@@ -6,7 +6,7 @@ import { sourceManager } from '../../source-manager';
 import { SourceViewBuilder } from '../../view-builder';
 import { bufferColumnManager } from './column-manager';
 import './load';
-import { config, openStrategy, delay, activeMode, supportBufferHighlight } from '../../../util';
+import { config, openStrategy, activeMode, supportBufferHighlight } from '../../../util';
 import { throttle } from 'throttle-debounce';
 
 const regex = /^\s*(\d+)(.+?)"(.+?)".*/;

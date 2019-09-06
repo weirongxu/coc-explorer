@@ -104,30 +104,34 @@ export class FileSource extends ExplorerSource<FileItem> {
     await fileColumnManager.init(this);
 
     if (activeMode) {
-      if (workspace.env.isVim) {
-        if (supportBufferHighlight) {
-          setTimeout(() => {
-            events.on(
-              'BufEnter',
-              throttle(1000, async (bufnr) => {
-                if (bufnr === this.explorer.bufnr) {
-                  await this.reload(null);
+      setTimeout(() => {
+        if (workspace.env.isVim) {
+          if (supportBufferHighlight) {
+            setTimeout(() => {
+              events.on(
+                'BufEnter',
+                throttle(1000, async (bufnr) => {
+                  if (bufnr === this.explorer.bufnr) {
+                    await this.reload(null);
+                  }
+                }),
+              );
+            }, 50);
+          }
+        } else {
+          events.on(
+            'BufEnter',
+            throttle(1000, async (bufnr) => {
+              if (bufnr !== this.explorer.bufnr) {
+                const bufinfo = await nvim.call('getbufinfo', [bufnr]);
+                if (bufinfo[0] && bufinfo[0].name) {
+                  await this.gotoItemByPath(bufinfo[0].name as string);
                 }
-              }),
-            );
-          }, 50);
+              }
+            }),
+          );
         }
-      } else {
-        events.on(
-          'BufEnter',
-          throttle(1000, async (bufnr) => {
-            const bufinfo = await nvim.call('getbufinfo', [bufnr]);
-            if (bufinfo[0] && bufinfo[0].name) {
-              await this.gotoItemByPath(bufinfo[0].name as string);
-            }
-          }),
-        );
-      }
+      }, 30);
     }
 
     this.root = pathLib.join(this.explorer.args.cwd);
@@ -635,7 +639,9 @@ export class FileSource extends ExplorerSource<FileItem> {
     builder.newRoot((row) => {
       row.add(rootExpanded ? '-' : '+', highlights.expandIcon.group);
       row.add(' ');
-      row.add(`[FILE${this.showHiddenFiles ? ' I' : ''}]: ${this.root}`, highlights.title.group);
+      row.add(`[FILE${this.showHiddenFiles ? ' I' : ''}]:`, highlights.title.group);
+      row.add(' ');
+      row.add(`${this.root}`);
     });
     const drawSubDirectory = (items: FileItem[]) => {
       for (const item of items) {

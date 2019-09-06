@@ -3,7 +3,7 @@ import { bufferColumnManager } from '../column-manager';
 
 const highlights = {
   name: hlGroupManager.hlLinkGroupCommand('BufferName', 'PreProc'),
-  nameActive: hlGroupManager.hlLinkGroupCommand('BufferNameActive', 'StorageClass'),
+  nameActive: hlGroupManager.hlLinkGroupCommand('BufferNameActive', 'String'),
 };
 
 hlGroupManager.register(highlights);

@@ -6,7 +6,7 @@ import { FileItem } from '..';
 
 const highlights = {
   directory: hlGroupManager.hlLinkGroupCommand('FileDirectory', 'PreProc'),
-  nameActive: hlGroupManager.hlLinkGroupCommand('FileNameActive', 'StorageClass'),
+  nameActive: hlGroupManager.hlLinkGroupCommand('FileNameActive', 'String'),
 };
 hlGroupManager.register(highlights);
 

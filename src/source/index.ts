@@ -326,14 +326,37 @@ export abstract class ExplorerSource<
     return (await this.nvim.call('col', '.')) as number;
   }
 
-  async currentLineIndex() {
-    const line = (await this.nvim.call('line', '.')) as number;
-    return line - 1 - this.startLine;
+  /**
+   * current cursor
+   * @returns return null if outside this source
+   */
+  async currentCursor() {
+    const winid = await this.explorer.winid;
+    if (winid) {
+      const [line, col] = await this.nvim.createWindow(winid).cursor;
+      const lineIndex = line - 1;
+      // const line = ((await this.nvim.call('line', '.')) as number) - 1;
+      if (lineIndex < this.startLine || lineIndex > this.endLine) {
+        return null;
+      } else {
+        return {
+          lineIndex: lineIndex - this.startLine,
+          col,
+        };
+      }
+    }
+    return null;
   }
 
   async currentItem() {
-    const line = this.lines[await this.currentLineIndex()];
-    return line ? line[1] : null;
+    const cursor = await this.currentCursor();
+    if (cursor) {
+      const line = this.lines[cursor.lineIndex];
+      if (line) {
+        return line[1];
+      }
+    }
+    return null;
   }
 
   getItemByIndex(lineIndex: number) {
@@ -381,7 +404,7 @@ export abstract class ExplorerSource<
   }
 
   async render(notify = false) {
-    const storeLineIndex = await this.currentLineIndex();
+    const storeCursor = await this.currentCursor();
     const view = await this.nvim.call('winsaveview');
 
     const builder = new SourceViewBuilder<Item>();
@@ -391,10 +414,14 @@ export abstract class ExplorerSource<
     await this.partRender(notify);
 
     const cursorCol = (await this.nvim.call('col', '.')) as number;
-    const storeItem = await this.getItemByIndex(storeLineIndex);
+    if (storeCursor) {
+      const storeItem = await this.getItemByIndex(storeCursor.lineIndex);
+      await this.nvim.call('winrestview', view);
+      await this.gotoItem(storeItem, cursorCol);
+    } else {
+      await this.nvim.call('winrestview', view);
+    }
 
-    await this.nvim.call('winrestview', view);
-    await this.gotoItem(storeItem, cursorCol);
     if (workspace.env.isVim) {
       await this.nvim.command('redraw');
     }
