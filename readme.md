@@ -2,6 +2,10 @@
 
 **Experimental, maybe has active changes and bugs.**
 
+## Screenshot
+
+![image](https://user-images.githubusercontent.com/1709861/64406207-d43cf980-d0b3-11e9-8167-71b9c6adcf2f.png)
+
 ## Requirements
 
 - `>= vim 8.0` or `>= neovim 0.3.1`
