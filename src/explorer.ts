@@ -162,13 +162,9 @@ export class Explorer {
       (['n', 'v'] as ('n' | 'v')[]).forEach((mode) => {
         this._mappingsDisposable.push(
           // @ts-ignore FIXME upgrade to latest coc.nvim
-          workspace.registerLocalKeymap(
-            mode,
-            key,
-            () => {
-              this.doActions(actions, mode).catch(onError);
-            },
-          ),
+          workspace.registerLocalKeymap(mode, key, () => {
+            this.doActions(actions, mode).catch(onError);
+          }),
         );
       });
     });

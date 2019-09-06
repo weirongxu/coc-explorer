@@ -11,6 +11,7 @@ export type ActionOptions = {
   multi: boolean;
   render: boolean;
   reload: boolean;
+  select: boolean;
 };
 
 export abstract class ExplorerSource<
@@ -48,6 +49,7 @@ export abstract class ExplorerSource<
 
   private _explorer?: Explorer;
   private _expanded?: boolean;
+  private needRedraw: boolean = true;
 
   constructor() {
     this.addAction(
@@ -96,7 +98,7 @@ export abstract class ExplorerSource<
         await this.render();
       },
       'toggle item selection',
-      { multi: false },
+      { multi: false, select: true },
     );
     this.addItemAction(
       'unselect',
@@ -105,7 +107,7 @@ export abstract class ExplorerSource<
         await this.render();
       },
       'toggle item selection',
-      { multi: false },
+      { multi: false, select: true },
     );
     this.addItemAction(
       'toggleSelection',
@@ -118,7 +120,7 @@ export abstract class ExplorerSource<
         await this.render();
       },
       'toggle item selection',
-      { multi: false },
+      { multi: false, select: true },
     );
   }
 
@@ -266,10 +268,12 @@ export abstract class ExplorerSource<
       return;
     }
 
-    const { multi = true, render = false, reload = false } = action.options;
+    const { multi = true, render = false, reload = false, select = false } = action.options;
 
     const finalItems = Array.isArray(items) ? items : [items];
-    if (multi) {
+    if (select) {
+      await action.callback(finalItems, arg);
+    } else if (multi) {
       if (this.selectedItems.size > 0) {
         const items = Array.from(this.selectedItems);
         this.selectedItems.clear();
@@ -341,7 +345,7 @@ export abstract class ExplorerSource<
       } else {
         return {
           lineIndex: lineIndex - this.startLine,
-          col,
+          col: workspace.env.isVim ? col : col + 1,
         };
       }
     }
@@ -391,10 +395,29 @@ export abstract class ExplorerSource<
   abstract draw(builder: SourceViewBuilder<Item>): void;
   async loaded(_item: null | Item): Promise<void> {}
 
+  private async storeCursor() {
+    const storeCursor = await this.currentCursor();
+    const storeView = await this.nvim.call('winsaveview');
+    if (storeCursor) {
+      let storeItem: null | Item = this.needRedraw ? null : await this.getItemByIndex(storeCursor.lineIndex);
+      return async () => {
+        if (this.needRedraw) {
+          storeItem = await this.getItemByIndex(storeCursor.lineIndex);
+        }
+        await this.nvim.call('winrestview', storeView);
+        await this.gotoItem(storeItem, storeCursor.col);
+      };
+    }
+    return async () => {
+      await this.nvim.call('winrestview', storeView);
+    };
+  }
+
   async reload(
     item: null | Item,
     { render = true, notify = false }: { buffer?: Buffer; render?: boolean; notify?: boolean } = {},
   ) {
+    this.needRedraw = true;
     this.items = await this.loadItems(item);
     await this.loaded(item);
     this.selectedItems = new Set();
@@ -404,8 +427,7 @@ export abstract class ExplorerSource<
   }
 
   async render(notify = false) {
-    const storeCursor = await this.currentCursor();
-    const view = await this.nvim.call('winsaveview');
+    const restore = await this.storeCursor();
 
     const builder = new SourceViewBuilder<Item>();
     this.draw(builder);
@@ -413,18 +435,13 @@ export abstract class ExplorerSource<
     this.relativeHlRanges = builder.relativeHlRanges;
     await this.partRender(notify);
 
-    const cursorCol = (await this.nvim.call('col', '.')) as number;
-    if (storeCursor) {
-      const storeItem = await this.getItemByIndex(storeCursor.lineIndex);
-      await this.nvim.call('winrestview', view);
-      await this.gotoItem(storeItem, cursorCol);
-    } else {
-      await this.nvim.call('winrestview', view);
-    }
+    await restore();
 
     if (workspace.env.isVim) {
       await this.nvim.command('redraw');
     }
+
+    this.needRedraw = false;
   }
 
   private async partRender(notify = false) {

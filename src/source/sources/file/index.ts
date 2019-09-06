@@ -127,6 +127,9 @@ export class FileSource extends ExplorerSource<FileItem> {
                 if (bufinfo[0] && bufinfo[0].name) {
                   await this.gotoItemByPath(bufinfo[0].name as string);
                 }
+              } else {
+                this.currentFileItem = null;
+                await this.render();
               }
             }),
           );

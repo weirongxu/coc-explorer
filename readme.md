@@ -4,7 +4,7 @@
 
 ## Screenshot
 
-![image](https://user-images.githubusercontent.com/1709861/64406207-d43cf980-d0b3-11e9-8167-71b9c6adcf2f.png)
+![image](https://user-images.githubusercontent.com/1709861/64413599-5e8d5980-d0c4-11e9-936f-863d4672c80f.png)
 
 ## Requirements
 
@@ -20,6 +20,11 @@
     ```
     :nmap ge :CocCommand explorer --toggle<CR>
     ```
+3. Open explorer
+    ```
+    ge
+    ```
+4. Press `?` to show default mappings help
 
 ## Feature
 - [x] Buffer source

@@ -8,5 +8,8 @@
       "name": "file",
       "expand": true
     }
-  ]
+  ],
+  "explorer.keyMappings": {
+    "<space>": "toggleSelection"
+  }
 }

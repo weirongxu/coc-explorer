@@ -65,15 +65,18 @@ function! coc_explorer#init_buf()
   silent setlocal buftype=nofile bufhidden=hide noswapfile nomodeline filetype=coc-explorer nomodifiable nobuflisted nomodified signcolumn=no
 endfunction
 
+
 let s:select_wins_chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
+
 function! coc_explorer#select_wins_restore(store)
   for winnr in keys(a:store)
     call setwinvar(winnr, '&statusline', a:store[winnr])
   endfor
 endfunction
+
 " returns
-"   -1  - User cancel
-"   0   - No selection of windows
+"   -1  - User cancelled
+"   0   - No selection of window
 "   > 0 - selected winnr
 function! coc_explorer#select_wins(name)
   let store = {}
