@@ -13,7 +13,8 @@
     "coc": "^0.0.71"
   },
   "files": [
-    "lib"
+    "lib",
+    "autoload"
   ],
   "keywords": [
     "coc.nvim",
