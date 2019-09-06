@@ -1,0 +1,292 @@
+{
+  "name": "coc-explorer",
+  "version": "0.0.1",
+  "description": "explorer for coc.nvim",
+  "main": "lib/index.js",
+  "types": "lib/index.d.ts",
+  "repository": "git@github.com:weirongxu/coc-explorer.git",
+  "author": "Weirong Xu <weirongxu.raidou@gmail.com>",
+  "publisher": "weirongxu",
+  "homepage": "https://github.com/weirongxu/coc-explorer",
+  "license": "MIT",
+  "engines": {
+    "coc": "^0.0.71"
+  },
+  "files": [
+    "lib"
+  ],
+  "keywords": [
+    "coc.nvim",
+    "explorer"
+  ],
+  "activationEvents": [
+    "*"
+  ],
+  "contributes": {
+    "configuration": {
+      "type": "object",
+      "title": "Explorer",
+      "properties": {
+        "explorer.keyMappingMode": {
+          "description": "Keymapping mode",
+          "enum": [
+            "none",
+            "default"
+          ],
+          "default": "default"
+        },
+        "explorer.keyMappings": {
+          "description": "Custom keymappings",
+          "type": "object",
+          "additionalProperties": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              {
+                "enum": [
+                  false
+                ]
+              }
+            ]
+          },
+          "default": {}
+        },
+        "explorer.position": {
+          "description": "Explorer position",
+          "enum": [
+            "left",
+            "right"
+          ],
+          "default": "left"
+        },
+        "explorer.width": {
+          "description": "Explorer window width for open in left or right side",
+          "type": "number",
+          "default": 40
+        },
+        "explorer.toggle": {
+          "description": "Close the explorer if it exists",
+          "type": "boolean",
+          "default": true
+        },
+        "explorer.activeMode": {
+          "description": "Explorer is very active to render",
+          "type": "boolean",
+          "default": true
+        },
+        "explorer.openAction.strategy": {
+          "description": "Strategy for open action",
+          "enum": [
+            "vsplit",
+            "previousBuffer",
+            "select"
+          ],
+          "default": "select"
+        },
+        "explorer.sources": {
+          "description": "Explorer sources",
+          "type": "array",
+          "default": [
+            {
+              "name": "buffer",
+              "expand": false
+            },
+            {
+              "name": "file",
+              "expand": true
+            }
+          ],
+          "items": {
+            "type": "object",
+            "required": [
+              "name",
+              "expand"
+            ],
+            "properties": {
+              "name": {
+                "description": "Explorer source name",
+                "type": "string",
+                "enum": [
+                  "tab",
+                  "file",
+                  "buffer"
+                ]
+              },
+              "expand": {
+                "description": "Whether to expand it by default",
+                "type": "boolean",
+                "default": false
+              }
+            }
+          }
+        },
+        "explorer.column.selection.selected": {
+          "description": "Selection selected chars for File source",
+          "type": "string",
+          "default": "●"
+        },
+        "explorer.column.selection.unselected": {
+          "description": "Selection unselected chars for File source",
+          "type": "string",
+          "default": " "
+        },
+        "explorer.buffer.showHiddenBuffers": {
+          "description": "Default show hidden buffers",
+          "type": "boolean",
+          "default": false
+        },
+        "explorer.buffer.columns": {
+          "description": "Default columns for buffer source",
+          "type": "array",
+          "items": {
+            "enum": [
+              "selection",
+              "bufnr",
+              "name",
+              "modified",
+              "bufname"
+            ]
+          },
+          "default": [
+            "selection",
+            "bufnr",
+            "name",
+            "modified",
+            "bufname"
+          ]
+        },
+        "explorer.file.showHiddenFiles": {
+          "description": "Default show hidden files",
+          "type": "boolean",
+          "default": false
+        },
+        "explorer.file.autoExpandSingleDirectory": {
+          "description": "Automatically expand a single directory",
+          "type": "boolean",
+          "default": true
+        },
+        "explorer.file.columns": {
+          "description": "Default columns for file source",
+          "type": "array",
+          "items": {
+            "enum": [
+              "git",
+              "selection",
+              "clip",
+              "indent",
+              "readonly",
+              "expandIcon",
+              "filename",
+              "size",
+              "modified",
+              "created",
+              "accessed"
+            ]
+          },
+          "default": [
+            "git",
+            "selection",
+            "clip",
+            "indent",
+            "expandIcon",
+            "filename",
+            "readonly",
+            "size",
+            "modified",
+            "created",
+            "accessed"
+          ]
+        },
+        "explorer.file.column.git.showIgnored": {
+          "description": "Show ignored files in git column",
+          "type": "boolean",
+          "default": false
+        },
+        "explorer.file.column.clip.copy": {
+          "description": "Whether the file is copied",
+          "type": "string",
+          "default": "C"
+        },
+        "explorer.file.column.clip.cut": {
+          "description": "Whether the file is cut",
+          "type": "string",
+          "default": "X"
+        },
+        "explorer.file.column.indent.chars": {
+          "description": "Indent chars for file source",
+          "type": "string",
+          "default": "  "
+        },
+        "explorer.file.column.indent.topLevel": {
+          "description": "Whether to indent it in top level",
+          "type": "boolean",
+          "default": false
+        },
+        "explorer.file.column.expandIcon.expanded": {
+          "description": "Expand icon expanded for File source",
+          "type": "string",
+          "default": "-"
+        },
+        "explorer.file.column.expandIcon.shrinked": {
+          "description": "Expand icon shrinked for File source",
+          "type": "string",
+          "default": "+"
+        },
+        "explorer.file.column.filename.minWidth": {
+          "description": "Filename min with for File source",
+          "type": "integer",
+          "default": 40
+        },
+        "explorer.file.column.filename.maxWidth": {
+          "description": "Filename max width for File source",
+          "type": "integer",
+          "default": 80
+        },
+        "explorer.file.column.readonly.chars": {
+          "description": "Readonly chars for File source",
+          "type": "string",
+          "default": "[O]"
+        },
+        "explorer.git.command": {
+          "description": "Git command",
+          "type": "string",
+          "default": "git"
+        }
+      }
+    }
+  },
+  "scripts": {
+    "clean": "rm -rf lib",
+    "build": "tsc",
+    "prepare": "yarn run clean && yarn run build",
+    "test": "tslint -p . && jest"
+  },
+  "dependencies": {
+    "command-exists": "^1.2.8",
+    "open": "^6.4.0",
+    "pretty-bytes": "^5.3.0",
+    "rimraf": "^3.0.0",
+    "throttle-debounce": "^2.1.0",
+    "trash": "^6.0.0",
+    "vscode-languageserver-protocol": "^3.14.1"
+  },
+  "devDependencies": {
+    "@types/command-exists": "^1.2.0",
+    "@types/jest": "^24.0.15",
+    "@types/node": "^12.0.8",
+    "@types/rimraf": "^2.0.2",
+    "@types/throttle-debounce": "^2.1.0",
+    "coc.nvim": "^0.0.71",
+    "jest": "^24.8.0",
+    "ts-jest": "^24.0.2",
+    "tslint": "^5.19.0",
+    "typescript": "^3.5.2"
+  }
+}

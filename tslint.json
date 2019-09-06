@@ -1,0 +1,11 @@
+{
+  "rulesDirectory": ["src"],
+  "rules": {
+    "semicolon": true,
+    "trailing-comma": [true, "all"],
+    "quotemark": [true, "single", "avoid-escape"],
+    "curly": true,
+    "prefer-const": true,
+    "no-floating-promises": true
+  }
+}
