@@ -1,6 +1,6 @@
 # coc-explorer
 
-Experimental, maybe has active changes and bugs.
+**Experimental, maybe has active changes and bugs.**
 
 ## Requirements
 
