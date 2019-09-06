@@ -501,7 +501,7 @@ export abstract class ExplorerSource<
     selected: (winnr: number) => void | Promise<void>,
     nothingChoice: () => void | Promise<void> = () => {},
   ) {
-    const winnr = await this.nvim.call('coc_explorer#select_wins');
+    const winnr = await this.nvim.call('coc_explorer#select_wins', [this.explorer.name]);
     if (winnr > 0) {
       await Promise.resolve(selected(winnr));
     } else if (winnr == 0) {
