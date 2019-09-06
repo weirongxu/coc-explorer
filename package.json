@@ -266,7 +266,7 @@
     "clean": "rm -rf lib",
     "build": "tsc",
     "prepare": "yarn run clean && yarn run build",
-    "test": "tslint -p . && jest"
+    "test": "tslint -p ."
   },
   "dependencies": {
     "command-exists": "^1.2.8",
