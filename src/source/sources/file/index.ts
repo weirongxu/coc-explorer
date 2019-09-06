@@ -110,7 +110,7 @@ export class FileSource extends ExplorerSource<FileItem> {
             setTimeout(() => {
               events.on(
                 'BufEnter',
-                throttle(1000, async (bufnr) => {
+                throttle(500, async (bufnr) => {
                   if (bufnr === this.explorer.bufnr) {
                     await this.reload(null);
                   }
@@ -121,7 +121,7 @@ export class FileSource extends ExplorerSource<FileItem> {
         } else {
           events.on(
             'BufEnter',
-            throttle(1000, async (bufnr) => {
+            throttle(500, async (bufnr) => {
               if (bufnr !== this.explorer.bufnr) {
                 const bufinfo = await nvim.call('getbufinfo', [bufnr]);
                 if (bufinfo[0] && bufinfo[0].name) {
@@ -554,19 +554,17 @@ export class FileSource extends ExplorerSource<FileItem> {
 
   async gotoItemByPath(path: string, items: FileItem[] = this.items): Promise<boolean> {
     for (const item of items) {
-      if (path.startsWith(item.fullpath)) {
-        if (path === item.fullpath) {
-          this.currentFileItem = item;
-          await this.render();
-          await this.gotoItem(item);
-          return true;
-        } else if (item.directory) {
-          expandStore.expand(item.fullpath);
-          if (!item.children) {
-            item.children = await this.listFiles(item.fullpath, item);
-          }
-          return await this.gotoItemByPath(path, item.children);
+      if (item.directory && path.startsWith(item.fullpath + '/')) {
+        expandStore.expand(item.fullpath);
+        if (!item.children) {
+          item.children = await this.listFiles(item.fullpath, item);
         }
+        return await this.gotoItemByPath(path, item.children);
+      } else if (path === item.fullpath) {
+        this.currentFileItem = item;
+        await this.render();
+        await this.gotoItem(item);
+        return true;
       }
     }
     this.currentFileItem = null;

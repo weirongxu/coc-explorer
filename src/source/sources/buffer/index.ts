@@ -52,7 +52,7 @@ export class BufferSource extends ExplorerSource<BufferItem> {
           if (supportBufferHighlight) {
             events.on(
               'BufEnter',
-              throttle(1000, async (bufnr) => {
+              throttle(500, async (bufnr) => {
                 if (bufnr === this.explorer.bufnr) {
                   await this.reload(null);
                 }
@@ -62,7 +62,7 @@ export class BufferSource extends ExplorerSource<BufferItem> {
         } else {
           events.on(
             ['BufCreate', 'BufHidden', 'BufUnload'],
-            throttle(1000, async () => {
+            throttle(500, async () => {
               await this.reload(null);
             }),
           );

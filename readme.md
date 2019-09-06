@@ -32,7 +32,7 @@
   - [x] Highlight visible buffers in real time (neovim only)
 - [x] File tree source
   - [x] Basic actions
-    - [x] Open file in select/vsplit/tab  
+    - [x] Open file in select / vsplit / tab  
            `explorer.openAction.strategy` options:
       - vsplit: open file with vsplit by default
       - previousBuffer: open file use last used buffer by default
