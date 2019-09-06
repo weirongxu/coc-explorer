@@ -13,7 +13,7 @@ import { config, openStrategy, activeMode, supportBufferHighlight } from '../../
 import trash from 'trash';
 import rimraf from 'rimraf';
 import open from 'open';
-import { throttle } from 'throttle-debounce';
+import { debounce } from 'throttle-debounce';
 
 const fsOpen = promisify(fs.open);
 const fsClose = promisify(fs.close);
@@ -110,7 +110,7 @@ export class FileSource extends ExplorerSource<FileItem> {
             setTimeout(() => {
               events.on(
                 'BufEnter',
-                throttle(500, async (bufnr) => {
+                debounce(500, async (bufnr) => {
                   if (bufnr === this.explorer.bufnr) {
                     await this.reload(null);
                   }
@@ -121,7 +121,7 @@ export class FileSource extends ExplorerSource<FileItem> {
         } else {
           events.on(
             'BufEnter',
-            throttle(500, async (bufnr) => {
+            debounce(500, async (bufnr) => {
               if (bufnr !== this.explorer.bufnr) {
                 const bufinfo = await nvim.call('getbufinfo', [bufnr]);
                 if (bufinfo[0] && bufinfo[0].name) {

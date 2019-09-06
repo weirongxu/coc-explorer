@@ -3,7 +3,6 @@ import pathLib from 'path';
 import { getGitRoot, gitCommand } from '../../../../util';
 import { hlGroupManager } from '../../../highlight-manager';
 import { fileColumnManager } from '../column-manager';
-import { workspace } from 'coc.nvim';
 
 const highlights = {
   sign: hlGroupManager.hlLinkGroupCommand('FileGitSign', 'Operator'),

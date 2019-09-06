@@ -7,7 +7,7 @@ import { SourceViewBuilder } from '../../view-builder';
 import { bufferColumnManager } from './column-manager';
 import './load';
 import { config, openStrategy, activeMode, supportBufferHighlight } from '../../../util';
-import { throttle } from 'throttle-debounce';
+import { debounce } from 'throttle-debounce';
 
 const regex = /^\s*(\d+)(.+?)"(.+?)".*/;
 
@@ -52,7 +52,7 @@ export class BufferSource extends ExplorerSource<BufferItem> {
           if (supportBufferHighlight) {
             events.on(
               'BufEnter',
-              throttle(500, async (bufnr) => {
+              debounce(500, async (bufnr) => {
                 if (bufnr === this.explorer.bufnr) {
                   await this.reload(null);
                 }
@@ -62,7 +62,7 @@ export class BufferSource extends ExplorerSource<BufferItem> {
         } else {
           events.on(
             ['BufCreate', 'BufHidden', 'BufUnload'],
-            throttle(500, async () => {
+            debounce(500, async () => {
               await this.reload(null);
             }),
           );
