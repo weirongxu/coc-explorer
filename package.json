@@ -63,7 +63,8 @@
           "description": "Explorer position",
           "enum": [
             "left",
-            "right"
+            "right",
+            "tab"
           ],
           "default": "left"
         },
