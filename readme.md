@@ -25,10 +25,10 @@
     - [x] Trash as default delete action
     - [x] Cut / Copy / Paste file or directory
     - [x] Git status
-    - [x] Exrename, like defx
     - [x] Automatic highlight current buffer (neovim only)
     - [ ] Automatic expand current buffer
     - [ ] LSP rename
+    - [ ] Exrename, like defx
     - [ ] Support archived file (use `lsar / unar`)
     - [ ] SSH
 - [ ] Git source
