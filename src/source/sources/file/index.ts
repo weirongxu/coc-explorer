@@ -554,8 +554,8 @@ export class FileSource extends ExplorerSource<FileItem> {
       if (path.startsWith(item.fullpath)) {
         if (path === item.fullpath) {
           this.currentFileItem = item;
-          await this.gotoItem(item);
           await this.render();
+          await this.gotoItem(item);
           return true;
         } else if (item.directory) {
           expandStore.expand(item.fullpath);

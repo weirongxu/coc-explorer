@@ -19,14 +19,13 @@
 
 ## Feature
 - [x] Buffer source
-    - [x] Highlight visible (neovim only)
+    - [x] Highlight visible buffers (neovim only)
 - [x] File tree source
     - [x] Basic actions
     - [x] Trash as default delete action
     - [x] Cut / Copy / Paste file or directory
     - [x] Git status
-    - [x] Automatic highlight current buffer (neovim only)
-    - [ ] Automatic expand current buffer
+    - [x] Highlight current buffer (neovim only)
     - [ ] LSP rename
     - [ ] Exrename, like defx
     - [ ] Support archived file (use `lsar / unar`)
