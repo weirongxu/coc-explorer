@@ -168,6 +168,7 @@ export abstract class ExplorerSource<
   }
 
   init() {}
+  opened() {}
 
   /**
    * highlight ranges with real positions
@@ -484,7 +485,7 @@ export abstract class ExplorerSource<
   private async clearHighlights() {
     const { buffer } = this.explorer;
 
-    if (supportBufferHighlight) {
+    if (supportBufferHighlight()) {
       if (!workspace.env.isVim) {
         await buffer.clearHighlight({
           srcId: this.hlSrcId,
@@ -499,7 +500,7 @@ export abstract class ExplorerSource<
   private async renderHighlights(highlights: Record<string, Range[]>, lines: string[]) {
     const { buffer } = this.explorer;
 
-    if (supportBufferHighlight) {
+    if (supportBufferHighlight()) {
       for (const [hlGroup, ranges] of Object.entries(highlights)) {
         for (const range of ranges) {
           await buffer.addHighlight({

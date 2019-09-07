@@ -106,7 +106,7 @@ export class FileSource extends ExplorerSource<FileItem> {
     if (activeMode) {
       setTimeout(() => {
         if (workspace.env.isVim) {
-          if (supportBufferHighlight) {
+          if (supportBufferHighlight()) {
             setTimeout(() => {
               events.on(
                 'BufEnter',
@@ -631,6 +631,12 @@ export class FileSource extends ExplorerSource<FileItem> {
 
   async loaded(item: FileItem | null) {
     await fileColumnManager.load(item);
+  }
+
+  async opened() {
+    if (this.explorer.focusFilepath) {
+      await this.gotoItemByPath(this.explorer.focusFilepath);
+    }
   }
 
   draw(builder: SourceViewBuilder<FileItem>) {

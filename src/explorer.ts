@@ -14,6 +14,7 @@ export class Explorer {
   position: ArgPosition = 'left';
   nvim = workspace.nvim;
   previousBufnr?: number;
+  focusFilepath?: string;
 
   private _buffer?: Buffer;
   private _bufnr?: number;
@@ -107,6 +108,7 @@ export class Explorer {
     const { nvim } = this;
 
     await this.initArgs(argStrings);
+    this.focusFilepath = this.args.filepath || (await nvim.call('expand', '%:p'));
 
     const [bufnr, inited] = (await nvim.call('coc_explorer#create', [
       this._bufnr,
@@ -126,6 +128,10 @@ export class Explorer {
 
     if (!inited) {
       await this.initMappings();
+    }
+
+    for (const source of this.sources) {
+      await source.opened();
     }
   }
 

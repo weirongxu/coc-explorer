@@ -266,9 +266,9 @@
   },
   "scripts": {
     "clean": "rm -rf lib",
-    "build": "tsc",
+    "build": "tsc -p ./tsconfig.prod.json",
     "prepare": "yarn run clean && yarn run build",
-    "test": "tslint -p ."
+    "test": "tslint -p . && jest --runInBand --detectOpenHandles --forceExit"
   },
   "dependencies": {
     "command-exists": "^1.2.8",

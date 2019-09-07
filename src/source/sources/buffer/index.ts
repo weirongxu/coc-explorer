@@ -49,7 +49,7 @@ export class BufferSource extends ExplorerSource<BufferItem> {
     if (activeMode) {
       setTimeout(() => {
         if (workspace.env.isVim) {
-          if (supportBufferHighlight) {
+          if (supportBufferHighlight()) {
             events.on(
               'BufEnter',
               debounce(500, async (bufnr) => {

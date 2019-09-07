@@ -58,7 +58,7 @@
 :CocCommand explorer
     \ --toggle
     \ --sources="buffer+,file+"
-    \ --file-columns="git,selection,clip,indent,filename,size" /path/to
+    \ --file-columns="git,selection,clip,indent,filename,size" /cwd/path/to
 ```
 
 ### `--sources`
@@ -77,9 +77,9 @@ Explorer width by default
 
 Explorer position, support positions: `left`, `right`, `tab`
 
-### `--cwd`
+### `--filepath`
 
-Explorer root
+Explorer will expand to this filepath for default
 
 ### `--buffer-columns`
 
@@ -106,6 +106,7 @@ Explorer file columns, supported:
 
 ## Inspired by
 
+- VSCode Explorer
 - [Shougo/vimfiler.vim](https://github.com/Shougo/vimfiler.vim)
 - [Shougo/defx.vim](https://github.com/Shougo/defx.vim)
 - [lambdalisue/fila.vim](https://github.com/lambdalisue/fila.vim)

@@ -13,10 +13,10 @@ export interface Args {
   toggle: boolean;
   width: number;
   position: ArgPosition;
-  cwd: string;
   bufferColumns: string[];
   fileColumns: string[];
-  filepath: string;
+  filepath: string | null;
+  cwd: string;
 }
 
 const boolTrueArgs = ['toggle', 'tab-isolate'];
@@ -44,8 +44,6 @@ export function parseSources(sources: string): ArgsSource[] {
 }
 
 export async function parseArgs(...args: string[]): Promise<Args> {
-  const { nvim } = workspace;
-  const filepath = await nvim.call('expand', '%:p');
   const cwd = workspace.cwd;
 
   const parsedArgs: Args = {
@@ -56,7 +54,7 @@ export async function parseArgs(...args: string[]): Promise<Args> {
     cwd,
     bufferColumns: config.get<string[]>('buffer.columns')!,
     fileColumns: config.get<string[]>('file.columns')!,
-    filepath,
+    filepath: null,
   };
 
   while (args.length > 0) {
@@ -96,6 +94,8 @@ export async function parseArgs(...args: string[]): Promise<Args> {
       } else {
         parsedArgs.cwd = arg;
       }
+    } else {
+      parsedArgs.cwd = arg;
     }
   }
 

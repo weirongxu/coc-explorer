@@ -2,6 +2,7 @@ import { workspace } from 'coc.nvim';
 import pathLib from 'path';
 import { spawn } from 'child_process';
 import { onError } from './logger';
+import util from 'util';
 
 export const delay = (time: number) => {
   return new Promise((resolve) => {
@@ -19,7 +20,9 @@ export const outputChannel = workspace.createOutputChannel('explorer');
 
 export const sum = (list: number[]) => list.reduce((result, item) => result + item, 0);
 
-export const supportBufferHighlight = !workspace.env.isVim || workspace.env.textprop;
+export function supportBufferHighlight() {
+  return !workspace.env.isVim || workspace.env.textprop;
+}
 
 export const chunk = <T>(array: T[], size: number = 1): T[][] => {
   const finalSize = Math.max(size, 0);
@@ -109,4 +112,8 @@ export function truncate(name: string, width: number, padSide: 'start' | 'end') 
       return name.padEnd(width, ' ');
     }
   }
+}
+
+export function prettyPrint(data: any) {
+  workspace.showMessage(util.inspect(data));
 }
