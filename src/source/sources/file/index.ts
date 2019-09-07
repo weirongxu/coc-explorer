@@ -9,7 +9,7 @@ import { hlGroupManager } from '../../highlight-manager';
 import { fileColumnManager } from './column-manager';
 import './load';
 import { onError } from '../../../logger';
-import { config, openStrategy, activeMode, supportBufferHighlight } from '../../../util';
+import { config, openStrategy, activeMode, supportBufferHighlight, autoFocus, prettyPrint, delay } from '../../../util';
 import trash from 'trash';
 import rimraf from 'rimraf';
 import open from 'open';
@@ -125,7 +125,14 @@ export class FileSource extends ExplorerSource<FileItem> {
               if (bufnr !== this.explorer.bufnr) {
                 const bufinfo = await nvim.call('getbufinfo', [bufnr]);
                 if (bufinfo[0] && bufinfo[0].name) {
-                  await this.gotoItemByPath(bufinfo[0].name as string);
+                  const item = await this.findItemByPath(bufinfo[0].name as string);
+                  if (item) {
+                    this.currentFileItem = item;
+                  }
+                  await this.render();
+                  if (autoFocus) {
+                    await this.gotoItem(this.currentFileItem);
+                  }
                 }
               } else {
                 this.currentFileItem = null;
@@ -552,24 +559,19 @@ export class FileSource extends ExplorerSource<FileItem> {
       : this.root;
   }
 
-  async gotoItemByPath(path: string, items: FileItem[] = this.items): Promise<boolean> {
+  async findItemByPath(path: string, items: FileItem[] = this.items): Promise<FileItem | null> {
     for (const item of items) {
       if (item.directory && path.startsWith(item.fullpath + '/')) {
         expandStore.expand(item.fullpath);
         if (!item.children) {
           item.children = await this.listFiles(item.fullpath, item);
         }
-        return await this.gotoItemByPath(path, item.children);
+        return await this.findItemByPath(path, item.children);
       } else if (path === item.fullpath) {
-        this.currentFileItem = item;
-        await this.render();
-        await this.gotoItem(item);
-        return true;
+        return item;
       }
     }
-    this.currentFileItem = null;
-    await this.render();
-    return false;
+    return null;
   }
 
   sortFiles(files: FileItem[]) {
@@ -634,8 +636,10 @@ export class FileSource extends ExplorerSource<FileItem> {
   }
 
   async opened() {
-    if (this.explorer.focusFilepath) {
-      await this.gotoItemByPath(this.explorer.focusFilepath);
+    if (this.explorer.focusFilepath && autoFocus) {
+      const item = await this.findItemByPath(this.explorer.focusFilepath);
+      await this.render();
+      await this.gotoItem(item);
     }
   }
 

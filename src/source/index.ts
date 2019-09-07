@@ -168,7 +168,7 @@ export abstract class ExplorerSource<
   }
 
   init() {}
-  opened() {}
+  async opened() {}
 
   /**
    * highlight ranges with real positions

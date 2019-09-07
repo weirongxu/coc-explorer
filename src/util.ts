@@ -12,9 +12,11 @@ export const delay = (time: number) => {
 
 export const config = workspace.getConfiguration('explorer');
 
-export const openStrategy = config.get<'vsplit' | 'previousBuffer' | 'select'>('openAction.strategy')!;
-
 export const activeMode = config.get<boolean>('activeMode')!;
+
+export const autoFocus = config.get<boolean>('file.autoFocus')!;
+
+export const openStrategy = config.get<'vsplit' | 'previousBuffer' | 'select'>('openAction.strategy')!;
 
 export const outputChannel = workspace.createOutputChannel('explorer');
 

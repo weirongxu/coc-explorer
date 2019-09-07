@@ -164,6 +164,11 @@
             "bufname"
           ]
         },
+        "explorer.file.autoFocus": {
+          "description": "Explorer will automatically focus on the current buffer file",
+          "type": "boolean",
+          "default": true
+        },
         "explorer.file.showHiddenFiles": {
           "description": "Default show hidden files",
           "type": "boolean",
