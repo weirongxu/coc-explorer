@@ -88,7 +88,7 @@ function! coc_explorer#select_wins(name)
       let store[winnr] = getwinvar(winnr, '&statusline')
       let char_idx_mapto_winnr[char_idx] = winnr
       let char = s:select_wins_chars[char_idx]
-      let statusline = printf('%s %s', repeat(' ', winwidth(winnr)/2-1), char)
+      let statusline = printf('%%#CocExplorerSelectUI#%s %%#CocExplorerSelectUI#%s', repeat(' ', winwidth(winnr)/2-1), char)
       call setwinvar(winnr, '&statusline', statusline)
       let char_idx += 1
     endif

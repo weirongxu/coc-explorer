@@ -9,15 +9,19 @@ export const activate = async (context: ExtensionContext) => {
   const { nvim } = workspace;
   registerLogger(logger);
 
+  hlGroupManager.register(hlGroupManager.hlGroupCommand('SelectUI', 'ctermbg=27 ctermfg=0 guibg=#1593e5 guifg=#ffffff'));
   hlGroupManager.executeCommands().catch(onError);
 
-  nvim.getOption('runtimepath').then(async (rtp) => {
-    const paths = (rtp as string).split(',');
-    const extensionPath = pathLib.resolve(__dirname, '..');
-    if (!paths.includes(extensionPath)) {
-      await nvim.command(`execute 'noa set rtp^='.fnameescape('${extensionPath.replace(/'/g, "''")}')`);
-    }
-  }).catch(onError);
+  nvim
+    .getOption('runtimepath')
+    .then(async (rtp) => {
+      const paths = (rtp as string).split(',');
+      const extensionPath = pathLib.resolve(__dirname, '..');
+      if (!paths.includes(extensionPath)) {
+        await nvim.command(`execute 'noa set rtp^='.fnameescape('${extensionPath.replace(/'/g, "''")}')`);
+      }
+    })
+    .catch(onError);
 
   const explorer = new Explorer(context);
 
