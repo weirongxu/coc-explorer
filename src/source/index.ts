@@ -50,6 +50,7 @@ export abstract class ExplorerSource<
   private _explorer?: Explorer;
   private _expanded?: boolean;
   private needRedraw: boolean = true;
+  private stopRendering: boolean = false;
 
   constructor() {
     this.addAction(
@@ -432,6 +433,10 @@ export abstract class ExplorerSource<
   }
 
   async render(notify = false) {
+    if (this.stopRendering) {
+      return;
+    }
+
     const restore = await this.storeCursor();
 
     const builder = new SourceViewBuilder<Item>();
@@ -567,6 +572,7 @@ export abstract class ExplorerSource<
   }
 
   private async renderHelp(isRoot: boolean) {
+    this.stopRendering = true;
     const builder = new SourceViewBuilder<null>();
     const width = await this.nvim.call('winwidth', '%');
 
@@ -635,6 +641,7 @@ export abstract class ExplorerSource<
     disposables.forEach((d) => d.dispose());
 
     await this.explorer.initMappings();
+    this.stopRendering = false;
     await this.explorer.renderAll();
   }
 }

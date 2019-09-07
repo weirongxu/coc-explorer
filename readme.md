@@ -77,15 +77,15 @@ Explorer width by default
 
 ### `--position`
 
-Explorer position, support positions: `left`, `right`, `tab`
+Explorer position, supported position: `left`, `right`, `tab`
 
 ### `--filepath`
 
-Explorer will expand to this filepath for default
+Explorer will expand to this filepath, default: `current buffer`
 
 ### `--buffer-columns`
 
-Explorer buffer columns, supported:
+Explorer buffer columns, supported columns:
 
 - selection
 - name
@@ -95,7 +95,7 @@ Explorer buffer columns, supported:
 
 ### `--file-columns`
 
-Explorer file columns, supported:
+Explorer file columns, supported columns:
 
 - git
 - selection
