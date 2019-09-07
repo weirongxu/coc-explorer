@@ -103,3 +103,9 @@ Explorer file columns, supported:
 - readonly
 - clip
 - size
+
+## Inspired by
+
+- [Shougo/vimfiler.vim](https://github.com/Shougo/vimfiler.vim)
+- [Shougo/defx.vim](https://github.com/Shougo/defx.vim)
+- [lambdalisue/fila.vim](https://github.com/lambdalisue/fila.vim)

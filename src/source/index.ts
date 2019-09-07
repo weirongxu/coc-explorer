@@ -44,7 +44,7 @@ export abstract class ExplorerSource<
       callback: (arg: string) => void | Promise<void>;
     }
   > = {};
-  hlIds: number[] = [];
+  hlIds: number[] = []; // hightlight match ids for vim8.0
   nvim = workspace.nvim;
 
   private _explorer?: Explorer;
@@ -161,6 +161,10 @@ export abstract class ExplorerSource<
 
   set expanded(expanded: boolean) {
     this._expanded = expanded;
+  }
+
+  get lineStrings() {
+    return this.lines.map((line) => line[0]);
   }
 
   init() {}
@@ -469,14 +473,15 @@ export abstract class ExplorerSource<
 
     buffer.setOption('modifiable', false, true);
 
-    await this.renderHighlights(this.readHlRanges);
+    await this.clearHighlights();
+    await this.renderHighlights(this.readHlRanges, this.lineStrings);
 
     if (!notify) {
       await this.nvim.resumeNotification();
     }
   }
 
-  private async renderHighlights(highlights: Record<string, Range[]>) {
+  private async clearHighlights() {
     const { buffer } = this.explorer;
 
     if (supportBufferHighlight) {
@@ -485,7 +490,16 @@ export abstract class ExplorerSource<
           srcId: this.hlSrcId,
         });
       }
+    } else {
+      this.vimClearHighlights(this.hlIds);
+      this.hlIds = [];
+    }
+  }
 
+  private async renderHighlights(highlights: Record<string, Range[]>, lines: string[]) {
+    const { buffer } = this.explorer;
+
+    if (supportBufferHighlight) {
       for (const [hlGroup, ranges] of Object.entries(highlights)) {
         for (const range of ranges) {
           await buffer.addHighlight({
@@ -498,10 +512,8 @@ export abstract class ExplorerSource<
         }
       }
     } else {
-      this.vimClearHighlights(this.hlIds);
-      this.hlIds = [];
       for (const [hlGroup, ranges] of Object.entries(highlights)) {
-        this.hlIds.push(...this.vimAddHighlights(ranges, hlGroup));
+        this.hlIds.push(...this.vimAddHighlights(ranges, hlGroup, lines));
       }
 
       this.nvim.command('redraw', true);
@@ -512,13 +524,13 @@ export abstract class ExplorerSource<
     this.nvim.call('coc_explorer#clearmatches', [Array.from(ids)], true);
   }
 
-  private vimAddHighlights(ranges: Range[], hlGroup: string): number[] {
+  private vimAddHighlights(ranges: Range[], hlGroup: string, lines: string[]): number[] {
     const priority = 10;
     const res: number[] = [];
     const arr: number[][] = [];
     for (const range of ranges) {
       const { start, end } = range;
-      const line = this.lines[start.line - this.startLine][0];
+      const line = lines[start.line - this.startLine];
       if (start.character == end.character) {
         continue;
       }
@@ -558,7 +570,7 @@ export abstract class ExplorerSource<
     const width = await this.nvim.call('winwidth', '%');
 
     builder.newItem(null, (row) => {
-      row.add(` Help for [${this.name}${isRoot ? ' root' : ''}], (use q or <esc> return to explorer)`);
+      row.add(`Help for [${this.name}${isRoot ? ' root' : ''}], (use q or <esc> return to explorer)`);
     });
     builder.newItem(null, (row) => {
       row.add('—'.repeat(width), 'Operator');
@@ -591,9 +603,13 @@ export abstract class ExplorerSource<
 
     this.nvim.pauseNotification();
 
+    const lineStrings = builder.lines.map(([content]) => content);
     await this.explorer.setLines(builder.lines.map(([content]) => content), 0, -1, true);
 
-    await this.renderHighlights(builder.relativeHlRanges);
+    for (const source of this.explorer.sources) {
+      await source.clearHighlights();
+    }
+    await this.renderHighlights(builder.relativeHlRanges, lineStrings);
 
     await this.nvim.resumeNotification();
 

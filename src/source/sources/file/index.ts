@@ -526,7 +526,7 @@ export class FileSource extends ExplorerSource<FileItem> {
         await fsRename(item.fullpath, targetPath);
         await this.reload(null);
       },
-      'add a new directory',
+      'rename a file or directory',
       { multi: false },
     );
 
@@ -539,7 +539,7 @@ export class FileSource extends ExplorerSource<FileItem> {
           await open(this.root);
         }
       },
-      'use system programs open file or directory',
+      'use system application open file or directory',
       { multi: false },
     );
   }
