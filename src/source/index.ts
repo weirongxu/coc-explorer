@@ -492,7 +492,7 @@ export abstract class ExplorerSource<
         });
       }
     } else {
-      this.vimClearHighlights(this.hlIds);
+      this.vim80ClearHighlights(this.hlIds);
       this.hlIds = [];
     }
   }
@@ -514,18 +514,18 @@ export abstract class ExplorerSource<
       }
     } else {
       for (const [hlGroup, ranges] of Object.entries(highlights)) {
-        this.hlIds.push(...this.vimAddHighlights(ranges, hlGroup, lines));
+        this.hlIds.push(...this.vim80AddHighlights(ranges, hlGroup, lines));
       }
 
       this.nvim.command('redraw', true);
     }
   }
 
-  private vimClearHighlights(ids: number[]) {
+  private vim80ClearHighlights(ids: number[]) {
     this.nvim.call('coc_explorer#clearmatches', [Array.from(ids)], true);
   }
 
-  private vimAddHighlights(ranges: Range[], hlGroup: string, lines: string[]): number[] {
+  private vim80AddHighlights(ranges: Range[], hlGroup: string, lines: string[]): number[] {
     const priority = 10;
     const res: number[] = [];
     const arr: number[][] = [];
