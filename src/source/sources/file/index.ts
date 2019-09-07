@@ -9,7 +9,7 @@ import { hlGroupManager } from '../../highlight-manager';
 import { fileColumnManager } from './column-manager';
 import './load';
 import { onError } from '../../../logger';
-import { config, openStrategy, activeMode, supportBufferHighlight, autoFocus, prettyPrint, delay } from '../../../util';
+import { config, openStrategy, activeMode, supportBufferHighlight, autoFocus } from '../../../util';
 import trash from 'trash';
 import rimraf from 'rimraf';
 import open from 'open';
@@ -110,7 +110,7 @@ export class FileSource extends ExplorerSource<FileItem> {
             setTimeout(() => {
               events.on(
                 'BufEnter',
-                debounce(500, async (bufnr) => {
+                debounce(200, async (bufnr) => {
                   if (bufnr === this.explorer.bufnr) {
                     await this.reload(null);
                   }
@@ -121,7 +121,7 @@ export class FileSource extends ExplorerSource<FileItem> {
         } else {
           events.on(
             'BufEnter',
-            debounce(500, async (bufnr) => {
+            debounce(200, async (bufnr) => {
               if (bufnr !== this.explorer.bufnr) {
                 const bufinfo = await nvim.call('getbufinfo', [bufnr]);
                 if (bufinfo[0] && bufinfo[0].name) {
@@ -552,7 +552,7 @@ export class FileSource extends ExplorerSource<FileItem> {
   }
 
   getTargetDir(item: FileItem) {
-    return item.directory && expandStore.expand(item.fullpath)
+    return item.directory && expandStore.isExpanded(item.fullpath)
       ? item.fullpath
       : item.parent
       ? item.parent.fullpath
