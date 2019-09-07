@@ -59,8 +59,8 @@
 ```
 :CocCommand explorer
     \ --toggle
-    \ --sources="buffer+,file+"
-    \ --file-columns="git,selection,clip,indent,filename,size" /cwd/path/to
+    \ --sources=buffer+,file+
+    \ --file-columns=git,selection,clip,indent,filename,size /cwd/path/to
 ```
 
 ### `--sources`
