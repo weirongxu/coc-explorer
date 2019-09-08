@@ -473,7 +473,7 @@ export class FileSource extends ExplorerSource<FileItem> {
           await fsTrash(items.map((item) => item.fullpath));
         }
       },
-      'cut file for paste',
+      'move file or directory to trash',
       { reload: true },
     );
     this.addItemsAction(
@@ -487,7 +487,7 @@ export class FileSource extends ExplorerSource<FileItem> {
           }
         }
       },
-      'cut file for paste',
+      'delete file or directory forever',
       { reload: true },
     );
 
