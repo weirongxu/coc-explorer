@@ -17,7 +17,7 @@ function! coc_explorer#create(bufnr, position, width, toggle, name)
   endif
 endfunction
 
-" returns is quit or resume or create
+" returns is 'quit' or 'resume' or 'create'
 function! coc_explorer#create_buffer(bufnr, position, width, toggle, name)
   let name = '['.a:name.']'
   if a:position ==# 'tab'
@@ -26,6 +26,7 @@ function! coc_explorer#create_buffer(bufnr, position, width, toggle, name)
     return 'create'
   else
     if a:bufnr != v:null
+      " explorer in visible window
       let winnr = bufwinnr(a:bufnr)
       if winnr > 0
         if a:toggle
@@ -35,15 +36,24 @@ function! coc_explorer#create_buffer(bufnr, position, width, toggle, name)
           execute winnr.'wincmd w'
           return 'resume'
         endif
-        return
       endif
     endif
     if a:position ==# 'left'
-      execute 'silent keepalt leftabove vsplit '.name
+      wincmd t
+      if a:bufnr == v:null
+        execute 'silent keepalt leftabove vsplit '.name
+      else
+        execute 'silent keepalt leftabove vertical sb '.a:bufnr
+      endif
       call coc_explorer#init_win(a:position, a:width)
       return 'create'
     elseif a:position ==# 'right'
-      execute 'silent keepalt rightbelow vsplit '.name
+      wincmd b
+      if a:bufnr == v:null
+        execute 'silent keepalt rightbelow vsplit '.name
+      else
+        execute 'silent keepalt rightbelow vertical sb '.a:bufnr
+      endif
       call coc_explorer#init_win(a:position, a:width)
       return 'create'
     else

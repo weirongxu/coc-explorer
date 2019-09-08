@@ -44,7 +44,7 @@
     - [x] Delete action use trash by default
   - [x] Git status
     - [x] Git row format
-    - [ ] icon format
+    - [ ] Icon format
   - [x] Highlight current buffer in real time (neovim only)
   - [ ] LSP rename
   - [ ] Exrename, like defx
