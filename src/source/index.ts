@@ -586,6 +586,9 @@ export abstract class ExplorerSource<
     const registeredActions = isRoot ? this.rootActions : this.actions;
     const drawAction = (row: SourceRowBuilder, action: Action) => {
       row.add(action.name, 'Identifier');
+      if (action.arg) {
+        row.add(`(${action.arg})`, 'Identifier');
+      }
       row.add(' ');
       row.add(registeredActions[action.name].description, 'Comment');
     };
