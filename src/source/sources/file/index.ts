@@ -159,7 +159,7 @@ export class FileSource extends ExplorerSource<FileItem> {
       { render: true, multi: false },
     );
     this.addAction(
-      'goParent',
+      'gotoParent',
       async () => {
         this.root = pathLib.dirname(this.root);
         expandStore.expand(this.root);

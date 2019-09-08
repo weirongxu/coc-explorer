@@ -24,7 +24,7 @@ const Actions = {
   openInVsplit: 0,
   openInTab: 0,
   drop: 0,
-  goParent: 0,
+  gotoParent: 0,
 
   copyFilepath: 0,
   copyFilename: 0,
