@@ -71,7 +71,7 @@ export const defaultMappings: Record<keyof typeof MappingMode, OriginalMappings>
     e: 'open',
     E: 'openInVsplit',
     t: 'openInTab',
-    '<bs>': 'goParent',
+    '<bs>': 'gotoParent',
 
     y: 'copyFilepath',
     Y: 'copyFilename',
