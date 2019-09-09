@@ -2,7 +2,7 @@ import { hlGroupManager } from '../../../highlight-manager';
 import { fileColumnManager } from '../column-manager';
 import { truncate } from '../../../../util';
 import { indentChars, topLevel } from './indent';
-import { FileItem } from '..';
+import { FileItem, expandStore } from '..';
 
 const highlights = {
   directory: hlGroupManager.hlLinkGroupCommand('FileDirectory', 'PreProc'),
@@ -22,6 +22,13 @@ function indentWidth(item: FileItem) {
 fileColumnManager.registerColumn('filename', (source) => ({
   beforeDraw() {
     const maxFilenameWidth = source.items
+      .reduce<FileItem[]>((flatItems, item) => {
+        flatItems.push(item);
+        if (item.directory && expandStore.isExpanded(item.fullpath) && item.children) {
+          flatItems.push(...item.children);
+        }
+        return flatItems;
+      }, [])
       .filter((item) => !item.hidden || source.showHiddenFiles)
       .map((item) => item.name.length + indentWidth(item))
       .reduce((width, max) => (width > max ? width : max), 0);
