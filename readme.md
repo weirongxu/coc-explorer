@@ -43,8 +43,6 @@
     - [x] Cut / Copy / Paste
     - [x] Delete action use trash by default
   - [x] Git status
-    - [x] Git row format
-    - [ ] Icon format
   - [x] Highlight current buffer in real time (neovim only)
   - [ ] LSP rename
   - [ ] Exrename, like [defx](https://github.com/Shougo/defx.nvim)
