@@ -1,6 +1,6 @@
 {
   "name": "coc-explorer",
-  "version": "0.0.13",
+  "version": "0.0.14",
   "description": "explorer for coc.nvim",
   "main": "lib/index.js",
   "types": "lib/index.d.ts",
@@ -251,12 +251,12 @@
           "type": "string",
           "default": "D"
         },
-        "explorer.file.column.git.icon.renamed":  {
+        "explorer.file.column.git.icon.renamed": {
           "description": "Icon for git renamed status",
           "type": "string",
           "default": "R"
         },
-        "explorer.file.column.git.icon.copied":  {
+        "explorer.file.column.git.icon.copied": {
           "description": "Icon for git copied status",
           "type": "string",
           "default": "C"
@@ -271,7 +271,7 @@
           "type": "string",
           "default": "?"
         },
-        "explorer.file.column.git.icon.ignored":  {
+        "explorer.file.column.git.icon.ignored": {
           "description": "Icon for git ignored status",
           "type": "string",
           "default": "!"
