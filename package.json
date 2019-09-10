@@ -129,12 +129,22 @@
             }
           }
         },
-        "explorer.column.selection.selected": {
+        "explorer.icon.expanded": {
+          "description": "Icon for expanded node",
+          "type": "string",
+          "default": "-"
+        },
+        "explorer.icon.shrinked": {
+          "description": "Icon for shrinked node",
+          "type": "string",
+          "default": "+"
+        },
+        "explorer.icon.selected": {
           "description": "Selection selected chars for File source",
           "type": "string",
-          "default": "●"
+          "default": "✓"
         },
-        "explorer.column.selection.unselected": {
+        "explorer.icon.unselected": {
           "description": "Selection unselected chars for File source",
           "type": "string",
           "default": " "
@@ -216,6 +226,56 @@
           "type": "boolean",
           "default": false
         },
+        "explorer.file.column.git.icon.mixed": {
+          "description": "Icon for git mixed status",
+          "type": "string",
+          "default": "*"
+        },
+        "explorer.file.column.git.icon.unmodified": {
+          "description": "Icon for git unmodified status",
+          "type": "string",
+          "default": " "
+        },
+        "explorer.file.column.git.icon.modified": {
+          "description": "Icon for git modified status",
+          "type": "string",
+          "default": "M"
+        },
+        "explorer.file.column.git.icon.added": {
+          "description": "Icon for git added status",
+          "type": "string",
+          "default": "A"
+        },
+        "explorer.file.column.git.icon.deleted": {
+          "description": "Icon for git removed status",
+          "type": "string",
+          "default": "D"
+        },
+        "explorer.file.column.git.icon.renamed":  {
+          "description": "Icon for git renamed status",
+          "type": "string",
+          "default": "R"
+        },
+        "explorer.file.column.git.icon.copied":  {
+          "description": "Icon for git copied status",
+          "type": "string",
+          "default": "C"
+        },
+        "explorer.file.column.git.icon.unmerged": {
+          "description": "Icon for git unmerged status ⮀",
+          "type": "string",
+          "default": "U"
+        },
+        "explorer.file.column.git.icon.untracked": {
+          "description": "Icon for git untracked status",
+          "type": "string",
+          "default": "?"
+        },
+        "explorer.file.column.git.icon.ignored":  {
+          "description": "Icon for git ignored status",
+          "type": "string",
+          "default": "!"
+        },
         "explorer.file.column.clip.copy": {
           "description": "Whether the file is copied",
           "type": "string",
@@ -245,6 +305,11 @@
           "description": "Icon shrinked directory",
           "type": "string",
           "default": "+"
+        },
+        "explorer.file.column.icon.enableDevicons": {
+          "description": "Enalbe devicons",
+          "type": "boolean",
+          "default": false
         },
         "explorer.file.column.filename.minWidth": {
           "description": "Filename min with",

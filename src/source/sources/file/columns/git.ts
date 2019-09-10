@@ -5,14 +5,19 @@ import { hlGroupManager } from '../../../highlight-manager';
 import { fileColumnManager } from '../column-manager';
 
 const highlights = {
-  unstageSign: hlGroupManager.hlLinkGroupCommand('FileGitUnstageSign', 'Operator'),
-  stageSign: hlGroupManager.hlLinkGroupCommand('FileGitStageSign', 'String'),
+  stage: hlGroupManager.hlLinkGroupCommand('FileGitStage', 'Comment'),
+  unstage: hlGroupManager.hlLinkGroupCommand('FileGitUnstage', 'DiffChange'),
 };
 hlGroupManager.register(highlights);
 
 const showIgnored = fileColumnManager.getColumnConfig<boolean>('git.showIgnored')!;
 
+const getSignConf = (name: string) => {
+  return fileColumnManager.getColumnConfig<string>('git.icon.' + name)!;
+};
+
 enum Format {
+  mixed = '*',
   unmodified = ' ',
   modified = 'M',
   added = 'A',
@@ -23,6 +28,19 @@ enum Format {
   untracked = '?',
   ignored = '!',
 }
+
+const statusIcons = {
+  [Format.mixed]: getSignConf('mixed'),
+  [Format.unmodified]: getSignConf('unmodified'),
+  [Format.modified]: getSignConf('modified'),
+  [Format.added]: getSignConf('added'),
+  [Format.deleted]: getSignConf('deleted'),
+  [Format.renamed]: getSignConf('renamed'),
+  [Format.copied]: getSignConf('copied'),
+  [Format.unmerged]: getSignConf('unmerged'),
+  [Format.untracked]: getSignConf('untracked'),
+  [Format.ignored]: getSignConf('ignored'),
+};
 
 type GitStatus = {
   fullpath: string;
@@ -43,15 +61,12 @@ type GitStatus = {
 
 let gitStatusCache: Record<string, GitStatus> = {};
 
-type GitDirectoryStatus = '*' | Format;
+type GitDirectoryStatus = {
+  x: Format;
+  y: Format;
+};
 
-let gitDirectoryCache: Record<
-  string,
-  {
-    x: GitDirectoryStatus;
-    y: GitDirectoryStatus;
-  }
-> = {};
+let gitDirectoryCache: Record<string, GitDirectoryStatus> = {};
 
 function parseFormat(format: string): Format {
   for (const name in Format) {
@@ -74,21 +89,21 @@ function generateDirectoryStatus(root: string) {
       const parentPath = pathLib.join(root, parts.slice(0, i).join(pathLib.sep));
       const cache = gitDirectoryCache[parentPath];
       if (cache) {
-        if (cache.x !== '*') {
+        if (cache.x !== Format.mixed) {
           if (cache.x !== status.x) {
             if (cache.x === Format.unmodified) {
               cache.x = status.x;
             } else {
-              cache.x = '*';
+              cache.x = Format.mixed;
             }
           }
         }
-        if (cache.y !== '*') {
+        if (cache.y !== Format.mixed) {
           if (cache.y !== status.y) {
             if (cache.y === Format.unmodified) {
               cache.y = status.y;
             } else {
-              cache.y = '*';
+              cache.y = Format.mixed;
             }
           }
         }
@@ -116,7 +131,13 @@ async function fetchGitStatus(path: string) {
     lines.forEach((line) => {
       const [fullpath, x, y] = parseLine(root, line);
 
-      const changedList = [Format.modified, Format.added, Format.deleted, Format.renamed, Format.copied];
+      const changedList = [
+        Format.modified,
+        Format.added,
+        Format.deleted,
+        Format.renamed,
+        Format.copied,
+      ];
       const added = x === Format.added || y === Format.added;
       const modified = x === Format.modified || y === Format.modified;
       const deleted = x === Format.deleted || y === Format.deleted;
@@ -168,16 +189,16 @@ fileColumnManager.registerColumn('git', (fileSource) => ({
     if (item.directory) {
       if (item.fullpath in gitDirectoryCache) {
         const status = gitDirectoryCache[item.fullpath];
-        row.add(status.x, highlights.stageSign.group);
-        row.add(status.y, highlights.unstageSign.group);
+        row.add(statusIcons[status.x], highlights.stage.group);
+        row.add(statusIcons[status.y], highlights.unstage.group);
         row.add(' ');
       } else {
         row.add('   ');
       }
     } else if (item.fullpath in gitStatusCache) {
       const status = gitStatusCache[item.fullpath];
-      row.add(status.x.toString(), highlights.stageSign.group);
-      row.add(status.y.toString(), highlights.unstageSign.group);
+      row.add(statusIcons[status.x], highlights.stage.group);
+      row.add(statusIcons[status.y], highlights.unstage.group);
       row.add(' ');
     } else {
       row.add('   ');

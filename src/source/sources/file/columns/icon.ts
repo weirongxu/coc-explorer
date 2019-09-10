@@ -1,14 +1,14 @@
 import { expandStore } from '..';
 import { fileColumnManager } from '../column-manager';
+import { sourceIcons } from '../../..';
 
-const expanded = fileColumnManager.getColumnConfig<string>('icon.expanded');
-const shrinked = fileColumnManager.getColumnConfig<string>('icon.shrinked');
-const space = ' '.repeat(shrinked.length);
+const enableDevicons = fileColumnManager.getColumnConfig<string>('icon.enableDevicons');
+const space = ' '.repeat(sourceIcons.shrinked.length);
 
-fileColumnManager.registerColumn('expandIcon', {
+fileColumnManager.registerColumn('icon', {
   draw(row, item) {
     if (item.directory) {
-      row.add(expandStore.isExpanded(item.fullpath) ? expanded : shrinked);
+      row.add(expandStore.isExpanded(item.fullpath) ? sourceIcons.expanded : sourceIcons.shrinked);
       row.add(' ');
     } else {
       row.add(space);

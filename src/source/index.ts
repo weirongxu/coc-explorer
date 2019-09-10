@@ -4,9 +4,8 @@ import { explorerActions } from '../actions-list';
 import { Explorer } from '../explorer';
 import { onError } from '../logger';
 import { Action, ActionSyms, mappings, reverseMappings } from '../mappings';
-import { byteIndex, byteLength, chunk, supportBufferHighlight } from '../util';
+import { byteIndex, byteLength, chunk, supportBufferHighlight, config } from '../util';
 import { SourceRowBuilder, SourceViewBuilder } from './view-builder';
-import { fileColumnManager } from './sources/file/column-manager';
 
 export type ActionOptions = {
   multi: boolean;
@@ -15,9 +14,11 @@ export type ActionOptions = {
   select: boolean;
 };
 
-export const folderIcons = {
-  expanded: fileColumnManager.getColumnConfig<string>('icon.expanded'),
-  shrinked: fileColumnManager.getColumnConfig<string>('icon.shrinked'),
+export const sourceIcons = {
+  expanded: config.get<string>('icon.expanded')!,
+  shrinked: config.get<string>('icon.shrinked')!,
+  selected: config.get<string>('icon.selected')!,
+  unselected: config.get<string>('icon.unselected')!,
 };
 
 export interface BaseItem<Item extends BaseItem<any>> {
