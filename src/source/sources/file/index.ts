@@ -433,7 +433,7 @@ export class FileSource extends ExplorerSource<FileItem> {
     this.addItemAction(
       'pasteFile',
       async (item) => {
-        const targetDir = this.getTargetDir(item);
+        const targetDir = this.getPutTargetDir(item);
         const checkSameFilename = (items: Set<FileItem>) => {
           Promise.all(
             Array.from(items).map(async (item) => {
@@ -492,14 +492,14 @@ export class FileSource extends ExplorerSource<FileItem> {
       { reload: true },
     );
 
-    this.addItemAction(
+    this.addAction(
       'addFile',
-      async (item) => {
+      async (items) => {
         const filename = (await nvim.call('input', 'Input new filename: ')) as string;
         if (filename.length === 0) {
           return;
         }
-        const targetPath = pathLib.join(this.getTargetDir(item), filename);
+        const targetPath = pathLib.join(this.getPutTargetDir(items ? items[0] : null), filename);
         await guardTargetPath(targetPath);
         await fsMkdir(pathLib.dirname(targetPath), { recursive: true });
         await fsTouch(targetPath);
@@ -512,15 +512,15 @@ export class FileSource extends ExplorerSource<FileItem> {
       'add a new file',
       { multi: false },
     );
-    this.addItemAction(
+    this.addAction(
       'addDirectory',
-      async (item) => {
+      async (items) => {
         const directoryPath = (await nvim.call('input', 'Input new directory name: ')) as string;
         if (directoryPath.length === 0) {
           return;
         }
         await guardTargetPath(directoryPath);
-        const targetPath = pathLib.join(this.getTargetDir(item), directoryPath);
+        const targetPath = pathLib.join(this.getPutTargetDir(items ? items[0] : null), directoryPath);
         await fsMkdir(targetPath, { recursive: true });
         await this.reload(null);
         const addedItem = await this.findItemByPath(targetPath);
@@ -561,8 +561,10 @@ export class FileSource extends ExplorerSource<FileItem> {
     );
   }
 
-  getTargetDir(item: FileItem) {
-    return item.directory && expandStore.isExpanded(item.fullpath)
+  getPutTargetDir(item: FileItem | null) {
+    return item === null
+      ? this.root
+      : item.directory && expandStore.isExpanded(item.fullpath)
       ? item.fullpath
       : item.parent
       ? item.parent.fullpath

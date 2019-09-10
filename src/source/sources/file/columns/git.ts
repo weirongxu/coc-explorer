@@ -5,7 +5,8 @@ import { hlGroupManager } from '../../../highlight-manager';
 import { fileColumnManager } from '../column-manager';
 
 const highlights = {
-  sign: hlGroupManager.hlLinkGroupCommand('FileGitSign', 'Operator'),
+  unstageSign: hlGroupManager.hlLinkGroupCommand('FileGitUnstageSign', 'Operator'),
+  stageSign: hlGroupManager.hlLinkGroupCommand('FileGitStageSign', 'String'),
 };
 hlGroupManager.register(highlights);
 
@@ -167,15 +168,16 @@ fileColumnManager.registerColumn('git', (fileSource) => ({
     if (item.directory) {
       if (item.fullpath in gitDirectoryCache) {
         const status = gitDirectoryCache[item.fullpath];
-        row.add(status.x + status.y, highlights.sign.group);
+        row.add(status.x, highlights.stageSign.group);
+        row.add(status.y, highlights.unstageSign.group);
         row.add(' ');
       } else {
         row.add('   ');
       }
     } else if (item.fullpath in gitStatusCache) {
       const status = gitStatusCache[item.fullpath];
-      row.add(status.x.toString(), highlights.sign.group);
-      row.add(status.y.toString(), highlights.sign.group);
+      row.add(status.x.toString(), highlights.stageSign.group);
+      row.add(status.y.toString(), highlights.unstageSign.group);
       row.add(' ');
     } else {
       row.add('   ');

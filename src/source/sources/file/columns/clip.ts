@@ -9,7 +9,7 @@ cut = cut.padEnd(width, ' ');
 const space = ' '.repeat(width);
 
 const highlights = {
-  clip: hlGroupManager.hlLinkGroupCommand('FileClip', 'Operator'),
+  clip: hlGroupManager.hlLinkGroupCommand('FileClip', 'Statement'),
 };
 hlGroupManager.register(highlights);
 

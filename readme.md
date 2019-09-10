@@ -47,8 +47,9 @@
     - [ ] Icon format
   - [x] Highlight current buffer in real time (neovim only)
   - [ ] LSP rename
-  - [ ] Exrename, like defx
-  - [ ] Support archived file (use `lsar / unar`)
+  - [ ] Exrename, like [defx](https://github.com/Shougo/defx.nvim)
+  - [ ] [DevIcons](https://github.com/ryanoasis/vim-devicons)
+  - [ ] Archive file (use `lsar / unar`)
   - [ ] SSH
 - [ ] Git source
   - [ ] Git actions
