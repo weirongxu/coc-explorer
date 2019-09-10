@@ -352,15 +352,16 @@ export abstract class ExplorerSource<Item extends BaseItem<Item>> {
     const finalCol = col === undefined ? await this.currentCol() : col;
     const win = await this.explorer.win;
     if (win) {
-      try {
-        await win.setCursor([this.startLine + lineIndex + 1, finalCol - 1]);
-      } catch (err) {}
+      if (lineIndex >= this.lines.length) {
+        lineIndex = this.lines.length - 1;
+      }
+      await win.setCursor([this.startLine + lineIndex + 1, finalCol - 1]);
     }
   }
 
   async gotoRoot({ col }: { col?: number } = {}) {
     const finalCol = col === undefined ? await this.currentCol() : col;
-    await this.gotoLineIndex(this.startLine, finalCol);
+    await this.gotoLineIndex(0, finalCol);
   }
 
   async gotoItem(item: Item | null, { lineIndex: fallbackLineIndex, col }: { lineIndex?: number; col?: number } = {}) {

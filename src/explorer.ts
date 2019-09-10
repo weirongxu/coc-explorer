@@ -320,7 +320,7 @@ export class Explorer {
     await Promise.all(this.sources.map((source) => source.reload(null, { render: false, notify: true })));
 
     if (render) {
-      await this.renderAll();
+      await this.renderAll(true);
     }
 
     if (!notify) {
@@ -333,9 +333,15 @@ export class Explorer {
       this.nvim.pauseNotification();
     }
 
+    const store = await this.storeCursor();
+
     await this.clearContent();
     for (const source of this.sources) {
-      await source.render({ notify });
+      await source.render({ notify, storeCursor: false });
+    }
+
+    if (store) {
+      await store();
     }
 
     if (!notify) {

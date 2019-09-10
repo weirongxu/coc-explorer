@@ -6,7 +6,20 @@ import pathLib from 'path';
 // reference from
 //   https://github.com/ryanoasis/vim-devicons/blob/830f0fe48a337ed26384c43929032786f05c8d24/plugin/webdevicons.vim#L129
 //   VSCode seti theme
-import icons from './icons.devicons.json';
+import iconsDevices from './icons.devicons.json';
+
+const icons = iconsDevices as {
+  icons: Record<
+    string,
+    {
+      code: string;
+      color: string;
+    }
+  >;
+  extensions: Record<string, string>;
+  filenames: Record<string, string>;
+  patternMatches: Record<string, string>;
+};
 
 const enableDevicons = fileColumnManager.getColumnConfig<string>('icon.enableDevicons');
 const space = ' '.repeat(sourceIcons.shrinked.length);
@@ -22,8 +35,8 @@ const getIcon = (filename: string): undefined | { code: string; color: string } 
   } else if (filename in icons.filenames) {
     return icons.icons[icons.filenames[filename]];
   } else {
-    const matched = Object.entries(icons.patternMatches as Record<string, string>).find(
-      ([pattern, icon]: [string, string]) => new RegExp(pattern).test(filename),
+    const matched = Object.entries(icons.patternMatches).find(
+      ([pattern]: [string, string]) => new RegExp(pattern).test(filename),
     );
     if (matched) {
       return icons.icons[matched[1]];

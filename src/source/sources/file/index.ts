@@ -9,7 +9,7 @@ import { hlGroupManager } from '../../highlight-manager';
 import { fileColumnManager } from './column-manager';
 import './load';
 import { onError } from '../../../logger';
-import { config, openStrategy, activeMode, supportBufferHighlight, autoFocus } from '../../../util';
+import { config, openStrategy, activeMode, supportBufferHighlight, autoReveal, delay } from '../../../util';
 import trash from 'trash';
 import rimraf from 'rimraf';
 import open from 'open';
@@ -131,7 +131,7 @@ export class FileSource extends ExplorerSource<FileItem> {
                     this.currentFileItem = item;
                   }
                   await this.render();
-                  if (autoFocus) {
+                  if (autoReveal) {
                     await this.gotoItem(this.currentFileItem);
                   }
                 }
@@ -669,12 +669,12 @@ export class FileSource extends ExplorerSource<FileItem> {
   }
 
   async opened() {
-    if (this.explorer.revealFilepath && autoFocus) {
+    if (this.explorer.revealFilepath && autoReveal) {
       const item = await this.findItemByPath(this.explorer.revealFilepath);
-      await this.render();
-      await this.gotoItem(item, { col: 0 });
+      await this.render({ storeCursor: false });
+      await this.gotoItem(item, { col: 1 });
     } else {
-      await this.gotoRoot({ col: 0 });
+      await this.gotoRoot({ col: 1 });
     }
   }
 
