@@ -189,7 +189,7 @@
               "clip",
               "indent",
               "readonly",
-              "expandIcon",
+              "icon",
               "filename",
               "size",
               "modified",
@@ -202,7 +202,7 @@
             "selection",
             "clip",
             "indent",
-            "expandIcon",
+            "icon",
             "filename",
             "readonly",
             "size",
@@ -236,23 +236,23 @@
           "type": "boolean",
           "default": false
         },
-        "explorer.file.column.expandIcon.expanded": {
-          "description": "Expand icon expanded for File source",
+        "explorer.file.column.icon.expanded": {
+          "description": "Icon expanded directory",
           "type": "string",
           "default": "-"
         },
-        "explorer.file.column.expandIcon.shrinked": {
-          "description": "Expand icon shrinked for File source",
+        "explorer.file.column.icon.shrinked": {
+          "description": "Icon shrinked directory",
           "type": "string",
           "default": "+"
         },
         "explorer.file.column.filename.minWidth": {
-          "description": "Filename min with for File source",
+          "description": "Filename min with",
           "type": "integer",
           "default": 40
         },
         "explorer.file.column.filename.maxWidth": {
-          "description": "Filename max width for File source",
+          "description": "Filename max width",
           "type": "integer",
           "default": 80
         },

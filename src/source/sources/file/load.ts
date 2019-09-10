@@ -1,6 +1,6 @@
 import './columns/git';
 import './columns/selection';
-import './columns/expand-icon';
+import './columns/icon';
 import './columns/filename';
 import './columns/indent';
 import './columns/readonly';
