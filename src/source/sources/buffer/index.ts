@@ -218,7 +218,7 @@ export class BufferSource extends ExplorerSource<BufferItem> {
       const flags = matches[2];
       const bufname = matches[3];
       res.push({
-        uid: this.name + '_' + bufnr,
+        uid: this.name + '-' + bufnr,
         bufnr,
         bufname,
         basename: pathLib.basename(bufname),

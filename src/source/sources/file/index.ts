@@ -504,6 +504,10 @@ export class FileSource extends ExplorerSource<FileItem> {
         await fsMkdir(pathLib.dirname(targetPath), { recursive: true });
         await fsTouch(targetPath);
         await this.reload(null);
+        const addedItem = await this.findItemByPath(targetPath);
+        if (addedItem) {
+          await this.gotoItem(addedItem);
+        }
       },
       'add a new file',
       { multi: false },
@@ -516,8 +520,13 @@ export class FileSource extends ExplorerSource<FileItem> {
           return;
         }
         await guardTargetPath(directoryPath);
-        await fsMkdir(pathLib.join(this.getTargetDir(item), directoryPath), { recursive: true });
+        const targetPath = pathLib.join(this.getTargetDir(item), directoryPath);
+        await fsMkdir(targetPath, { recursive: true });
         await this.reload(null);
+        const addedItem = await this.findItemByPath(targetPath);
+        if (addedItem) {
+          await this.gotoItem(addedItem);
+        }
       },
       'add a new directory',
       { multi: false },
@@ -598,7 +607,7 @@ export class FileSource extends ExplorerSource<FileItem> {
           const writable = await fsAccess(fullpath, fs.constants.W_OK);
           const readable = await fsAccess(fullpath, fs.constants.R_OK);
           const item: FileItem = {
-            uid: this.name + '_' + fullpath,
+            uid: this.name + '-' + fullpath,
             name: file,
             level: parent ? parent.level + 1 : 1,
             fullpath,

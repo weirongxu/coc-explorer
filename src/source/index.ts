@@ -336,46 +336,6 @@ export abstract class ExplorerSource<Item extends BaseItem<Item>> {
     return (await this.nvim.call('col', '.')) as number;
   }
 
-  async cursor() {
-    const win = await this.explorer.win;
-    if (win) {
-      const [line, col] = await win.cursor;
-      const lineIndex = line - 1;
-      // const line = ((await this.nvim.call('line', '.')) as number) - 1;
-      if (lineIndex < this.startLine || lineIndex > this.endLine) {
-        return null;
-      } else {
-        return {
-          lineIndex: lineIndex - this.startLine,
-          col: workspace.env.isVim ? col : col + 1,
-        };
-      }
-    }
-    return null;
-  }
-
-  /**
-   * current cursor
-   * @returns return null if outside this source
-   */
-  async currentCursor() {
-    const win = await this.explorer.win;
-    if (win) {
-      const [line, col] = await win.cursor;
-      const lineIndex = line - 1;
-      // const line = ((await this.nvim.call('line', '.')) as number) - 1;
-      if (lineIndex < this.startLine || lineIndex > this.endLine) {
-        return null;
-      } else {
-        return {
-          lineIndex: lineIndex - this.startLine,
-          col: workspace.env.isVim ? col : col + 1,
-        };
-      }
-    }
-    return null;
-  }
-
   getItemByIndex(lineIndex: number) {
     const line = this.lines[lineIndex];
     return line ? line[1] : null;
