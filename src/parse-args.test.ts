@@ -3,8 +3,8 @@ import { workspace } from 'coc.nvim';
 
 it('should parse args', async () => {
   // @ts-ignore
-  workspace.nvim = { call: async () => 'current/filepath' };
-  const args = await parseArgs('--filepath', 'filepath', 'path/to/cwd');
-  expect(args.cwd).toEqual('path/to/cwd');
-  expect(args.revealPath).toEqual('filepath');
+  workspace.nvim = { call: async () => '/buffer/path' };
+  const args = await parseArgs('--reveal', '/reveal/path', '/cwd/path');
+  expect(args.cwd).toEqual('/cwd/path');
+  expect(args.revealPath).toEqual('/reveal/path');
 });
