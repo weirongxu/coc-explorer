@@ -6,13 +6,13 @@ import { fileColumnManager } from '../column-manager';
 
 const highlights = {
   stage: hlGroupManager.hlLinkGroupCommand('FileGitStage', 'Comment'),
-  unstage: hlGroupManager.hlLinkGroupCommand('FileGitUnstage', 'DiffChange'),
+  unstage: hlGroupManager.hlLinkGroupCommand('FileGitUnstage', 'Operator'),
 };
 hlGroupManager.register(highlights);
 
 const showIgnored = fileColumnManager.getColumnConfig<boolean>('git.showIgnored')!;
 
-const getSignConf = (name: string) => {
+const getIconConf = (name: string) => {
   return fileColumnManager.getColumnConfig<string>('git.icon.' + name)!;
 };
 
@@ -30,16 +30,16 @@ enum Format {
 }
 
 const statusIcons = {
-  [Format.mixed]: getSignConf('mixed'),
-  [Format.unmodified]: getSignConf('unmodified'),
-  [Format.modified]: getSignConf('modified'),
-  [Format.added]: getSignConf('added'),
-  [Format.deleted]: getSignConf('deleted'),
-  [Format.renamed]: getSignConf('renamed'),
-  [Format.copied]: getSignConf('copied'),
-  [Format.unmerged]: getSignConf('unmerged'),
-  [Format.untracked]: getSignConf('untracked'),
-  [Format.ignored]: getSignConf('ignored'),
+  [Format.mixed]: getIconConf('mixed'),
+  [Format.unmodified]: getIconConf('unmodified'),
+  [Format.modified]: getIconConf('modified'),
+  [Format.added]: getIconConf('added'),
+  [Format.deleted]: getIconConf('deleted'),
+  [Format.renamed]: getIconConf('renamed'),
+  [Format.copied]: getIconConf('copied'),
+  [Format.unmerged]: getIconConf('unmerged'),
+  [Format.untracked]: getIconConf('untracked'),
+  [Format.ignored]: getIconConf('ignored'),
 };
 
 type GitStatus = {
@@ -131,13 +131,7 @@ async function fetchGitStatus(path: string) {
     lines.forEach((line) => {
       const [fullpath, x, y] = parseLine(root, line);
 
-      const changedList = [
-        Format.modified,
-        Format.added,
-        Format.deleted,
-        Format.renamed,
-        Format.copied,
-      ];
+      const changedList = [Format.modified, Format.added, Format.deleted, Format.renamed, Format.copied];
       const added = x === Format.added || y === Format.added;
       const modified = x === Format.modified || y === Format.modified;
       const deleted = x === Format.deleted || y === Format.deleted;
@@ -186,19 +180,26 @@ fileColumnManager.registerColumn('git', (fileSource) => ({
     await fetchGitStatus(fileSource.root);
   },
   draw(row, item) {
+    const showFormat = (f: string, staged: boolean) => {
+      if (f.trim()) {
+        row.add(f, staged ? highlights.stage.group : highlights.unstage.group);
+      } else {
+        row.add(f);
+      }
+    };
     if (item.directory) {
       if (item.fullpath in gitDirectoryCache) {
         const status = gitDirectoryCache[item.fullpath];
-        row.add(statusIcons[status.x], highlights.stage.group);
-        row.add(statusIcons[status.y], highlights.unstage.group);
+        showFormat(statusIcons[status.x], true);
+        showFormat(statusIcons[status.y], false);
         row.add(' ');
       } else {
         row.add('   ');
       }
     } else if (item.fullpath in gitStatusCache) {
       const status = gitStatusCache[item.fullpath];
-      row.add(statusIcons[status.x], highlights.stage.group);
-      row.add(statusIcons[status.y], highlights.unstage.group);
+      showFormat(statusIcons[status.x], true);
+      showFormat(statusIcons[status.y], false);
       row.add(' ');
     } else {
       row.add('   ');

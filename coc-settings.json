@@ -11,5 +11,6 @@
   ],
   "explorer.keyMappings": {
     "<space>": "toggleSelection"
-  }
+  },
+  "explorer.file.column.icon.enableDevicons": true
 }

@@ -46,6 +46,11 @@ const Actions = {
   quit: 0,
   systemExecute: 0,
   windowsDrive: 0,
+
+  gitPrev: 0,
+  gitNext: 0,
+  gitStage: 0,
+  gitUnstage: 0,
 };
 
 export type ActionSyms = keyof typeof Actions;
@@ -92,6 +97,11 @@ export const defaultMappings: Record<keyof typeof MappingMode, OriginalMappings>
     q: 'quit',
     X: 'systemExecute',
     gd: 'windowsDrive',
+
+    '[c': 'gitPrev',
+    ']c': 'gitNext',
+    '<<': 'gitStage',
+    '>>': 'gitUnstage',
   },
 };
 
