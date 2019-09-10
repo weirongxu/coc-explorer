@@ -164,8 +164,8 @@
             "bufname"
           ]
         },
-        "explorer.file.autoFocus": {
-          "description": "Explorer will automatically focus on the current buffer file",
+        "explorer.file.autoReveal": {
+          "description": "Explorer will automatically expand to the current buffer",
           "type": "boolean",
           "default": true
         },

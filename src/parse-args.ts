@@ -15,7 +15,7 @@ export interface Args {
   position: ArgPosition;
   bufferColumns: string[];
   fileColumns: string[];
-  filepath: string | null;
+  revealPath: string | null;
   cwd: string;
 }
 
@@ -54,7 +54,7 @@ export async function parseArgs(...args: string[]): Promise<Args> {
     cwd,
     bufferColumns: config.get<string[]>('buffer.columns')!,
     fileColumns: config.get<string[]>('file.columns')!,
-    filepath: null,
+    revealPath: null,
   };
 
   while (args.length > 0) {
@@ -78,8 +78,8 @@ export async function parseArgs(...args: string[]): Promise<Args> {
       if (key && value) {
         if (key === 'sources') {
           parsedArgs.sources = parseSources(value as string);
-        } else if (key === 'filepath') {
-          parsedArgs.filepath = value as string;
+        } else if (key === 'reveal') {
+          parsedArgs.revealPath = value as string;
         } else if (key === 'toggle') {
           parsedArgs.toggle = value as boolean;
         } else if (key === 'width') {

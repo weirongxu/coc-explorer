@@ -14,7 +14,7 @@ export class Explorer {
   position: ArgPosition = 'left';
   nvim = workspace.nvim;
   previousBufnr?: number;
-  focusFilepath?: string;
+  revealFilepath?: string;
   cursorLineIndex: number = 0;
   cursorCol: number = 0;
 
@@ -116,7 +116,7 @@ export class Explorer {
     const { nvim } = this;
 
     await this.initArgs(argStrings);
-    this.focusFilepath = this.args.filepath || (await nvim.call('expand', '%:p'));
+    this.revealFilepath = this.args.revealPath || (await nvim.call('expand', '%:p'));
 
     const [bufnr, inited] = (await nvim.call('coc_explorer#create', [
       this._bufnr,

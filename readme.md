@@ -80,7 +80,7 @@ Explorer width by default
 
 Explorer position, supported position: `left`, `right`, `tab`
 
-### `--filepath`
+### `--reveal`
 
 Explorer will expand to this filepath, default: `current buffer`
 

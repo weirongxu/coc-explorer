@@ -1,8 +1,8 @@
 import { expandStore } from '..';
 import { fileColumnManager } from '../column-manager';
 
-const expanded = fileColumnManager.getColumnConfig<string>('expandIcon.expanded');
-const shrinked = fileColumnManager.getColumnConfig<string>('expandIcon.shrinked');
+const expanded = fileColumnManager.getColumnConfig<string>('icon.expanded');
+const shrinked = fileColumnManager.getColumnConfig<string>('icon.shrinked');
 const space = ' '.repeat(shrinked.length);
 
 fileColumnManager.registerColumn('expandIcon', {

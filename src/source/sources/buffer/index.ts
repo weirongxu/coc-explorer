@@ -62,7 +62,7 @@ export class BufferSource extends ExplorerSource<BufferItem> {
           }
         } else {
           events.on(
-            ['BufCreate', 'BufHidden', 'BufUnload'],
+            ['BufCreate', 'BufHidden', 'BufUnload', 'BufWritePost'],
             debounce(500, async () => {
               await this.reload(null);
             }),

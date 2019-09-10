@@ -649,8 +649,8 @@ export class FileSource extends ExplorerSource<FileItem> {
   }
 
   async opened() {
-    if (this.explorer.focusFilepath && autoFocus) {
-      const item = await this.findItemByPath(this.explorer.focusFilepath);
+    if (this.explorer.revealFilepath && autoFocus) {
+      const item = await this.findItemByPath(this.explorer.revealFilepath);
       await this.render();
       await this.gotoItem(item);
     }
