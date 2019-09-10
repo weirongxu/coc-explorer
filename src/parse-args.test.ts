@@ -6,5 +6,5 @@ it('should parse args', async () => {
   workspace.nvim = { call: async () => 'current/filepath' };
   const args = await parseArgs('--filepath', 'filepath', 'path/to/cwd');
   expect(args.cwd).toEqual('path/to/cwd');
-  expect(args.filepath).toEqual('filepath');
+  expect(args.revealPath).toEqual('filepath');
 });

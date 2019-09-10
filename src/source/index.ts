@@ -6,12 +6,18 @@ import { onError } from '../logger';
 import { Action, ActionSyms, mappings, reverseMappings } from '../mappings';
 import { byteIndex, byteLength, chunk, supportBufferHighlight } from '../util';
 import { SourceRowBuilder, SourceViewBuilder } from './view-builder';
+import { fileColumnManager } from './sources/file/column-manager';
 
 export type ActionOptions = {
   multi: boolean;
   render: boolean;
   reload: boolean;
   select: boolean;
+};
+
+export const folderIcons = {
+  expanded: fileColumnManager.getColumnConfig<string>('icon.expanded'),
+  shrinked: fileColumnManager.getColumnConfig<string>('icon.shrinked'),
 };
 
 export interface BaseItem<Item extends BaseItem<any>> {
@@ -343,26 +349,33 @@ export abstract class ExplorerSource<Item extends BaseItem<Item>> {
 
   async gotoLineIndex(lineIndex: number, col?: number) {
     const finalCol = col === undefined ? await this.currentCol() : col;
-    const winid = await this.explorer.winid;
-    if (winid) {
+    const win = await this.explorer.win;
+    if (win) {
       try {
-        await this.nvim.createWindow(winid).setCursor([this.startLine + lineIndex + 1, finalCol - 1]);
-        // await this.nvim.call('cursor', [this.startLine + lineIndex + 1, finalCol]);
+        await win.setCursor([this.startLine + lineIndex + 1, finalCol - 1]);
       } catch (err) {}
     }
   }
 
-  async gotoItem(item: Item | null, col?: number) {
+  async gotoRoot({ col }: { col?: number } = {}) {
     const finalCol = col === undefined ? await this.currentCol() : col;
-    const lineIndex = this.lines.findIndex(
-      ([, it]) => (it === null && item === null) || (it !== null && item !== null && it.uid === item.uid),
-    );
+    await this.gotoLineIndex(this.startLine, finalCol);
+  }
+
+  async gotoItem(item: Item | null, { lineIndex: fallbackLineIndex, col }: { lineIndex?: number; col?: number } = {}) {
+    if (item === null) {
+      await this.gotoRoot({ col });
+      return;
+    }
+
+    const finalCol = col === undefined ? await this.currentCol() : col;
+    const lineIndex = this.lines.findIndex(([, it]) => it !== null && it.uid === item.uid);
     if (lineIndex !== -1) {
       await this.gotoLineIndex(lineIndex, finalCol);
-    } else if (item && item.parent) {
-      await this.gotoItem(item.parent, col);
+    } else if (fallbackLineIndex !== undefined) {
+      await this.gotoLineIndex(fallbackLineIndex, finalCol);
     } else {
-      await this.gotoItem(null, col);
+      await this.gotoRoot({ col: finalCol });
     }
   }
 

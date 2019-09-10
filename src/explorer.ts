@@ -266,10 +266,11 @@ export class Explorer {
       const sourceIndex = this.findSourceIndex(storeCursor.lineIndex);
       const source = this.sources[sourceIndex];
       if (source) {
-        const storeItem: null | Item = await source.getItemByIndex(storeCursor.lineIndex - source.startLine);
+        const sourceLineIndex = storeCursor.lineIndex - source.startLine;
+        const storeItem: null | Item = await source.getItemByIndex(sourceLineIndex);
         return async () => {
           await this.nvim.call('winrestview', storeView);
-          await source.gotoItem(storeItem, storeCursor.col);
+          await source.gotoItem(storeItem, { lineIndex: sourceLineIndex, col: storeCursor.col });
         };
       }
     }

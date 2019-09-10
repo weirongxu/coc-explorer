@@ -179,12 +179,32 @@ export class FileSource extends ExplorerSource<FileItem> {
       'expand root node',
     );
     this.addRootAction(
+      'recursiveExpend',
+      async () => {
+        expandStore.expand(this.root);
+        await this.reload(null, { render: false });
+        await this.recursiveExpandItems(this.items);
+      },
+      'expand root node recursively',
+    );
+    this.addRootAction(
       'shrink',
       async () => {
         expandStore.shrink(this.root);
         await this.reload(null);
+        await this.gotoRoot();
       },
       'shrink root node',
+    );
+    this.addRootAction(
+      'recursiveShrink',
+      async () => {
+        expandStore.shrink(this.root);
+        await this.recursiveShrinkItems(this.items);
+        await this.render();
+        await this.gotoRoot();
+      },
+      'shrink root node recursively',
     );
 
     this.addItemAction(
@@ -307,23 +327,8 @@ export class FileSource extends ExplorerSource<FileItem> {
     this.addItemAction(
       'recursiveExpend',
       async (item) => {
-        if (item.directory) {
-          const recursiveExpendItem = async (item: FileItem) => {
-            expandStore.expand(item.fullpath);
-            if (!item.children) {
-              item.children = await this.listFiles(item.fullpath, item);
-            }
-            await Promise.all(
-              item.children.map(async (child) => {
-                if (child.directory) {
-                  await recursiveExpendItem(child);
-                }
-              }),
-            );
-          };
-          await recursiveExpendItem(item);
-          await this.render();
-        }
+        await this.recursiveExpandItems([item]);
+        await this.render();
       },
       'recursive expand directory or open file',
       { multi: true },
@@ -337,6 +342,7 @@ export class FileSource extends ExplorerSource<FileItem> {
         } else if (item.parent) {
           expandStore.shrink(item.parent.fullpath);
           await this.render();
+          await this.gotoItem(item.parent);
         } else {
           await this.doRootAction('shrink');
         }
@@ -346,29 +352,16 @@ export class FileSource extends ExplorerSource<FileItem> {
     this.addItemAction(
       'recursiveShrink',
       async (item) => {
-        const recursiveShrinkItems = async (items: FileItem[]) => {
-          await Promise.all(
-            items.map(async (item) => {
-              expandStore.shrink(item.fullpath);
-              if (item.directory && item.children) {
-                await recursiveShrinkItems(item.children);
-              }
-            }),
-          );
-        };
         if (item.directory && expandStore.isExpanded(item.fullpath)) {
-          expandStore.shrink(item.fullpath);
-          if (item.children) {
-            await recursiveShrinkItems(item.children);
-          }
+          await this.recursiveShrinkItems([item]);
         } else if (item.parent) {
           expandStore.shrink(item.parent.fullpath);
           if (item.parent.children) {
-            await recursiveShrinkItems(item.parent.children);
+            await this.recursiveShrinkItems(item.parent.children);
           }
+          await this.gotoItem(item.parent);
         } else {
-          expandStore.shrink(this.root);
-          await recursiveShrinkItems(this.items);
+          await this.doRootAction('recursiveShrink');
         }
         await this.render();
       },
@@ -636,6 +629,33 @@ export class FileSource extends ExplorerSource<FileItem> {
     return this.sortFiles(results.filter((r): r is FileItem => r !== null));
   }
 
+  async recursiveExpandItems(items: FileItem[]) {
+    await Promise.all(
+      items.map(async (item) => {
+        if (item.directory) {
+          expandStore.expand(item.fullpath);
+          if (!item.children) {
+            item.children = await this.listFiles(item.fullpath, item);
+          }
+          await this.recursiveExpandItems(item.children);
+        }
+      }),
+    );
+  }
+
+  async recursiveShrinkItems(items: FileItem[]) {
+    await Promise.all(
+      items.map(async (item) => {
+        if (item.directory) {
+          expandStore.shrink(item.fullpath);
+          if (item.children) {
+            await this.recursiveShrinkItems(item.children);
+          }
+        }
+      }),
+    );
+  }
+
   async loadItems(_item: FileItem | null): Promise<FileItem[]> {
     if (expandStore.isExpanded(this.root)) {
       return this.listFiles(this.root, null);
@@ -652,7 +672,9 @@ export class FileSource extends ExplorerSource<FileItem> {
     if (this.explorer.revealFilepath && autoFocus) {
       const item = await this.findItemByPath(this.explorer.revealFilepath);
       await this.render();
-      await this.gotoItem(item);
+      await this.gotoItem(item, { col: 0 });
+    } else {
+      await this.gotoRoot({ col: 0 });
     }
   }
 

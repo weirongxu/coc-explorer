@@ -84,6 +84,7 @@ export class BufferSource extends ExplorerSource<BufferItem> {
       async () => {
         this.expanded = false;
         await this.reload(null);
+        await this.gotoRoot();
       },
       'shrink root node',
     );
