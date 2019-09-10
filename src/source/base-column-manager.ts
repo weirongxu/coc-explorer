@@ -1,5 +1,5 @@
 import { SourceRowBuilder } from './view-builder';
-import { ExplorerSource } from '.';
+import { ExplorerSource, BaseItem } from '.';
 import { config } from '../util';
 import { Disposable } from 'coc.nvim';
 
@@ -15,7 +15,11 @@ export interface ColumnDraw<Item> {
   draw(row: SourceRowBuilder, item: Item): void;
 }
 
-export class BaseColumnManager<Item, S extends ExplorerSource<Item>, C extends ColumnDraw<Item>> {
+export class BaseColumnManager<
+  Item extends BaseItem<Item>,
+  S extends ExplorerSource<Item>,
+  C extends ColumnDraw<Item>
+> {
   registeredColumns: Record<string, (fileSource: S) => C> = {};
   columnDraws: C[] = [];
 

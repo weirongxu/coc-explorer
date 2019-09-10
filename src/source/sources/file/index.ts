@@ -53,6 +53,7 @@ const guardTargetPath = async (path: string) => {
 };
 
 export type FileItem = {
+  uid: string;
   name: string;
   level: number;
   fullpath: string;
@@ -596,7 +597,8 @@ export class FileSource extends ExplorerSource<FileItem> {
           const executable = await fsAccess(fullpath, fs.constants.X_OK);
           const writable = await fsAccess(fullpath, fs.constants.W_OK);
           const readable = await fsAccess(fullpath, fs.constants.R_OK);
-          const item = {
+          const item: FileItem = {
+            uid: this.name + '_' + fullpath,
             name: file,
             level: parent ? parent.level + 1 : 1,
             fullpath,
@@ -608,7 +610,7 @@ export class FileSource extends ExplorerSource<FileItem> {
             hidden: file.startsWith('.'),
             stat,
             parent: parent || undefined,
-          } as FileItem;
+          };
           if (expandStore.isExpanded(item.fullpath)) {
             item.children = await this.listFiles(item.fullpath, item);
           }

@@ -1,7 +1,7 @@
 import { ExtensionContext, workspace, Disposable, Window, events, Buffer } from 'coc.nvim';
 import { Args, parseArgs, ArgPosition } from './parse-args';
 import './source/load';
-import { ExplorerSource } from './source';
+import { ExplorerSource, BaseItem } from './source';
 import { sourceManager } from './source/source-manager';
 import { mappings, Action } from './mappings';
 import { onError } from './logger';
@@ -15,6 +15,8 @@ export class Explorer {
   nvim = workspace.nvim;
   previousBufnr?: number;
   focusFilepath?: string;
+  cursorLineIndex: number = 0;
+  cursorCol: number = 0;
 
   private _buffer?: Buffer;
   private _bufnr?: number;
@@ -27,7 +29,16 @@ export class Explorer {
 
     subscriptions.push(
       events.on('BufWinLeave', (bufnr) => {
-        this.previousBufnr = bufnr;
+        if (bufnr !== this._bufnr) {
+          this.previousBufnr = bufnr;
+        }
+      }),
+      events.on('CursorMoved', (bufnr, cursor) => {
+        if (bufnr === this._bufnr) {
+          const [line, col] = cursor;
+          this.cursorLineIndex = line - 1;
+          this.cursorCol = col;
+        }
       }),
     );
   }
@@ -60,44 +71,41 @@ export class Explorer {
     return this._bufnr;
   }
 
-  /**
-   * get vim window in current tabpage
-   */
-  get tabpageWin(): Promise<Window | null> {
-    return new Promise<Window | null>(async (resolve) => {
-      const tabpage = await this.nvim.tabpage;
-      const wins = await tabpage.windows;
-      const winBufs = await Promise.all(
-        wins.map(async (win) => ({
-          win,
-          buf: await win.buffer,
-        })),
-      );
-      for (const winBuf of winBufs) {
-        if (winBuf.buf.id === this.bufnr) {
-          resolve(winBuf.win);
-          return;
-        }
-      }
-      // Explorer window not found in this tabpage
-      resolve(null);
-    });
-  }
-
-  get winnr(): Promise<number | null> {
-    return this.tabpageWin.then(async (win) => {
-      if (win) {
-        return await win.number;
+  get win(): Promise<Window | null> {
+    return this.winid.then((winid) => {
+      if (winid) {
+        return this.nvim.createWindow(winid);
       } else {
         return null;
       }
     });
   }
 
+  /**
+   * vim winnr of explorer
+   */
+  get winnr(): Promise<number | null> {
+    return this.nvim.call('bufwinnr', this.bufnr).then((winnr: number) => {
+      if (winnr > 0) {
+        return winnr;
+      } else {
+        return null;
+      }
+    });
+  }
+
+  /**
+   * vim winid of explorer
+   */
   get winid(): Promise<number | null> {
-    return this.tabpageWin.then((win) => {
-      if (win) {
-        return win.id;
+    return this.winnr.then(async (winnr) => {
+      if (winnr) {
+        const winid = (await this.nvim.call('win_getid', winnr)) as number;
+        if (winid >= 0) {
+          return winid;
+        } else {
+          return null;
+        }
       } else {
         return null;
       }
@@ -204,7 +212,7 @@ export class Explorer {
     const itemsGroup: Map<ExplorerSource<any>, Set<object | null>> = new Map();
 
     for (const lineIndex of lineIndexs) {
-      const source = this.sources.find((source) => lineIndex < source.endLine);
+      const source = this.findSource(lineIndex);
       if (source) {
         if (!itemsGroup.has(source)) {
           itemsGroup.set(source, new Set());
@@ -225,6 +233,49 @@ export class Explorer {
         }
       }),
     );
+  }
+
+  private findSource(lineIndex: number) {
+    return this.sources.find((source) => lineIndex < source.endLine);
+  }
+
+  private findSourceIndex(lineIndex: number) {
+    return this.sources.findIndex((source) => lineIndex < source.endLine);
+  }
+
+  /**
+   * current cursor
+   */
+  async currentCursor() {
+    const win = await this.win;
+    if (win) {
+      const [line, col] = await win.cursor;
+      const lineIndex = line - 1;
+      return {
+        lineIndex,
+        col: workspace.env.isVim ? col : col + 1,
+      };
+    }
+    return null;
+  }
+
+  async storeCursor<Item extends BaseItem<Item>>() {
+    const storeCursor = await this.currentCursor();
+    const storeView = await this.nvim.call('winsaveview');
+    if (storeCursor) {
+      const sourceIndex = this.findSourceIndex(storeCursor.lineIndex);
+      const source = this.sources[sourceIndex];
+      if (source) {
+        const storeItem: null | Item = await source.getItemByIndex(storeCursor.lineIndex - source.startLine);
+        return async () => {
+          await this.nvim.call('winrestview', storeView);
+          await source.gotoItem(storeItem, storeCursor.col);
+        };
+      }
+    }
+    return async () => {
+      await this.nvim.call('winrestview', storeView);
+    };
   }
 
   async setLines(lines: string[], start: number, end: number, notify = false) {
@@ -283,7 +334,7 @@ export class Explorer {
 
     await this.clearContent();
     for (const source of this.sources) {
-      await source.render(notify);
+      await source.render({ notify });
     }
 
     if (!notify) {

@@ -14,11 +14,12 @@ export type ActionOptions = {
   select: boolean;
 };
 
-export abstract class ExplorerSource<
-  Item extends object & {
-    parent?: Item;
-  }
-> {
+export interface BaseItem<Item extends BaseItem<any>> {
+  uid: string;
+  parent?: Item;
+}
+
+export abstract class ExplorerSource<Item extends BaseItem<Item>> {
   abstract name: string;
   startLine: number = 0;
   endLine: number = 0;
@@ -49,7 +50,6 @@ export abstract class ExplorerSource<
 
   private _explorer?: Explorer;
   private _expanded?: boolean;
-  private needRedraw: boolean = true;
   private stopRendering: boolean = false;
 
   constructor() {
@@ -336,14 +336,10 @@ export abstract class ExplorerSource<
     return (await this.nvim.call('col', '.')) as number;
   }
 
-  /**
-   * current cursor
-   * @returns return null if outside this source
-   */
-  async currentCursor() {
-    const winid = await this.explorer.winid;
-    if (winid) {
-      const [line, col] = await this.nvim.createWindow(winid).cursor;
+  async cursor() {
+    const win = await this.explorer.win;
+    if (win) {
+      const [line, col] = await win.cursor;
       const lineIndex = line - 1;
       // const line = ((await this.nvim.call('line', '.')) as number) - 1;
       if (lineIndex < this.startLine || lineIndex > this.endLine) {
@@ -358,12 +354,23 @@ export abstract class ExplorerSource<
     return null;
   }
 
-  async currentItem() {
-    const cursor = await this.currentCursor();
-    if (cursor) {
-      const line = this.lines[cursor.lineIndex];
-      if (line) {
-        return line[1];
+  /**
+   * current cursor
+   * @returns return null if outside this source
+   */
+  async currentCursor() {
+    const win = await this.explorer.win;
+    if (win) {
+      const [line, col] = await win.cursor;
+      const lineIndex = line - 1;
+      // const line = ((await this.nvim.call('line', '.')) as number) - 1;
+      if (lineIndex < this.startLine || lineIndex > this.endLine) {
+        return null;
+      } else {
+        return {
+          lineIndex: lineIndex - this.startLine,
+          col: workspace.env.isVim ? col : col + 1,
+        };
       }
     }
     return null;
@@ -387,7 +394,9 @@ export abstract class ExplorerSource<
 
   async gotoItem(item: Item | null, col?: number) {
     const finalCol = col === undefined ? await this.currentCol() : col;
-    const lineIndex = this.lines.findIndex(([, it]) => it === item);
+    const lineIndex = this.lines.findIndex(
+      ([, it]) => (it === null && item === null) || (it !== null && item !== null && it.uid === item.uid),
+    );
     if (lineIndex !== -1) {
       await this.gotoLineIndex(lineIndex, finalCol);
     } else if (item && item.parent) {
@@ -401,43 +410,27 @@ export abstract class ExplorerSource<
   abstract draw(builder: SourceViewBuilder<Item>): void;
   async loaded(_item: null | Item): Promise<void> {}
 
-  private async storeCursor() {
-    const storeCursor = await this.currentCursor();
-    const storeView = await this.nvim.call('winsaveview');
-    if (storeCursor) {
-      let storeItem: null | Item = this.needRedraw ? null : await this.getItemByIndex(storeCursor.lineIndex);
-      return async () => {
-        if (this.needRedraw) {
-          storeItem = await this.getItemByIndex(storeCursor.lineIndex);
-        }
-        await this.nvim.call('winrestview', storeView);
-        await this.gotoItem(storeItem, storeCursor.col);
-      };
-    }
-    return async () => {
-      await this.nvim.call('winrestview', storeView);
-    };
-  }
-
   async reload(
     item: null | Item,
     { render = true, notify = false }: { buffer?: Buffer; render?: boolean; notify?: boolean } = {},
   ) {
-    this.needRedraw = true;
     this.items = await this.loadItems(item);
     await this.loaded(item);
     this.selectedItems = new Set();
     if (render) {
-      await this.render(notify);
+      await this.render({ notify });
     }
   }
 
-  async render(notify = false) {
+  async render({ notify = false, storeCursor = true }: { notify?: boolean; storeCursor?: boolean } = {}) {
     if (this.stopRendering) {
       return;
     }
 
-    const restore = await this.storeCursor();
+    let restore: (() => Promise<void>) | null = null;
+    if (storeCursor) {
+      restore = await this.explorer.storeCursor();
+    }
 
     const builder = new SourceViewBuilder<Item>();
     this.draw(builder);
@@ -445,13 +438,13 @@ export abstract class ExplorerSource<
     this.relativeHlRanges = builder.relativeHlRanges;
     await this.partRender(notify);
 
-    await restore();
+    if (restore) {
+      await restore();
+    }
 
     if (workspace.env.isVim) {
       await this.nvim.command('redraw');
     }
-
-    this.needRedraw = false;
   }
 
   private async partRender(notify = false) {

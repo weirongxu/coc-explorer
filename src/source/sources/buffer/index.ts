@@ -12,6 +12,7 @@ import { debounce } from 'throttle-debounce';
 const regex = /^\s*(\d+)(.+?)"(.+?)".*/;
 
 export interface BufferItem {
+  uid: string;
   bufnr: number;
   bufname: string;
   basename: string;
@@ -217,6 +218,7 @@ export class BufferSource extends ExplorerSource<BufferItem> {
       const flags = matches[2];
       const bufname = matches[3];
       res.push({
+        uid: this.name + '_' + bufnr,
         bufnr,
         bufname,
         basename: pathLib.basename(bufname),
