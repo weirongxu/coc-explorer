@@ -14,6 +14,7 @@ const regex = /^\s*(\d+)(.+?)"(.+?)".*/;
 export interface BufferItem {
   uid: string;
   bufnr: number;
+  bufnrStr: string;
   bufname: string;
   basename: string;
   unlisted: boolean;
@@ -215,12 +216,13 @@ export class BufferSource extends ExplorerSource<BufferItem> {
         return res;
       }
 
-      const bufnr = parseInt(matches[1]);
+      const bufnr = matches[1];
       const flags = matches[2];
       const bufname = matches[3];
       res.push({
         uid: this.name + '-' + bufnr,
-        bufnr,
+        bufnr: parseInt(bufnr),
+        bufnrStr: bufnr,
         bufname,
         basename: pathLib.basename(bufname),
         unlisted: flags.includes('u'),
