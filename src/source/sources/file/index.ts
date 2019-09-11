@@ -9,7 +9,7 @@ import { hlGroupManager } from '../../highlight-manager';
 import { fileColumnManager } from './column-manager';
 import './load';
 import { onError } from '../../../logger';
-import { config, openStrategy, activeMode, supportBufferHighlight, autoReveal, delay } from '../../../util';
+import { config, openStrategy, activeMode, supportBufferHighlight, autoReveal } from '../../../util';
 import trash from 'trash';
 import rimraf from 'rimraf';
 import open from 'open';

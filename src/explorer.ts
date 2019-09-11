@@ -17,6 +17,7 @@ export class Explorer {
   revealFilepath?: string;
   cursorLineIndex: number = 0;
   cursorCol: number = 0;
+  stopRendering: boolean = false;
 
   private _buffer?: Buffer;
   private _bufnr?: number;
