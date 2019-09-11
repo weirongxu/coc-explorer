@@ -156,7 +156,7 @@ export class FileSource extends ExplorerSource<FileItem> {
       async () => {
         this.showHiddenFiles = !this.showHiddenFiles;
       },
-      'toggle hidden files',
+      'toggle visibility of hidden files',
       { render: true, multi: false },
     );
     this.addAction(

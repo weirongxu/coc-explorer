@@ -77,7 +77,7 @@ export class BufferSource extends ExplorerSource<BufferItem> {
       async () => {
         this.showHiddenBuffers = !this.showHiddenBuffers;
       },
-      'expand root node',
+      'toggle visibility of unlisted buffers',
       { reload: true },
     );
     this.addAction(
