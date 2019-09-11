@@ -338,17 +338,13 @@ export abstract class ExplorerSource<Item extends BaseItem<Item>> {
     return this.selectedItems.has(item);
   }
 
-  async currentCol() {
-    return (await this.nvim.call('col', '.')) as number;
-  }
-
   getItemByIndex(lineIndex: number) {
     const line = this.lines[lineIndex];
     return line ? line[1] : null;
   }
 
   async gotoLineIndex(lineIndex: number, col?: number) {
-    const finalCol = col === undefined ? await this.currentCol() : col;
+    const finalCol = col === undefined ? await this.explorer.currentCol() : col;
     const win = await this.explorer.win;
     if (win) {
       if (lineIndex >= this.lines.length) {
@@ -359,7 +355,7 @@ export abstract class ExplorerSource<Item extends BaseItem<Item>> {
   }
 
   async gotoRoot({ col }: { col?: number } = {}) {
-    const finalCol = col === undefined ? await this.currentCol() : col;
+    const finalCol = col === undefined ? await this.explorer.currentCol() : col;
     await this.gotoLineIndex(0, finalCol);
   }
 
@@ -369,7 +365,7 @@ export abstract class ExplorerSource<Item extends BaseItem<Item>> {
       return;
     }
 
-    const finalCol = col === undefined ? await this.currentCol() : col;
+    const finalCol = col === undefined ? await this.explorer.currentCol() : col;
     const lineIndex = this.lines.findIndex(([, it]) => it !== null && it.uid === item.uid);
     if (lineIndex !== -1) {
       await this.gotoLineIndex(lineIndex, finalCol);

@@ -137,7 +137,7 @@ export class FileSource extends ExplorerSource<FileItem> {
                 }
               } else {
                 this.currentFileItem = null;
-                await this.render();
+                await this.render({ storeCursor: false });
               }
             }),
           );

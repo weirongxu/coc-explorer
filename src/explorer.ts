@@ -260,6 +260,14 @@ export class Explorer {
     return null;
   }
 
+  async currentCol() {
+    const cursor = await this.currentCursor();
+    if (cursor) {
+      return cursor.col;
+    }
+    return 0;
+  }
+
   async storeCursor<Item extends BaseItem<Item>>() {
     const storeCursor = await this.currentCursor();
     const storeView = await this.nvim.call('winsaveview');
