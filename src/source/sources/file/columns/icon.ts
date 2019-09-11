@@ -88,7 +88,7 @@ fileColumnManager.registerColumn('icon', {
       row.add(' ');
     } else {
       if (enableNerdfont) {
-        const icon = getIcon(item.name);
+        const icon = getIcon(item.name.toLowerCase());
         if (icon) {
           row.add(icon.code, nerdfontHighlights[icon.name].group);
         } else {

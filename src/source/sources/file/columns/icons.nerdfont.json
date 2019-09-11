@@ -20,6 +20,10 @@
       "code": "",
       "color": "#e37933"
     },
+    "xml": {
+      "code": "謹",
+      "color": "#e37933"
+    },
     "ejs": {
       "code": "",
       "color": "#cbcb41"
@@ -295,6 +299,18 @@
     "vagrant": {
       "code": "",
       "color": "#1563FF"
+    },
+    "svg": {
+      "code": "ﰟ",
+      "color": "#FFB13B"
+    },
+    "font": {
+      "code": "",
+      "color": "#999999"
+    },
+    "text": {
+      "code": "",
+      "color": "#999999"
     }
   },
   "extensions": {
@@ -304,6 +320,8 @@
     "htm": "html",
     "html": "html",
     "slim": "html",
+    "xml": "xml",
+    "xaml": "xml",
     "ejs": "ejs",
     "css": "css",
     "less": "css",
@@ -323,6 +341,7 @@
     "coffee": "coffee",
     "mustache": "mustache",
     "hbs": "mustache",
+    "config": "conf",
     "conf": "conf",
     "ini": "conf",
     "yml": "conf",
@@ -400,6 +419,12 @@
     "pp": "puppet",
     "vue": "vue",
     "swift": "swift",
+    "svg": "svg",
+    "otf": "font",
+    "ttf": "font",
+    "fnt": "font",
+    "txt": "text",
+    "text": "text",
     "xcplayground": "swift",
     ".gitconfig": "gitconfig",
     ".gitignore": "gitconfig",
@@ -435,4 +460,3 @@
     "Vagrantfile$": "vagrant"
   }
 }
-
