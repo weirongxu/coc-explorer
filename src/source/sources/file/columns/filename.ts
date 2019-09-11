@@ -4,7 +4,7 @@ import { truncate } from '../../../../util';
 import { indentChars, topLevel } from './indent';
 import { FileItem, expandStore } from '..';
 
-const highlights = {
+export const highlights = {
   directory: hlGroupManager.hlLinkGroupCommand('FileDirectory', 'PreProc'),
   nameActive: hlGroupManager.hlLinkGroupCommand('FileNameActive', 'String'),
 };

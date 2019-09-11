@@ -3,11 +3,13 @@ import { fileColumnManager } from '../column-manager';
 import { sourceIcons } from '../../..';
 import pathLib from 'path';
 // reference:
-//   icons from https://github.com/ryanoasis/vim-devicons/blob/830f0fe48a337ed26384c43929032786f05c8d24/plugin/webdevicons.vim#L129
-//   color from VSCode seti theme
-import nerdfontIcons from './icons.nerdfont.json';
+//   icon code from https://github.com/ryanoasis/vim-devicons/blob/830f0fe48a337ed26384c43929032786f05c8d24/plugin/webdevicons.vim#L129
+//   icon color from https://github.com/microsoft/vscode/blob/e75e71f41911633be838344377df26842f2b8c7c/extensions/theme-seti/icons/vs-seti-icon-theme.json
+import nerdfontJson from './icons.nerdfont.json';
+import { highlights as filenameHighlights } from './filename';
+import { hlGroupManager, HighlightCommand } from '../../../highlight-manager';
 
-const icons = nerdfontIcons as {
+const nerdfont = nerdfontJson as {
   icons: Record<
     string,
     {
@@ -20,25 +22,49 @@ const icons = nerdfontIcons as {
   patternMatches: Record<string, string>;
 };
 
+export const nerdfontHighlights: Record<string, HighlightCommand> = {};
+
+Object.entries(nerdfontJson.icons).forEach(([name, icon]) => {
+  nerdfontHighlights[name] = hlGroupManager.hlGroupCommand(`FileIconNerdfont_${name}`, `guifg=${icon.color}`);
+});
+
+hlGroupManager.register(nerdfontHighlights);
+
 const enableNerdfont = fileColumnManager.getColumnConfig<string>('icon.enableNerdfont');
 const space = ' '.repeat(sourceIcons.shrinked.length);
 
-const getIcon = (filename: string): undefined | { code: string; color: string } => {
+const getIcon = (filename: string): undefined | { name: string; code: string; color: string } => {
   const ext = pathLib.extname(filename);
   const extname = ext.slice(1);
   const basename = pathLib.basename(filename, ext);
-  if (extname in icons.extensions) {
-    return icons.icons[icons.extensions[extname]];
-  } else if (basename in icons.filenames) {
-    return icons.icons[icons.filenames[basename]];
-  } else if (filename in icons.filenames) {
-    return icons.icons[icons.filenames[filename]];
+  if (extname in nerdfont.extensions) {
+    const name = nerdfont.extensions[extname];
+    return {
+      name,
+      ...nerdfont.icons[name],
+    };
+  } else if (basename in nerdfont.filenames) {
+    const name = nerdfont.filenames[basename];
+    return {
+      name,
+      ...nerdfont.icons[name],
+    };
+  } else if (filename in nerdfont.filenames) {
+    const name = nerdfont.filenames[filename];
+    return {
+      name,
+      ...nerdfont.icons[name],
+    };
   } else {
-    const matched = Object.entries(icons.patternMatches).find(
-      ([pattern]: [string, string]) => new RegExp(pattern).test(filename),
+    const matched = Object.entries(nerdfont.patternMatches).find(([pattern]: [string, string]) =>
+      new RegExp(pattern).test(filename),
     );
     if (matched) {
-      return icons.icons[matched[1]];
+      const name = matched[1];
+      return {
+        name,
+        ...nerdfont.icons[name],
+      };
     }
   }
 };
@@ -46,13 +72,25 @@ const getIcon = (filename: string): undefined | { code: string; color: string } 
 fileColumnManager.registerColumn('icon', {
   draw(row, item) {
     if (item.directory) {
-      row.add(expandStore.isExpanded(item.fullpath) ? sourceIcons.expanded : sourceIcons.shrinked);
+      if (enableNerdfont) {
+        row.add(
+          expandStore.isExpanded(item.fullpath)
+            ? nerdfontJson.icons.folder_opened.code
+            : nerdfontJson.icons.folder_closed.code,
+          filenameHighlights.directory.group,
+        );
+      } else {
+        row.add(
+          expandStore.isExpanded(item.fullpath) ? sourceIcons.expanded : sourceIcons.shrinked,
+          filenameHighlights.directory.group,
+        );
+      }
       row.add(' ');
     } else {
       if (enableNerdfont) {
         const icon = getIcon(item.name);
         if (icon) {
-          row.add(icon.code);
+          row.add(icon.code, nerdfontHighlights[icon.name].group);
         } else {
           row.add(space);
         }

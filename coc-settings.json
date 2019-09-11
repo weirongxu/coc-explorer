@@ -12,5 +12,5 @@
   "explorer.keyMappings": {
     "<space>": "toggleSelection"
   },
-  "explorer.file.column.icon.enableDevicons": true
+  "explorer.file.column.icon.enableNerdfont": true
 }

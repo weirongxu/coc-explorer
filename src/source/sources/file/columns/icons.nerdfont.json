@@ -1,5 +1,13 @@
 {
   "icons": {
+    "folder_closed": {
+      "code": "",
+      "color": "#00afaf"
+    },
+    "folder_opened": {
+      "code": "",
+      "color": "#00afaf"
+    },
     "stylus": {
       "code": "",
       "color": "#8dc149"
