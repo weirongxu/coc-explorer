@@ -306,8 +306,8 @@
           "type": "string",
           "default": "+"
         },
-        "explorer.file.column.icon.enableDevicons": {
-          "description": "Enalbe devicons",
+        "explorer.file.column.icon.enableNerdfont": {
+          "description": "Enalbe nerdfont",
           "type": "boolean",
           "default": false
         },

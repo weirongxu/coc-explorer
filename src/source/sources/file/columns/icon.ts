@@ -2,13 +2,12 @@ import { expandStore } from '..';
 import { fileColumnManager } from '../column-manager';
 import { sourceIcons } from '../../..';
 import pathLib from 'path';
-// @ts-ignore
-// reference from
-//   https://github.com/ryanoasis/vim-devicons/blob/830f0fe48a337ed26384c43929032786f05c8d24/plugin/webdevicons.vim#L129
-//   VSCode seti theme
-import iconsDevices from './icons.devicons.json';
+// reference:
+//   icons from https://github.com/ryanoasis/vim-devicons/blob/830f0fe48a337ed26384c43929032786f05c8d24/plugin/webdevicons.vim#L129
+//   color from VSCode seti theme
+import nerdfontIcons from './icons.nerdfont.json';
 
-const icons = iconsDevices as {
+const icons = nerdfontIcons as {
   icons: Record<
     string,
     {
@@ -21,7 +20,7 @@ const icons = iconsDevices as {
   patternMatches: Record<string, string>;
 };
 
-const enableDevicons = fileColumnManager.getColumnConfig<string>('icon.enableDevicons');
+const enableNerdfont = fileColumnManager.getColumnConfig<string>('icon.enableNerdfont');
 const space = ' '.repeat(sourceIcons.shrinked.length);
 
 const getIcon = (filename: string): undefined | { code: string; color: string } => {
@@ -50,7 +49,7 @@ fileColumnManager.registerColumn('icon', {
       row.add(expandStore.isExpanded(item.fullpath) ? sourceIcons.expanded : sourceIcons.shrinked);
       row.add(' ');
     } else {
-      if (enableDevicons) {
+      if (enableNerdfont) {
         const icon = getIcon(item.name);
         if (icon) {
           row.add(icon.code);

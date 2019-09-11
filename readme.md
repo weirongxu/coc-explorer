@@ -36,17 +36,17 @@
   - [x] Basic actions
     - [x] Open file in select / vsplit / tab  
            `explorer.openAction.strategy` options:
-      - vsplit: open file with vsplit by default
-      - previousBuffer: open file use last used buffer by default
-      - select: open file use select ui by default
+      - vsplit: open action with vsplit by default
+      - previousBuffer: open action use last used buffer by default
+      - select: open action use selection ui by default
     - [x] Selection
     - [x] Cut / Copy / Paste
     - [x] Delete action use trash by default
   - [x] Git status
   - [x] Highlight current buffer in real time (neovim only)
+  - [x] [NerdIcons](https://github.com/ryanoasis/nerd-fonts)
   - [ ] LSP rename
   - [ ] Exrename, like [defx](https://github.com/Shougo/defx.nvim)
-  - [ ] [DevIcons](https://github.com/ryanoasis/vim-devicons)
   - [ ] Archive file (use `lsar / unar`)
   - [ ] SSH
 - [ ] Git source
