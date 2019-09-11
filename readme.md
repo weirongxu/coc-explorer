@@ -44,7 +44,7 @@
     - [x] Delete action use trash by default
   - [x] Git status
   - [x] Highlight current buffer in real time (neovim only)
-  - [x] [NerdIcons](https://github.com/ryanoasis/nerd-fonts)
+  - [x] Icons, use [nerdfont](https://github.com/ryanoasis/nerd-fonts)
   - [ ] LSP rename
   - [ ] Exrename, like [defx](https://github.com/Shougo/defx.nvim)
   - [ ] Archive file (use `lsar / unar`)
@@ -98,7 +98,7 @@ Explorer file columns, supported columns:
 
 - git
 - selection
-- expand-icon
+- icon
 - filename
 - indent
 - readonly
