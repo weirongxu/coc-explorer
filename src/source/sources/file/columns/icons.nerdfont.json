@@ -346,6 +346,7 @@
     "ini": "conf",
     "yml": "conf",
     "yaml": "conf",
+    "toml": "conf",
     "bat": "bat",
     "jpg": "image",
     "jpeg": "image",

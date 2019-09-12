@@ -6,3 +6,4 @@ import './columns/indent';
 import './columns/readonly';
 import './columns/clip';
 import './columns/size';
+import './columns/diagnostic';

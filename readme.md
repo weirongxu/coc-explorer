@@ -45,7 +45,9 @@
   - [x] Git status
   - [x] Highlight current buffer in real time (neovim only)
   - [x] Icons, use [nerdfont](https://github.com/ryanoasis/nerd-fonts)
-  - [ ] LSP rename
+  - [ ] LSP
+    - [x] diagnostic
+    - [ ] file rename
   - [ ] Exrename, like [defx](https://github.com/Shougo/defx.nvim)
   - [ ] Archive file (use `lsar / unar`)
   - [ ] SSH
