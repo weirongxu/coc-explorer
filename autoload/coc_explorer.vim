@@ -68,11 +68,24 @@ function! coc_explorer#init_win(position, width)
     silent execute 'vertical resize '.a:width
   endif
 
-  silent setlocal colorcolumn conceallevel=0 concealcursor=nc nocursorcolumn nofoldenable foldcolumn=0 nolist nonumber norelativenumber nospell nowrap
+  silent setlocal colorcolumn=
+        \ conceallevel=0 concealcursor=nc nocursorcolumn
+        \ cursorline
+        \ nofoldenable foldcolumn=0
+        \ nolist
+        \ nonumber norelativenumber
+        \ nospell
+        \ nowrap
 endfunction
 
 function! coc_explorer#init_buf()
-  silent setlocal buftype=nofile bufhidden=hide noswapfile nomodeline filetype=coc-explorer nomodifiable nobuflisted nomodified signcolumn=no
+  silent setlocal buftype=nofile bufhidden=hide
+        \ noswapfile nomodeline
+        \ filetype=coc-explorer
+        \ nomodifiable
+        \ nomodified
+        \ signcolumn=no
+        \ nobuflisted
 endfunction
 
 
