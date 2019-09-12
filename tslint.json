@@ -6,6 +6,11 @@
     "quotemark": [true, "single", "avoid-escape"],
     "curly": true,
     "prefer-const": true,
-    "no-floating-promises": true
+    "no-floating-promises": true,
+    "ban": [
+      true,
+      ["workspace", "showMessage"],
+      ["prettyPrint"]
+    ]
   }
 }

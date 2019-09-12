@@ -401,6 +401,7 @@ export class FileSource extends ExplorerSource<FileItem> {
       'copyFilepath',
       async (items) => {
         await this.copy(items ? items.map((it) => it.fullpath).join('\n') : this.root);
+        // tslint:disable-next-line: ban
         workspace.showMessage('Copy filepath to clipboard');
       },
       'copy full filepath to clipboard',
@@ -409,6 +410,7 @@ export class FileSource extends ExplorerSource<FileItem> {
       'copyFilename',
       async (items) => {
         await this.copy(items ? items.map((it) => it.name).join('\n') : pathLib.basename(this.root));
+        // tslint:disable-next-line: ban
         workspace.showMessage('Copy filename to clipboard');
       },
       'copy filename to clipboard',
@@ -476,6 +478,7 @@ export class FileSource extends ExplorerSource<FileItem> {
       'delete',
       async (items) => {
         const list = items.map((item) => item.fullpath).join('\n');
+        // tslint:disable-next-line: ban
         workspace.showMessage(list);
         if (await workspace.showPrompt(`Move these files or directories to trash?`)) {
           await fsTrash(items.map((item) => item.fullpath));
@@ -488,6 +491,7 @@ export class FileSource extends ExplorerSource<FileItem> {
       'deleteForever',
       async (items) => {
         const list = items.map((item) => item.fullpath).join('\n');
+        // tslint:disable-next-line: ban
         workspace.showMessage(list);
         if (await workspace.showPrompt(`Forever delete these files or directories?`)) {
           for (const item of items) {

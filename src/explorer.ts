@@ -155,6 +155,7 @@ export class Explorer {
             source.bindExplorer(this, sourceArg.expand);
             return source;
           } else {
+            // tslint:disable-next-line: ban
             workspace.showMessage(`explorer source(${sourceArg.name}) not found`, 'error');
             return null;
           }

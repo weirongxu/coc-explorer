@@ -12,6 +12,7 @@ const loggerLog = (type: LoggerType, data: string | Error) => {
   if (logger) {
     if (type !== 'info') {
       const mtype = type === 'warn' ? 'warning' : type;
+      // tslint:disable-next-line: ban
       workspace.showMessage(data.toString(), mtype);
     }
     logger[type](data);

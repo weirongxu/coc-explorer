@@ -117,5 +117,6 @@ export function truncate(name: string, width: number, padSide: 'start' | 'end') 
 }
 
 export function prettyPrint(data: any) {
+  // tslint:disable-next-line: ban
   workspace.showMessage(util.inspect(data));
 }
