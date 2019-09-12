@@ -1,10 +1,10 @@
 {
   "icons": {
-    "folder_closed": {
+    "folderClosed": {
       "code": "",
       "color": "#00afaf"
     },
-    "folder_opened": {
+    "folderOpened": {
       "code": "",
       "color": "#00afaf"
     },
@@ -228,16 +228,8 @@
       "code": "",
       "color": "#4d5a5e"
     },
-    ".bashprofile": {
-      "code": "",
-      "color": "#4d5a5e"
-    },
     "favicon": {
       "code": "",
-      "color": "#cbcb41"
-    },
-    "node_modules": {
-      "code": "",
       "color": "#cbcb41"
     },
     "docker": {

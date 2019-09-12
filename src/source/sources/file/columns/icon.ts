@@ -8,6 +8,7 @@ import pathLib from 'path';
 import nerdfontJson from './icons.nerdfont.json';
 import { highlights as filenameHighlights } from './filename';
 import { hlGroupManager, HighlightCommand } from '../../../highlight-manager';
+import { workspace } from 'coc.nvim';
 
 const nerdfont = nerdfontJson as {
   icons: Record<
@@ -25,6 +26,7 @@ const nerdfont = nerdfontJson as {
 export const nerdfontHighlights: Record<string, HighlightCommand> = {};
 
 Object.entries(nerdfontJson.icons).forEach(([name, icon]) => {
+  workspace.showMessage(name);
   nerdfontHighlights[name] = hlGroupManager.hlGroupCommand(`FileIconNerdfont_${name}`, `guifg=${icon.color}`);
 });
 
@@ -78,8 +80,8 @@ fileColumnManager.registerColumn('icon', {
       if (enableNerdfont) {
         row.add(
           expandStore.isExpanded(item.fullpath)
-            ? nerdfontJson.icons.folder_opened.code
-            : nerdfontJson.icons.folder_closed.code,
+            ? nerdfontJson.icons.folderOpened.code
+            : nerdfontJson.icons.folderClosed.code,
           filenameHighlights.directory.group,
         );
       } else {
