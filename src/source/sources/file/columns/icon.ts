@@ -37,14 +37,16 @@ const getIcon = (filename: string): undefined | { name: string; code: string; co
   const ext = pathLib.extname(filename);
   const extname = ext.slice(1);
   const basename = pathLib.basename(filename, ext);
-  if (basename in nerdfont.filenames) {
+
+  if (nerdfont.filenames.hasOwnProperty(basename)) {
     const name = nerdfont.filenames[basename];
     return {
       name,
       ...nerdfont.icons[name],
     };
   }
-  if (filename in nerdfont.filenames) {
+
+  if (nerdfont.filenames.hasOwnProperty(filename)) {
     const name = nerdfont.filenames[filename];
     return {
       name,
@@ -63,7 +65,7 @@ const getIcon = (filename: string): undefined | { name: string; code: string; co
     };
   }
 
-  if (extname in nerdfont.extensions) {
+  if (nerdfont.extensions.hasOwnProperty(extname)) {
     const name = nerdfont.extensions[extname];
     return {
       name,
