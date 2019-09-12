@@ -7,6 +7,8 @@ class DiagnosticUI {
   errorMap: Record<string, string> = {};
   warningMap: Record<string, string> = {};
   reload: throttle<() => void>;
+  errorNeedRedraw: boolean = false;
+  warningNeedRedraw: boolean = false;
 
   constructor() {
     this.reload = throttle(100, this._reload);
@@ -16,6 +18,7 @@ class DiagnosticUI {
     // initialize diagnosticMapCount
     const errorMapCount: Record<string, number> = {};
     const warningMapCount: Record<string, number> = {};
+
     diagnosticManager.getDiagnosticList().forEach((diagnostic) => {
       const uri = diagnostic.location.uri;
       if (uri.startsWith('file://')) {
@@ -34,16 +37,25 @@ class DiagnosticUI {
       }
     });
 
-    this.errorMap = {};
-    this.warningMap = {};
+    const errorMap: Record<string, string> = {};
+    const warningMap: Record<string, string> = {};
     for (const path in errorMapCount) {
-      this.errorMap[path] = errorMapCount[path].toString();
+      errorMap[path] = errorMapCount[path].toString();
     }
     for (const path in warningMapCount) {
-      this.warningMap[path] = warningMapCount[path].toString();
+      warningMap[path] = warningMapCount[path].toString();
     }
-    this.maxErrorWidth = Math.max(...Object.values(this.errorMap).map((d) => d.length));
-    this.maxWarningWidth = Math.max(...Object.values(this.warningMap).map((d) => d.length));
+
+    if (JSON.stringify(errorMap) !== JSON.stringify(this.errorMap)) {
+      this.maxErrorWidth = Math.max(...Object.values(errorMap).map((d) => d.length));
+      this.errorMap = errorMap;
+      this.errorNeedRedraw = true;
+    }
+    if (JSON.stringify(warningMap) !== JSON.stringify(this.warningMap)) {
+      this.maxWarningWidth = Math.max(...Object.values(warningMap).map((d) => d.length));
+      this.warningMap = warningMap;
+      this.warningNeedRedraw = true;
+    }
   }
 }
 

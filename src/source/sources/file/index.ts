@@ -1,4 +1,4 @@
-import { workspace, events } from 'coc.nvim';
+import { workspace, events, diagnosticManager } from 'coc.nvim';
 import fs from 'fs';
 import pathLib from 'path';
 import { promisify } from 'util';
@@ -9,11 +9,12 @@ import { hlGroupManager } from '../../highlight-manager';
 import { fileColumnManager } from './column-manager';
 import './load';
 import { onError } from '../../../logger';
-import { config, openStrategy, activeMode, supportBufferHighlight, autoReveal } from '../../../util';
+import { config, openStrategy, activeMode, supportBufferHighlight, autoReveal, delay } from '../../../util';
 import trash from 'trash';
 import rimraf from 'rimraf';
 import open from 'open';
 import { debounce } from 'throttle-debounce';
+import { diagnosticUI } from './diagnostic-ui';
 
 const fsOpen = promisify(fs.open);
 const fsClose = promisify(fs.close);
@@ -138,6 +139,19 @@ export class FileSource extends ExplorerSource<FileItem> {
               } else {
                 this.currentFileItem = null;
                 await this.render({ storeCursor: false });
+              }
+            }),
+          );
+
+          events.on(
+            ['InsertLeave', 'TextChanged'],
+            debounce(1000, async () => {
+              diagnosticUI.reload();
+              if (
+                (fileColumnManager.columns.includes('diagnosticError') && diagnosticUI.errorNeedRedraw) ||
+                (fileColumnManager.columns.includes('diagnosticWarning') && diagnosticUI.warningNeedRedraw)
+              ) {
+                await this.render();
               }
             }),
           );
