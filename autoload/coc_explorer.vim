@@ -70,7 +70,6 @@ function! coc_explorer#init_win(position, width)
 
   silent setlocal colorcolumn=
         \ conceallevel=0 concealcursor=nc nocursorcolumn
-        \ cursorline
         \ nofoldenable foldcolumn=0
         \ nolist
         \ nonumber norelativenumber
