@@ -181,7 +181,7 @@ fileColumnManager.registerColumn('git', (fileSource) => ({
   },
   draw(row, item) {
     const showFormat = (f: string, staged: boolean) => {
-      if (f.trim()) {
+      if (f.trim().length > 0) {
         row.add(f, staged ? highlights.stage.group : highlights.unstage.group);
       } else {
         row.add(f);
@@ -190,7 +190,11 @@ fileColumnManager.registerColumn('git', (fileSource) => ({
     if (item.directory) {
       if (item.fullpath in gitDirectoryCache) {
         const status = gitDirectoryCache[item.fullpath];
-        showFormat(statusIcons[status.x], true);
+        if (status.x !== status.y) {
+          showFormat(statusIcons[status.x], true);
+        } else {
+          showFormat(' ', true);
+        }
         showFormat(statusIcons[status.y], false);
         row.add(' ');
       } else {
@@ -198,7 +202,11 @@ fileColumnManager.registerColumn('git', (fileSource) => ({
       }
     } else if (item.fullpath in gitStatusCache) {
       const status = gitStatusCache[item.fullpath];
-      showFormat(statusIcons[status.x], true);
+      if (status.x !== status.y) {
+        showFormat(statusIcons[status.x], true);
+      } else {
+        showFormat(' ', true);
+      }
       showFormat(statusIcons[status.y], false);
       row.add(' ');
     } else {

@@ -1,4 +1,4 @@
-import { workspace, events, diagnosticManager } from 'coc.nvim';
+import { workspace, events } from 'coc.nvim';
 import fs from 'fs';
 import pathLib from 'path';
 import { promisify } from 'util';
@@ -9,7 +9,7 @@ import { hlGroupManager } from '../../highlight-manager';
 import { fileColumnManager } from './column-manager';
 import './load';
 import { onError } from '../../../logger';
-import { config, openStrategy, activeMode, supportBufferHighlight, autoReveal, delay } from '../../../util';
+import { config, openStrategy, activeMode, supportBufferHighlight, autoReveal } from '../../../util';
 import trash from 'trash';
 import rimraf from 'rimraf';
 import open from 'open';
@@ -109,16 +109,14 @@ export class FileSource extends ExplorerSource<FileItem> {
       setTimeout(() => {
         if (workspace.env.isVim) {
           if (supportBufferHighlight()) {
-            setTimeout(() => {
-              events.on(
-                'BufEnter',
-                debounce(200, async (bufnr) => {
-                  if (bufnr === this.explorer.bufnr) {
-                    await this.reload(null);
-                  }
-                }),
-              );
-            }, 50);
+            events.on(
+              'BufEnter',
+              debounce(200, async (bufnr) => {
+                if (bufnr === this.explorer.bufnr) {
+                  await this.reload(null);
+                }
+              }),
+            );
           }
         } else {
           events.on(
