@@ -37,35 +37,38 @@ const getIcon = (filename: string): undefined | { name: string; code: string; co
   const ext = pathLib.extname(filename);
   const extname = ext.slice(1);
   const basename = pathLib.basename(filename, ext);
+  if (basename in nerdfont.filenames) {
+    const name = nerdfont.filenames[basename];
+    return {
+      name,
+      ...nerdfont.icons[name],
+    };
+  }
+  if (filename in nerdfont.filenames) {
+    const name = nerdfont.filenames[filename];
+    return {
+      name,
+      ...nerdfont.icons[name],
+    };
+  }
+
+  const matched = Object.entries(nerdfont.patternMatches).find(([pattern]: [string, string]) =>
+    new RegExp(pattern).test(filename),
+  );
+  if (matched) {
+    const name = matched[1];
+    return {
+      name,
+      ...nerdfont.icons[name],
+    };
+  }
+
   if (extname in nerdfont.extensions) {
     const name = nerdfont.extensions[extname];
     return {
       name,
       ...nerdfont.icons[name],
     };
-  } else if (basename in nerdfont.filenames) {
-    const name = nerdfont.filenames[basename];
-    return {
-      name,
-      ...nerdfont.icons[name],
-    };
-  } else if (filename in nerdfont.filenames) {
-    const name = nerdfont.filenames[filename];
-    return {
-      name,
-      ...nerdfont.icons[name],
-    };
-  } else {
-    const matched = Object.entries(nerdfont.patternMatches).find(([pattern]: [string, string]) =>
-      new RegExp(pattern).test(filename),
-    );
-    if (matched) {
-      const name = matched[1];
-      return {
-        name,
-        ...nerdfont.icons[name],
-      };
-    }
   }
 };
 

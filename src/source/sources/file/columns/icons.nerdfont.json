@@ -72,10 +72,6 @@
       "code": "",
       "color": "#6d8086"
     },
-    "bat": {
-      "code": "",
-      "color": "#519aba"
-    },
     "image": {
       "code": "",
       "color": "#a074c4"
@@ -108,7 +104,7 @@
       "code": "",
       "color": "#cc3e44"
     },
-    "shell": {
+    "terminal": {
       "code": "",
       "color": "#4d5a5e"
     },
@@ -244,7 +240,7 @@
       "code": "",
       "color": "#cbcb41"
     },
-    "dockerfile": {
+    "docker": {
       "code": "",
       "color": "#519aba"
     },
@@ -267,10 +263,6 @@
     "procfile": {
       "code": "",
       "color": "#a074c4"
-    },
-    "docker": {
-      "code": "",
-      "color": "#f55385"
     },
     "jquery": {
       "code": "",
@@ -311,6 +303,10 @@
     "text": {
       "code": "",
       "color": "#999999"
+    },
+    "archive": {
+      "code": "",
+      "color": "#cc3e44"
     }
   },
   "extensions": {
@@ -331,8 +327,10 @@
     "rmd": "markdown",
     "json": "json",
     "js": "javascript",
+    "es6": "javascript",
     "jsx": "javascriptreact",
     "rb": "ruby",
+    "ru": "ruby",
     "php": "php",
     "py": "python",
     "pyc": "python",
@@ -347,7 +345,6 @@
     "yml": "conf",
     "yaml": "conf",
     "toml": "conf",
-    "bat": "bat",
     "jpg": "image",
     "jpeg": "image",
     "bmp": "image",
@@ -368,14 +365,17 @@
     "lhs": "haskell",
     "lua": "lua",
     "java": "java",
-    "sh": "shell",
-    "fish": "shell",
-    "bash": "shell",
-    "zsh": "shell",
-    "ksh": "shell",
-    "csh": "shell",
-    "awk": "shell",
-    "ps1": "shell",
+    "jar": "java",
+    "sh": "terminal",
+    "fish": "terminal",
+    "bash": "terminal",
+    "zsh": "terminal",
+    "ksh": "terminal",
+    "csh": "terminal",
+    "awk": "terminal",
+    "ps1": "terminal",
+    "bat": "terminal",
+    "cmd": "terminal",
     "ml": "ml",
     "mli": "ml",
     "diff": "diff",
@@ -420,34 +420,46 @@
     "pp": "puppet",
     "vue": "vue",
     "swift": "swift",
+    "xcplayground": "swift",
     "svg": "svg",
     "otf": "font",
     "ttf": "font",
     "fnt": "font",
     "txt": "text",
     "text": "text",
-    "xcplayground": "swift",
-    ".gitconfig": "gitconfig",
-    ".gitignore": "gitconfig",
-    ".bashrc": "bashrc",
-    ".zshrc": "bashrc",
-    ".bashprofile": "bashrc",
-    "favicon.ico": "favicon",
-    "node_modules": "javascript",
-    "dockerfile": "dockerfile"
+    "zip": "archive",
+    "tar": "archive",
+    "gz": "archive",
+    "gzip": "archive",
+    "rar": "archive",
+    "7z": "archive",
+    "iso": "archive"
   },
   "filenames": {
     "gruntfile": "gruntfile",
     "gulpfile": "gulpfile",
+    "gemfile": "ruby",
+    "guardfile": "ruby",
+    "capfile": "ruby",
+    "rakefile": "ruby",
     "mix": "mix",
     "dropbox": "dropbox",
+    "vimrc": "vim",
     ".vimrc": "vim",
     ".gvimrc": "vim",
     "_vimrc": "vim",
     "_gvimrc": "vim",
     "license": "license",
     "procfile": "procfile",
-    "docker-compose.yml": "docker"
+    "Vagrantfile": "vagrant",
+    "docker-compose.yml": "docker",
+    ".gitconfig": "gitconfig",
+    ".gitignore": "gitconfig",
+    ".bashrc": "bashrc",
+    ".zshrc": "bashrc",
+    ".bashprofile": "bashrc",
+    "favicon.ico": "favicon",
+    "dockerfile": "docker"
   },
   "patternMatches": {
     ".*jquery.*.js$": "jquery",
@@ -456,8 +468,6 @@
     ".*require.*.js$": "requirejs",
     ".*materialize.*.js$": "materialize",
     ".*materialize.*.css$": "materialize",
-    ".*mootools.*.js$": "mootools",
-    ".*vimrc.*": "vim",
-    "Vagrantfile$": "vagrant"
+    ".*mootools.*.js$": "mootools"
   }
 }
