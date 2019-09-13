@@ -1,8 +1,17 @@
 import { fileColumnManager } from '../column-manager';
 import { hlGroupManager } from '../../../highlight-manager';
+import { enableNerdfont } from './icon';
 
 let copy = fileColumnManager.getColumnConfig<string>('clip.copy');
 let cut = fileColumnManager.getColumnConfig<string>('clip.cut');
+if (enableNerdfont) {
+  if (copy === 'C') {
+    copy = '';
+  }
+  if (cut === 'X') {
+    cut = '';
+  }
+}
 const width = Math.max(copy.length, cut.length) + 1;
 copy = copy.padEnd(width, ' ');
 cut = cut.padEnd(width, ' ');

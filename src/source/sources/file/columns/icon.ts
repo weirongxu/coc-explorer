@@ -30,7 +30,7 @@ Object.entries(nerdfontJson.icons).forEach(([name, icon]) => {
 
 hlGroupManager.register(nerdfontHighlights);
 
-const enableNerdfont = fileColumnManager.getColumnConfig<string>('icon.enableNerdfont');
+export const enableNerdfont = fileColumnManager.getColumnConfig<string>('icon.enableNerdfont');
 const space = ' '.repeat(sourceIcons.shrinked.length);
 
 const getIcon = (filename: string): undefined | { name: string; code: string; color: string } => {
@@ -96,8 +96,10 @@ fileColumnManager.registerColumn('icon', {
         const icon = getIcon(item.name.toLowerCase());
         if (icon) {
           row.add(icon.code, nerdfontHighlights[icon.name].group);
+        } else if (item.hidden) {
+          row.add(nerdfont.icons.fileHidden.code, nerdfontHighlights['fileHidden'].group);
         } else {
-          row.add(space);
+          row.add(nerdfont.icons.file.code, nerdfontHighlights['file'].group);
         }
       } else {
         row.add(space);

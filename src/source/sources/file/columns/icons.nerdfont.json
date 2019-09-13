@@ -9,7 +9,11 @@
       "color": "#00afaf"
     },
     "file": {
-      "code": "",
+      "code": "",
+      "color": "#ffffff"
+    },
+    "fileHidden": {
+      "code": "﬒",
       "color": "#ffffff"
     },
     "stylus": {
