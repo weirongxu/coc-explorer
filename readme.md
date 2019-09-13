@@ -106,6 +106,8 @@ Explorer file columns, supported columns:
 - readonly
 - clip
 - size
+- diagnosticError
+- diagnosticWarning
 
 ## Inspired by
 

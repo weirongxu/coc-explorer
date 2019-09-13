@@ -9,7 +9,9 @@ export const activate = async (context: ExtensionContext) => {
   const { nvim } = workspace;
   registerLogger(logger);
 
-  hlGroupManager.register(hlGroupManager.hlGroupCommand('SelectUI', 'ctermbg=27 ctermfg=0 guibg=#1593e5 guifg=#ffffff'));
+  hlGroupManager.register(
+    hlGroupManager.hlGroupCommand('SelectUI', 'ctermbg=27 ctermfg=0 guibg=#1593e5 guifg=#ffffff'),
+  );
   hlGroupManager.executeCommands().catch(onError);
 
   nvim

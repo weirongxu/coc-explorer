@@ -1,7 +1,4 @@
 import { workspace } from 'coc.nvim';
-import pathLib from 'path';
-import { spawn } from 'child_process';
-import { onError } from './logger';
 import util from 'util';
 
 export const delay = (time: number) => {
@@ -45,58 +42,6 @@ export function byteIndex(content: string, index: number): number {
 
 export function byteLength(str: string): number {
   return Buffer.byteLength(str);
-}
-
-export function gitCommand(args: string[], { cwd }: { cwd?: string } = {}) {
-  const streams = spawn(config.get<string>('git.command')!, args, {
-    cwd,
-  });
-
-  let output = '';
-  streams.stdout.on('data', (data: Buffer) => {
-    output += data.toString();
-  });
-  return new Promise<string>((resolve, reject) => {
-    streams.stdout.on('error', (error) => {
-      reject(error);
-    });
-    streams.stdout.on('end', () => {
-      resolve(output);
-    });
-  });
-}
-
-const gitRootCache: Record<string, string> = {};
-async function fetchGitRoot(cwd: string) {
-  const output = await gitCommand(['rev-parse', '--show-toplevel'], {
-    cwd,
-  });
-  return output.trim();
-}
-export async function getGitRoot(path: string): Promise<string | undefined> {
-  if (path in gitRootCache) {
-    return gitRootCache[path];
-  }
-
-  const parts = path.split(pathLib.sep);
-  const idx = parts.indexOf('.git');
-  if (idx !== -1) {
-    const root = parts.slice(0, idx).join(pathLib.sep);
-    gitRootCache[path] = root;
-  } else {
-    try {
-      const gitRoot = await fetchGitRoot(path);
-      if (pathLib.isAbsolute(gitRoot)) {
-        gitRootCache[path] = gitRoot;
-      } else {
-        pathLib.join(path, gitRoot);
-      }
-    } catch (error) {
-      onError(error);
-      return;
-    }
-  }
-  return gitRootCache[path];
 }
 
 export function truncate(name: string, width: number, padSide: 'start' | 'end') {

@@ -15,6 +15,7 @@ import rimraf from 'rimraf';
 import open from 'open';
 import { debounce } from 'throttle-debounce';
 import { diagnosticUI } from './diagnostic-ui';
+import { gitManager } from '../../../git-manager';
 
 const fsOpen = promisify(fs.open);
 const fsClose = promisify(fs.close);
@@ -567,6 +568,24 @@ export class FileSource extends ExplorerSource<FileItem> {
       },
       'use system application open file or directory',
       { multi: false },
+    );
+
+    this.addItemsAction(
+      'gitStage',
+      async (items) => {
+        await gitManager.stage(...items.map((item) => item.fullpath));
+        await this.reload(null);
+      },
+      'add file to git index',
+    );
+
+    this.addItemsAction(
+      'gitUnstage',
+      async (items) => {
+        await gitManager.unstage(...items.map((item) => item.fullpath));
+        await this.reload(null);
+      },
+      'use system application open file or directory',
     );
   }
 
