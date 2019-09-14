@@ -3,6 +3,7 @@ import './columns/selection';
 import './columns/icon';
 import './columns/filename';
 import './columns/indent';
+import './columns/indentLine';
 import './columns/readonly';
 import './columns/clip';
 import './columns/size';

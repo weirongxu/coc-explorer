@@ -67,6 +67,7 @@ export type FileItem = {
   writable: boolean;
   hidden: boolean;
   stat: fs.Stats;
+  isLastInLevel: boolean;
   parent?: FileItem;
   children?: FileItem[];
 };
@@ -678,6 +679,7 @@ export class FileSource extends ExplorerSource<FileItem> {
             readable,
             writable,
             hidden: file.startsWith('.'),
+            isLastInLevel: false,
             stat,
             parent: parent || undefined,
           };
@@ -692,7 +694,11 @@ export class FileSource extends ExplorerSource<FileItem> {
       }),
     );
 
-    return this.sortFiles(results.filter((r): r is FileItem => r !== null));
+    const sortedFiles = this.sortFiles(results.filter((r): r is FileItem => r !== null));
+    if (sortedFiles.length > 0) {
+      sortedFiles[sortedFiles.length - 1].isLastInLevel = true;
+    }
+    return sortedFiles;
   }
 
   async expandRecursiveItems(items: FileItem[]) {

@@ -200,6 +200,7 @@
               "diagnosticWarning",
               "diagnosticError",
               "indent",
+              "indentLine",
               "icon",
               "filename",
               "size",
