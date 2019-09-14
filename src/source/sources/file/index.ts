@@ -16,6 +16,7 @@ import open from 'open';
 import { debounce } from 'throttle-debounce';
 import { diagnosticUI } from './diagnostic-ui';
 import { gitManager } from '../../../git-manager';
+import { gitChangedLineIndexs } from './columns/git';
 
 const fsOpen = promisify(fs.open);
 const fsClose = promisify(fs.close);
@@ -99,7 +100,7 @@ export class FileSource extends ExplorerSource<FileItem> {
   showHiddenFiles: boolean = config.get<boolean>('file.showHiddenFiles')!;
   copyItems: Set<FileItem> = new Set();
   cutItems: Set<FileItem> = new Set();
-  currentFileItem: FileItem | null = null;
+  revealFileItem: FileItem | null = null;
 
   async init() {
     const { nvim } = this;
@@ -128,15 +129,15 @@ export class FileSource extends ExplorerSource<FileItem> {
                 if (bufinfo[0] && bufinfo[0].name) {
                   const item = await this.findItemByPath(bufinfo[0].name as string);
                   if (item) {
-                    this.currentFileItem = item;
+                    this.revealFileItem = item;
                   }
                   await this.render();
                   if (autoReveal) {
-                    await this.gotoItem(this.currentFileItem);
+                    await this.gotoItem(this.revealFileItem);
                   }
                 }
               } else {
-                this.currentFileItem = null;
+                this.revealFileItem = null;
                 await this.render({ storeCursor: false });
               }
             }),
@@ -585,7 +586,37 @@ export class FileSource extends ExplorerSource<FileItem> {
         await gitManager.unstage(...items.map((item) => item.fullpath));
         await this.reload(null);
       },
-      'use system application open file or directory',
+      'reset file from git index',
+    );
+
+    this.addItemAction(
+      'gitPrev',
+      async (item) => {
+        const lineIndex = this.lines.findIndex(([, it]) => it === item);
+        const changedIndex = gitChangedLineIndexs.findIndex((index) => index >= lineIndex);
+        if (changedIndex !== -1) {
+          const prevLineIndex = gitChangedLineIndexs[changedIndex - 1];
+          if (prevLineIndex !== undefined) {
+            await this.gotoLineIndex(prevLineIndex);
+          }
+        }
+      },
+      'goto previous git changed',
+    );
+
+    this.addItemAction(
+      'gitNext',
+      async (item) => {
+        const lineIndex = this.lines.findIndex(([, it]) => it === item);
+        const changedIndex = gitChangedLineIndexs.findIndex((index) => index > lineIndex) - 1;
+        if (changedIndex !== -2) {
+          const nextLineIndex = gitChangedLineIndexs[changedIndex + 1];
+          if (nextLineIndex !== undefined) {
+            await this.gotoLineIndex(nextLineIndex);
+          }
+        }
+      },
+      'goto previous git changed',
     );
   }
 

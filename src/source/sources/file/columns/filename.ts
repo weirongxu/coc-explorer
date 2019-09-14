@@ -38,7 +38,7 @@ fileColumnManager.registerColumn('filename', (source) => ({
     const width = realFilenameWidth - indentWidth(item);
     if (item.directory) {
       row.add(truncate(item.name + '/', width, 'end'), highlights.directory.group);
-    } else if (source.currentFileItem === item) {
+    } else if (source.revealFileItem === item) {
       row.add(truncate(item.name, width, 'end'), highlights.nameActive.group);
     } else {
       row.add(truncate(item.name, width, 'end'));

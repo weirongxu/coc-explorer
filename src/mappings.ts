@@ -106,8 +106,8 @@ export const defaultMappings: Record<keyof typeof MappingMode, OriginalMappings>
 
     '[c': 'gitPrev',
     ']c': 'gitNext',
-    'g<': 'gitStage',
-    'g>': 'gitUnstage',
+    '<c': 'gitStage',
+    '>c': 'gitUnstage',
   },
 };
 

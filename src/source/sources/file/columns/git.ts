@@ -83,6 +83,8 @@ async function loadStatus(path: string) {
   }
 }
 
+export let gitChangedLineIndexs: number[] = [];
+
 fileColumnManager.registerColumn('git', (fileSource) => ({
   async validate() {
     try {
@@ -94,6 +96,9 @@ fileColumnManager.registerColumn('git', (fileSource) => ({
   },
   async load() {
     await loadStatus(fileSource.root);
+  },
+  beforeDraw() {
+    gitChangedLineIndexs = [];
   },
   draw(row, item) {
     const showFormat = (f: string, staged: boolean) => {
@@ -113,6 +118,7 @@ fileColumnManager.registerColumn('git', (fileSource) => ({
         }
         showFormat(statusIcons[status.y], false);
         row.add(' ');
+        gitChangedLineIndexs.push(row.line);
       } else {
         row.add('   ');
       }
@@ -125,6 +131,7 @@ fileColumnManager.registerColumn('git', (fileSource) => ({
       }
       showFormat(statusIcons[status.y], false);
       row.add(' ');
+      gitChangedLineIndexs.push(row.line);
     } else {
       row.add('   ');
     }

@@ -15,8 +15,6 @@ export class Explorer {
   nvim = workspace.nvim;
   previousBufnr?: number;
   revealFilepath?: string;
-  cursorLineIndex: number = 0;
-  cursorCol: number = 0;
   stopRendering: boolean = false;
 
   private _buffer?: Buffer;
@@ -32,13 +30,6 @@ export class Explorer {
       events.on('BufWinLeave', (bufnr) => {
         if (bufnr !== this._bufnr) {
           this.previousBufnr = bufnr;
-        }
-      }),
-      events.on('CursorMoved', (bufnr, cursor) => {
-        if (bufnr === this._bufnr) {
-          const [line, col] = cursor;
-          this.cursorLineIndex = line - 1;
-          this.cursorCol = col;
         }
       }),
     );
