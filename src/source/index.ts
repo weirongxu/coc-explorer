@@ -538,6 +538,7 @@ export abstract class ExplorerSource<Item extends BaseItem<Item>> {
     this.explorer.stopRendering = true;
     const builder = new SourceViewBuilder<null>();
     const width = await this.nvim.call('winwidth', '%');
+    const storeCursor = await this.explorer.storeCursor();
 
     builder.newItem(null, (row) => {
       row.add(`Help for [${this.name}${isRoot ? ' root' : ''}], (use q or <esc> return to explorer)`);
@@ -608,6 +609,7 @@ export abstract class ExplorerSource<Item extends BaseItem<Item>> {
 
     await this.explorer.initMappings();
     this.explorer.stopRendering = false;
-    await this.explorer.renderAll();
+    await this.explorer.renderAll({ storeCursor: false });
+    await storeCursor();
   }
 }
