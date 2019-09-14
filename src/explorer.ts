@@ -321,7 +321,7 @@ export class Explorer {
     await Promise.all(this.sources.map((source) => source.reload(null, { render: false, notify: true })));
 
     if (render) {
-      await this.renderAll(true);
+      await this.renderAll({ notify: true, storeCursor: false });
     }
 
     if (!notify) {
@@ -329,7 +329,7 @@ export class Explorer {
     }
   }
 
-  async renderAll(notify = false) {
+  async renderAll({ notify = false, storeCursor = false } = {}) {
     if (!notify) {
       this.nvim.pauseNotification();
     }
@@ -338,7 +338,7 @@ export class Explorer {
 
     await this.clearContent();
     for (const source of this.sources) {
-      await source.render({ notify, storeCursor: false });
+      await source.render({ notify, storeCursor: storeCursor });
     }
 
     if (store) {

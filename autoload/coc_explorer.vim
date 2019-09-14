@@ -81,6 +81,7 @@ function! coc_explorer#init_buf()
   silent setlocal buftype=nofile bufhidden=hide
         \ noswapfile nomodeline
         \ filetype=coc-explorer
+        \ cursorline
         \ nomodifiable
         \ nomodified
         \ signcolumn=no

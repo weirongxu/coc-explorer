@@ -215,7 +215,7 @@
             "selection",
             "clip",
             "diagnosticError",
-            "indent",
+            "indentLine",
             "icon",
             "filename",
             "readonly",

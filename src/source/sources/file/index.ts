@@ -1,7 +1,6 @@
 import { workspace, events } from 'coc.nvim';
 import fs from 'fs';
 import pathLib from 'path';
-import { promisify } from 'util';
 import { ExplorerSource } from '../../';
 import { SourceViewBuilder } from '../../view-builder';
 import { sourceManager } from '../../source-manager';
@@ -9,45 +8,24 @@ import { hlGroupManager } from '../../highlight-manager';
 import { fileColumnManager } from './column-manager';
 import './load';
 import { onError } from '../../../logger';
-import { config, openStrategy, activeMode, supportBufferHighlight, autoReveal } from '../../../util';
-import trash from 'trash';
-import rimraf from 'rimraf';
+import { config, openStrategy, activeMode, supportBufferHighlight, autoReveal, delay } from '../../../util';
 import open from 'open';
 import { debounce } from 'throttle-debounce';
 import { diagnosticUI } from './diagnostic-ui';
 import { gitManager } from '../../../git-manager';
 import { gitChangedLineIndexs } from './columns/git';
-
-const fsOpen = promisify(fs.open);
-const fsClose = promisify(fs.close);
-const fsTouch = async (path: string) => await fsClose(await fsOpen(path, 'w'));
-const fsMkdir = promisify(fs.mkdir);
-const fsReaddir = promisify(fs.readdir);
-const fsAccess = (path: string, mode?: number) =>
-  new Promise<boolean>((resolve) => {
-    fs.access(path, mode, (err) => {
-      err ? resolve(false) : resolve(true);
-    });
-  });
-const fsExists = fsAccess;
-const fsStat = promisify(fs.stat);
-const fsCopyFile = promisify(fs.copyFile);
-const fsRename = promisify(fs.rename);
-const fsTrash = (paths: string | string[]) => trash(paths, { glob: false });
-const fsRimraf = promisify(rimraf);
-
-const copyFileOrDirectory = async (sourcePath: string, targetPath: string) => {
-  const stat = await fsStat(sourcePath);
-  if (stat.isDirectory()) {
-    await fsMkdir(targetPath);
-    const files = await fsReaddir(sourcePath);
-    for (const filename of files) {
-      await copyFileOrDirectory(pathLib.join(sourcePath, filename), pathLib.join(targetPath, filename));
-    }
-  } else {
-    await fsCopyFile(sourcePath, targetPath);
-  }
-};
+import {
+  fsExists,
+  copyFileOrDirectory,
+  fsRename,
+  fsTrash,
+  fsRimraf,
+  fsMkdir,
+  fsTouch,
+  fsReaddir,
+  fsStat,
+  fsAccess,
+} from '../../../util/fs';
 
 const guardTargetPath = async (path: string) => {
   if (await fsExists(path)) {
@@ -97,11 +75,11 @@ hlGroupManager.register(highlights);
 export class FileSource extends ExplorerSource<FileItem> {
   name = 'file';
   hlSrcId = workspace.createNameSpace('coc-explorer-file');
+  hlRevealedLineSrcId = workspace.createNameSpace('coc-explorer-file-revealed-line');
   root!: string;
   showHiddenFiles: boolean = config.get<boolean>('file.showHiddenFiles')!;
   copyItems: Set<FileItem> = new Set();
   cutItems: Set<FileItem> = new Set();
-  revealFileItem: FileItem | null = null;
 
   async init() {
     const { nvim } = this;
@@ -129,17 +107,12 @@ export class FileSource extends ExplorerSource<FileItem> {
                 const bufinfo = await nvim.call('getbufinfo', [bufnr]);
                 if (bufinfo[0] && bufinfo[0].name) {
                   const item = await this.findItemByPath(bufinfo[0].name as string);
-                  if (item) {
-                    this.revealFileItem = item;
-                  }
-                  await this.render();
-                  if (autoReveal) {
-                    await this.gotoItem(this.revealFileItem);
+                  if (autoReveal && item !== null) {
+                    await this.render();
+                    await this.gotoItem(item);
+                    await nvim.command('redraw!');
                   }
                 }
-              } else {
-                this.revealFileItem = null;
-                await this.render({ storeCursor: false });
               }
             }),
           );
@@ -629,6 +602,27 @@ export class FileSource extends ExplorerSource<FileItem> {
       : item.parent
       ? item.parent.fullpath
       : this.root;
+  }
+
+  async highlightRevealedLine(item: FileItem | null) {
+    if (supportBufferHighlight()) {
+      const { buffer } = this.explorer;
+      await buffer.clearHighlight({
+        srcId: this.hlRevealedLineSrcId,
+      });
+      if (item !== null) {
+        const lineIndex = this.lines.findIndex(([, it]) => it === item);
+        if (lineIndex !== -1) {
+          await buffer.addHighlight({
+            hlGroup: 'CursorLine',
+            line: this.startLine + lineIndex,
+            colStart: 0,
+            colEnd: -1,
+            srcId: this.hlRevealedLineSrcId,
+          });
+        }
+      }
+    }
   }
 
   async findItemByPath(path: string, items: FileItem[] = this.items): Promise<FileItem | null> {
