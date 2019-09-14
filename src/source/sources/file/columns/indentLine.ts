@@ -6,6 +6,7 @@ import { topLevel } from './indent';
 const highlights = {
   line: hlGroupManager.hlLinkGroupCommand('IndentLine', 'Comment'),
 };
+hlGroupManager.register(highlights);
 
 /**
  * indentLine
