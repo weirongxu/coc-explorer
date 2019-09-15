@@ -92,6 +92,11 @@
           ],
           "default": "select"
         },
+        "explorer.openAction.select.filterFloatWindows": {
+          "description": "Filter float windows in select strategy",
+          "type": "boolean",
+          "default": true
+        },
         "explorer.sources": {
           "description": "Explorer sources",
           "type": "array",

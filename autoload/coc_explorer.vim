@@ -88,6 +88,15 @@ function! coc_explorer#init_buf()
         \ nobuflisted
 endfunction
 
+fun coc_explorer#is_float_window(winnr)
+  if has('nvim')
+    let winid = win_getid(a:winnr)
+    return nvim_win_get_config(winid)['relative'] != ''
+  else
+    return 0
+  endif
+endf
+
 
 let s:select_wins_chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
 
@@ -99,22 +108,26 @@ endfunction
 
 " returns
 "   -1  - User cancelled
-"   0   - No selection of window
-"   > 0 - selected winnr
-function! coc_explorer#select_wins(name)
+"   0   - No window selected
+"   > 0 - Selected winnr
+function! coc_explorer#select_wins(explrer_bufname, filterFloatWindows)
   let store = {}
   let char_idx_mapto_winnr = {}
   let char_idx = 0
-  let explorer_name = '['.a:name.']'
-  for winnr in range(winnr(), winnr('$'))
-    if bufname(winbufnr(winnr)) != explorer_name
-      let store[winnr] = getwinvar(winnr, '&statusline')
-      let char_idx_mapto_winnr[char_idx] = winnr
-      let char = s:select_wins_chars[char_idx]
-      let statusline = printf('%%#CocExplorerSelectUI#%s %s', repeat(' ', winwidth(winnr)/2-1), char)
-      call setwinvar(winnr, '&statusline', statusline)
-      let char_idx += 1
+  let explorer_name = '['.a:explrer_bufname.']'
+  for winnr in range(1, winnr('$'))
+    if a:filterFloatWindows && coc_explorer#is_float_window(winnr)
+      continue
     endif
+    if bufname(winbufnr(winnr)) == explorer_name
+      continue
+    endif
+    let store[winnr] = getwinvar(winnr, '&statusline')
+    let char_idx_mapto_winnr[char_idx] = winnr
+    let char = s:select_wins_chars[char_idx]
+    let statusline = printf('%%#CocExplorerSelectUI#%s %s', repeat(' ', winwidth(winnr)/2-1), char)
+    call setwinvar(winnr, '&statusline', statusline)
+    let char_idx += 1
   endfor
   if len(char_idx_mapto_winnr) == 0
     call coc_explorer#select_wins_restore(store)

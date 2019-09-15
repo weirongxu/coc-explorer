@@ -1,6 +1,6 @@
 # coc-explorer
 
-**Experimental, maybe has break changes and bugs.**
+**Experimental, maybe has breaking changes and bugs.**
 
 [![Build Status](https://travis-ci.com/weirongxu/coc-explorer.svg?branch=master)](https://travis-ci.com/weirongxu/coc-explorer)
 
