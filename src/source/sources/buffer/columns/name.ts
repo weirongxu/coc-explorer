@@ -2,7 +2,7 @@ import { hlGroupManager } from '../../../highlight-manager';
 import { bufferColumnManager } from '../column-manager';
 
 const highlights = {
-  nameActive: hlGroupManager.hlLinkGroupCommand('BufferNameActive', 'String'),
+  nameVisible: hlGroupManager.hlLinkGroupCommand('BufferNameVisible', 'String'),
 };
 
 hlGroupManager.register(highlights);
@@ -10,7 +10,7 @@ hlGroupManager.register(highlights);
 bufferColumnManager.registerColumn('name', {
   draw(row, item) {
     if (item.visible) {
-      row.add(item.basename, highlights.nameActive.group);
+      row.add(item.basename, highlights.nameVisible.group);
     } else {
       row.add(item.basename);
     }
