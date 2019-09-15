@@ -1,6 +1,6 @@
 import { fileColumnManager } from '../column-manager';
 import { hlGroupManager } from '../../../highlight-manager';
-import { enableNerdfont } from './icon';
+import { enableNerdfont } from '../../../source';
 
 let copy = fileColumnManager.getColumnConfig<string>('clip.copy');
 let cut = fileColumnManager.getColumnConfig<string>('clip.cut');

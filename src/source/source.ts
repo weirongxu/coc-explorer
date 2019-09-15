@@ -14,9 +14,11 @@ export type ActionOptions = {
   select: boolean;
 };
 
+export const enableNerdfont = config.get<string>('icon.enableNerdfont')!;
+
 export const sourceIcons = {
-  expanded: config.get<string>('icon.expanded')!,
-  shrinked: config.get<string>('icon.shrinked')!,
+  expanded: config.get<string>('icon.expanded') || (enableNerdfont ? '' : '-'),
+  shrinked: config.get<string>('icon.shrinked') || (enableNerdfont ? '' : '+'),
   selected: config.get<string>('icon.selected')!,
   unselected: config.get<string>('icon.unselected')!,
 };
@@ -384,9 +386,9 @@ export abstract class ExplorerSource<Item extends BaseItem<Item>> {
     item: null | Item,
     { render = true, notify = false }: { buffer?: Buffer; render?: boolean; notify?: boolean } = {},
   ) {
+    this.selectedItems = new Set();
     this.items = await this.loadItems(item);
     await this.loaded(item);
-    this.selectedItems = new Set();
     if (render) {
       await this.render({ notify });
     }

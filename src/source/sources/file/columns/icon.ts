@@ -1,6 +1,6 @@
-import { expandStore } from '..';
+import { expandStore } from '../file-source';
 import { fileColumnManager } from '../column-manager';
-import { sourceIcons } from '../../..';
+import { sourceIcons, enableNerdfont } from '../../../source';
 import pathLib from 'path';
 // reference:
 //   icon code from https://github.com/ryanoasis/vim-devicons/blob/830f0fe48a337ed26384c43929032786f05c8d24/plugin/webdevicons.vim#L129
@@ -30,7 +30,6 @@ Object.entries(nerdfontJson.icons).forEach(([name, icon]) => {
 
 hlGroupManager.register(nerdfontHighlights);
 
-export const enableNerdfont = fileColumnManager.getColumnConfig<string>('icon.enableNerdfont');
 const space = ' '.repeat(sourceIcons.shrinked.length);
 
 const getIcon = (filename: string): undefined | { name: string; code: string; color: string } => {

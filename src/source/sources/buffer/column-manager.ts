@@ -1,4 +1,4 @@
-import { BufferItem, BufferSource } from './index';
+import { BufferItem, BufferSource } from './buffer-source';
 import { config } from '../../../util';
 import { ColumnDraw, BaseColumnManager } from '../../base-column-manager';
 

@@ -1,14 +1,14 @@
 import { workspace, events } from 'coc.nvim';
 import fs from 'fs';
 import pathLib from 'path';
-import { ExplorerSource } from '../../';
+import { ExplorerSource, sourceIcons } from '../../source';
 import { SourceViewBuilder } from '../../view-builder';
 import { sourceManager } from '../../source-manager';
 import { hlGroupManager } from '../../highlight-manager';
 import { fileColumnManager } from './column-manager';
 import './load';
 import { onError } from '../../../logger';
-import { config, openStrategy, activeMode, supportBufferHighlight, autoReveal, delay } from '../../../util';
+import { config, openStrategy, activeMode, supportBufferHighlight, autoReveal } from '../../../util';
 import open from 'open';
 import { debounce } from 'throttle-debounce';
 import { diagnosticUI } from './diagnostic-ui';
@@ -106,7 +106,7 @@ export class FileSource extends ExplorerSource<FileItem> {
               if (bufnr !== this.explorer.bufnr) {
                 const bufinfo = await nvim.call('getbufinfo', [bufnr]);
                 if (bufinfo[0] && bufinfo[0].name) {
-                  const item = await this.findItemByPath(bufinfo[0].name as string);
+                  const item = await this.revealItemByPath(bufinfo[0].name as string);
                   if (autoReveal && item !== null) {
                     await this.render();
                     await this.gotoItem(item);
@@ -489,7 +489,7 @@ export class FileSource extends ExplorerSource<FileItem> {
         await fsMkdir(pathLib.dirname(targetPath), { recursive: true });
         await fsTouch(targetPath);
         await this.reload(null);
-        const addedItem = await this.findItemByPath(targetPath);
+        const addedItem = await this.revealItemByPath(targetPath);
         if (addedItem) {
           await this.gotoItem(addedItem);
         }
@@ -508,7 +508,7 @@ export class FileSource extends ExplorerSource<FileItem> {
         const targetPath = pathLib.join(this.getPutTargetDir(items ? items[0] : null), directoryPath);
         await fsMkdir(targetPath, { recursive: true });
         await this.reload(null);
-        const addedItem = await this.findItemByPath(targetPath);
+        const addedItem = await this.revealItemByPath(targetPath);
         if (addedItem) {
           await this.gotoItem(addedItem);
         }
@@ -590,7 +590,7 @@ export class FileSource extends ExplorerSource<FileItem> {
           }
         }
       },
-      'goto previous git changed',
+      'goto next git changed',
     );
   }
 
@@ -604,35 +604,14 @@ export class FileSource extends ExplorerSource<FileItem> {
       : this.root;
   }
 
-  async highlightRevealedLine(item: FileItem | null) {
-    if (supportBufferHighlight()) {
-      const { buffer } = this.explorer;
-      await buffer.clearHighlight({
-        srcId: this.hlRevealedLineSrcId,
-      });
-      if (item !== null) {
-        const lineIndex = this.lines.findIndex(([, it]) => it === item);
-        if (lineIndex !== -1) {
-          await buffer.addHighlight({
-            hlGroup: 'CursorLine',
-            line: this.startLine + lineIndex,
-            colStart: 0,
-            colEnd: -1,
-            srcId: this.hlRevealedLineSrcId,
-          });
-        }
-      }
-    }
-  }
-
-  async findItemByPath(path: string, items: FileItem[] = this.items): Promise<FileItem | null> {
+  async revealItemByPath(path: string, items: FileItem[] = this.items): Promise<FileItem | null> {
     for (const item of items) {
       if (item.directory && path.startsWith(item.fullpath + '/')) {
         expandStore.expand(item.fullpath);
         if (!item.children) {
           item.children = await this.listFiles(item.fullpath, item);
         }
-        return await this.findItemByPath(path, item.children);
+        return await this.revealItemByPath(path, item.children);
       } else if (path === item.fullpath) {
         return item;
       }
@@ -723,6 +702,8 @@ export class FileSource extends ExplorerSource<FileItem> {
   }
 
   async loadItems(_item: FileItem | null): Promise<FileItem[]> {
+    this.copyItems.clear();
+    this.cutItems.clear();
     if (expandStore.isExpanded(this.root)) {
       return this.listFiles(this.root, null);
     } else {
@@ -736,7 +717,7 @@ export class FileSource extends ExplorerSource<FileItem> {
 
   async opened() {
     if (this.explorer.revealFilepath && autoReveal) {
-      const item = await this.findItemByPath(this.explorer.revealFilepath);
+      const item = await this.revealItemByPath(this.explorer.revealFilepath);
       await this.render({ storeCursor: false });
       await this.gotoItem(item, { col: 1 });
     } else {
@@ -749,7 +730,7 @@ export class FileSource extends ExplorerSource<FileItem> {
 
     const rootExpanded = expandStore.isExpanded(this.root);
     builder.newRoot((row) => {
-      row.add(rootExpanded ? '-' : '+', highlights.expandIcon.group);
+      row.add(rootExpanded ? sourceIcons.expanded : sourceIcons.shrinked, highlights.expandIcon.group);
       row.add(' ');
       row.add(`[FILE${this.showHiddenFiles ? ' I' : ''}]:`, highlights.title.group);
       row.add(' ');

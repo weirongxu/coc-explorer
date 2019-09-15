@@ -1,4 +1,4 @@
-import { FileItem, FileSource } from '.';
+import { FileItem, FileSource } from './file-source';
 import { config } from '../../../util';
 import { ColumnDraw, BaseColumnManager } from '../../base-column-manager';
 

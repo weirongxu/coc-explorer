@@ -1,5 +1,5 @@
 import { bufferColumnManager } from '../column-manager';
-import { sourceIcons } from '../../..';
+import { sourceIcons } from '../../../source';
 
 bufferColumnManager.registerColumn('selection', (source) => ({
   draw(row, item) {

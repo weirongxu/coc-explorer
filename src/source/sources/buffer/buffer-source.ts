@@ -1,6 +1,6 @@
 import { workspace, events } from 'coc.nvim';
 import pathLib from 'path';
-import { ExplorerSource } from '../..';
+import { ExplorerSource, sourceIcons } from '../../source';
 import { hlGroupManager } from '../../highlight-manager';
 import { sourceManager } from '../../source-manager';
 import { SourceViewBuilder } from '../../view-builder';
@@ -248,7 +248,7 @@ export class BufferSource extends ExplorerSource<BufferItem> {
     bufferColumnManager.beforeDraw();
 
     builder.newRoot((row) => {
-      row.add(this.expanded ? '-' : '+', highlights.expandIcon.group);
+      row.add(this.expanded ? sourceIcons.expanded : sourceIcons.shrinked, highlights.expandIcon.group);
       row.add(' ');
       row.add(`[BUFFER${this.showHiddenBuffers ? ' I' : ''}]`, highlights.title.group);
     });

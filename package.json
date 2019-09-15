@@ -129,15 +129,18 @@
             }
           }
         },
+        "explorer.icon.enableNerdfont": {
+          "description": "Enalbe nerdfont",
+          "type": "boolean",
+          "default": false
+        },
         "explorer.icon.expanded": {
           "description": "Icon for expanded node",
-          "type": "string",
-          "default": "-"
+          "type": "string"
         },
         "explorer.icon.shrinked": {
           "description": "Icon for shrinked node",
-          "type": "string",
-          "default": "+"
+          "type": "string"
         },
         "explorer.icon.selected": {
           "description": "Selection selected chars for File source",
@@ -309,11 +312,6 @@
           "description": "Icon shrinked directory",
           "type": "string",
           "default": "+"
-        },
-        "explorer.file.column.icon.enableNerdfont": {
-          "description": "Enalbe nerdfont",
-          "type": "boolean",
-          "default": false
         },
         "explorer.file.column.filename.minWidth": {
           "description": "Filename min with",

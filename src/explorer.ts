@@ -1,7 +1,7 @@
 import { ExtensionContext, workspace, Disposable, Window, events, Buffer } from 'coc.nvim';
 import { Args, parseArgs, ArgPosition } from './parse-args';
 import './source/load';
-import { ExplorerSource, BaseItem } from './source';
+import { ExplorerSource, BaseItem } from './source/source';
 import { sourceManager } from './source/source-manager';
 import { mappings, Action } from './mappings';
 import { onError } from './logger';

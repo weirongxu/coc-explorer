@@ -1,5 +1,5 @@
 import { SourceRowBuilder } from './view-builder';
-import { ExplorerSource, BaseItem } from '.';
+import { ExplorerSource, BaseItem } from './source';
 import { config } from '../util';
 import { Disposable } from 'coc.nvim';
 

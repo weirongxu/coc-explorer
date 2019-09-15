@@ -1,5 +1,5 @@
 import { fileColumnManager } from '../column-manager';
-import { FileItem } from '..';
+import { FileItem } from '../file-source';
 import { hlGroupManager } from '../../../highlight-manager';
 import { topLevel } from './indent';
 
@@ -12,9 +12,6 @@ hlGroupManager.register(highlights);
  * indentLine
  *
  * ┊
- * ┊
- * └
- * │
  * │
  * └
  */

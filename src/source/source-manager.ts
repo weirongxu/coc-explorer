@@ -1,5 +1,5 @@
 import { Disposable, workspace } from 'coc.nvim';
-import { ExplorerSource } from '.';
+import { ExplorerSource } from './source';
 
 class SourceManager {
   registeredSources: Record<string, ExplorerSource<any>> = {};

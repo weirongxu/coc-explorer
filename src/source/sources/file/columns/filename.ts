@@ -2,7 +2,7 @@ import { hlGroupManager } from '../../../highlight-manager';
 import { fileColumnManager } from '../column-manager';
 import { truncate } from '../../../../util';
 import { indentChars, topLevel } from './indent';
-import { FileItem, expandStore } from '..';
+import { FileItem, expandStore } from '../file-source';
 
 export const highlights = {
   directory: hlGroupManager.hlLinkGroupCommand('FileDirectory', 'PreProc'),
