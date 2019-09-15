@@ -136,10 +136,11 @@ class GitCommand {
 }
 
 class GitManager {
+  cmd = new GitCommand();
+
   private rootCache: Record<string, string> = {};
   private statusCache: Record<string, Record<string, GitStatus>> = {};
   private directoryStatusCache: Record<string, Record<string, GitDirectoryStatus>> = {};
-  cmd = new GitCommand();
 
   async getGitRoot(path: string): Promise<string | undefined> {
     if (path in this.rootCache) {

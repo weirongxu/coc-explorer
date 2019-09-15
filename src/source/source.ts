@@ -1,11 +1,12 @@
-import { Disposable, listManager, workspace, Buffer } from 'coc.nvim';
+import { Buffer, Disposable, listManager, workspace } from 'coc.nvim';
 import { Range } from 'vscode-languageserver-protocol';
 import { explorerActions } from '../actions-list';
 import { Explorer } from '../explorer';
 import { onError } from '../logger';
 import { Action, ActionSyms, mappings, reverseMappings } from '../mappings';
-import { byteIndex, byteLength, chunk, supportBufferHighlight, config } from '../util';
+import { byteIndex, byteLength, chunk, config, supportBufferHighlight } from '../util';
 import { SourceRowBuilder, SourceViewBuilder } from './view-builder';
+import { findLast } from '../util/array';
 
 export type ActionOptions = {
   multi: boolean;
@@ -130,6 +131,61 @@ export abstract class ExplorerSource<Item extends BaseItem<Item>> {
       },
       'toggle item selection',
       { multi: false, select: true },
+    );
+
+    this.addAction(
+      'gitPrev',
+      async (items) => {
+        const item = items ? items[0] : null;
+        if (this instanceof FileSource) {
+          const lineIndex = this.lines.findIndex(([, it]) => it === item);
+          const prevChangedIndex = findLast(this.gitChangedLineIndexes, (idx) => idx < lineIndex);
+          if (prevChangedIndex !== undefined) {
+            await this.gotoLineIndex(prevChangedIndex);
+            return;
+          }
+        }
+        const sourceIndex = this.explorer.sources.findIndex((s) => s === this);
+        const fileSource = findLast(
+          this.explorer.sources.slice(0, sourceIndex),
+          (source) => source instanceof FileSource && source.gitChangedLineIndexes.length > 0,
+        ) as undefined | FileSource;
+        if (fileSource) {
+          const prevLineIndex = fileSource.gitChangedLineIndexes[fileSource.gitChangedLineIndexes.length - 1];
+          if (prevLineIndex !== undefined) {
+            await fileSource.gotoLineIndex(prevLineIndex);
+          }
+        }
+      },
+      'goto previous git changed',
+    );
+
+    this.addAction(
+      'gitNext',
+      async (items) => {
+        const item = items ? items[0] : null;
+        if (this instanceof FileSource) {
+          const lineIndex = this.lines.findIndex(([, it]) => it === item);
+          const nextChangedIndex = this.gitChangedLineIndexes.find((idx) => idx > lineIndex);
+          if (nextChangedIndex !== undefined) {
+            await this.gotoLineIndex(nextChangedIndex);
+            return;
+          }
+        }
+        const sourceIndex = this.explorer.sources.findIndex((s) => s === this);
+        const fileSource = this.explorer.sources
+          .slice(sourceIndex + 1)
+          .find((source) => source instanceof FileSource && source.gitChangedLineIndexes.length > 0) as
+          | undefined
+          | FileSource;
+        if (fileSource) {
+          const nextLineIndex = fileSource.gitChangedLineIndexes[0];
+          if (nextLineIndex !== undefined) {
+            await fileSource.gotoLineIndex(nextLineIndex);
+          }
+        }
+      },
+      'goto next git changed',
     );
   }
 
@@ -618,3 +674,5 @@ export abstract class ExplorerSource<Item extends BaseItem<Item>> {
     await storeCursor();
   }
 }
+
+import { FileSource } from './sources/file/file-source';

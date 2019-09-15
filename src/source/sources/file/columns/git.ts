@@ -28,8 +28,6 @@ const statusIcons = {
   [GitFormat.ignored]: getIconConf('ignored'),
 };
 
-export let gitChangedLineIndexs: number[] = [];
-
 fileColumnManager.registerColumn('git', (fileSource) => ({
   async validate() {
     try {
@@ -43,7 +41,7 @@ fileColumnManager.registerColumn('git', (fileSource) => ({
     await gitManager.reload(item ? item.fullpath : fileSource.root, showIgnored);
   },
   beforeDraw() {
-    gitChangedLineIndexs = [];
+    fileSource.gitChangedLineIndexes = [];
   },
   draw(row, item) {
     const showFormat = (f: string, staged: boolean) => {
@@ -62,7 +60,7 @@ fileColumnManager.registerColumn('git', (fileSource) => ({
       }
       showFormat(statusIcons[status.y], false);
       row.add(' ');
-      gitChangedLineIndexs.push(row.line);
+      fileSource.gitChangedLineIndexes.push(row.line);
     } else {
       row.add('   ');
     }

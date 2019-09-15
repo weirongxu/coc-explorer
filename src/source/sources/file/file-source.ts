@@ -1,31 +1,30 @@
-import { workspace, events } from 'coc.nvim';
+import { events, workspace } from 'coc.nvim';
 import fs from 'fs';
-import pathLib from 'path';
-import { ExplorerSource, sourceIcons } from '../../source';
-import { SourceViewBuilder } from '../../view-builder';
-import { sourceManager } from '../../source-manager';
-import { hlGroupManager } from '../../highlight-manager';
-import { fileColumnManager } from './column-manager';
-import './load';
-import { onError } from '../../../logger';
-import { config, openStrategy, activeMode, supportBufferHighlight, autoReveal } from '../../../util';
 import open from 'open';
+import pathLib from 'path';
 import { debounce } from 'throttle-debounce';
-import { diagnosticUI } from './diagnostic-ui';
 import { gitManager } from '../../../git-manager';
-import { gitChangedLineIndexs } from './columns/git';
+import { onError } from '../../../logger';
+import { activeMode, autoReveal, config, openStrategy, supportBufferHighlight } from '../../../util';
 import {
-  fsExists,
   copyFileOrDirectory,
-  fsRename,
-  fsTrash,
-  fsRimraf,
-  fsMkdir,
-  fsTouch,
-  fsReaddir,
-  fsStat,
   fsAccess,
+  fsExists,
+  fsMkdir,
+  fsReaddir,
+  fsRename,
+  fsRimraf,
+  fsStat,
+  fsTouch,
+  fsTrash,
 } from '../../../util/fs';
+import { hlGroupManager } from '../../highlight-manager';
+import { ExplorerSource, sourceIcons } from '../../source';
+import { sourceManager } from '../../source-manager';
+import { SourceViewBuilder } from '../../view-builder';
+import { fileColumnManager } from './column-manager';
+import { diagnosticUI } from './diagnostic-ui';
+import './load';
 
 const guardTargetPath = async (path: string) => {
   if (await fsExists(path)) {
@@ -80,6 +79,7 @@ export class FileSource extends ExplorerSource<FileItem> {
   showHiddenFiles: boolean = config.get<boolean>('file.showHiddenFiles')!;
   copyItems: Set<FileItem> = new Set();
   cutItems: Set<FileItem> = new Set();
+  gitChangedLineIndexes: number[] = [];
 
   async init() {
     const { nvim } = this;
@@ -561,36 +561,6 @@ export class FileSource extends ExplorerSource<FileItem> {
         await this.reload(null);
       },
       'reset file from git index',
-    );
-
-    this.addItemAction(
-      'gitPrev',
-      async (item) => {
-        const lineIndex = this.lines.findIndex(([, it]) => it === item);
-        const changedIndex = gitChangedLineIndexs.findIndex((index) => index >= lineIndex);
-        if (changedIndex !== -1) {
-          const prevLineIndex = gitChangedLineIndexs[changedIndex - 1];
-          if (prevLineIndex !== undefined) {
-            await this.gotoLineIndex(prevLineIndex);
-          }
-        }
-      },
-      'goto previous git changed',
-    );
-
-    this.addItemAction(
-      'gitNext',
-      async (item) => {
-        const lineIndex = this.lines.findIndex(([, it]) => it === item);
-        const changedIndex = gitChangedLineIndexs.findIndex((index) => index > lineIndex) - 1;
-        if (changedIndex !== -2) {
-          const nextLineIndex = gitChangedLineIndexs[changedIndex + 1];
-          if (nextLineIndex !== undefined) {
-            await this.gotoLineIndex(nextLineIndex);
-          }
-        }
-      },
-      'goto next git changed',
     );
   }
 
