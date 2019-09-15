@@ -240,8 +240,8 @@ export class BufferSource extends ExplorerSource<BufferItem> {
     }, []);
   }
 
-  async loaded(item: BufferItem) {
-    await bufferColumnManager.load(item);
+  async loaded(sourceItem: BufferItem) {
+    await bufferColumnManager.load(sourceItem);
   }
 
   draw(builder: SourceViewBuilder<BufferItem>) {

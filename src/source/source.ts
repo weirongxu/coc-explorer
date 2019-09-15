@@ -378,17 +378,17 @@ export abstract class ExplorerSource<Item extends BaseItem<Item>> {
     }
   }
 
-  abstract loadItems(item: null | Item): Promise<Item[]>;
+  abstract loadItems(sourceItem: null | Item): Promise<Item[]>;
   abstract draw(builder: SourceViewBuilder<Item>): void;
-  async loaded(_item: null | Item): Promise<void> {}
+  async loaded(_sourceItem: null | Item): Promise<void> {}
 
   async reload(
-    item: null | Item,
+    sourceItem: null | Item,
     { render = true, notify = false }: { buffer?: Buffer; render?: boolean; notify?: boolean } = {},
   ) {
     this.selectedItems = new Set();
-    this.items = await this.loadItems(item);
-    await this.loaded(item);
+    this.items = await this.loadItems(sourceItem);
+    await this.loaded(sourceItem);
     if (render) {
       await this.render({ notify });
     }

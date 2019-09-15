@@ -1,8 +1,7 @@
 import commandExists from 'command-exists';
-import pathLib from 'path';
 import { hlGroupManager } from '../../../highlight-manager';
 import { fileColumnManager } from '../column-manager';
-import { GitFormat, GitStatus, gitManager } from '../../../../git-manager';
+import { GitFormat, gitManager } from '../../../../git-manager';
 
 const highlights = {
   stage: hlGroupManager.hlLinkGroupCommand('FileGitStage', 'Comment'),
@@ -29,60 +28,6 @@ const statusIcons = {
   [GitFormat.ignored]: getIconConf('ignored'),
 };
 
-let gitStatusCache: Record<string, GitStatus> = {};
-
-type GitDirectoryStatus = {
-  x: GitFormat;
-  y: GitFormat;
-};
-
-let gitDirectoryCache: Record<string, GitDirectoryStatus> = {};
-
-function generateDirectoryStatus(root: string) {
-  Object.entries(gitStatusCache).forEach(([fullpath, status]) => {
-    const relativePath = pathLib.relative(root, fullpath);
-    const parts = relativePath.split(pathLib.sep);
-    for (let i = 1; i <= parts.length; i++) {
-      const parentPath = pathLib.join(root, parts.slice(0, i).join(pathLib.sep));
-      const cache = gitDirectoryCache[parentPath];
-      if (cache) {
-        if (cache.x !== GitFormat.mixed) {
-          if (cache.x !== status.x) {
-            if (cache.x === GitFormat.unmodified) {
-              cache.x = status.x;
-            } else {
-              cache.x = GitFormat.mixed;
-            }
-          }
-        }
-        if (cache.y !== GitFormat.mixed) {
-          if (cache.y !== status.y) {
-            if (cache.y === GitFormat.unmodified) {
-              cache.y = status.y;
-            } else {
-              cache.y = GitFormat.mixed;
-            }
-          }
-        }
-      } else {
-        gitDirectoryCache[parentPath] = {
-          x: status.x,
-          y: status.y,
-        };
-      }
-    }
-  });
-}
-
-async function loadStatus(path: string) {
-  gitDirectoryCache = {};
-  const root = await gitManager.getGitRoot(path);
-  if (root) {
-    gitStatusCache = await gitManager.fetchStatus(root, showIgnored);
-    generateDirectoryStatus(root);
-  }
-}
-
 export let gitChangedLineIndexs: number[] = [];
 
 fileColumnManager.registerColumn('git', (fileSource) => ({
@@ -94,8 +39,8 @@ fileColumnManager.registerColumn('git', (fileSource) => ({
       return false;
     }
   },
-  async load() {
-    await loadStatus(fileSource.root);
+  async load(item) {
+    await gitManager.reload(item ? item.fullpath : fileSource.root, showIgnored);
   },
   beforeDraw() {
     gitChangedLineIndexs = [];
@@ -108,23 +53,9 @@ fileColumnManager.registerColumn('git', (fileSource) => ({
         row.add(f);
       }
     };
-    if (item.directory) {
-      if (item.fullpath in gitDirectoryCache) {
-        const status = gitDirectoryCache[item.fullpath];
-        if (status.x !== status.y) {
-          showFormat(statusIcons[status.x], true);
-        } else {
-          showFormat(' ', true);
-        }
-        showFormat(statusIcons[status.y], false);
-        row.add(' ');
-        gitChangedLineIndexs.push(row.line);
-      } else {
-        row.add('   ');
-      }
-    } else if (item.fullpath in gitStatusCache) {
-      const status = gitStatusCache[item.fullpath];
-      if (status.x !== status.y) {
+    const status = gitManager.getStatus(item.fullpath);
+    if (status) {
+      if (status.x !== GitFormat.untracked && status.x !== GitFormat.ignored) {
         showFormat(statusIcons[status.x], true);
       } else {
         showFormat(' ', true);

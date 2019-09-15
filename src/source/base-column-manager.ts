@@ -8,7 +8,7 @@ export interface ColumnDraw<Item> {
 
   validate?(): boolean | Promise<boolean>;
 
-  load?(item: Item | null): void | Promise<void>;
+  load?(sourceTtem: Item | null): void | Promise<void>;
 
   beforeDraw?(): void | Promise<void>;
 
@@ -56,9 +56,9 @@ export class BaseColumnManager<
     });
   }
 
-  async load(item: Item | null) {
+  async load(sourceItem: Item | null) {
     for (const fileColumn of this.columnDraws) {
-      await (fileColumn.load && fileColumn.load(item));
+      await (fileColumn.load && fileColumn.load(sourceItem));
     }
   }
 

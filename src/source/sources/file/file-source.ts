@@ -154,7 +154,7 @@ export class FileSource extends ExplorerSource<FileItem> {
         expandStore.expand(this.root);
         await this.reload(null);
       },
-      'goto parent root',
+      'change directory to parent directory',
       { multi: false },
     );
 
@@ -204,7 +204,7 @@ export class FileSource extends ExplorerSource<FileItem> {
           await this.reload(item);
         }
       },
-      'change directory',
+      'change directory to current node',
       { multi: false },
     );
     this.addItemAction(
@@ -548,7 +548,7 @@ export class FileSource extends ExplorerSource<FileItem> {
     this.addItemsAction(
       'gitStage',
       async (items) => {
-        await gitManager.stage(...items.map((item) => item.fullpath));
+        await gitManager.cmd.stage(...items.map((item) => item.fullpath));
         await this.reload(null);
       },
       'add file to git index',
@@ -557,7 +557,7 @@ export class FileSource extends ExplorerSource<FileItem> {
     this.addItemsAction(
       'gitUnstage',
       async (items) => {
-        await gitManager.unstage(...items.map((item) => item.fullpath));
+        await gitManager.cmd.unstage(...items.map((item) => item.fullpath));
         await this.reload(null);
       },
       'reset file from git index',
@@ -701,7 +701,7 @@ export class FileSource extends ExplorerSource<FileItem> {
     );
   }
 
-  async loadItems(_item: FileItem | null): Promise<FileItem[]> {
+  async loadItems(_sourceItem: FileItem | null): Promise<FileItem[]> {
     this.copyItems.clear();
     this.cutItems.clear();
     if (expandStore.isExpanded(this.root)) {
@@ -711,8 +711,8 @@ export class FileSource extends ExplorerSource<FileItem> {
     }
   }
 
-  async loaded(item: FileItem | null) {
-    await fileColumnManager.load(item);
+  async loaded(sourceItem: FileItem | null) {
+    await fileColumnManager.load(sourceItem);
   }
 
   async opened() {
