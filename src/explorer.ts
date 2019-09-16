@@ -23,7 +23,10 @@ export class Explorer {
   private _args?: Args;
   private _sources?: ExplorerSource<any>[];
   private lastArgStrings?: string[];
-  private mappings: Record<string, string> = {};
+  /**
+   * mappings[key][mode] = '<Plug>(coc-action-mode-key)'
+   */
+  private mappings: Record<string, Record<string, string>> = {};
   private registeredMapping: boolean = false;
   private onRegisteredMapping = new Emitter<void>();
 
@@ -172,15 +175,16 @@ export class Explorer {
   async registerMappings() {
     this.mappings = {};
     Object.entries(mappings).forEach(([key, actions]) => {
-      const plugKey = `explorer-action-${key.replace('<', '[lt]').replace('>', '[gt]')}`;
+      this.mappings[key] = {};
       (['n', 'v'] as ('n' | 'v')[]).forEach((mode) => {
+        const plugKey = `explorer-action-${mode}-${key.replace(/\<(.*)\>/, '[$1]')}`;
         this.context.subscriptions.push(
           workspace.registerKeymap([mode], plugKey, async () => {
             this.doActions(actions, mode).catch(onError);
           }),
         );
+        this.mappings[key][mode] = `<Plug>(coc-${plugKey})`;
       });
-      this.mappings[key] = `<Plug>(coc-${plugKey})`;
     });
     await this.nvim.call('coc_explorer#register_mappings', [this.mappings]);
     this.registeredMapping = true;
@@ -204,7 +208,7 @@ export class Explorer {
   async doAction(action: Action, mode: 'n' | 'v' = 'n') {
     const { nvim } = this;
 
-    const lineIndexs = [];
+    const lineIndexes: number[] = [];
     const document = await workspace.document;
     if (mode === 'v') {
       const range = await workspace.getSelectedRange(
@@ -213,17 +217,17 @@ export class Explorer {
         document,
       );
       for (let line = range.start.line; line <= range.end.line; line++) {
-        lineIndexs.push(line);
+        lineIndexes.push(line);
       }
     } else {
       const line = ((await nvim.call('line', '.')) as number) - 1;
-      lineIndexs.push(line);
+      lineIndexes.push(line);
     }
 
     const itemsGroup: Map<ExplorerSource<any>, Set<object | null>> = new Map();
 
-    for (const lineIndex of lineIndexs) {
-      const source = this.findSource(lineIndex);
+    for (const lineIndex of lineIndexes) {
+      const [source] = this.findSourceByLineIndex(lineIndex);
       if (source) {
         if (!itemsGroup.has(source)) {
           itemsGroup.set(source, new Set());
@@ -246,12 +250,13 @@ export class Explorer {
     );
   }
 
-  private findSource(lineIndex: number) {
-    return this.sources.find((source) => lineIndex < source.endLine);
-  }
-
-  private findSourceIndex(lineIndex: number) {
-    return this.sources.findIndex((source) => lineIndex < source.endLine);
+  private findSourceByLineIndex(lineIndex: number) {
+    const sourceIndex = this.sources.findIndex((source) => lineIndex < source.endLine);
+    if (sourceIndex === -1) {
+      return [null, -1] as [null, -1];
+    } else {
+      return [this.sources[sourceIndex], sourceIndex] as [ExplorerSource<any>, number];
+    }
   }
 
   /**
@@ -282,7 +287,7 @@ export class Explorer {
     const storeCursor = await this.currentCursor();
     const storeView = await this.nvim.call('winsaveview');
     if (storeCursor) {
-      const sourceIndex = this.findSourceIndex(storeCursor.lineIndex);
+      const [, sourceIndex] = this.findSourceByLineIndex(storeCursor.lineIndex);
       const source = this.sources[sourceIndex];
       if (source) {
         const sourceLineIndex = storeCursor.lineIndex - source.startLine;

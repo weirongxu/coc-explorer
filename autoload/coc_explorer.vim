@@ -186,18 +186,20 @@ endfunction
 
 function! coc_explorer#execute_mappings(mappings)
   if &filetype == 'coc-explorer'
-    for [key, target] in items(a:mappings)
-      execute 'vmap <buffer> ' . key . ' ' . target
-      execute 'nmap <buffer> ' . key . ' ' . target
+    for [key, mapping] in items(a:mappings)
+      for [mode, target] in items(mapping)
+        execute mode . 'map <buffer> ' . key . ' ' . target
+      endfor
     endfor
   endif
 endfunction
 
 function! coc_explorer#clear_mappings(mappings)
   if &filetype == 'coc-explorer'
-    for [key, target] in items(a:mappings)
-      execute 'vunmap <buffer> ' . key
-      execute 'nunmap <buffer> ' . key
+    for [key, mapping] in items(a:mappings)
+      for [mode, target] in items(mapping)
+        execute mode . 'unmap <buffer> ' . key
+      endfor
     endfor
   endif
 endfunction
