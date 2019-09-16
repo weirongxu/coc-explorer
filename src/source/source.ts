@@ -408,6 +408,9 @@ export abstract class ExplorerSource<Item extends BaseItem<Item>> {
         lineIndex = this.lines.length - 1;
       }
       await win.setCursor([this.startLine + lineIndex + 1, finalCol - 1]);
+      if (workspace.env.isVim) {
+        await this.nvim.command('redraw!');
+      }
     }
   }
 
