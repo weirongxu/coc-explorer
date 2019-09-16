@@ -6,7 +6,7 @@
 
 ## Screenshot
 
-![image](https://user-images.githubusercontent.com/1709861/64673276-49d40b80-d4a0-11e9-95d0-9744febd7da0.png)
+![image](https://user-images.githubusercontent.com/1709861/64966850-1e9f5100-d8d2-11e9-9490-438c6d1cf378.png)
 
 ## Requirements
 
