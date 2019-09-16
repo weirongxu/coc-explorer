@@ -14,6 +14,8 @@ export const activate = async (context: ExtensionContext) => {
   );
   hlGroupManager.executeCommands().catch(onError);
 
+  const explorer = new Explorer(context);
+
   nvim
     .getOption('runtimepath')
     .then(async (rtp) => {
@@ -22,16 +24,13 @@ export const activate = async (context: ExtensionContext) => {
       if (!paths.includes(extensionPath)) {
         await nvim.command(`execute 'noa set rtp^='.fnameescape('${extensionPath.replace(/'/g, "''")}')`);
       }
+      explorer.onDidAutoload.fire();
     })
     .catch(onError);
-
-  const explorer = new Explorer(context);
 
   subscriptions.push(
     commands.registerCommand('explorer', (...args) => {
       explorer.open(args).catch(onError);
     }),
   );
-
-  await explorer.registerMappings();
 };

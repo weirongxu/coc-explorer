@@ -1,4 +1,4 @@
-import { ExtensionContext, workspace, Disposable, Window, events, Buffer } from 'coc.nvim';
+import { ExtensionContext, workspace, Window, events, Buffer, Emitter } from 'coc.nvim';
 import { Args, parseArgs, ArgPosition } from './parse-args';
 import './source/load';
 import { ExplorerSource, BaseItem } from './source/source';
@@ -16,6 +16,7 @@ export class Explorer {
   previousBufnr?: number;
   revealFilepath?: string;
   stopRendering: boolean = false;
+  onDidAutoload = new Emitter<void>();
 
   private _buffer?: Buffer;
   private _bufnr?: number;
@@ -23,6 +24,8 @@ export class Explorer {
   private _sources?: ExplorerSource<any>[];
   private lastArgStrings?: string[];
   private mappings: Record<string, string> = {};
+  private registeredMapping: boolean = false;
+  private onRegisteredMapping = new Emitter<void>();
 
   constructor(public context: ExtensionContext) {
     const { subscriptions } = context;
@@ -34,6 +37,10 @@ export class Explorer {
         }
       }),
     );
+
+    this.onDidAutoload.event(() => {
+      this.registerMappings().catch(onError);
+    });
   }
 
   get args(): Args {
@@ -106,6 +113,12 @@ export class Explorer {
   }
 
   async open(argStrings: string[]) {
+    if (!this.registeredMapping) {
+      await new Promise((resolve) => {
+        this.onRegisteredMapping.event(resolve);
+      });
+    }
+
     const { nvim } = this;
 
     await this.initArgs(argStrings);
@@ -170,6 +183,8 @@ export class Explorer {
       this.mappings[key] = `<Plug>(coc-${plugKey})`;
     });
     await this.nvim.call('coc_explorer#register_mappings', [this.mappings]);
+    this.registeredMapping = true;
+    this.onRegisteredMapping.fire();
   }
 
   async executeMappings() {
