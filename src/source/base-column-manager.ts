@@ -10,7 +10,7 @@ export interface ColumnDraw<Item> {
 
   load?(sourceTtem: Item | null): void | Promise<void>;
 
-  beforeDraw?(): void | Promise<void>;
+  beforeDraw?(): void;
 
   draw(row: SourceRowBuilder, item: Item): void;
 }

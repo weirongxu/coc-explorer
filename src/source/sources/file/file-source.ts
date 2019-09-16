@@ -23,7 +23,7 @@ import { ExplorerSource, sourceIcons } from '../../source';
 import { sourceManager } from '../../source-manager';
 import { SourceViewBuilder } from '../../view-builder';
 import { fileColumnManager } from './column-manager';
-import { diagnosticUI } from './diagnostic-ui';
+import { diagnosticManager } from '../../../diagnostic-manager';
 import './load';
 
 const guardTargetPath = async (path: string) => {
@@ -120,11 +120,18 @@ export class FileSource extends ExplorerSource<FileItem> {
           events.on(
             ['InsertLeave', 'TextChanged'],
             debounce(1000, async () => {
-              diagnosticUI.reload();
-              if (
-                (fileColumnManager.columns.includes('diagnosticError') && diagnosticUI.errorNeedRedraw) ||
-                (fileColumnManager.columns.includes('diagnosticWarning') && diagnosticUI.warningNeedRedraw)
-              ) {
+              let needRender = false;
+              if (fileColumnManager.columns.includes('diagnosticError')) {
+                if (diagnosticManager.errorReload()) {
+                  needRender = true;
+                }
+              }
+              if (fileColumnManager.columns.includes('diagnosticWarning')) {
+                if (diagnosticManager.warningReload()) {
+                  needRender = true;
+                }
+              }
+              if (needRender) {
                 await this.render();
               }
             }),
