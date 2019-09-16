@@ -7,9 +7,12 @@ const highlights = {
 };
 hlGroupManager.register(highlights);
 
-fileColumnManager.registerColumn('diagnosticWarning', {
+fileColumnManager.registerColumn('diagnosticWarning', (fileSource) => ({
   load() {
     diagnosticManager.warningReload();
+  },
+  beforeDraw() {
+    fileSource.diagnosisLineIndexes = [];
   },
   draw(row, item) {
     if (Object.keys(diagnosticManager.warningPathCountStr).length > 0) {
@@ -18,10 +21,11 @@ fileColumnManager.registerColumn('diagnosticWarning', {
           diagnosticManager.warningPathCountStr[item.fullpath].padStart(diagnosticManager.errorMaxWidth),
           highlights.warning.group,
         );
+        fileSource.diagnosisLineIndexes.push(row.line);
       } else {
         row.add(' '.repeat(diagnosticManager.warningMaxWidth));
       }
       row.add(' ');
     }
   },
-});
+}));

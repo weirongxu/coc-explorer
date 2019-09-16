@@ -47,8 +47,8 @@ const Actions = {
   systemExecute: 0,
   windowsDrive: 0,
 
-  diagnosisPrev: 0,
-  diagnosisNext: 0,
+  diagnosticPrev: 0,
+  diagnosticNext: 0,
 
   gitPrev: 0,
   gitNext: 0,
@@ -101,13 +101,13 @@ export const defaultMappings: Record<keyof typeof MappingMode, OriginalMappings>
     X: 'systemExecute',
     gd: 'windowsDrive',
 
-    '[d': 'diagnosisPrev',
-    ']d': 'diagnosisNext',
+    '[d': 'diagnosticPrev',
+    ']d': 'diagnosticNext',
 
     '[c': 'gitPrev',
     ']c': 'gitNext',
-    '<c': 'gitStage',
-    '>c': 'gitUnstage',
+    '<<': 'gitStage',
+    '>>': 'gitUnstage',
   },
 };
 

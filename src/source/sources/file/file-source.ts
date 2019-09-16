@@ -78,6 +78,7 @@ export class FileSource extends ExplorerSource<FileItem> {
   showHiddenFiles: boolean = config.get<boolean>('file.showHiddenFiles')!;
   copyItems: Set<FileItem> = new Set();
   cutItems: Set<FileItem> = new Set();
+  diagnosisLineIndexes: number[] = [];
   gitChangedLineIndexes: number[] = [];
 
   async init() {

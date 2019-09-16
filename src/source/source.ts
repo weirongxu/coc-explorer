@@ -134,14 +134,68 @@ export abstract class ExplorerSource<Item extends BaseItem<Item>> {
     );
 
     this.addAction(
+      'diagnosticPrev',
+      async (items) => {
+        const item = items ? items[0] : null;
+        if (this instanceof FileSource) {
+          const lineIndex = this.lines.findIndex(([, it]) => it === item);
+          const prevIndex = findLast(this.diagnosisLineIndexes, (idx) => idx < lineIndex);
+          if (prevIndex !== undefined) {
+            await this.gotoLineIndex(prevIndex);
+          }
+        }
+        const sourceIndex = this.explorer.sources.findIndex((s) => s === this);
+        const fileSource = findLast(
+          this.explorer.sources.slice(0, sourceIndex),
+          (source) => source instanceof FileSource && source.diagnosisLineIndexes.length > 0,
+        ) as undefined | FileSource;
+        if (fileSource) {
+          const prevIndex = fileSource.diagnosisLineIndexes[fileSource.diagnosisLineIndexes.length - 1];
+          if (prevIndex !== undefined) {
+            await fileSource.gotoLineIndex(prevIndex);
+          }
+        }
+      },
+      'go to previous diagnostic',
+    );
+
+    this.addAction(
+      'diagnosticNext',
+      async (items) => {
+        const item = items ? items[0] : null;
+        if (this instanceof FileSource) {
+          const lineIndex = this.lines.findIndex(([, it]) => it === item);
+          const nextIndex = this.diagnosisLineIndexes.find((idx) => idx > lineIndex);
+          if (nextIndex !== undefined) {
+            await this.gotoLineIndex(nextIndex);
+            return;
+          }
+        }
+        const sourceIndex = this.explorer.sources.findIndex((s) => s === this);
+        const fileSource = this.explorer.sources
+          .slice(sourceIndex + 1)
+          .find((source) => source instanceof FileSource && source.diagnosisLineIndexes.length > 0) as
+          | undefined
+          | FileSource;
+        if (fileSource) {
+          const nextIndex = fileSource.diagnosisLineIndexes[0];
+          if (nextIndex !== undefined) {
+            await fileSource.gotoLineIndex(nextIndex);
+          }
+        }
+      },
+      'go to next diagnostic',
+    );
+
+    this.addAction(
       'gitPrev',
       async (items) => {
         const item = items ? items[0] : null;
         if (this instanceof FileSource) {
           const lineIndex = this.lines.findIndex(([, it]) => it === item);
-          const prevChangedIndex = findLast(this.gitChangedLineIndexes, (idx) => idx < lineIndex);
-          if (prevChangedIndex !== undefined) {
-            await this.gotoLineIndex(prevChangedIndex);
+          const prevIndex = findLast(this.gitChangedLineIndexes, (idx) => idx < lineIndex);
+          if (prevIndex !== undefined) {
+            await this.gotoLineIndex(prevIndex);
             return;
           }
         }
@@ -151,13 +205,13 @@ export abstract class ExplorerSource<Item extends BaseItem<Item>> {
           (source) => source instanceof FileSource && source.gitChangedLineIndexes.length > 0,
         ) as undefined | FileSource;
         if (fileSource) {
-          const prevLineIndex = fileSource.gitChangedLineIndexes[fileSource.gitChangedLineIndexes.length - 1];
-          if (prevLineIndex !== undefined) {
-            await fileSource.gotoLineIndex(prevLineIndex);
+          const prevIndex = fileSource.gitChangedLineIndexes[fileSource.gitChangedLineIndexes.length - 1];
+          if (prevIndex !== undefined) {
+            await fileSource.gotoLineIndex(prevIndex);
           }
         }
       },
-      'goto previous git changed',
+      'go to previous git changed',
     );
 
     this.addAction(
@@ -166,9 +220,9 @@ export abstract class ExplorerSource<Item extends BaseItem<Item>> {
         const item = items ? items[0] : null;
         if (this instanceof FileSource) {
           const lineIndex = this.lines.findIndex(([, it]) => it === item);
-          const nextChangedIndex = this.gitChangedLineIndexes.find((idx) => idx > lineIndex);
-          if (nextChangedIndex !== undefined) {
-            await this.gotoLineIndex(nextChangedIndex);
+          const nextIndex = this.gitChangedLineIndexes.find((idx) => idx > lineIndex);
+          if (nextIndex !== undefined) {
+            await this.gotoLineIndex(nextIndex);
             return;
           }
         }
@@ -179,13 +233,13 @@ export abstract class ExplorerSource<Item extends BaseItem<Item>> {
           | undefined
           | FileSource;
         if (fileSource) {
-          const nextLineIndex = fileSource.gitChangedLineIndexes[0];
-          if (nextLineIndex !== undefined) {
-            await fileSource.gotoLineIndex(nextLineIndex);
+          const nextIndex = fileSource.gitChangedLineIndexes[0];
+          if (nextIndex !== undefined) {
+            await fileSource.gotoLineIndex(nextIndex);
           }
         }
       },
-      'goto next git changed',
+      'go to next git changed',
     );
   }
 
