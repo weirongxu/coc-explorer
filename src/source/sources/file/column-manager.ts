@@ -5,11 +5,15 @@ import { ColumnDraw, BaseColumnManager } from '../../base-column-manager';
 export type FileColumn =
   | 'git'
   | 'selection'
+  | 'clip'
+  | 'diagnosticWarning'
+  | 'diagnosticError'
   | 'indent'
-  | 'readonly'
-  | 'expandIcon'
+  | 'indentLine'
+  | 'icon'
   | 'filename'
   | 'size'
+  | 'readonly'
   | 'modified'
   | 'created'
   | 'accessed'
@@ -17,12 +21,6 @@ export type FileColumn =
 
 export interface FileColumnDraw extends ColumnDraw<FileItem> {}
 
-class FileColumnManager extends BaseColumnManager<
-  FileItem,
-  FileSource,
-  FileColumnDraw
-> {}
+class FileColumnManager extends BaseColumnManager<FileItem, FileSource, FileColumnDraw> {}
 
-export const fileColumnManager = new FileColumnManager(
-  config.get<FileColumn[]>('file.columns')!,
-);
+export const fileColumnManager = new FileColumnManager(config.get<FileColumn[]>('file.columns')!);

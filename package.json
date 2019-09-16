@@ -228,9 +228,7 @@
             "filename",
             "readonly",
             "size",
-            "modified",
-            "created",
-            "accessed"
+            "modified"
           ]
         },
         "explorer.file.column.git.showIgnored": {
@@ -350,6 +348,7 @@
   },
   "dependencies": {
     "command-exists": "^1.2.8",
+    "dayjs": "^1.8.16",
     "open": "^6.4.0",
     "pretty-bytes": "^5.3.0",
     "rimraf": "^3.0.0",

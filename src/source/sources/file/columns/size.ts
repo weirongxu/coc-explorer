@@ -15,5 +15,6 @@ fileColumnManager.registerColumn('size', {
     } else {
       row.add(truncate(prettyBytes(item.stat.size), 10, 'start'), highlights.size.group);
     }
+    row.add(' ');
   },
 });

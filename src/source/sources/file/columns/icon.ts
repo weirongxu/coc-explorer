@@ -100,10 +100,8 @@ fileColumnManager.registerColumn('icon', {
         } else {
           row.add(nerdfont.icons.file.code, nerdfontHighlights['file'].group);
         }
-      } else {
-        row.add(space);
+        row.add(' ');
       }
-      row.add(' ');
     }
   },
 });

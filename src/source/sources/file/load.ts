@@ -7,5 +7,8 @@ import './columns/indentLine';
 import './columns/readonly';
 import './columns/clip';
 import './columns/size';
+import './columns/modified';
+import './columns/created';
+import './columns/accessed';
 import './columns/diagnosticError';
 import './columns/diagnosticWarning';
