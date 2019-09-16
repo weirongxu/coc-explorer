@@ -126,9 +126,7 @@ export class Explorer {
 
     await this.reloadAll();
 
-    if (!inited) {
-      await this.initMappings();
-    }
+    await this.initMappings();
 
     for (const source of this.sources) {
       await source.opened();
