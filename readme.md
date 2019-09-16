@@ -109,6 +109,9 @@ Explorer file columns, supported columns:
 - size
 - diagnosticError
 - diagnosticWarning
+- created
+- modified
+- accessed
 
 ## Inspired by
 

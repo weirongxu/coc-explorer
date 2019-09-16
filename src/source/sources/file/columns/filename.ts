@@ -3,6 +3,7 @@ import { fileColumnManager } from '../column-manager';
 import { truncate } from '../../../../util';
 import { indentChars, topLevel } from './indent';
 import { FileItem, expandStore } from '../file-source';
+import { enableNerdfont } from '../../../source';
 
 export const highlights = {
   directory: hlGroupManager.hlLinkGroupCommand('FileDirectory', 'PreProc'),
@@ -13,15 +14,33 @@ hlGroupManager.register(highlights);
 const minWidth = fileColumnManager.getColumnConfig<number>('filename.minWidth')!;
 const maxWidth = fileColumnManager.getColumnConfig<number>('filename.maxWidth')!;
 
-let realFilenameWidth = minWidth;
+let fullTreeWidth = minWidth;
 
 function indentWidth(item: FileItem) {
-  return indentChars.length * (item.level - (topLevel ? 0 : 1));
+  if (fileColumnManager.columns.includes('indent') || fileColumnManager.columns.includes('indentLine')) {
+    return indentChars.length * (item.level - (topLevel ? 0 : 1));
+  } else {
+    return 0;
+  }
+}
+
+function iconWidth(item: FileItem) {
+  if (fileColumnManager.columns.includes('icon')) {
+    if (enableNerdfont) {
+      return 2;
+    } else if (item.directory) {
+      return 2;
+    } else {
+      return 0;
+    }
+  } else {
+    return 0;
+  }
 }
 
 fileColumnManager.registerColumn('filename', (fileSource) => ({
   beforeDraw() {
-    const maxFilenameWidth = fileSource.items
+    const maxTreeWidth = fileSource.items
       .reduce<FileItem[]>((flatItems, item) => {
         flatItems.push(item);
         if (item.directory && expandStore.isExpanded(item.fullpath) && item.children) {
@@ -30,16 +49,16 @@ fileColumnManager.registerColumn('filename', (fileSource) => ({
         return flatItems;
       }, [])
       .filter((item) => !item.hidden || fileSource.showHiddenFiles)
-      .map((item) => item.name.length + indentWidth(item))
+      .map((item) => item.name.length + indentWidth(item) + iconWidth(item))
       .reduce((width, max) => (width > max ? width : max), 0);
-    realFilenameWidth = Math.min(maxWidth, Math.max(minWidth, maxFilenameWidth));
+    fullTreeWidth = Math.min(maxWidth, Math.max(minWidth, maxTreeWidth));
   },
   draw(row, item) {
-    const width = realFilenameWidth - indentWidth(item);
+    const filenameWidth = fullTreeWidth - indentWidth(item) - iconWidth(item);
     if (item.directory) {
-      row.add(truncate(item.name + '/', width, 'end'), highlights.directory.group);
+      row.add(truncate(item.name + '/', filenameWidth, 'end'), highlights.directory.group);
     } else {
-      row.add(truncate(item.name, width, 'end'));
+      row.add(truncate(item.name, filenameWidth, 'end'));
     }
     row.add(' ');
   },
