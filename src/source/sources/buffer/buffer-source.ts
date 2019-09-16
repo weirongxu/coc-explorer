@@ -127,7 +127,7 @@ export class BufferSource extends ExplorerSource<BufferItem> {
           if (prevWinnr) {
             nvim.pauseNotification();
             nvim.command(`${prevWinnr}wincmd w`, true);
-            await nvim.command(`buffer ${item.bufnr}`);
+            nvim.command(`buffer ${item.bufnr}`, true);
             await nvim.resumeNotification();
           } else {
             await this.doAction('openInVsplit', item);
@@ -172,7 +172,7 @@ export class BufferSource extends ExplorerSource<BufferItem> {
       'openInVsplit',
       async (item) => {
         nvim.pauseNotification();
-        await nvim.command(`vertical sbuffer ${item.bufnr}`);
+        nvim.command(`vertical sbuffer ${item.bufnr}`, true);
         if (this.explorer.position === 'left') {
           nvim.command('wincmd L', true);
         } else {
