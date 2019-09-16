@@ -11,7 +11,6 @@ hlGroupManager.register(highlights);
 /**
  * indentLine
  *
- * ┊
  * │
  * └
  */
@@ -22,8 +21,6 @@ function indentLine(item: FileItem) {
   }
   if (item.isLastInLevel) {
     row = '└ ';
-  } else if (item.level % 2 === 0) {
-    row = '┊ ';
   } else {
     row = '│ ';
   }
@@ -34,8 +31,6 @@ function indentLine(item: FileItem) {
     }
     if (curItem.isLastInLevel) {
       row = '  ' + row;
-    } else if (curItem.level % 2 === 0) {
-      row = '┊ ' + row;
     } else {
       row = '│ ' + row;
     }

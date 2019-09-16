@@ -3,7 +3,6 @@ import { fileColumnManager } from '../column-manager';
 import { truncate } from '../../../../util';
 import { indentChars, topLevel } from './indent';
 import { FileItem, expandStore } from '../file-source';
-import { enableNerdfont } from '../../../source';
 
 export const highlights = {
   directory: hlGroupManager.hlLinkGroupCommand('FileDirectory', 'PreProc'),
@@ -24,20 +23,6 @@ function indentWidth(item: FileItem) {
   }
 }
 
-function iconWidth(item: FileItem) {
-  if (fileColumnManager.columns.includes('icon')) {
-    if (enableNerdfont) {
-      return 2;
-    } else if (item.directory) {
-      return 2;
-    } else {
-      return 0;
-    }
-  } else {
-    return 0;
-  }
-}
-
 fileColumnManager.registerColumn('filename', (fileSource) => ({
   beforeDraw() {
     const maxTreeWidth = fileSource.items
@@ -49,12 +34,12 @@ fileColumnManager.registerColumn('filename', (fileSource) => ({
         return flatItems;
       }, [])
       .filter((item) => !item.hidden || fileSource.showHiddenFiles)
-      .map((item) => item.name.length + indentWidth(item) + iconWidth(item))
+      .map((item) => item.name.length + indentWidth(item))
       .reduce((width, max) => (width > max ? width : max), 0);
     fullTreeWidth = Math.min(maxWidth, Math.max(minWidth, maxTreeWidth));
   },
   draw(row, item) {
-    const filenameWidth = fullTreeWidth - indentWidth(item) - iconWidth(item);
+    const filenameWidth = fullTreeWidth - indentWidth(item);
     if (item.directory) {
       row.add(truncate(item.name + '/', filenameWidth, 'end'), highlights.directory.group);
     } else {
