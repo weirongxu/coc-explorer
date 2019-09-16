@@ -63,12 +63,11 @@ export const expandStore = {
 };
 
 const hl = hlGroupManager.hlLinkGroupCommand;
-
 const highlights = {
   title: hl('FileRoot', 'Identifier'),
   expandIcon: hl('FileExpandIcon', 'Special'),
+  fullpath: hl('FileFullpath', 'Comment'),
 };
-
 hlGroupManager.register(highlights);
 
 export class FileSource extends ExplorerSource<FileItem> {
@@ -711,7 +710,9 @@ export class FileSource extends ExplorerSource<FileItem> {
       row.add(' ');
       row.add(`[FILE${this.showHiddenFiles ? ' I' : ''}]:`, highlights.title.group);
       row.add(' ');
-      row.add(`${this.root}`);
+      row.add(pathLib.basename(this.root));
+      row.add(' ');
+      row.add(this.root, highlights.fullpath.group);
     });
     const drawSubDirectory = (items: FileItem[]) => {
       for (const item of items) {

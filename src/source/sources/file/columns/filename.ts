@@ -19,9 +19,9 @@ function indentWidth(item: FileItem) {
   return indentChars.length * (item.level - (topLevel ? 0 : 1));
 }
 
-fileColumnManager.registerColumn('filename', (source) => ({
+fileColumnManager.registerColumn('filename', (fileSource) => ({
   beforeDraw() {
-    const maxFilenameWidth = source.items
+    const maxFilenameWidth = fileSource.items
       .reduce<FileItem[]>((flatItems, item) => {
         flatItems.push(item);
         if (item.directory && expandStore.isExpanded(item.fullpath) && item.children) {
@@ -29,7 +29,7 @@ fileColumnManager.registerColumn('filename', (source) => ({
         }
         return flatItems;
       }, [])
-      .filter((item) => !item.hidden || source.showHiddenFiles)
+      .filter((item) => !item.hidden || fileSource.showHiddenFiles)
       .map((item) => item.name.length + indentWidth(item))
       .reduce((width, max) => (width > max ? width : max), 0);
     realFilenameWidth = Math.min(maxWidth, Math.max(minWidth, maxFilenameWidth));
