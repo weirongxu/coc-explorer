@@ -113,16 +113,22 @@ export class BufferSource extends ExplorerSource<BufferItem> {
         } else if (openStrategy === 'select') {
           await this.selectWindowsUI(
             async (winnr) => {
-              await this.nvim.command(`${winnr}wincmd w`);
-              await nvim.command(`buffer ${item.bufnr}`);
+              nvim.pauseNotification();
+              this.nvim.command(`${winnr}wincmd w`, true);
+              nvim.command(`buffer ${item.bufnr}`, true);
+              await nvim.resumeNotification();
             },
             async () => {
               await this.doAction('openInVsplit', item);
             },
           );
         } else if (openStrategy === 'previousBuffer') {
-          if (await this.gotoPrevWin()) {
+          const prevWinnr = await this.prevWinnr();
+          if (prevWinnr) {
+            nvim.pauseNotification();
+            nvim.command(`${prevWinnr}wincmd w`, true);
             await nvim.command(`buffer ${item.bufnr}`);
+            await nvim.resumeNotification();
           } else {
             await this.doAction('openInVsplit', item);
           }
@@ -165,18 +171,14 @@ export class BufferSource extends ExplorerSource<BufferItem> {
     this.addItemAction(
       'openInVsplit',
       async (item) => {
+        nvim.pauseNotification();
         await nvim.command(`vertical sbuffer ${item.bufnr}`);
-        const winnr = await nvim.call('winnr');
         if (this.explorer.position === 'left') {
-          if (winnr === 1) {
-            await nvim.command('wincmd L');
-          }
+          nvim.command('wincmd L', true);
         } else {
-          const lastWinid = (await nvim.call('winnr', '$')) as number;
-          if (winnr === lastWinid) {
-            await nvim.command('wincmd H');
-          }
+          nvim.command('wincmd H', true);
         }
+        await nvim.resumeNotification();
       },
       'open buffer via vsplit command',
     );

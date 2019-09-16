@@ -224,16 +224,22 @@ export class FileSource extends ExplorerSource<FileItem> {
           } else if (openStrategy === 'select') {
             await this.selectWindowsUI(
               async (winnr) => {
-                await this.nvim.command(`${winnr}wincmd w`);
-                await nvim.command(`edit ${item.fullpath}`);
+                nvim.pauseNotification();
+                this.nvim.command(`${winnr}wincmd w`, true);
+                nvim.command(`edit ${item.fullpath}`, true);
+                await nvim.resumeNotification();
               },
               async () => {
                 await this.doAction('openInVsplit', item);
               },
             );
           } else if (openStrategy === 'previousBuffer') {
-            if (await this.gotoPrevWin()) {
-              await nvim.command(`edit ${item.fullpath}`);
+            const prevWinnr = await this.prevWinnr();
+            if (prevWinnr) {
+              nvim.pauseNotification();
+              nvim.command(`${prevWinnr}wincmd w`, true);
+              nvim.command(`edit ${item.fullpath}`, true);
+              await nvim.resumeNotification();
             } else {
               await this.doAction('openInVsplit', item);
             }
@@ -256,18 +262,14 @@ export class FileSource extends ExplorerSource<FileItem> {
       'openInVsplit',
       async (item) => {
         if (!item.directory) {
-          await nvim.command(`vsplit ${item.fullpath}`);
-          const winnr = await nvim.call('winnr');
+          nvim.pauseNotification();
+          nvim.command(`vsplit ${item.fullpath}`, true);
           if (this.explorer.position === 'left') {
-            if (winnr === 1) {
-              await nvim.command('wincmd L');
-            }
+            nvim.command('wincmd L', true);
           } else {
-            const lastWinid = (await nvim.call('winnr', '$')) as number;
-            if (winnr === lastWinid) {
-              await nvim.command('wincmd H');
-            }
+            nvim.command('wincmd H', true);
           }
+          await nvim.resumeNotification();
         }
       },
       'open file via vsplit command',

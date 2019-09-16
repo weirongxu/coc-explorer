@@ -204,16 +204,15 @@ export abstract class ExplorerSource<Item extends BaseItem<Item>> {
     throw new Error(`source(${this.name}) unbound to explorer`);
   }
 
-  async gotoPrevWin() {
-    const { nvim } = this;
-    if (this.explorer.previousBufnr) {
-      const winnr = await this.nvim.call('bufwinnr', [this.explorer.previousBufnr]);
-      if (winnr !== this.explorer.winnr && winnr > 0) {
-        await nvim.command(`${winnr}wincmd w`);
-        return true;
-      } else {
-        return false;
-      }
+  /**
+   * @returns winnr
+   */
+  async prevWinnr() {
+    const winnr = (await this.nvim.call('bufwinnr', [this.explorer.previousBufnr])) as number;
+    if ((await this.explorer.winnr) !== winnr && winnr > 0) {
+      return winnr;
+    } else {
+      return null;
     }
   }
 

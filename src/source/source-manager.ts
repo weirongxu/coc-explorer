@@ -1,4 +1,4 @@
-import { Disposable, workspace } from 'coc.nvim';
+import { Disposable } from 'coc.nvim';
 import { ExplorerSource } from './source';
 
 class SourceManager {
