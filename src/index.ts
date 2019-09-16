@@ -32,4 +32,6 @@ export const activate = async (context: ExtensionContext) => {
       explorer.open(args).catch(onError);
     }),
   );
+
+  await explorer.registerMappings();
 };

@@ -22,6 +22,7 @@ export class Explorer {
   private _args?: Args;
   private _sources?: ExplorerSource<any>[];
   private lastArgStrings?: string[];
+  private mappings: Record<string, string> = {};
 
   constructor(public context: ExtensionContext) {
     const { subscriptions } = context;
@@ -126,8 +127,6 @@ export class Explorer {
 
     await this.reloadAll();
 
-    await this.initMappings();
-
     for (const source of this.sources) {
       await source.opened();
     }
@@ -157,22 +156,28 @@ export class Explorer {
     await this.nvim.command('quit');
   }
 
-  private _mappingsDisposable: Disposable[] = [];
-  async clearMappings() {
-    this._mappingsDisposable.forEach((d) => d.dispose());
-    this._mappingsDisposable = [];
-  }
-  async initMappings() {
+  async registerMappings() {
+    this.mappings = {};
     Object.entries(mappings).forEach(([key, actions]) => {
+      const plugKey = `explorer-action-${key.replace('<', '[lt]').replace('>', '[gt]')}`;
       (['n', 'v'] as ('n' | 'v')[]).forEach((mode) => {
-        this._mappingsDisposable.push(
-          // @ts-ignore FIXME upgrade to latest coc.nvim
-          workspace.registerLocalKeymap(mode, key, () => {
+        this.context.subscriptions.push(
+          workspace.registerKeymap([mode], plugKey, async () => {
             this.doActions(actions, mode).catch(onError);
           }),
         );
       });
+      this.mappings[key] = `<Plug>(coc-${plugKey})`;
     });
+    await this.nvim.call('coc_explorer#register_mappings', [this.mappings]);
+  }
+
+  async executeMappings() {
+    await this.nvim.call('coc_explorer#execute_mappings', [this.mappings]);
+  }
+
+  async clearMappings() {
+    await this.nvim.call('coc_explorer#clear_mappings', [this.mappings]);
   }
 
   async doActions(actions: Action[], mode: 'n' | 'v' = 'n') {

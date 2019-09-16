@@ -88,14 +88,14 @@ function! coc_explorer#init_buf()
         \ nobuflisted
 endfunction
 
-fun coc_explorer#is_float_window(winnr)
+function! coc_explorer#is_float_window(winnr)
   if has('nvim')
     let winid = win_getid(a:winnr)
     return nvim_win_get_config(winid)['relative'] != ''
   else
     return 0
   endif
-endf
+endfunction
 
 
 let s:select_wins_chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
@@ -173,5 +173,31 @@ function! coc_explorer#clearmatches(ids, ...)
   let exists = get(w:, 'coc_explorer_matchids', [])
   if !empty(exists)
     call filter(w:coc_matchids, 'index(a:ids, v:val) == -1')
+  endif
+endfunction
+
+function! coc_explorer#register_mappings(mappings)
+  let s:coc_explorer_mappings = a:mappings
+  augroup coc_explorer_mappings
+    au!
+    autocmd FileType coc-explorer call coc_explorer#execute_mappings(s:coc_explorer_mappings)
+  augroup END
+endfunction
+
+function! coc_explorer#execute_mappings(mappings)
+  if &filetype == 'coc-explorer'
+    for [key, target] in items(a:mappings)
+      execute 'vmap <buffer> ' . key . ' ' . target
+      execute 'nmap <buffer> ' . key . ' ' . target
+    endfor
+  endif
+endfunction
+
+function! coc_explorer#clear_mappings(mappings)
+  if &filetype == 'coc-explorer'
+    for [key, target] in items(a:mappings)
+      execute 'vunmap <buffer> ' . key
+      execute 'nunmap <buffer> ' . key
+    endfor
   endif
 endfunction

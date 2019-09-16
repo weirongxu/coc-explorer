@@ -667,7 +667,7 @@ export abstract class ExplorerSource<Item extends BaseItem<Item>> {
     });
     disposables.forEach((d) => d.dispose());
 
-    await this.explorer.initMappings();
+    await this.explorer.executeMappings();
     this.explorer.stopRendering = false;
     await this.explorer.renderAll({ storeCursor: false });
     await storeCursor();
