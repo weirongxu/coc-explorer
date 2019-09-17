@@ -44,6 +44,7 @@ export type FileItem = {
   writable: boolean;
   hidden: boolean;
   stat: fs.Stats;
+  isFirstInLevel: boolean;
   isLastInLevel: boolean;
   parent?: FileItem;
   children?: FileItem[];
@@ -631,6 +632,7 @@ export class FileSource extends ExplorerSource<FileItem> {
             readable,
             writable,
             hidden: file.startsWith('.'),
+            isFirstInLevel: false,
             isLastInLevel: false,
             stat,
             parent: parent || undefined,
@@ -646,11 +648,7 @@ export class FileSource extends ExplorerSource<FileItem> {
       }),
     );
 
-    const sortedFiles = this.sortFiles(results.filter((r): r is FileItem => r !== null));
-    if (sortedFiles.length > 0) {
-      sortedFiles[sortedFiles.length - 1].isLastInLevel = true;
-    }
-    return sortedFiles;
+    return this.sortFiles(results.filter((r): r is FileItem => r !== null));
   }
 
   async expandRecursiveItems(items: FileItem[]) {
@@ -718,14 +716,21 @@ export class FileSource extends ExplorerSource<FileItem> {
       row.add(this.root, highlights.fullpath.group);
     });
     const drawSubDirectory = (items: FileItem[]) => {
-      for (const item of items) {
-        if (!item.hidden || this.showHiddenFiles) {
-          builder.newItem(item, (row) => {
-            fileColumnManager.drawItem(row, item);
-          });
-          if (expandStore.isExpanded(item.fullpath) && item.children) {
-            drawSubDirectory(item.children);
-          }
+      items.forEach((item) => {
+        item.isFirstInLevel = false;
+        item.isLastInLevel = false;
+      });
+      const filteredItems = this.showHiddenFiles ? items : items.filter((item) => !item.hidden);
+      if (filteredItems.length > 0) {
+        filteredItems[0].isFirstInLevel = true;
+        filteredItems[filteredItems.length - 1].isLastInLevel = true;
+      }
+      for (const item of filteredItems) {
+        builder.newItem(item, (row) => {
+          fileColumnManager.drawItem(row, item);
+        });
+        if (expandStore.isExpanded(item.fullpath) && item.children) {
+          drawSubDirectory(item.children);
         }
       }
     };
