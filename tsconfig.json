@@ -4,7 +4,7 @@
     "module": "commonjs",
     "lib": ["es6"],
     "target": "es2017",
-    "declaration": true,
+    "declaration": false,
     "moduleResolution": "node",
     "esModuleInterop": true,
     "resolveJsonModule": true,
