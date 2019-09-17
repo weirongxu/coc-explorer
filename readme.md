@@ -58,33 +58,45 @@
 ## Command
 
 ```
+:CocCommand explorer [options] [path]
+```
+
+### Example
+
+```
 :CocCommand explorer
     \ --toggle
     \ --sources=buffer+,file+
     \ --file-columns=git,selection,clip,indent,filename,size /cwd/path/to
 ```
 
-### `--sources`
+### Options
 
-Explorer sources, example: `buffer+,file+`
+#### `[path]`
 
-### `--toggle --no-toggle`
+Explorer root, default: `getcwd()`
 
-Close the explorer if it exists
+#### `--sources`
 
-### `--width`
+Explorer sources, example: `buffer+,file+`, default: `buffer-,file+`
 
-Explorer width by default
+#### `--toggle --no-toggle`
 
-### `--position`
+Close the explorer if it exists, default: `--toggle`
 
-Explorer position, supported position: `left`, `right`, `tab`
+#### `--width`
 
-### `--reveal`
+Explorer window width, default: `40`
+
+#### `--position`
+
+Explorer position, supported position: `left`, `right`, `tab`, default: `left`
+
+#### `--reveal`
 
 Explorer will expand to this filepath, default: `current buffer`
 
-### `--buffer-columns`
+#### `--buffer-columns`
 
 Explorer buffer columns, supported columns:
 
@@ -94,7 +106,7 @@ Explorer buffer columns, supported columns:
 - modified
 - bufnr
 
-### `--file-columns`
+#### `--file-columns`
 
 Explorer file columns, supported columns:
 
