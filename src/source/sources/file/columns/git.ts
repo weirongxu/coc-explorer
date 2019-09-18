@@ -48,7 +48,7 @@ fileColumnManager.registerColumn('git', (fileSource) => ({
   draw(row, item) {
     const showFormat = (f: string, staged: boolean) => {
       if (f.trim().length > 0) {
-        row.add(f, staged ? highlights.stage.group : highlights.unstage.group);
+        row.add(f, staged ? highlights.stage: highlights.unstage);
       } else {
         row.add(f);
       }

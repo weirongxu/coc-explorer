@@ -41,7 +41,7 @@ fileColumnManager.registerColumn('filename', (fileSource) => ({
   draw(row, item) {
     const filenameWidth = fullTreeWidth - indentWidth(item);
     if (item.directory) {
-      row.add(truncate(item.name + '/', filenameWidth, 'end'), highlights.directory.group);
+      row.add(truncate(item.name + '/', filenameWidth, 'end'), highlights.directory);
     } else {
       row.add(truncate(item.name, filenameWidth, 'end'));
     }

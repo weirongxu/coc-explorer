@@ -19,7 +19,7 @@ fileColumnManager.registerColumn('diagnosticError', (fileSource) => ({
       if (item.fullpath in diagnosticManager.errorPathCountStr) {
         row.add(
           diagnosticManager.errorPathCountStr[item.fullpath].padStart(diagnosticManager.errorMaxWidth),
-          highlights.error.group,
+          highlights.error,
         );
         fileSource.diagnosisLineIndexes.push(row.line);
       } else {

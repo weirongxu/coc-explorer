@@ -9,7 +9,7 @@ hlGroupManager.register(highlights);
 
 bufferColumnManager.registerColumn('modified', {
   draw(row, item) {
-    row.add(item.modified ? '+' : '', highlights.modified.group);
+    row.add(item.modified ? '+' : '', highlights.modified);
     row.add(' ');
   },
 });

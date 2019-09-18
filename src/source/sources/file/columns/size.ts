@@ -13,7 +13,7 @@ fileColumnManager.registerColumn('size', {
     if (item.directory) {
       row.add(' '.repeat(10));
     } else {
-      row.add(truncate(prettyBytes(item.stat.size), 10, 'start'), highlights.size.group);
+      row.add(truncate(prettyBytes(item.stat.size), 10, 'start'), highlights.size);
     }
     row.add(' ');
   },

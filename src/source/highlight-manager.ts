@@ -1,20 +1,29 @@
 import { workspace } from 'coc.nvim';
-import { execNotifyBlock } from '../util/neovim-notify';
+import { execNotifyBlock } from '../util';
 
 export type HighlightCommand = {
   group: string;
   command: string;
+  markerID: number;
 };
 
 class HighlightManager {
+  static maxMarkerID = 0;
+
   nvim = workspace.nvim;
   highlightCommands: HighlightCommand[] = [];
+
+  createMarkerID() {
+    HighlightManager.maxMarkerID += 1;
+    return HighlightManager.maxMarkerID;
+  }
 
   hlLinkGroupCommand(groupName: string, targetGroup: string): HighlightCommand {
     const group = `CocExplorer${groupName}`;
     return {
       group,
       command: `highlight default link ${group} ${targetGroup}`,
+      markerID: this.createMarkerID(),
     };
   }
 
@@ -23,6 +32,7 @@ class HighlightManager {
     return {
       group,
       command: `highlight default ${group} ${hlArgs}`,
+      markerID: this.createMarkerID(),
     };
   }
 
@@ -39,11 +49,9 @@ class HighlightManager {
     }
   }
 
-  async executeCommands(notify = false) {
-    await execNotifyBlock(() => {
-      this.highlightCommands.forEach((h) => {
-        this.nvim.command(h.command, true);
-      });
+  async registerHighlightSyntax(notify = false) {
+    await execNotifyBlock(async () => {
+      this.nvim.call('coc_explorer#register_syntax_highlights', [this.highlightCommands], true);
     }, notify);
   }
 }

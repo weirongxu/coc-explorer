@@ -10,7 +10,7 @@ hlGroupManager.register(highlights);
 bufferColumnManager.registerColumn('name', {
   draw(row, item) {
     if (item.visible) {
-      row.add(item.basename, highlights.nameVisible.group);
+      row.add(item.basename, highlights.nameVisible);
     } else {
       row.add(item.basename);
     }

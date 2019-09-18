@@ -1,15 +1,22 @@
-import { workspace, events } from 'coc.nvim';
+import { events, workspace } from 'coc.nvim';
 import pathLib from 'path';
-import { ExplorerSource, sourceIcons } from '../../source';
+import { debounce } from 'throttle-debounce';
+import {
+  activeMode,
+  avoidOnBufEnter,
+  config,
+  execNotifyBlock,
+  onBufEnter,
+  openStrategy,
+  supportBufferHighlight,
+  supportSetbufline,
+} from '../../../util';
 import { hlGroupManager } from '../../highlight-manager';
+import { ExplorerSource, sourceIcons } from '../../source';
 import { sourceManager } from '../../source-manager';
 import { SourceViewBuilder } from '../../view-builder';
 import { bufferColumnManager } from './column-manager';
 import './load';
-import { config, openStrategy, activeMode, supportBufferHighlight, supportSetbufline } from '../../../util';
-import { debounce } from 'throttle-debounce';
-import { onBufEnter, avoidOnBufEnter } from '../../../util/events';
-import { execNotifyBlock } from '../../../util/neovim-notify';
 
 const regex = /^\s*(\d+)(.+?)"(.+?)".*/;
 
@@ -31,7 +38,7 @@ export interface BufferItem {
   readErrors: boolean;
 }
 
-const hl = hlGroupManager.hlLinkGroupCommand;
+const hl = hlGroupManager.hlLinkGroupCommand.bind(hlGroupManager);
 
 const highlights = {
   title: hl('BufferRoot', 'Identifier'),
@@ -247,9 +254,9 @@ export class BufferSource extends ExplorerSource<BufferItem> {
     bufferColumnManager.beforeDraw();
 
     builder.newRoot((row) => {
-      row.add(this.expanded ? sourceIcons.expanded : sourceIcons.shrinked, highlights.expandIcon.group);
+      row.add(this.expanded ? sourceIcons.expanded : sourceIcons.shrinked, highlights.expandIcon);
       row.add(' ');
-      row.add(`[BUFFER${this.showHiddenBuffers ? ' I' : ''}]`, highlights.title.group);
+      row.add(`[BUFFER${this.showHiddenBuffers ? ' I' : ''}]`, highlights.title);
     });
     for (const item of this.items) {
       builder.newItem(item, (row) => {

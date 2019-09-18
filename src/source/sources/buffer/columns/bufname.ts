@@ -9,7 +9,7 @@ hlGroupManager.register(highlights);
 bufferColumnManager.registerColumn('bufname', {
   draw(row, item) {
     if (item.basename !== item.bufname) {
-      row.add(item.bufname, highlights.bufname.group);
+      row.add(item.bufname, highlights.bufname);
       row.add(' ');
     }
   },

@@ -23,14 +23,10 @@ const nerdfont = nerdfontJson as {
 };
 
 export const nerdfontHighlights: Record<string, HighlightCommand> = {};
-
 Object.entries(nerdfontJson.icons).forEach(([name, icon]) => {
   nerdfontHighlights[name] = hlGroupManager.hlGroupCommand(`FileIconNerdfont_${name}`, `guifg=${icon.color}`);
 });
-
 hlGroupManager.register(nerdfontHighlights);
-
-const space = ' '.repeat(sourceIcons.shrinked.length);
 
 const getIcon = (filename: string): undefined | { name: string; code: string; color: string } => {
   const ext = pathLib.extname(filename);
@@ -81,12 +77,12 @@ fileColumnManager.registerColumn('icon', {
           expandStore.isExpanded(item.fullpath)
             ? nerdfontJson.icons.folderOpened.code
             : nerdfontJson.icons.folderClosed.code,
-          filenameHighlights.directory.group,
+          filenameHighlights.directory,
         );
       } else {
         row.add(
           expandStore.isExpanded(item.fullpath) ? sourceIcons.expanded : sourceIcons.shrinked,
-          filenameHighlights.directory.group,
+          filenameHighlights.directory,
         );
       }
       row.add(' ');
@@ -94,11 +90,11 @@ fileColumnManager.registerColumn('icon', {
       if (enableNerdfont) {
         const icon = getIcon(item.name.toLowerCase());
         if (icon) {
-          row.add(icon.code, nerdfontHighlights[icon.name].group);
+          row.add(icon.code, nerdfontHighlights[icon.name]);
         } else if (item.hidden) {
-          row.add(nerdfont.icons.fileHidden.code, nerdfontHighlights['fileHidden'].group);
+          row.add(nerdfont.icons.fileHidden.code, nerdfontHighlights['fileHidden']);
         } else {
-          row.add(nerdfont.icons.file.code, nerdfontHighlights['file'].group);
+          row.add(nerdfont.icons.file.code, nerdfontHighlights['file']);
         }
       } else {
         row.add(' ');

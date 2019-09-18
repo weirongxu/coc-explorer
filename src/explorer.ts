@@ -1,11 +1,12 @@
-import { ExtensionContext, workspace, Window, events, Buffer, Emitter } from 'coc.nvim';
-import { Args, parseArgs, ArgPosition } from './parse-args';
-import './source/load';
-import { ExplorerSource, BaseItem } from './source/source';
-import { sourceManager } from './source/source-manager';
-import { mappings, Action } from './mappings';
+import { Buffer, Emitter, events, ExtensionContext, Window, workspace } from 'coc.nvim';
 import { onError } from './logger';
-import { execNotifyBlock } from './util/neovim-notify';
+import { Action, mappings } from './mappings';
+import { ArgPosition, Args, parseArgs } from './parse-args';
+import './source/load';
+import { BaseItem, ExplorerSource } from './source/source';
+import { sourceManager } from './source/source-manager';
+import { execNotifyBlock } from './util';
+import { hlGroupManager } from './source/highlight-manager';
 
 export class Explorer {
   // id for matchaddpos
@@ -44,6 +45,7 @@ export class Explorer {
 
     this.onDidAutoload.event(() => {
       this.registerMappings().catch(onError);
+      hlGroupManager.registerHighlightSyntax().catch(onError);
     });
   }
 
@@ -141,6 +143,9 @@ export class Explorer {
     }
 
     this._bufnr = bufnr;
+
+    // if (!inited) {
+    // }
 
     await this.reloadAll();
 

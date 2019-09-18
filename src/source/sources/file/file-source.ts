@@ -3,10 +3,19 @@ import fs from 'fs';
 import open from 'open';
 import pathLib from 'path';
 import { debounce } from 'throttle-debounce';
+import { diagnosticManager } from '../../../diagnostic-manager';
 import { gitManager } from '../../../git-manager';
 import { onError } from '../../../logger';
-import { activeMode, autoReveal, config, openStrategy, supportBufferHighlight, supportSetbufline } from '../../../util';
 import {
+  activeMode,
+  autoReveal,
+  avoidOnBufEnter,
+  config,
+  execNotifyBlock,
+  onBufEnter,
+  openStrategy,
+  supportBufferHighlight,
+  supportSetbufline,
   copyFileOrDirectory,
   fsAccess,
   fsExists,
@@ -17,16 +26,13 @@ import {
   fsStat,
   fsTouch,
   fsTrash,
-} from '../../../util/fs';
+} from '../../../util';
 import { hlGroupManager } from '../../highlight-manager';
 import { ExplorerSource, sourceIcons } from '../../source';
 import { sourceManager } from '../../source-manager';
 import { SourceViewBuilder } from '../../view-builder';
 import { fileColumnManager } from './column-manager';
-import { diagnosticManager } from '../../../diagnostic-manager';
 import './load';
-import { onBufEnter, avoidOnBufEnter } from '../../../util/events';
-import { execNotifyBlock } from '../../../util/neovim-notify';
 
 const guardTargetPath = async (path: string) => {
   if (await fsExists(path)) {
@@ -65,7 +71,7 @@ export const expandStore = {
   },
 };
 
-const hl = hlGroupManager.hlLinkGroupCommand;
+const hl = hlGroupManager.hlLinkGroupCommand.bind(hlGroupManager);
 const highlights = {
   title: hl('FileRoot', 'Identifier'),
   expandIcon: hl('FileExpandIcon', 'Special'),
@@ -716,13 +722,13 @@ export class FileSource extends ExplorerSource<FileItem> {
 
     const rootExpanded = expandStore.isExpanded(this.root);
     builder.newRoot((row) => {
-      row.add(rootExpanded ? sourceIcons.expanded : sourceIcons.shrinked, highlights.expandIcon.group);
+      row.add(rootExpanded ? sourceIcons.expanded : sourceIcons.shrinked, highlights.expandIcon);
       row.add(' ');
-      row.add(`[FILE${this.showHiddenFiles ? ' I' : ''}]:`, highlights.title.group);
+      row.add(`[FILE${this.showHiddenFiles ? ' I' : ''}]:`, highlights.title);
       row.add(' ');
       row.add(pathLib.basename(this.root));
       row.add(' ');
-      row.add(this.root, highlights.fullpath.group);
+      row.add(this.root, highlights.fullpath);
     });
     const drawSubDirectory = (items: FileItem[]) => {
       items.forEach((item) => {

@@ -41,6 +41,6 @@ function indentLine(item: FileItem) {
 
 fileColumnManager.registerColumn('indentLine', {
   draw(row, item) {
-    row.add(indentLine(item), highlights.line.group);
+    row.add(indentLine(item), highlights.line);
   },
 });

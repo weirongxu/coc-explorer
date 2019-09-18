@@ -28,6 +28,6 @@ fileColumnManager.registerColumn('clip', (source) => ({
       return;
     }
     const chars = source.copyItems.has(item) ? copy : source.cutItems.has(item) ? cut : space;
-    row.add(chars, highlights.clip.group);
+    row.add(chars, highlights.clip);
   },
 }));

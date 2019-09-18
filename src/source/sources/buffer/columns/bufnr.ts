@@ -14,7 +14,7 @@ bufferColumnManager.registerColumn('bufnr', (source) => ({
     maxBufnrWidth = Math.max(...source.items.map((item) => item.bufnrStr.length));
   },
   draw(row, item) {
-    row.add(item.bufnrStr.padStart(maxBufnrWidth), highlights.bufnr.group);
+    row.add(item.bufnrStr.padStart(maxBufnrWidth), highlights.bufnr);
     row.add(' ');
   },
 }));
