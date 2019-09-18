@@ -1,4 +1,5 @@
 import { workspace } from 'coc.nvim';
+import { execNotifyBlock } from '../util/neovim-notify';
 
 export type HighlightCommand = {
   group: string;
@@ -39,15 +40,11 @@ class HighlightManager {
   }
 
   async executeCommands(notify = false) {
-    if (!notify) {
-      this.nvim.pauseNotification();
-    }
-    this.highlightCommands.forEach((h) => {
-      this.nvim.command(h.command, true);
-    });
-    if (!notify) {
-      await this.nvim.resumeNotification();
-    }
+    await execNotifyBlock(() => {
+      this.highlightCommands.forEach((h) => {
+        this.nvim.command(h.command, true);
+      });
+    }, notify);
   }
 }
 

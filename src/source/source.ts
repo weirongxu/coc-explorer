@@ -4,9 +4,10 @@ import { explorerActions } from '../actions-list';
 import { Explorer } from '../explorer';
 import { onError } from '../logger';
 import { Action, ActionSyms, mappings, reverseMappings } from '../mappings';
-import { byteIndex, byteLength, chunk, config, supportBufferHighlight } from '../util';
-import { SourceRowBuilder, SourceViewBuilder } from './view-builder';
+import { chunk, config, supportBufferHighlight } from '../util';
 import { findLast } from '../util/array';
+import { execNotifyBlock } from '../util/neovim-notify';
+import { SourceRowBuilder, SourceViewBuilder } from './view-builder';
 
 export type ActionOptions = {
   multi: boolean;
@@ -291,7 +292,7 @@ export abstract class ExplorerSource<Item extends BaseItem<Item>> {
   /**
    * highlight ranges with real positions
    */
-  get readHlRanges() {
+  get realHlRanges() {
     const hlRanges: Record<string, Range[]> = {};
     for (const hlGroup in this.relativeHlRanges) {
       hlRanges[hlGroup] = this.relativeHlRanges[hlGroup].map((range) =>
@@ -454,39 +455,45 @@ export abstract class ExplorerSource<Item extends BaseItem<Item>> {
     return line ? line[1] : null;
   }
 
-  async gotoLineIndex(lineIndex: number, col?: number) {
-    const finalCol = col === undefined ? await this.explorer.currentCol() : col;
-    const win = await this.explorer.win;
-    if (win) {
-      if (lineIndex >= this.lines.length) {
-        lineIndex = this.lines.length - 1;
+  async gotoLineIndex(lineIndex: number, col?: number, notify = false) {
+    await execNotifyBlock(async () => {
+      const finalCol = col === undefined ? await this.explorer.currentCol() : col;
+      const win = await this.explorer.win;
+      if (win) {
+        if (lineIndex >= this.lines.length) {
+          lineIndex = this.lines.length - 1;
+        }
+        win.setCursor([this.startLine + lineIndex + 1, finalCol - 1], true);
+        if (workspace.env.isVim) {
+          this.nvim.command('redraw', true);
+        }
       }
-      await win.setCursor([this.startLine + lineIndex + 1, finalCol - 1]);
-      if (workspace.env.isVim) {
-        await this.nvim.command('redraw!');
-      }
-    }
+    }, notify);
   }
 
-  async gotoRoot({ col }: { col?: number } = {}) {
+  async gotoRoot({ col }: { col?: number } = {}, notify = false) {
     const finalCol = col === undefined ? await this.explorer.currentCol() : col;
-    await this.gotoLineIndex(0, finalCol);
+    await this.gotoLineIndex(0, finalCol, notify);
   }
 
-  async gotoItem(item: Item | null, { lineIndex: fallbackLineIndex, col }: { lineIndex?: number; col?: number } = {}) {
+  async gotoItem(
+    item: Item | null,
+    { lineIndex: fallbackLineIndex, col }: { lineIndex?: number; col?: number } = {},
+    notify = false,
+  ) {
     if (item === null) {
-      await this.gotoRoot({ col });
+      await this.gotoRoot({ col }, notify);
       return;
     }
 
     const finalCol = col === undefined ? await this.explorer.currentCol() : col;
     const lineIndex = this.lines.findIndex(([, it]) => it !== null && it.uid === item.uid);
     if (lineIndex !== -1) {
-      await this.gotoLineIndex(lineIndex, finalCol);
+      await this.gotoLineIndex(lineIndex, finalCol, notify);
     } else if (fallbackLineIndex !== undefined) {
-      await this.gotoLineIndex(fallbackLineIndex, finalCol);
+      await this.gotoLineIndex(fallbackLineIndex, finalCol, notify);
     } else {
-      await this.gotoRoot({ col: finalCol });
+      await this.gotoRoot({ col: finalCol }, notify);
     }
   }
 
@@ -511,102 +518,135 @@ export abstract class ExplorerSource<Item extends BaseItem<Item>> {
       return;
     }
 
+    const { nvim } = this;
+
     let restore: (() => Promise<void>) | null = null;
     if (storeCursor) {
       restore = await this.explorer.storeCursor();
     }
 
-    const builder = new SourceViewBuilder<Item>();
-    this.draw(builder);
-    this.lines = builder.lines;
-    this.relativeHlRanges = builder.relativeHlRanges;
-    await this.partRender(notify);
+    await execNotifyBlock(async () => {
+      const builder = new SourceViewBuilder<Item>();
+      this.draw(builder);
+      this.lines = builder.lines;
+      this.relativeHlRanges = builder.relativeHlRanges;
+      await this.partRender(true);
 
-    if (restore) {
-      await restore();
-    }
+      if (restore) {
+        await restore();
+      }
 
-    if (workspace.env.isVim) {
-      await this.nvim.command('redraw');
-    }
+      if (workspace.env.isVim) {
+        nvim.command('redraw', true);
+      }
+    }, notify);
   }
 
   private async partRender(notify = false) {
-    if (!notify) {
-      this.nvim.pauseNotification();
-    }
+    await execNotifyBlock(async () => {
+      const buffer = this.explorer.buffer;
+      const sourceIndex = this.explorer.sources.indexOf(this);
+      const isLastSource = this.explorer.sources.length - 1 == sourceIndex;
 
-    const buffer = this.explorer.buffer;
-    const sourceIndex = this.explorer.sources.indexOf(this);
-    const isLastSource = this.explorer.sources.length - 1 == sourceIndex;
+      await this.explorer.setLines(
+        this.lines.map(([content]) => content),
+        this.startLine,
+        isLastSource ? -1 : this.endLine,
+        true,
+      );
 
-    await this.explorer.setLines(
-      this.lines.map(([content]) => content),
-      this.startLine,
-      isLastSource ? -1 : this.endLine,
-      true,
-    );
+      let lineNumber = this.startLine;
+      this.explorer.sources.slice(sourceIndex).forEach((source) => {
+        source.startLine = lineNumber;
+        lineNumber += source.lines.length;
+        source.endLine = lineNumber;
+      });
 
-    let lineNumber = this.startLine;
-    this.explorer.sources.slice(sourceIndex).forEach((source) => {
-      source.startLine = lineNumber;
-      lineNumber += source.lines.length;
-      source.endLine = lineNumber;
-    });
+      buffer.setOption('modifiable', false, true);
 
-    buffer.setOption('modifiable', false, true);
-
-    await this.clearHighlights();
-    await this.renderHighlights(this.readHlRanges, this.lineStrings);
-
-    if (!notify) {
-      await this.nvim.resumeNotification();
-    }
+      if (supportBufferHighlight()) {
+        await this.clearHighlights();
+        await this.renderHighlights(this.realHlRanges, this.lineStrings);
+      } else {
+        await this.vim80ClearAllHighlights();
+        await this.vim80RenderAllHighlights();
+      }
+    }, notify);
   }
 
+  private vim80ClearAllHighlights() {
+    this.explorer.sources.forEach((s) => {
+      s.vim80ClearHighlights(s.hlIds);
+      s.hlIds = [];
+    });
+  }
+
+  /**
+   * notify
+   */
+  private vim80RenderAllHighlights() {
+    this.explorer.sources.forEach((s) => {
+      for (const [hlGroup, ranges] of Object.entries(s.realHlRanges)) {
+        s.hlIds.push(...s.vim80AddHighlights(ranges, hlGroup, s.lineStrings));
+      }
+      this.nvim.command('redraw', true);
+    });
+  }
+
+  /**
+   * notify
+   */
   private async clearHighlights() {
     const { buffer } = this.explorer;
 
     if (supportBufferHighlight()) {
-      if (!workspace.env.isVim) {
-        await buffer.clearHighlight({
-          srcId: this.hlSrcId,
-        });
-      }
+      await buffer.clearNamespace(this.hlSrcId, 0, -1);
     } else {
-      this.vim80ClearHighlights(this.hlIds);
-      this.hlIds = [];
+      this.vim80ClearAllHighlights();
+      // this.vim80ClearHighlights(this.hlIds);
+      // this.hlIds = [];
     }
   }
 
-  private async renderHighlights(highlights: Record<string, Range[]>, lines: string[]) {
+  /**
+   * notify
+   */
+  private renderHighlights(highlights: Record<string, Range[]>, lines: string[]) {
     const { buffer } = this.explorer;
 
     if (supportBufferHighlight()) {
       for (const [hlGroup, ranges] of Object.entries(highlights)) {
         for (const range of ranges) {
-          await buffer.addHighlight({
-            hlGroup,
-            line: range.start.line,
-            colStart: range.start.character,
-            colEnd: range.end.character,
-            srcId: this.hlSrcId,
-          });
+          buffer
+            .addHighlight({
+              hlGroup,
+              line: range.start.line,
+              colStart: range.start.character,
+              colEnd: range.end.character,
+              srcId: this.hlSrcId,
+            })
+            .catch(onError);
         }
       }
     } else {
-      for (const [hlGroup, ranges] of Object.entries(highlights)) {
-        this.hlIds.push(...this.vim80AddHighlights(ranges, hlGroup, lines));
-      }
-
-      this.nvim.command('redraw', true);
+      this.vim80RenderAllHighlights();
+      // for (const [hlGroup, ranges] of Object.entries(highlights)) {
+      //   this.hlIds.push(...this.vim80AddHighlights(ranges, hlGroup, lines));
+      // }
+      // this.nvim.command('redraw', true);
     }
   }
 
+  /**
+   * notify
+   */
   private vim80ClearHighlights(ids: number[]) {
     this.nvim.call('coc_explorer#clearmatches', [Array.from(ids)], true);
   }
 
+  /**
+   * notify
+   */
   private vim80AddHighlights(ranges: Range[], hlGroup: string, lines: string[]): number[] {
     const priority = 10;
     const res: number[] = [];
@@ -619,8 +659,10 @@ export abstract class ExplorerSource<Item extends BaseItem<Item>> {
       }
       arr.push([
         start.line + 1,
-        byteIndex(line, start.character) + 1,
-        byteLength(line.slice(start.character, end.character)),
+        // byteIndex(line, start.character) + 1,
+        // byteLength(line.slice(start.character, end.character)),
+        start.character + 1,
+        line.slice(start.character, end.character).length,
       ]);
     }
     for (const pos of chunk(arr, 8)) {

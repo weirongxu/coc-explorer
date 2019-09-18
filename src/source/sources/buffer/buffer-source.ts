@@ -6,8 +6,10 @@ import { sourceManager } from '../../source-manager';
 import { SourceViewBuilder } from '../../view-builder';
 import { bufferColumnManager } from './column-manager';
 import './load';
-import { config, openStrategy, activeMode, supportBufferHighlight } from '../../../util';
+import { config, openStrategy, activeMode, supportBufferHighlight, supportSetbufline } from '../../../util';
 import { debounce } from 'throttle-debounce';
+import { onBufEnter, avoidOnBufEnter } from '../../../util/events';
+import { execNotifyBlock } from '../../../util/neovim-notify';
 
 const regex = /^\s*(\d+)(.+?)"(.+?)".*/;
 
@@ -49,25 +51,20 @@ export class BufferSource extends ExplorerSource<BufferItem> {
     await bufferColumnManager.init(this);
 
     if (activeMode) {
-      setTimeout(() => {
-        if (workspace.env.isVim) {
-          if (supportBufferHighlight()) {
-            events.on(
-              'BufEnter',
-              debounce(500, async (bufnr) => {
-                if (bufnr === this.explorer.bufnr) {
-                  await this.reload(null);
-                }
-              }),
-            );
-          }
-        } else {
+      setTimeout(async () => {
+        if (!workspace.env.isVim || ((await supportSetbufline()) && supportBufferHighlight())) {
           events.on(
-            ['BufCreate', 'BufHidden', 'BufUnload', 'BufWritePost'],
+            ['BufCreate', 'BufHidden', 'BufUnload', 'BufWritePost', 'InsertLeave'],
             debounce(500, async () => {
               await this.reload(null);
             }),
           );
+        } else if (workspace.env.isVim && supportBufferHighlight()) {
+          onBufEnter(500, async (bufnr) => {
+            if (bufnr === this.explorer.bufnr) {
+              await this.reload(null);
+            }
+          });
         }
       }, 30);
     }
@@ -113,10 +110,10 @@ export class BufferSource extends ExplorerSource<BufferItem> {
         } else if (openStrategy === 'select') {
           await this.selectWindowsUI(
             async (winnr) => {
-              nvim.pauseNotification();
-              this.nvim.command(`${winnr}wincmd w`, true);
-              nvim.command(`buffer ${item.bufnr}`, true);
-              await nvim.resumeNotification();
+              await avoidOnBufEnter(async () => {
+                await this.nvim.command(`${winnr}wincmd w`);
+              });
+              await nvim.command(`buffer ${item.bufnr}`);
             },
             async () => {
               await this.doAction('openInVsplit', item);
@@ -125,10 +122,10 @@ export class BufferSource extends ExplorerSource<BufferItem> {
         } else if (openStrategy === 'previousBuffer') {
           const prevWinnr = await this.prevWinnr();
           if (prevWinnr) {
-            nvim.pauseNotification();
-            nvim.command(`${prevWinnr}wincmd w`, true);
-            nvim.command(`buffer ${item.bufnr}`, true);
-            await nvim.resumeNotification();
+            await avoidOnBufEnter(async () => {
+              await nvim.command(`${prevWinnr}wincmd w`);
+            });
+            await nvim.command(`buffer ${item.bufnr}`);
           } else {
             await this.doAction('openInVsplit', item);
           }
@@ -171,14 +168,14 @@ export class BufferSource extends ExplorerSource<BufferItem> {
     this.addItemAction(
       'openInVsplit',
       async (item) => {
-        nvim.pauseNotification();
-        nvim.command(`vertical sbuffer ${item.bufnr}`, true);
-        if (this.explorer.position === 'left') {
-          nvim.command('wincmd L', true);
-        } else {
-          nvim.command('wincmd H', true);
-        }
-        await nvim.resumeNotification();
+        await execNotifyBlock(() => {
+          nvim.command(`vertical sbuffer ${item.bufnr}`, true);
+          if (this.explorer.position === 'left') {
+            nvim.command('wincmd L', true);
+          } else {
+            nvim.command('wincmd H', true);
+          }
+        });
       },
       'open buffer via vsplit command',
     );

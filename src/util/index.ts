@@ -1,6 +1,8 @@
 import { workspace } from 'coc.nvim';
 import util from 'util';
 
+const { nvim } = workspace;
+
 export const delay = (time: number) => {
   return new Promise((resolve) => {
     setTimeout(resolve, time);
@@ -21,6 +23,14 @@ export const sum = (list: number[]) => list.reduce((result, item) => result + it
 
 export function supportBufferHighlight() {
   return !workspace.env.isVim || workspace.env.textprop;
+}
+
+let _supportSetbufline: boolean | null = null;
+export async function supportSetbufline() {
+  if (_supportSetbufline === null) {
+    _supportSetbufline = Boolean(await nvim.call('exists', ['*setbufline']));
+  }
+  return _supportSetbufline;
 }
 
 export const chunk = <T>(array: T[], size: number = 1): T[][] => {

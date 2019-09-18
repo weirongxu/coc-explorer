@@ -5,7 +5,7 @@ import pathLib from 'path';
 import { debounce } from 'throttle-debounce';
 import { gitManager } from '../../../git-manager';
 import { onError } from '../../../logger';
-import { activeMode, autoReveal, config, openStrategy, supportBufferHighlight } from '../../../util';
+import { activeMode, autoReveal, config, openStrategy, supportBufferHighlight, supportSetbufline } from '../../../util';
 import {
   copyFileOrDirectory,
   fsAccess,
@@ -25,6 +25,8 @@ import { SourceViewBuilder } from '../../view-builder';
 import { fileColumnManager } from './column-manager';
 import { diagnosticManager } from '../../../diagnostic-manager';
 import './load';
+import { onBufEnter, avoidOnBufEnter } from '../../../util/events';
+import { execNotifyBlock } from '../../../util/neovim-notify';
 
 const guardTargetPath = async (path: string) => {
   if (await fsExists(path)) {
@@ -88,35 +90,23 @@ export class FileSource extends ExplorerSource<FileItem> {
     await fileColumnManager.init(this);
 
     if (activeMode) {
-      setTimeout(() => {
-        if (workspace.env.isVim) {
-          if (supportBufferHighlight()) {
-            events.on(
-              'BufEnter',
-              debounce(200, async (bufnr) => {
-                if (bufnr === this.explorer.bufnr) {
-                  await this.reload(null);
-                }
-              }),
-            );
-          }
-        } else {
-          events.on(
-            'BufEnter',
-            debounce(200, async (bufnr) => {
+      setTimeout(async () => {
+        if (!workspace.env.isVim || ((await supportSetbufline()) && supportBufferHighlight())) {
+          if (autoReveal) {
+            onBufEnter(200, async (bufnr) => {
               if (bufnr !== this.explorer.bufnr) {
                 const bufinfo = await nvim.call('getbufinfo', [bufnr]);
                 if (bufinfo[0] && bufinfo[0].name) {
                   const item = await this.revealItemByPath(bufinfo[0].name as string);
-                  if (autoReveal && item !== null) {
+                  if (item !== null) {
                     await this.render();
                     await this.gotoItem(item);
-                    await nvim.command('redraw!');
+                    await nvim.command('redraw');
                   }
                 }
               }
-            }),
-          );
+            });
+          }
 
           events.on(
             ['InsertLeave', 'TextChanged'],
@@ -137,6 +127,12 @@ export class FileSource extends ExplorerSource<FileItem> {
               }
             }),
           );
+        } else if (workspace.env.isVim && supportBufferHighlight()) {
+          onBufEnter(200, async (bufnr) => {
+            if (bufnr === this.explorer.bufnr) {
+              await this.reload(null);
+            }
+          });
         }
       }, 30);
     }
@@ -226,10 +222,10 @@ export class FileSource extends ExplorerSource<FileItem> {
           } else if (openStrategy === 'select') {
             await this.selectWindowsUI(
               async (winnr) => {
-                nvim.pauseNotification();
-                this.nvim.command(`${winnr}wincmd w`, true);
-                nvim.command(`edit ${item.fullpath}`, true);
-                await nvim.resumeNotification();
+                await avoidOnBufEnter(async () => {
+                  await this.nvim.command(`${winnr}wincmd w`);
+                });
+                await nvim.command(`edit ${item.fullpath}`);
               },
               async () => {
                 await this.doAction('openInVsplit', item);
@@ -238,10 +234,10 @@ export class FileSource extends ExplorerSource<FileItem> {
           } else if (openStrategy === 'previousBuffer') {
             const prevWinnr = await this.prevWinnr();
             if (prevWinnr) {
-              nvim.pauseNotification();
-              nvim.command(`${prevWinnr}wincmd w`, true);
-              nvim.command(`edit ${item.fullpath}`, true);
-              await nvim.resumeNotification();
+              await avoidOnBufEnter(async () => {
+                await nvim.command(`${prevWinnr}wincmd w`);
+              });
+              await nvim.command(`edit ${item.fullpath}`);
             } else {
               await this.doAction('openInVsplit', item);
             }
@@ -264,14 +260,14 @@ export class FileSource extends ExplorerSource<FileItem> {
       'openInVsplit',
       async (item) => {
         if (!item.directory) {
-          nvim.pauseNotification();
-          nvim.command(`vsplit ${item.fullpath}`, true);
-          if (this.explorer.position === 'left') {
-            nvim.command('wincmd L', true);
-          } else {
-            nvim.command('wincmd H', true);
-          }
-          await nvim.resumeNotification();
+          await execNotifyBlock(() => {
+            nvim.command(`vsplit ${item.fullpath}`, true);
+            if (this.explorer.position === 'left') {
+              nvim.command('wincmd L', true);
+            } else {
+              nvim.command('wincmd H', true);
+            }
+          });
         }
       },
       'open file via vsplit command',

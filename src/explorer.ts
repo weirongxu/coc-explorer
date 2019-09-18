@@ -5,6 +5,7 @@ import { ExplorerSource, BaseItem } from './source/source';
 import { sourceManager } from './source/source-manager';
 import { mappings, Action } from './mappings';
 import { onError } from './logger';
+import { execNotifyBlock } from './util/neovim-notify';
 
 export class Explorer {
   // id for matchaddpos
@@ -292,7 +293,7 @@ export class Explorer {
       if (source) {
         const sourceLineIndex = storeCursor.lineIndex - source.startLine;
         const storeItem: null | Item = await source.getItemByIndex(sourceLineIndex);
-        return async () => {
+        return async (notify = false) => {
           await this.nvim.call('winrestview', storeView);
           await source.gotoItem(storeItem, { lineIndex: sourceLineIndex, col: storeCursor.col });
         };
@@ -304,26 +305,20 @@ export class Explorer {
   }
 
   async setLines(lines: string[], start: number, end: number, notify = false) {
-    if (!notify) {
-      this.nvim.pauseNotification();
-    }
+    await execNotifyBlock(async () => {
+      this.buffer.setOption('modifiable', true, true);
 
-    this.buffer.setOption('modifiable', true, true);
+      await this.buffer.setLines(
+        lines,
+        {
+          start,
+          end,
+        },
+        true,
+      );
 
-    await this.buffer.setLines(
-      lines,
-      {
-        start,
-        end,
-      },
-      true,
-    );
-
-    this.buffer.setOption('modifiable', false, true);
-
-    if (!notify) {
-      await this.nvim.resumeNotification();
-    }
+      this.buffer.setOption('modifiable', false, true);
+    }, notify);
   }
 
   private async clearContent() {
@@ -337,39 +332,27 @@ export class Explorer {
   }
 
   async reloadAll({ render = true, notify = false } = {}) {
-    if (!notify) {
-      this.nvim.pauseNotification();
-    }
+    await execNotifyBlock(async () => {
+      await Promise.all(this.sources.map((source) => source.reload(null, { render: false, notify: true })));
 
-    await Promise.all(this.sources.map((source) => source.reload(null, { render: false, notify: true })));
-
-    if (render) {
-      await this.renderAll({ notify: true, storeCursor: false });
-    }
-
-    if (!notify) {
-      await this.nvim.resumeNotification();
-    }
+      if (render) {
+        await this.renderAll({ notify: true, storeCursor: false });
+      }
+    }, notify);
   }
 
   async renderAll({ notify = false, storeCursor = false } = {}) {
-    if (!notify) {
-      this.nvim.pauseNotification();
-    }
+    await execNotifyBlock(async () => {
+      const store = await this.storeCursor();
 
-    const store = await this.storeCursor();
+      await this.clearContent();
+      for (const source of this.sources) {
+        await source.render({ notify, storeCursor: storeCursor });
+      }
 
-    await this.clearContent();
-    for (const source of this.sources) {
-      await source.render({ notify, storeCursor: storeCursor });
-    }
-
-    if (store) {
-      await store();
-    }
-
-    if (!notify) {
-      await this.nvim.resumeNotification();
-    }
+      if (store) {
+        await store();
+      }
+    });
   }
 }
