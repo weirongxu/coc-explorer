@@ -477,9 +477,7 @@ export class FileSource extends ExplorerSource<FileItem> {
       'delete',
       async (items) => {
         const list = items.map((item) => item.fullpath).join('\n');
-        // tslint:disable-next-line: ban
-        workspace.showMessage(list);
-        if (await workspace.showPrompt(`Move these files or directories to trash?`)) {
+        if ((await this.explorer.prompt('Move these files or directories to trash?\n' + list)) === 'yes') {
           await fsTrash(items.map((item) => item.fullpath));
         }
       },
@@ -490,9 +488,7 @@ export class FileSource extends ExplorerSource<FileItem> {
       'deleteForever',
       async (items) => {
         const list = items.map((item) => item.fullpath).join('\n');
-        // tslint:disable-next-line: ban
-        workspace.showMessage(list);
-        if (await workspace.showPrompt(`Forever delete these files or directories?`)) {
+        if ((await this.explorer.prompt('Forever delete these files or directories?\n' + list)) === 'yes') {
           for (const item of items) {
             await fsRimraf(item.fullpath);
           }

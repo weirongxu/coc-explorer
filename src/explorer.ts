@@ -174,6 +174,29 @@ export class Explorer {
     }
   }
 
+  async prompt(msg: string): Promise<'yes' | 'no' | null>;
+  async prompt<T extends string>(msg: string, defaultChoice: T, choices: T[]): Promise<T | null>;
+  async prompt(msg: string, defaultChoice: string = 'no', choices: string[] = ['yes', 'no']): Promise<string | null> {
+    const defaultNumber = choices.indexOf(defaultChoice);
+    if (defaultNumber === -1) {
+      throw new Error('defaultChoice not match');
+    }
+    const result = (await this.nvim.call('confirm', [
+      msg,
+      choices
+        .map((c) => {
+          return '&' + c[0].toUpperCase() + c.slice(1);
+        })
+        .join('\n'),
+      defaultNumber + 1,
+    ])) as number;
+    if (result === 0) {
+      return null;
+    } else {
+      return choices[result - 1];
+    }
+  }
+
   async quit() {
     await this.nvim.command('quit');
   }
