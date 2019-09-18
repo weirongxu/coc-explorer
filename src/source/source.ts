@@ -81,8 +81,9 @@ export abstract class ExplorerSource<Item extends BaseItem<Item>> {
     );
     this.addAction(
       'refresh',
-      async () => {
-        await this.reload(null);
+      async (items) => {
+        const item = items ? items[0] : null;
+        await this.reload(item);
       },
       'refresh',
       { multi: false },
@@ -478,8 +479,7 @@ export abstract class ExplorerSource<Item extends BaseItem<Item>> {
 
   async gotoItem(
     item: Item | null,
-    { lineIndex: fallbackLineIndex, col }: { lineIndex?: number; col?: number } = {},
-    notify = false,
+    { lineIndex: fallbackLineIndex, col, notify = false }: { lineIndex?: number; col?: number; notify?: boolean } = {},
   ) {
     if (item === null) {
       await this.gotoRoot({ col }, notify);

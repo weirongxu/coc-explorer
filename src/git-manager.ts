@@ -142,34 +142,34 @@ class GitManager {
   private statusCache: Record<string, Record<string, GitStatus>> = {};
   private directoryStatusCache: Record<string, Record<string, GitDirectoryStatus>> = {};
 
-  async getGitRoot(path: string): Promise<string | undefined> {
-    if (path in this.rootCache) {
-      return this.rootCache[path];
+  async getGitRoot(folderPath: string): Promise<string | undefined> {
+    if (folderPath in this.rootCache) {
+      return this.rootCache[folderPath];
     }
 
-    const parts = path.split(pathLib.sep);
+    const parts = folderPath.split(pathLib.sep);
     const idx = parts.indexOf('.git');
     if (idx !== -1) {
       const root = parts.slice(0, idx).join(pathLib.sep);
-      this.rootCache[path] = root;
+      this.rootCache[folderPath] = root;
     } else {
       try {
-        const gitRoot = await this.cmd.getRoot(path);
+        const gitRoot = await this.cmd.getRoot(folderPath);
         if (pathLib.isAbsolute(gitRoot)) {
-          this.rootCache[path] = gitRoot;
+          this.rootCache[folderPath] = gitRoot;
         } else {
-          pathLib.join(path, gitRoot);
+          pathLib.join(folderPath, gitRoot);
         }
       } catch (error) {
         onError(error);
         return;
       }
     }
-    return this.rootCache[path];
+    return this.rootCache[folderPath];
   }
 
-  async reload(path: string, showIgnored: boolean) {
-    const root = await this.getGitRoot(path);
+  async reload(folderPath: string, showIgnored: boolean) {
+    const root = await this.getGitRoot(folderPath);
     if (root) {
       this.statusCache[root] = await this.cmd.status(root, showIgnored);
       this.directoryStatusCache[root] = {};

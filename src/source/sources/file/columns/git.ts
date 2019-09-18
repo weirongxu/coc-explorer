@@ -2,6 +2,7 @@ import commandExists from 'command-exists';
 import { hlGroupManager } from '../../../highlight-manager';
 import { fileColumnManager } from '../column-manager';
 import { GitFormat, gitManager } from '../../../../git-manager';
+import pathLib from 'path';
 
 const highlights = {
   stage: hlGroupManager.hlLinkGroupCommand('FileGitStage', 'Comment'),
@@ -38,7 +39,8 @@ fileColumnManager.registerColumn('git', (fileSource) => ({
     }
   },
   async load(item) {
-    await gitManager.reload(item ? item.fullpath : fileSource.root, showIgnored);
+    const folderPath = item ? (item.directory ? item.fullpath : pathLib.dirname(item.fullpath)) : fileSource.root;
+    await gitManager.reload(folderPath, showIgnored);
   },
   beforeDraw() {
     fileSource.gitChangedLineIndexes = [];

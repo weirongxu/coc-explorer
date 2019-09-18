@@ -99,14 +99,27 @@ export class FileSource extends ExplorerSource<FileItem> {
                 if (bufinfo[0] && bufinfo[0].name) {
                   const item = await this.revealItemByPath(bufinfo[0].name as string);
                   if (item !== null) {
-                    await this.render();
-                    await this.gotoItem(item);
-                    await nvim.command('redraw');
+                    await execNotifyBlock(async () => {
+                      await this.render({ storeCursor: false, notify: true });
+                      await this.gotoItem(item, { notify: true });
+                      nvim.command('redraw', true);
+                    });
                   }
                 }
               }
             });
           }
+
+          events.on(
+            'BufWritePost',
+            debounce(1000, async (bufnr) => {
+              const bufinfo = await nvim.call('getbufinfo', [bufnr]);
+              if (bufinfo[0] && bufinfo[0].name) {
+                await gitManager.reload(pathLib.dirname(bufinfo[0].name as string), this.showHiddenFiles);
+                await this.render();
+              }
+            }),
+          );
 
           events.on(
             ['InsertLeave', 'TextChanged'],
