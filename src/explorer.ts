@@ -319,7 +319,8 @@ export class Explorer {
 
   async storeCursor<Item extends BaseItem<Item>>() {
     const storeCursor = await this.currentCursor();
-    // const storeView = await this.nvim.call('winsaveview');
+    let storeView = await this.nvim.call('winsaveview');
+    storeView = { topline: storeView.topline };
     if (storeCursor) {
       const [, sourceIndex] = this.findSourceByLineIndex(storeCursor.lineIndex);
       const source = this.sources[sourceIndex];
@@ -327,7 +328,7 @@ export class Explorer {
         const sourceLineIndex = storeCursor.lineIndex - source.startLine;
         const storeItem: null | Item = await source.getItemByIndex(sourceLineIndex);
         return async (notify = false) => {
-          // await this.nvim.call('winrestview', storeView);
+          await this.nvim.call('winrestview', storeView);
           await source.gotoItem(storeItem, { lineIndex: sourceLineIndex, col: storeCursor.col, notify });
         };
       }
