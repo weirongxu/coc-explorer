@@ -179,12 +179,13 @@ export class Explorer {
   }
 
   async prompt(msg: string): Promise<'yes' | 'no' | null>;
-  async prompt<T extends string>(msg: string, defaultChoice: T, choices: T[]): Promise<T | null>;
-  async prompt(msg: string, defaultChoice: string = 'no', choices: string[] = ['yes', 'no']): Promise<string | null> {
-    const defaultNumber = choices.indexOf(defaultChoice);
-    if (defaultNumber === -1) {
-      throw new Error('defaultChoice not match');
+  async prompt<T extends string>(msg: string, choices: T[], defaultChoice?: T): Promise<T | null>;
+  async prompt(msg: string, choices?: string[], defaultChoice?: string): Promise<string | null> {
+    if (!choices) {
+      choices = ['yes', 'no'];
+      defaultChoice = 'no';
     }
+    const defaultNumber = defaultChoice ? choices.indexOf(defaultChoice) : -1;
     const result = (await this.nvim.call('confirm', [
       msg,
       choices
@@ -197,7 +198,7 @@ export class Explorer {
     if (result === 0) {
       return null;
     } else {
-      return choices[result - 1];
+      return choices[result - 1] || null;
     }
   }
 

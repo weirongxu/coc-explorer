@@ -14,8 +14,6 @@ import {
   execNotifyBlock,
   onBufEnter,
   openStrategy,
-  supportBufferHighlight,
-  supportSetbufline,
   copyFileOrDirectory,
   fsAccess,
   fsExists,
@@ -98,7 +96,7 @@ export class FileSource extends ExplorerSource<FileItem> {
 
     if (activeMode) {
       setTimeout(async () => {
-        if (!workspace.env.isVim || ((await supportSetbufline()) && supportBufferHighlight())) {
+        if (!workspace.env.isVim) {
           if (autoReveal) {
             onBufEnter(200, async (bufnr) => {
               if (bufnr !== this.explorer.bufnr) {
@@ -147,7 +145,7 @@ export class FileSource extends ExplorerSource<FileItem> {
               }
             }),
           );
-        } else if (workspace.env.isVim && supportBufferHighlight()) {
+        } else {
           onBufEnter(200, async (bufnr) => {
             if (bufnr === this.explorer.bufnr) {
               await this.reload(null);
@@ -439,32 +437,52 @@ export class FileSource extends ExplorerSource<FileItem> {
       'pasteFile',
       async (item) => {
         const targetDir = this.getPutTargetDir(item);
-        const checkSameFilename = (items: Set<FileItem>) => {
-          Promise.all(
-            Array.from(items).map(async (item) => {
-              const targetPath = pathLib.join(targetDir, item.name);
-              await guardTargetPath(targetPath);
-            }),
-          ).catch(onError);
+        const checkItemsExists = async (
+          items: Set<FileItem>,
+          callback: (item: FileItem, targetPath: string) => Promise<void>,
+        ) => {
+          let canceled = false;
+          for (const item of Array.from(items)) {
+            if (canceled) {
+              break;
+            }
+            let targetPath = pathLib.join(targetDir, item.name);
+            while (true) {
+              if (await fsExists(targetPath)) {
+                const answer = await this.explorer.prompt(`${targetPath} already exists. Overwrite?`, [
+                  'rename',
+                  'skip',
+                  'cancel',
+                ]);
+                if (answer === 'skip') {
+                  break;
+                } else if (answer === 'cancel') {
+                  canceled = true;
+                  break;
+                } else if (answer === 'rename') {
+                  targetPath = (await nvim.call('input', ['Rename: ${targetPath} -> ', targetPath])) as string;
+                  continue;
+                }
+              } else {
+                await callback(item, targetPath);
+                await this.reload(null);
+                break;
+              }
+            }
+          }
         };
         if (this.copyItems.size > 0) {
-          await checkSameFilename(this.copyItems);
-          await Promise.all(
-            Array.from(this.copyItems).map(async (item) => {
-              await copyFileOrDirectory(item.fullpath, pathLib.join(targetDir, item.name));
-            }),
-          );
+          await checkItemsExists(this.copyItems, async (item, targetPath) => {
+            await copyFileOrDirectory(item.fullpath, targetPath);
+          });
           this.copyItems.clear();
-          await this.reload(null);
+          await this.render();
         } else if (this.cutItems.size > 0) {
-          await checkSameFilename(this.cutItems);
-          await Promise.all(
-            Array.from(this.cutItems).map(async (item) => {
-              await fsRename(item.fullpath, pathLib.join(targetDir, item.name));
-            }),
-          );
+          await checkItemsExists(this.cutItems, async (item, targetPath) => {
+            await fsRename(item.fullpath, targetPath);
+          });
           this.cutItems.clear();
-          await this.reload(null);
+          await this.render();
         }
       },
       'paste files to here',
@@ -498,8 +516,9 @@ export class FileSource extends ExplorerSource<FileItem> {
     this.addAction(
       'addFile',
       async (items) => {
-        const filename = (await nvim.call('input', 'Input new filename: ')) as string;
-        if (filename.length === 0) {
+        let filename = (await nvim.call('input', 'Input a new filename: ')) as string;
+        filename = filename.trim();
+        if (!filename) {
           return;
         }
         const targetPath = pathLib.join(this.getPutTargetDir(items ? items[0] : null), filename);
@@ -518,8 +537,9 @@ export class FileSource extends ExplorerSource<FileItem> {
     this.addAction(
       'addDirectory',
       async (items) => {
-        const directoryPath = (await nvim.call('input', 'Input new directory name: ')) as string;
-        if (directoryPath.length === 0) {
+        let directoryPath = (await nvim.call('input', 'Input a new directory name: ')) as string;
+        directoryPath = directoryPath.trim();
+        if (!directoryPath) {
           return;
         }
         await guardTargetPath(directoryPath);
@@ -537,7 +557,7 @@ export class FileSource extends ExplorerSource<FileItem> {
     this.addItemAction(
       'rename',
       async (item) => {
-        const targetPath = (await nvim.call('input', ['New name: ', item.fullpath])) as string;
+        const targetPath = (await nvim.call('input', ['Rename: ${item.fullpath} ->', item.fullpath])) as string;
         if (targetPath.length == 0) {
           return;
         }

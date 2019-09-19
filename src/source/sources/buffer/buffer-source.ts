@@ -8,8 +8,6 @@ import {
   execNotifyBlock,
   onBufEnter,
   openStrategy,
-  supportBufferHighlight,
-  supportSetbufline,
 } from '../../../util';
 import { hlGroupManager } from '../../highlight-manager';
 import { ExplorerSource, sourceIcons } from '../../source';
@@ -59,17 +57,17 @@ export class BufferSource extends ExplorerSource<BufferItem> {
 
     if (activeMode) {
       setTimeout(async () => {
-        if (!workspace.env.isVim || ((await supportSetbufline()) && supportBufferHighlight())) {
+        if (!workspace.env.isVim) {
           events.on(
             ['BufCreate', 'BufHidden', 'BufUnload', 'BufWritePost', 'InsertLeave'],
             debounce(500, async () => {
               await this.reload(null);
             }),
           );
-        } else if (workspace.env.isVim && supportBufferHighlight()) {
+        } else if (workspace.env.isVim) {
           onBufEnter(500, async (bufnr) => {
             if (bufnr === this.explorer.bufnr) {
-              await this.reload(null);
+              await this.reload(null, { render: false });
             }
           });
         }
