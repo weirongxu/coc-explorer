@@ -460,7 +460,7 @@ export class FileSource extends ExplorerSource<FileItem> {
                   canceled = true;
                   break;
                 } else if (answer === 'rename') {
-                  targetPath = (await nvim.call('input', ['Rename: ${targetPath} -> ', targetPath])) as string;
+                  targetPath = (await nvim.call('input', [`Rename: ${targetPath} -> `, targetPath])) as string;
                   continue;
                 }
               } else {
@@ -557,7 +557,7 @@ export class FileSource extends ExplorerSource<FileItem> {
     this.addItemAction(
       'rename',
       async (item) => {
-        const targetPath = (await nvim.call('input', ['Rename: ${item.fullpath} ->', item.fullpath])) as string;
+        const targetPath = (await nvim.call('input', [`Rename: ${item.fullpath} ->`, item.fullpath])) as string;
         if (targetPath.length == 0) {
           return;
         }
