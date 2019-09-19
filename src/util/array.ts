@@ -12,19 +12,6 @@ export function flatten<T>(arr: T[]) {
   return res;
 }
 
-export function flattenChildren<T extends Record<string, any> & { children?: T[] }>(arr: T[]) {
-  const stack = [...arr];
-  const res = [];
-  while (stack.length) {
-    const item = stack.shift()!;
-    res.push(item);
-    if (item.children && Array.isArray(item.children)) {
-      stack.unshift(...item.children);
-    }
-  }
-  return res;
-}
-
 export function chunk<T>(array: T[], size: number = 1): T[][] {
   const finalSize = Math.max(size, 0);
   if (!array.length || size < 1) {
