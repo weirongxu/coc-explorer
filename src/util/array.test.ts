@@ -35,7 +35,7 @@ test('flattenChildren', () => {
       },
     ]).map((item) => {
       item.children = undefined;
-      return item
+      return item;
     }),
   ).toEqual([
     {

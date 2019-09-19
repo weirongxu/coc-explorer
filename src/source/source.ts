@@ -295,28 +295,6 @@ export abstract class ExplorerSource<Item extends BaseItem<Item>> {
   init() {}
   async opened() {}
 
-  /**
-   * highlight ranges with real positions
-   */
-  get realHlRanges() {
-    const hlRanges: Record<string, Range[]> = {};
-    for (const hlGroup in this.relativeHlRanges) {
-      hlRanges[hlGroup] = this.relativeHlRanges[hlGroup].map((range) =>
-        Range.create(
-          {
-            line: this.startLine + range.start.line,
-            character: range.start.character,
-          },
-          {
-            line: this.startLine + range.end.line,
-            character: range.end.character,
-          },
-        ),
-      );
-    }
-    return hlRanges;
-  }
-
   addAction(
     name: ActionSyms,
     callback: (items: Item[] | null, arg: string) => void | Promise<void>,
@@ -503,7 +481,7 @@ export abstract class ExplorerSource<Item extends BaseItem<Item>> {
   }
 
   abstract loadItems(sourceItem: null | Item): Promise<Item[]>;
-  abstract draw(builder: SourceViewBuilder<Item>): void;
+  abstract draw(builder: SourceViewBuilder<Item>): void | Promise<void>;
   async loaded(_sourceItem: null | Item): Promise<void> {}
 
   async reload(
@@ -519,7 +497,7 @@ export abstract class ExplorerSource<Item extends BaseItem<Item>> {
   }
 
   async render({ notify = false, storeCursor = true }: { notify?: boolean; storeCursor?: boolean } = {}) {
-    if (this.explorer.stopRendering) {
+    if (this.explorer.isHelpUI) {
       return;
     }
 
@@ -532,7 +510,7 @@ export abstract class ExplorerSource<Item extends BaseItem<Item>> {
 
     await execNotifyBlock(async () => {
       const builder = new SourceViewBuilder<Item>();
-      this.draw(builder);
+      await this.draw(builder);
       this.lines = builder.lines;
       await this.partRender(true);
 
@@ -585,8 +563,8 @@ export abstract class ExplorerSource<Item extends BaseItem<Item>> {
     }
   }
 
-  private async renderHelp(isRoot: boolean) {
-    this.explorer.stopRendering = true;
+  async renderHelp(isRoot: boolean) {
+    this.explorer.isHelpUI = true;
     const builder = new SourceViewBuilder<null>();
     const width = await this.nvim.call('winwidth', '%');
     const storeCursor = await this.explorer.storeCursor();
@@ -650,10 +628,14 @@ export abstract class ExplorerSource<Item extends BaseItem<Item>> {
     });
     disposables.forEach((d) => d.dispose());
 
-    await this.explorer.executeMappings();
-    this.explorer.stopRendering = false;
+    await this.quitHelp();
     await this.explorer.renderAll({ storeCursor: false });
     await storeCursor();
+  }
+
+  async quitHelp() {
+    await this.explorer.executeMappings();
+    this.explorer.isHelpUI = false;
   }
 }
 

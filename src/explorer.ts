@@ -17,7 +17,7 @@ export class Explorer {
   nvim = workspace.nvim;
   previousBufnr?: number;
   revealFilepath?: string;
-  stopRendering: boolean = false;
+  isHelpUI: boolean = false;
   onDidAutoload = new Emitter<void>();
 
   private _buffer?: Buffer;
@@ -146,6 +146,10 @@ export class Explorer {
 
     // if (!inited) {
     // }
+
+    if (this.isHelpUI) {
+      await this.sources[0].quitHelp();
+    }
 
     await this.reloadAll();
 
@@ -314,7 +318,7 @@ export class Explorer {
 
   async storeCursor<Item extends BaseItem<Item>>() {
     const storeCursor = await this.currentCursor();
-    const storeView = await this.nvim.call('winsaveview');
+    // const storeView = await this.nvim.call('winsaveview');
     if (storeCursor) {
       const [, sourceIndex] = this.findSourceByLineIndex(storeCursor.lineIndex);
       const source = this.sources[sourceIndex];
@@ -322,13 +326,13 @@ export class Explorer {
         const sourceLineIndex = storeCursor.lineIndex - source.startLine;
         const storeItem: null | Item = await source.getItemByIndex(sourceLineIndex);
         return async (notify = false) => {
-          await this.nvim.call('winrestview', storeView);
-          await source.gotoItem(storeItem, { lineIndex: sourceLineIndex, col: storeCursor.col });
+          // await this.nvim.call('winrestview', storeView);
+          await source.gotoItem(storeItem, { lineIndex: sourceLineIndex, col: storeCursor.col, notify });
         };
       }
     }
     return async () => {
-      await this.nvim.call('winrestview', storeView);
+      // await this.nvim.call('winrestview', storeView);
     };
   }
 
