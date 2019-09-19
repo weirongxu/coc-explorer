@@ -218,3 +218,51 @@ function! coc_explorer#execute_syntax_highlights(syntax_highlights)
     execute sh['command']
   endfor
 endfunction
+
+function! coc_explorer#truncate(str, width, omit)
+  " Modified from https://github.com/Shougo/defx.nvim/blob/f81aa358afae22c89ce254db3f589212637bc1ba/autoload/defx/util.vim#L258
+  let width = strdisplaywidth(a:str)
+  if width <= a:width
+    let ret = a:str
+  else
+    let omit_width = strdisplaywidth(a:omit)
+    let left_width = float2nr(ceil((a:width - omit_width) / 2.0))
+    let right_width = a:width - left_width - omit_width
+    let ret = s:strwidthpart(a:str, left_width) . a:omit
+         \ . s:strwidthpart_reverse(a:str, right_width)
+  endif
+  return s:pad_end(ret, a:width)
+endfunction
+
+function! s:pad_end(str, width)
+  if a:str =~# '^[\x00-\x7f]*$'
+    return strdisplaywidth(a:str) < a:width
+          \ ? printf('%-' . a:width . 's', a:str)
+          \ : strpart(a:str, 0, a:width)
+  endif
+
+  let ret = a:str
+  let width = strdisplaywidth(a:str)
+  if width > a:width
+    let ret = s:strwidthpart(ret, a:width)
+    let width = strdisplaywidth(ret)
+  endif
+
+  if width < a:width
+    let ret .= repeat(' ', a:width - width)
+  endif
+
+  return ret
+endfunction
+
+function! s:strwidthpart(str, width)
+  let str = tr(a:str, "\t", ' ')
+  let vcol = a:width + 2
+  return matchstr(str, '.*\%<' . (vcol < 0 ? 0 : vcol) . 'v')
+endfunction
+
+function! s:strwidthpart_reverse(str, width)
+  let str = tr(a:str, "\t", ' ')
+  let vcol = strdisplaywidth(str) - a:width
+  return matchstr(str, '\%>' . (vcol < 0 ? 0 : vcol) . 'v.*')
+endfunction

@@ -10,7 +10,7 @@ export interface ColumnDraw<Item> {
 
   load?(sourceTtem: Item | null): void | Promise<void>;
 
-  beforeDraw?(): void;
+  beforeDraw?(): void | Promise<void>;
 
   draw(row: SourceRowBuilder, item: Item): void;
 }
@@ -62,10 +62,10 @@ export class BaseColumnManager<
     }
   }
 
-  beforeDraw() {
-    this.columnDraws.forEach((column) => {
-      column.beforeDraw && column.beforeDraw();
-    });
+  async beforeDraw() {
+    for (const fileColumn of this.columnDraws) {
+      await (fileColumn.beforeDraw && fileColumn.beforeDraw());
+    }
   }
 
   drawItem(row: SourceRowBuilder, item: Item) {

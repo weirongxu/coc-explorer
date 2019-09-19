@@ -250,8 +250,8 @@ export class BufferSource extends ExplorerSource<BufferItem> {
     await bufferColumnManager.load(sourceItem);
   }
 
-  draw(builder: SourceViewBuilder<BufferItem>) {
-    bufferColumnManager.beforeDraw();
+  async draw(builder: SourceViewBuilder<BufferItem>) {
+    await bufferColumnManager.beforeDraw();
 
     builder.newRoot((row) => {
       row.add(this.expanded ? sourceIcons.expanded : sourceIcons.shrinked, highlights.expandIcon);

@@ -56,6 +56,7 @@ export type FileItem = {
   isLastInLevel: boolean;
   parent?: FileItem;
   children?: FileItem[];
+  data: Record<string, any>;
 };
 
 export const expandStore = {
@@ -335,7 +336,6 @@ export class FileSource extends ExplorerSource<FileItem> {
         }
       },
       'expand directory or open file',
-      { multi: false },
     );
     this.addItemAction(
       'expandRecursive',
@@ -344,7 +344,6 @@ export class FileSource extends ExplorerSource<FileItem> {
         await this.render();
       },
       'expand directory recursively',
-      { multi: true },
     );
     this.addItemAction(
       'shrink',
@@ -379,7 +378,6 @@ export class FileSource extends ExplorerSource<FileItem> {
         await this.render();
       },
       'shrink directory recursively',
-      { multi: false },
     );
     this.addItemAction(
       'expandOrShrink',
@@ -393,7 +391,6 @@ export class FileSource extends ExplorerSource<FileItem> {
         }
       },
       'expand or shrink directory',
-      { multi: false },
     );
 
     this.addAction(
@@ -647,6 +644,7 @@ export class FileSource extends ExplorerSource<FileItem> {
             isLastInLevel: false,
             stat,
             parent: parent || undefined,
+            data: {},
           };
           if (expandStore.isExpanded(item.fullpath)) {
             item.children = await this.listFiles(item.fullpath, item);
@@ -713,8 +711,8 @@ export class FileSource extends ExplorerSource<FileItem> {
     }
   }
 
-  draw(builder: SourceViewBuilder<FileItem>) {
-    fileColumnManager.beforeDraw();
+  async draw(builder: SourceViewBuilder<FileItem>) {
+    await fileColumnManager.beforeDraw();
 
     const rootExpanded = expandStore.isExpanded(this.root);
     builder.newRoot((row) => {

@@ -1,14 +1,17 @@
 import { hlGroupManager } from '../../../highlight-manager';
 import { fileColumnManager } from '../column-manager';
-import { truncate } from '../../../../util';
+import { flattenChildren } from '../../../../util';
 import { indentChars, topLevel } from './indent';
-import { FileItem, expandStore } from '../file-source';
+import { FileItem } from '../file-source';
+import { workspace } from 'coc.nvim';
 
 export const highlights = {
   directory: hlGroupManager.hlLinkGroupCommand('FileDirectory', 'PreProc'),
   nameActive: hlGroupManager.hlLinkGroupCommand('FileNameActive', 'String'),
 };
 hlGroupManager.register(highlights);
+
+const nvim = workspace.nvim;
 
 const minWidth = fileColumnManager.getColumnConfig<number>('filename.minWidth')!;
 const maxWidth = fileColumnManager.getColumnConfig<number>('filename.maxWidth')!;
@@ -24,26 +27,35 @@ function indentWidth(item: FileItem) {
 }
 
 fileColumnManager.registerColumn('filename', (fileSource) => ({
-  beforeDraw() {
-    const maxTreeWidth = fileSource.items
-      .reduce<FileItem[]>((flatItems, item) => {
-        flatItems.push(item);
-        if (item.directory && expandStore.isExpanded(item.fullpath) && item.children) {
-          flatItems.push(...item.children);
-        }
-        return flatItems;
-      }, [])
-      .filter((item) => !item.hidden || fileSource.showHiddenFiles)
-      .map((item) => item.name.length + indentWidth(item))
-      .reduce((width, max) => (width > max ? width : max), 0);
-    fullTreeWidth = Math.min(maxWidth, Math.max(minWidth, maxTreeWidth));
+  async beforeDraw() {
+    const flatItems = flattenChildren(fileSource.items).filter((item) => !item.hidden || fileSource.showHiddenFiles);
+    flatItems.forEach((item) => {
+      if (item.data.indentWidth === undefined) {
+        item.data.indentWidth = indentWidth(item);
+      }
+    });
+    const treeWidths = await Promise.all(
+      flatItems.map(
+        async (item) => ((await nvim.call('strdisplaywidth', [item.name])) as number) + item.data.indentWidth,
+      ),
+    );
+    fullTreeWidth = Math.min(maxWidth, Math.max(minWidth, Math.max(...treeWidths)));
+    await Promise.all(
+      flatItems.map(async (item) => {
+        const filenameWidth = fullTreeWidth - item.data.indentWidth;
+        item.data.truncatedName = await nvim.call('coc_explorer#truncate', [
+          item.directory ? item.name + '/' : item.name,
+          filenameWidth,
+          '..',
+        ]);
+      }),
+    );
   },
   draw(row, item) {
-    const filenameWidth = fullTreeWidth - indentWidth(item);
     if (item.directory) {
-      row.add(truncate(item.name + '/', filenameWidth, 'end'), highlights.directory);
+      row.add(item.data.truncatedName, highlights.directory);
     } else {
-      row.add(truncate(item.name, filenameWidth, 'end'));
+      row.add(item.data.truncatedName);
     }
     row.add(' ');
   },

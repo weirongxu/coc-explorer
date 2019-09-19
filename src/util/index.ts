@@ -1,12 +1,13 @@
 import { workspace } from 'coc.nvim';
 import util from 'util';
+export * from './string';
+export * from './number';
 export * from './array';
 export * from './async';
 export * from './config';
 export * from './events';
 export * from './fs';
 export * from './neovim-notify';
-export * from './string';
 export * from './throttle-debounce';
 export * from './vim';
 

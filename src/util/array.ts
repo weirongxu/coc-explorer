@@ -1,4 +1,31 @@
-export const chunk = <T>(array: T[], size: number = 1): T[][] => {
+export function flatten<T>(arr: T[]) {
+  const stack = [...arr];
+  const res = [];
+  while (stack.length) {
+    const item = stack.shift()!;
+    if (Array.isArray(item)) {
+      stack.unshift(...item);
+    } else {
+      res.push(item);
+    }
+  }
+  return res;
+}
+
+export function flattenChildren<T extends Record<string, any> & { children?: T[] }>(arr: T[]) {
+  const stack = [...arr];
+  const res = [];
+  while (stack.length) {
+    const item = stack.shift()!;
+    res.push(item);
+    if (item.children && Array.isArray(item.children)) {
+      stack.unshift(...item.children);
+    }
+  }
+  return res;
+}
+
+export function chunk<T>(array: T[], size: number = 1): T[][] {
   const finalSize = Math.max(size, 0);
   if (!array.length || size < 1) {
     return [];
@@ -8,7 +35,7 @@ export const chunk = <T>(array: T[], size: number = 1): T[][] => {
     result.push(array.slice(i * size, (i + 1) * size));
   }
   return result;
-};
+}
 
 export const sum = (list: number[]) => list.reduce((result, item) => result + item, 0);
 
