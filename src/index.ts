@@ -1,4 +1,3 @@
-import pathLib from 'path';
 import { ExtensionContext, commands, workspace } from 'coc.nvim';
 import { Explorer } from './explorer';
 import { registerLogger, onError } from './logger';
@@ -19,9 +18,8 @@ export const activate = async (context: ExtensionContext) => {
     .getOption('runtimepath')
     .then(async (rtp) => {
       const paths = (rtp as string).split(',');
-      const extensionPath = pathLib.resolve(__dirname, '..');
-      if (!paths.includes(extensionPath)) {
-        await nvim.command(`execute 'noa set rtp^='.fnameescape('${extensionPath.replace(/'/g, "''")}')`);
+      if (!paths.includes(context.extensionPath)) {
+        await nvim.command(`execute 'noa set rtp^='.fnameescape('${context.extensionPath.replace(/'/g, "''")}')`);
       }
       explorer.onDidAutoload.fire();
     })
