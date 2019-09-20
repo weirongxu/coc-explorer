@@ -127,11 +127,17 @@ class GitCommand {
   }
 
   async stage(...path: string[]) {
-    await this.spawn(['add', ...path]);
+    if (path.length) {
+      const root = await this.getRoot(pathLib.dirname(path[0]));
+      await this.spawn(['add', ...path], { cwd: root });
+    }
   }
 
   async unstage(...path: string[]) {
-    await this.spawn(['reset', ...path]);
+    if (path.length) {
+      const root = await this.getRoot(pathLib.dirname(path[0]));
+      await this.spawn(['reset', ...path], { cwd: root });
+    }
   }
 }
 
