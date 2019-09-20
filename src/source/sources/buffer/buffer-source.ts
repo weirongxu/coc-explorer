@@ -56,7 +56,7 @@ export class BufferSource extends ExplorerSource<BufferItem> {
     await bufferColumnManager.init(this);
 
     if (activeMode) {
-      setTimeout(async () => {
+      this.explorer.onDidInit.event(() => {
         if (!workspace.env.isVim) {
           events.on(
             ['BufCreate', 'BufHidden', 'BufUnload', 'BufWritePost', 'InsertLeave'],
@@ -71,7 +71,7 @@ export class BufferSource extends ExplorerSource<BufferItem> {
             }
           });
         }
-      }, 30);
+      });
     }
 
     this.addAction(

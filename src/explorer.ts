@@ -19,6 +19,7 @@ export class Explorer {
   revealFilepath?: string;
   isHelpUI: boolean = false;
   onDidAutoload = new Emitter<void>();
+  onDidInit = new Emitter<number>();
 
   private _buffer?: Buffer;
   private _bufnr?: number;
@@ -144,8 +145,9 @@ export class Explorer {
 
     this._bufnr = bufnr;
 
-    // if (!inited) {
-    // }
+    if (!inited) {
+      this.onDidInit.fire(this._bufnr);
+    }
 
     if (this.isHelpUI) {
       await this.sources[0].quitHelp();

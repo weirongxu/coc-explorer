@@ -95,7 +95,7 @@ export class FileSource extends ExplorerSource<FileItem> {
     await fileColumnManager.init(this);
 
     if (activeMode) {
-      setTimeout(async () => {
+      this.explorer.onDidInit.event(() => {
         if (!workspace.env.isVim) {
           if (autoReveal) {
             onBufEnter(200, async (bufnr) => {
@@ -152,7 +152,7 @@ export class FileSource extends ExplorerSource<FileItem> {
             }
           });
         }
-      }, 30);
+      });
     }
 
     this.root = pathLib.join(this.explorer.args.cwd);
@@ -449,7 +449,7 @@ export class FileSource extends ExplorerSource<FileItem> {
             let targetPath = pathLib.join(targetDir, item.name);
             while (true) {
               if (await fsExists(targetPath)) {
-                const answer = await this.explorer.prompt(`${targetPath} already exists. Overwrite?`, [
+                const answer = await this.explorer.prompt(`${targetPath} already exists. Skip?`, [
                   'rename',
                   'skip',
                   'cancel',
