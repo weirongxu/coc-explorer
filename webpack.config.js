@@ -7,6 +7,10 @@ module.exports = {
     mainFields: ['main', 'module'],
     extensions: ['.js', '.ts'],
   },
+  node: {
+    __dirname: false,
+    __filename: false,
+  },
   entry: './src/index.ts',
   output: {
     path: path.resolve(__dirname, 'lib'),
