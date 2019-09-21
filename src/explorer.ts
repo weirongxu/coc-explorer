@@ -305,7 +305,7 @@ export class Explorer {
       const lineIndex = line - 1;
       return {
         lineIndex,
-        col: workspace.env.isVim ? col : col + 1,
+        col: col + 1,
       };
     }
     return null;
