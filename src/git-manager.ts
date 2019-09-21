@@ -33,7 +33,7 @@ export type GitStatus = {
   ignored: boolean;
 };
 
-export type GitDirectoryStatus = {
+export type GitMixedStatus = {
   x: GitFormat;
   y: GitFormat;
 };
@@ -88,7 +88,8 @@ class GitCommand {
     const output = await this.spawn(args, { cwd: root });
     const lines = output.split('\n');
     lines.forEach((line) => {
-      const [fullpath, x, y] = this.parseStatusLine(root, line);
+      const [fullpath, x_, y] = this.parseStatusLine(root, line);
+      const x = [GitFormat.untracked, GitFormat.ignored].includes(x_) ? GitFormat.unmodified : x_;
 
       const changedList = [GitFormat.modified, GitFormat.added, GitFormat.deleted, GitFormat.renamed, GitFormat.copied];
       const added = x === GitFormat.added || y === GitFormat.added;
@@ -146,7 +147,7 @@ class GitManager {
 
   private rootCache: Record<string, string> = {};
   private statusCache: Record<string, Record<string, GitStatus>> = {};
-  private directoryStatusCache: Record<string, Record<string, GitDirectoryStatus>> = {};
+  private mixedStatusCache: Record<string, Record<string, GitMixedStatus>> = {};
 
   async getGitRoot(folderPath: string): Promise<string | undefined> {
     if (folderPath in this.rootCache) {
@@ -178,7 +179,7 @@ class GitManager {
     const root = await this.getGitRoot(folderPath);
     if (root) {
       this.statusCache[root] = await this.cmd.status(root, showIgnored);
-      this.directoryStatusCache[root] = {};
+      this.mixedStatusCache[root] = {};
 
       // generate directory status
       Object.entries(this.statusCache[root]).forEach(([fullpath, status]) => {
@@ -186,7 +187,7 @@ class GitManager {
         const parts = relativePath.split(pathLib.sep);
         for (let i = 1; i <= parts.length; i++) {
           const frontalPath = pathLib.join(root, parts.slice(0, i).join(pathLib.sep));
-          const cache = this.directoryStatusCache[root][frontalPath];
+          const cache = this.mixedStatusCache[root][frontalPath];
           if (cache) {
             if (cache.x !== GitFormat.mixed) {
               if (cache.x !== status.x) {
@@ -207,7 +208,7 @@ class GitManager {
               }
             }
           } else {
-            this.directoryStatusCache[root][frontalPath] = {
+            this.mixedStatusCache[root][frontalPath] = {
               x: status.x,
               y: status.y,
             };
@@ -217,8 +218,8 @@ class GitManager {
     }
   }
 
-  getStatus(path: string): GitDirectoryStatus | null {
-    for (const [, directoryStatusCache] of Object.entries(this.directoryStatusCache)) {
+  getStatus(path: string): GitMixedStatus | null {
+    for (const [, directoryStatusCache] of Object.entries(this.mixedStatusCache)) {
       if (path in directoryStatusCache) {
         return directoryStatusCache[path];
       }

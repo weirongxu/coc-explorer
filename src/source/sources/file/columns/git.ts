@@ -48,18 +48,14 @@ fileColumnManager.registerColumn('git', (fileSource) => ({
   draw(row, item) {
     const showFormat = (f: string, staged: boolean) => {
       if (f.trim().length > 0) {
-        row.add(f, staged ? highlights.stage: highlights.unstage);
+        row.add(f, staged ? highlights.stage : highlights.unstage);
       } else {
         row.add(f);
       }
     };
     const status = gitManager.getStatus(item.fullpath);
     if (status) {
-      if (status.x !== GitFormat.untracked && status.x !== GitFormat.ignored) {
-        showFormat(statusIcons[status.x], true);
-      } else {
-        showFormat(' ', true);
-      }
+      showFormat(statusIcons[status.x], true);
       showFormat(statusIcons[status.y], false);
       row.add(' ');
       fileSource.gitChangedLineIndexes.push(row.line);
