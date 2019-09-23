@@ -115,7 +115,6 @@ Explorer file columns, supported columns:
 - icon
 - filename
 - indent
-- indentLine
 - readonly
 - clip
 - size

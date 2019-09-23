@@ -208,7 +208,6 @@
               "diagnosticWarning",
               "diagnosticError",
               "indent",
-              "indentLine",
               "icon",
               "filename",
               "size",
@@ -223,7 +222,7 @@
             "selection",
             "clip",
             "diagnosticError",
-            "indentLine",
+            "indent",
             "icon",
             "filename",
             "readonly",
@@ -287,14 +286,12 @@
           "default": "!"
         },
         "explorer.file.column.clip.copy": {
-          "description": "Whether the file is copied",
-          "type": "string",
-          "default": "C"
+          "description": "Whether the file has been copied",
+          "type": "string"
         },
         "explorer.file.column.clip.cut": {
-          "description": "Whether the file is cut",
-          "type": "string",
-          "default": "X"
+          "description": "Whether the file has been cut",
+          "type": "string"
         },
         "explorer.file.column.indent.chars": {
           "description": "Indent chars for file source",
@@ -305,6 +302,10 @@
           "description": "Whether to indent it in top level",
           "type": "boolean",
           "default": false
+        },
+        "explorer.file.column.indent.indentLine": {
+          "description": "Whether to display the alignment line",
+          "type": "boolean"
         },
         "explorer.file.column.icon.expanded": {
           "description": "Icon expanded directory",

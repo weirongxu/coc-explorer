@@ -5,11 +5,18 @@ import { enableNerdfont } from '../../../source';
 let copy = fileColumnManager.getColumnConfig<string>('clip.copy');
 let cut = fileColumnManager.getColumnConfig<string>('clip.cut');
 if (enableNerdfont) {
-  if (copy === 'C') {
+  if (copy === undefined) {
     copy = '';
   }
-  if (cut === 'X') {
+  if (cut === undefined) {
     cut = '';
+  }
+} else {
+  if (copy === undefined) {
+    copy = 'C';
+  }
+  if (cut === undefined) {
+    cut = 'X';
   }
 }
 const width = Math.max(copy.length, cut.length) + 1;
