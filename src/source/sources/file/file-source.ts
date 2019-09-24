@@ -351,8 +351,10 @@ export class FileSource extends ExplorerSource<FileItem> {
           await this.render();
         } else if (item.parent) {
           expandStore.shrink(item.parent.fullpath);
-          await this.render();
-          await this.gotoItem(item.parent);
+          await execNotifyBlock(async () => {
+            await this.render({ notify: true });
+            await this.gotoItem(item.parent!, { notify: true });
+          });
         } else {
           await this.doRootAction('shrink');
         }
@@ -719,16 +721,6 @@ export class FileSource extends ExplorerSource<FileItem> {
 
   async loaded(sourceItem: FileItem | null) {
     await fileColumnManager.load(sourceItem);
-  }
-
-  async opened() {
-    if (this.explorer.revealFilepath && autoReveal) {
-      const item = await this.revealItemByPath(this.explorer.revealFilepath);
-      await this.render({ storeCursor: false });
-      await this.gotoItem(item, { col: 1 });
-    } else {
-      await this.gotoRoot({ col: 1 });
-    }
   }
 
   async draw(builder: SourceViewBuilder<FileItem>) {

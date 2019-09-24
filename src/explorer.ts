@@ -5,7 +5,7 @@ import { ArgPosition, Args, parseArgs } from './parse-args';
 import './source/load';
 import { BaseItem, ExplorerSource } from './source/source';
 import { sourceManager } from './source/source-manager';
-import { execNotifyBlock } from './util';
+import { execNotifyBlock, autoReveal } from './util';
 import { hlGroupManager } from './source/highlight-manager';
 
 export class Explorer {
@@ -153,11 +153,28 @@ export class Explorer {
       await this.sources[0].quitHelp();
     }
 
-    await this.reloadAll();
+    await execNotifyBlock(async () => {
+      await this.reloadAll({ render: false });
 
-    for (const source of this.sources) {
-      await source.opened();
-    }
+      const firstFileSource = this.sources.find((s) => s instanceof FileSource) as FileSource | undefined;
+      let item: FileItem | null = null;
+
+      if (firstFileSource) {
+        if (this.revealFilepath && autoReveal) {
+          item = await firstFileSource.revealItemByPath(this.revealFilepath);
+        }
+      }
+
+      await this.renderAll({ notify: true });
+
+      if (firstFileSource) {
+        if (this.revealFilepath && autoReveal) {
+          await firstFileSource.gotoItem(item, { col: 1, notify: true });
+        } else {
+          await firstFileSource.gotoRoot({ col: 1, notify: true });
+        }
+      }
+    });
   }
 
   private async initArgs(argStrings: string[]) {
@@ -357,15 +374,15 @@ export class Explorer {
     }, notify);
   }
 
-  private async clearContent() {
-    await this.setLines([], 0, -1, true);
-
-    this.sources.forEach((source) => {
-      source.lines = [];
-      source.startLine = 0;
-      source.endLine = 0;
-    });
-  }
+  // private async clearContent() {
+  //   await this.setLines([], 0, -1, true);
+  //
+  //   this.sources.forEach((source) => {
+  //     source.lines = [];
+  //     source.startLine = 0;
+  //     source.endLine = 0;
+  //   });
+  // }
 
   async reloadAll({ render = true, notify = false } = {}) {
     await execNotifyBlock(async () => {
@@ -381,7 +398,7 @@ export class Explorer {
     await execNotifyBlock(async () => {
       const store = await this.storeCursor();
 
-      await this.clearContent();
+      // await this.clearContent();
       for (const source of this.sources) {
         await source.render({ notify, storeCursor: storeCursor });
       }
@@ -392,3 +409,5 @@ export class Explorer {
     });
   }
 }
+
+import { FileSource, FileItem } from './source/sources/file/file-source';

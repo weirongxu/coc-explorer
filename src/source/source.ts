@@ -293,7 +293,6 @@ export abstract class ExplorerSource<Item extends BaseItem<Item>> {
   }
 
   init() {}
-  async opened() {}
 
   addAction(
     name: ActionSyms,
@@ -455,7 +454,7 @@ export abstract class ExplorerSource<Item extends BaseItem<Item>> {
     }, notify);
   }
 
-  async gotoRoot({ col }: { col?: number } = {}, notify = false) {
+  async gotoRoot({ col, notify = false }: { col?: number; notify?: boolean } = {}) {
     const finalCol = col === undefined ? await this.explorer.currentCol() : col;
     await this.gotoLineIndex(0, finalCol, notify);
   }
@@ -465,7 +464,7 @@ export abstract class ExplorerSource<Item extends BaseItem<Item>> {
     { lineIndex: fallbackLineIndex, col, notify = false }: { lineIndex?: number; col?: number; notify?: boolean } = {},
   ) {
     if (item === null) {
-      await this.gotoRoot({ col }, notify);
+      await this.gotoRoot({ col, notify });
       return;
     }
 
@@ -476,7 +475,7 @@ export abstract class ExplorerSource<Item extends BaseItem<Item>> {
     } else if (fallbackLineIndex !== undefined) {
       await this.gotoLineIndex(fallbackLineIndex, finalCol, notify);
     } else {
-      await this.gotoRoot({ col: finalCol }, notify);
+      await this.gotoRoot({ col: finalCol, notify });
     }
   }
 
