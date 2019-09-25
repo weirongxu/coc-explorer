@@ -187,6 +187,11 @@
           "type": "boolean",
           "default": true
         },
+        "explorer.file.diagnosticCountMax": {
+          "description": "Maximum count of diagnostic column",
+          "type": "number",
+          "default": 99
+        },
         "explorer.file.showHiddenFiles": {
           "description": "Default show hidden files",
           "type": "boolean",

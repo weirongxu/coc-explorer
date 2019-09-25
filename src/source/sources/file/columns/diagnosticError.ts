@@ -17,10 +17,8 @@ fileColumnManager.registerColumn('diagnosticError', (fileSource) => ({
   draw(row, item) {
     if (Object.keys(diagnosticManager.errorMixedCount).length > 0) {
       if (item.fullpath in diagnosticManager.errorMixedCount) {
-        row.add(
-          diagnosticManager.errorMixedCount[item.fullpath].toString().padStart(diagnosticManager.errorMaxWidth),
-          highlights.error,
-        );
+        const count = diagnosticManager.errorMixedCount[item.fullpath];
+        row.add(count.padStart(diagnosticManager.errorMaxWidth), highlights.error);
         fileSource.diagnosisLineIndexes.push(row.line);
       } else {
         row.add(' '.repeat(diagnosticManager.errorMaxWidth));
