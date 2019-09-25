@@ -1,12 +1,15 @@
 import { diagnosticManager as cocDiagnosticManager } from 'coc.nvim';
+import pathLib from 'path';
 
 class DiagnosticManager {
   errorMaxWidth = 0;
   warningMaxWidth = 0;
-  errorPathCountNum: Record<string, number> = {};
-  warningPathCountNum: Record<string, number> = {};
-  errorPathCountStr: Record<string, string> = {};
-  warningPathCountStr: Record<string, string> = {};
+  errorNeedRender = false;
+  warningNeedRender = false;
+  errorPathCount: Record<string, number> = {};
+  warningPathCount: Record<string, number> = {};
+  errorMixedCount: Record<string, number> = {};
+  warningMixedCount: Record<string, number> = {};
 
   private lastReloadTime = 0;
 
@@ -17,58 +20,85 @@ class DiagnosticManager {
     }
     this.lastReloadTime = nowTime;
 
-    this.errorPathCountNum = {};
-    this.warningPathCountNum = {};
+    const errorPathCountNum: Record<string, number> = {};
+    const warningPathCountNum: Record<string, number> = {};
 
     cocDiagnosticManager.getDiagnosticList().forEach((diagnostic) => {
       const uri = diagnostic.location.uri;
       if (uri.startsWith('file://')) {
         const path = uri.slice(7);
         if (diagnostic.severity === 'Error') {
-          if (!(path in this.errorPathCountNum)) {
-            this.errorPathCountNum[path] = 0;
+          if (!(path in errorPathCountNum)) {
+            errorPathCountNum[path] = 0;
           }
-          this.errorPathCountNum[path] += 1;
+          errorPathCountNum[path] += 1;
         } else {
-          if (!(path in this.warningPathCountNum)) {
-            this.warningPathCountNum[path] = 0;
+          if (!(path in warningPathCountNum)) {
+            warningPathCountNum[path] = 0;
           }
-          this.warningPathCountStr[path] += 1;
+          warningPathCountNum[path] += 1;
         }
       }
     });
-  }
 
-  errorReload() {
-    this.reload();
-
-    const errorPathCountStr: Record<string, string> = {};
-    for (const path in this.errorPathCountNum) {
-      errorPathCountStr[path] = this.errorPathCountNum[path].toString();
+    if (JSON.stringify(errorPathCountNum) !== JSON.stringify(this.errorPathCount)) {
+      this.errorPathCount = errorPathCountNum;
+      this.errorNeedRender = true;
     }
-    if (JSON.stringify(errorPathCountStr) !== JSON.stringify(this.errorPathCountStr)) {
-      this.errorMaxWidth = Math.max(...Object.values(errorPathCountStr).map((d) => d.length));
-      this.errorPathCountStr = errorPathCountStr;
-      return true;
-    } else {
-      return false;
+
+    if (JSON.stringify(warningPathCountNum) !== JSON.stringify(this.warningPathCount)) {
+      this.warningPathCount = warningPathCountNum;
+      this.warningNeedRender = true;
     }
   }
 
-  warningReload() {
+  errorReload(root: string) {
     this.reload();
 
-    const warningPathCountStr: Record<string, string> = {};
-    for (const path in this.warningPathCountNum) {
-      warningPathCountStr[path] = this.warningPathCountNum[path].toString();
-    }
+    if (this.errorNeedRender) {
+      this.errorMixedCount = {};
 
-    if (JSON.stringify(warningPathCountStr) !== JSON.stringify(this.warningPathCountStr)) {
-      this.warningMaxWidth = Math.max(...Object.values(warningPathCountStr).map((d) => d.length));
-      this.warningPathCountStr = warningPathCountStr;
-      return true;
-    } else {
-      return false;
+      Object.entries(this.errorPathCount).forEach(([fullpath, count]) => {
+        const relativePath = pathLib.relative(root, fullpath);
+        const parts = relativePath.split(pathLib.sep);
+
+        for (let i = 1; i <= parts.length; i++) {
+          const frontalPath = pathLib.join(root, parts.slice(0, i).join(pathLib.sep));
+          const cache = this.errorMixedCount[frontalPath];
+          if (cache) {
+            this.errorMixedCount[frontalPath] += count;
+          } else {
+            this.errorMixedCount[frontalPath] = count;
+          }
+        }
+      });
+
+      this.errorMaxWidth = Math.max(...Object.values(this.errorMixedCount).map((d) => d.toString().length));
+    }
+  }
+
+  warningReload(root: string) {
+    this.reload();
+
+    if (this.warningNeedRender) {
+      this.warningMixedCount = {};
+
+      Object.entries(this.warningPathCount).forEach(([fullpath, count]) => {
+        const relativePath = pathLib.relative(root, fullpath);
+        const parts = relativePath.split(pathLib.sep);
+
+        for (let i = 1; i <= parts.length; i++) {
+          const frontalPath = pathLib.join(root, parts.slice(0, i).join(pathLib.sep));
+          const cache = this.warningMixedCount[frontalPath];
+          if (cache) {
+            this.warningMixedCount[frontalPath] += count;
+          } else {
+            this.warningMixedCount[frontalPath] = count;
+          }
+        }
+
+        this.warningMaxWidth = Math.max(...Object.values(this.warningMixedCount).map((d) => d.toString().length));
+      });
     }
   }
 }

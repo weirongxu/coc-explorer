@@ -170,7 +170,7 @@ export class Explorer {
       if (firstFileSource) {
         if (this.revealFilepath && autoReveal) {
           await firstFileSource.gotoItem(item, { col: 1, notify: true });
-        } else {
+        } else if (!inited) {
           await firstFileSource.gotoRoot({ col: 1, notify: true });
         }
       }
@@ -353,7 +353,7 @@ export class Explorer {
       }
     }
     return async () => {
-      // await this.nvim.call('winrestview', storeView);
+      await this.nvim.call('winrestview', storeView);
     };
   }
 

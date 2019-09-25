@@ -181,7 +181,7 @@ class GitManager {
       this.statusCache[root] = await this.cmd.status(root, showIgnored);
       this.mixedStatusCache[root] = {};
 
-      // generate directory status
+      // generate mixed status cache
       Object.entries(this.statusCache[root]).forEach(([fullpath, status]) => {
         const relativePath = pathLib.relative(root, fullpath);
         const parts = relativePath.split(pathLib.sep);

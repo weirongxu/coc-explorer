@@ -131,13 +131,17 @@ export class FileSource extends ExplorerSource<FileItem> {
             debounce(1000, async () => {
               let needRender = false;
               if (fileColumnManager.columns.includes('diagnosticError')) {
-                if (diagnosticManager.errorReload()) {
+                diagnosticManager.errorReload(this.root);
+                if (diagnosticManager.errorNeedRender) {
                   needRender = true;
+                  diagnosticManager.errorNeedRender = false;
                 }
               }
               if (fileColumnManager.columns.includes('diagnosticWarning')) {
-                if (diagnosticManager.warningReload()) {
+                diagnosticManager.warningReload(this.root);
+                if (diagnosticManager.warningNeedRender) {
                   needRender = true;
+                  diagnosticManager.warningNeedRender = false;
                 }
               }
               if (needRender) {

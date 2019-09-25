@@ -9,16 +9,16 @@ hlGroupManager.register(highlights);
 
 fileColumnManager.registerColumn('diagnosticWarning', (fileSource) => ({
   load() {
-    diagnosticManager.warningReload();
+    diagnosticManager.warningReload(fileSource.root);
   },
   beforeDraw() {
     fileSource.diagnosisLineIndexes = [];
   },
   draw(row, item) {
-    if (Object.keys(diagnosticManager.warningPathCountStr).length > 0) {
-      if (item.fullpath in diagnosticManager.warningPathCountStr) {
+    if (Object.keys(diagnosticManager.warningMixedCount).length > 0) {
+      if (item.fullpath in diagnosticManager.warningMixedCount) {
         row.add(
-          diagnosticManager.warningPathCountStr[item.fullpath].padStart(diagnosticManager.errorMaxWidth),
+          diagnosticManager.warningMixedCount[item.fullpath].toString().padStart(diagnosticManager.warningMaxWidth),
           highlights.warning,
         );
         fileSource.diagnosisLineIndexes.push(row.line);
