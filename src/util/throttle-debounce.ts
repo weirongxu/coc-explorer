@@ -1,9 +1,22 @@
+import { onError } from '../logger';
+
 export function throttle<A extends Array<any>, R>(
+  delay: number,
+  fn: (...args: A) => Promise<R> | R,
+  options: { tail?: boolean } = {},
+): (...args: A) => void {
+  const debounceFn = throttlePromise(delay, fn, options);
+  return (...args: A) => {
+    debounceFn(...args).catch(onError);
+  };
+}
+
+export function throttlePromise<A extends Array<any>, R>(
   delay: number,
   fn: (...args: A) => Promise<R> | R,
   { tail = false }: { tail?: boolean } = {},
 ): (...args: A) => Promise<R | undefined> {
-  const debounceFn = debounce(delay, fn);
+  const debounceFn = debouncePromise(delay, fn);
   let lastTime = 0;
   return async (...args: A) => {
     const now = Date.now();
@@ -26,6 +39,16 @@ export function throttle<A extends Array<any>, R>(
 }
 
 export function debounce<A extends Array<any>, R>(
+  delay: number,
+  fn: (...args: A) => Promise<R> | R,
+): (...args: A) => void {
+  const debounceFn = debouncePromise(delay, fn);
+  return (...args: A) => {
+    debounceFn(...args).catch(onError);
+  };
+}
+
+export function debouncePromise<A extends Array<any>, R>(
   delay: number,
   fn: (...args: A) => Promise<R> | R,
 ): (...args: A) => Promise<R | undefined> {

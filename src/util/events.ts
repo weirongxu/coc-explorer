@@ -9,7 +9,7 @@ export function onBufEnter(delay: number, callback: (bufnr: number) => void | Pr
     if (stopBufEnter) {
       return;
     }
-    await throttleFn(bufnr);
+    throttleFn(bufnr);
   });
 }
 
