@@ -3,6 +3,7 @@ import { fileColumnManager } from '../column-manager';
 import { indentChars, topLevel } from './indent';
 import { FileItem, expandStore } from '../file-source';
 import { workspace } from 'coc.nvim';
+import { enableNerdfont } from '../../../source';
 
 export const highlights = {
   directory: hlGroupManager.hlLinkGroupCommand('FileDirectory', 'PreProc'),
@@ -43,10 +44,11 @@ async function loadTruncateItems(fullTreeWidth: number, flatItems: FileItem[]) {
       const key = [item.uid, item.level] as [string, number];
       if (!truncateCache.has(key)) {
         const filenameWidth = fullTreeWidth - item.data.filename.indentWidth;
-        truncateCache.set(
-          key,
-          await nvim.call('coc_explorer#truncate', [item.directory ? item.name + '/' : item.name, filenameWidth, '..']),
-        );
+        let name = item.name;
+        if (item.directory) {
+          name += '/';
+        }
+        truncateCache.set(key, await nvim.call('coc_explorer#truncate', [name, filenameWidth, '..']));
       }
       item.data.filename.truncatedName = truncateCache.get(key);
     }),

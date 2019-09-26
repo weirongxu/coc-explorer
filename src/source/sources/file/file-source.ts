@@ -21,9 +21,10 @@ import {
   fsReaddir,
   fsRename,
   fsRimraf,
-  fsStat,
   fsTouch,
   fsTrash,
+  fsLstat,
+  fsStat,
 } from '../../../util';
 import { hlGroupManager } from '../../highlight-manager';
 import { ExplorerSource, sourceIcons } from '../../source';
@@ -49,7 +50,8 @@ export type FileItem = {
   readable: boolean;
   writable: boolean;
   hidden: boolean;
-  stat: fs.Stats;
+  symbolicLink: boolean;
+  lstat: fs.Stats;
   isFirstInLevel: boolean;
   isLastInLevel: boolean;
   parent?: FileItem;
@@ -651,7 +653,8 @@ export class FileSource extends ExplorerSource<FileItem> {
       files.map(async (file) => {
         try {
           const fullpath = pathLib.join(path, file);
-          const stat = await fsStat(fullpath);
+          const stat = await fsStat(fullpath).catch(() => {});
+          const lstat = await fsLstat(fullpath);
           const executable = await fsAccess(fullpath, fs.constants.X_OK);
           const writable = await fsAccess(fullpath, fs.constants.W_OK);
           const readable = await fsAccess(fullpath, fs.constants.R_OK);
@@ -660,15 +663,16 @@ export class FileSource extends ExplorerSource<FileItem> {
             name: file,
             level: parent ? parent.level + 1 : 1,
             fullpath,
-            directory: stat.isDirectory(),
+            directory: stat ? stat.isDirectory() : false,
             readonly: !writable && readable,
             executable,
             readable,
             writable,
             hidden: file.startsWith('.'),
+            symbolicLink: lstat.isSymbolicLink(),
             isFirstInLevel: false,
             isLastInLevel: false,
-            stat,
+            lstat,
             parent: parent || undefined,
             data: {},
           };

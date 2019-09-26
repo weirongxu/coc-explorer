@@ -75,8 +75,8 @@ fileColumnManager.registerColumn('icon', {
       if (enableNerdfont) {
         row.add(
           expandStore.isExpanded(item.fullpath)
-            ? nerdfontJson.icons.folderOpened.code
-            : nerdfontJson.icons.folderClosed.code,
+          ? nerdfontJson.icons.folderOpened.code
+          : nerdfontJson.icons.folderClosed.code,
           filenameHighlights.directory,
         );
       } else {

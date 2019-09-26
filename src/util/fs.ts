@@ -17,6 +17,7 @@ export const fsAccess = (path: string, mode?: number) =>
   });
 export const fsExists = fsAccess;
 export const fsStat = promisify(fs.stat);
+export const fsLstat = promisify(fs.lstat);
 export const fsCopyFile = promisify(fs.copyFile);
 export const fsRename = promisify(fs.rename);
 export const fsTrash = (paths: string | string[]) => trash(paths, { glob: false });

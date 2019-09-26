@@ -9,7 +9,7 @@ hlGroupManager.register(highlights);
 
 fileColumnManager.registerColumn('accessed', {
   draw(row, item) {
-    row.add(dayjs(item.stat.atime).format('YY/MM/DD HH:mm:ss'), highlights.time);
+    row.add(dayjs(item.lstat.atime).format('YY/MM/DD HH:mm:ss'), highlights.time);
     row.add(' ');
   },
 });

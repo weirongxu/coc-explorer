@@ -9,11 +9,7 @@ hlGroupManager.register(highlights);
 
 fileColumnManager.registerColumn('size', {
   draw(row, item) {
-    if (item.directory) {
-      row.add(' '.repeat(10));
-    } else {
-      row.add(prettyBytes(item.stat.size).padStart(10), highlights.size);
-    }
+    row.add(prettyBytes(item.lstat.size).padStart(10), highlights.size);
     row.add(' ');
   },
 });

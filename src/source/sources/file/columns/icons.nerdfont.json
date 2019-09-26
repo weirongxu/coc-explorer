@@ -8,8 +8,16 @@
       "code": "",
       "color": "#00afaf"
     },
+    "folderSymlink": {
+      "code": "",
+      "color": "#00afaf"
+    },
     "file": {
       "code": "",
+      "color": "#999999"
+    },
+    "fileSymlink": {
+      "code": "",
       "color": "#999999"
     },
     "fileHidden": {
