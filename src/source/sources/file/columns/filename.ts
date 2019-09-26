@@ -3,7 +3,7 @@ import { fileColumnManager } from '../column-manager';
 import { indentChars, topLevel } from './indent';
 import { FileItem, expandStore } from '../file-source';
 import { workspace } from 'coc.nvim';
-import { fsRealpath } from '../../../../util';
+import { fsReadlink } from '../../../../util';
 
 export const highlights = {
   directory: hlGroupManager.hlLinkGroupCommand('FileDirectory', 'PreProc'),
@@ -46,7 +46,13 @@ async function loadTruncateItems(fullTreeWidth: number, flatItems: FileItem[]) {
       if (item.directory) {
         name += '/';
       }
-      const linkTarget = item.symbolicLink ? ' → ' + (await fsRealpath(item.fullpath)) : '';
+      const linkTarget = item.symbolicLink
+        ? await fsReadlink(item.fullpath)
+            .then((link) => {
+              return ' → ' + link;
+            })
+            .catch(() => '')
+        : '';
       const key = [item.level, name, linkTarget] as [number, string, string];
       if (!truncateCache.has(key)) {
         const filenameWidth = fullTreeWidth - item.data.filename.indentWidth;
