@@ -1,6 +1,5 @@
 import { events, workspace } from 'coc.nvim';
 import pathLib from 'path';
-import { debounce } from 'throttle-debounce';
 import {
   activeMode,
   avoidOnBufEnter,
@@ -8,6 +7,7 @@ import {
   execNotifyBlock,
   onBufEnter,
   openStrategy,
+  debounce,
 } from '../../../util';
 import { hlGroupManager } from '../../highlight-manager';
 import { ExplorerSource, sourceIcons } from '../../source';
@@ -64,7 +64,7 @@ export class BufferSource extends ExplorerSource<BufferItem> {
               await this.reload(null);
             }),
           );
-        } else if (workspace.env.isVim) {
+        } else {
           onBufEnter(500, async (bufnr) => {
             if (bufnr === this.explorer.bufnr) {
               await this.reload(null, { render: false });

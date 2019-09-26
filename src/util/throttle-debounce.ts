@@ -1,58 +1,49 @@
-class Cancellation {}
-
-export function throttleSingleThread<A extends Array<any>, R>(
+export function throttle<A extends Array<any>, R>(
   delay: number,
   fn: (...args: A) => Promise<R> | R,
-): (...args: A) => Promise<R | typeof Cancellation> {
+  { tail = false }: { tail?: boolean } = {},
+): (...args: A) => Promise<R | undefined> {
+  const debounceFn = debounce(delay, fn);
   let lastTime = 0;
-  let block = false;
   return async (...args: A) => {
-    if (block) {
-      return Cancellation;
-    }
     const now = Date.now();
     if (now - lastTime < delay) {
-      return Cancellation;
-    }
-    lastTime = now;
-    try {
-      block = true;
-      const ret = await fn(...args);
-      block = false;
-      return ret;
-    } catch (error) {
-      block = false;
-      throw error;
+      if (tail) {
+        return await debounceFn(...args);
+      } else {
+        return undefined;
+      }
+    } else {
+      lastTime = now;
+      try {
+        const ret = await fn(...args);
+        return ret;
+      } catch (error) {
+        throw error;
+      }
     }
   };
 }
 
-export function debounceSingleThread<A extends Array<any>, R>(
+export function debounce<A extends Array<any>, R>(
   delay: number,
   fn: (...args: A) => Promise<R> | R,
-): (...args: A) => Promise<R | typeof Cancellation> {
+): (...args: A) => Promise<R | undefined> {
   let timer: NodeJS.Timeout | null = null;
-  let lastResolve: null | ((value: R | typeof Cancellation) => void) = null;
-  let block = false;
+  let lastResolve: null | ((value: R | undefined) => void) = null;
   return async (...args: A) => {
-    if (block) {
-      return Cancellation;
-    }
-
     if (timer) {
       clearTimeout(timer);
-      lastResolve!(Cancellation);
+      lastResolve!(undefined);
     }
-    return await new Promise<R | typeof Cancellation>((resolve, reject) => {
+    return await new Promise<R | undefined>((resolve, reject) => {
       lastResolve = resolve;
       timer = setTimeout(async () => {
-        block = true;
         try {
           resolve(await fn(...args));
         } catch (error) {
           reject(error);
         }
-        block = false;
       }, delay);
     });
   };

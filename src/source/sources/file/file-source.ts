@@ -2,7 +2,6 @@ import { events, workspace } from 'coc.nvim';
 import fs from 'fs';
 import open from 'open';
 import pathLib from 'path';
-import { debounce } from 'throttle-debounce';
 import { diagnosticManager } from '../../../diagnostic-manager';
 import { gitManager } from '../../../git-manager';
 import { onError } from '../../../logger';
@@ -25,6 +24,7 @@ import {
   fsTrash,
   fsLstat,
   fsStat,
+  debounce,
 } from '../../../util';
 import { hlGroupManager } from '../../highlight-manager';
 import { ExplorerSource, sourceIcons } from '../../source';
