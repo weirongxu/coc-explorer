@@ -3,11 +3,12 @@ import { fileColumnManager } from '../column-manager';
 import { indentChars, topLevel } from './indent';
 import { FileItem, expandStore } from '../file-source';
 import { workspace } from 'coc.nvim';
-import { enableNerdfont } from '../../../source';
+import { fsRealpath } from '../../../../util';
 
 export const highlights = {
   directory: hlGroupManager.hlLinkGroupCommand('FileDirectory', 'PreProc'),
   nameActive: hlGroupManager.hlLinkGroupCommand('FileNameActive', 'String'),
+  linkTarget: hlGroupManager.hlLinkGroupCommand('FileLinkTarget', 'Comment'),
 };
 hlGroupManager.register(highlights);
 
@@ -37,20 +38,23 @@ export function flattenChildren(items: FileItem[]) {
   return res;
 }
 
-const truncateCache: Map<[string, number], string> = new Map();
+const truncateCache: Map<[number, string, string], [string, string]> = new Map();
 async function loadTruncateItems(fullTreeWidth: number, flatItems: FileItem[]) {
   await Promise.all(
     flatItems.map(async (item) => {
-      const key = [item.uid, item.level] as [string, number];
+      let name = item.name;
+      if (item.directory) {
+        name += '/';
+      }
+      const linkTarget = item.symbolicLink ? ' → ' + (await fsRealpath(item.fullpath)) : '';
+      const key = [item.level, name, linkTarget] as [number, string, string];
       if (!truncateCache.has(key)) {
         const filenameWidth = fullTreeWidth - item.data.filename.indentWidth;
-        let name = item.name;
-        if (item.directory) {
-          name += '/';
-        }
-        truncateCache.set(key, await nvim.call('coc_explorer#truncate', [name, filenameWidth, '..']));
+        truncateCache.set(key, await nvim.call('coc_explorer#truncate', [name, linkTarget, filenameWidth, '..']));
       }
-      item.data.filename.truncatedName = truncateCache.get(key);
+      const cache = truncateCache.get(key)!;
+      item.data.filename.truncatedName = cache[0];
+      item.data.filename.truncatedLinkTarget = cache[1];
     }),
   );
 }
@@ -88,8 +92,10 @@ fileColumnManager.registerColumn('filename', (fileSource) => ({
   draw(row, item) {
     if (item.directory) {
       row.add(item.data.filename.truncatedName, highlights.directory);
+      row.add(item.data.filename.truncatedLinkTarget, highlights.linkTarget);
     } else {
       row.add(item.data.filename.truncatedName);
+      row.add(item.data.filename.truncatedLinkTarget, highlights.linkTarget);
     }
     row.add(' ');
   },

@@ -9,6 +9,7 @@ export const fsClose = promisify(fs.close);
 export const fsTouch = async (path: string) => await fsClose(await fsOpen(path, 'w'));
 export const fsMkdir = promisify(fs.mkdir);
 export const fsReaddir = promisify(fs.readdir);
+export const fsRealpath = promisify(fs.realpath);
 export const fsAccess = (path: string, mode?: number) =>
   new Promise<boolean>((resolve) => {
     fs.access(path, mode, (err) => {
