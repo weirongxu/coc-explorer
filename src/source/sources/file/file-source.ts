@@ -550,8 +550,8 @@ export class FileSource extends ExplorerSource<FileItem> {
         if (!directoryPath) {
           return;
         }
-        await guardTargetPath(directoryPath);
         const targetPath = pathLib.join(this.getPutTargetDir(items ? items[0] : null), directoryPath);
+        await guardTargetPath(targetPath);
         await fsMkdir(targetPath, { recursive: true });
         await this.reload(null);
         const addedItem = await this.revealItemByPath(targetPath);
