@@ -60,17 +60,19 @@ export async function parseArgs(...args: string[]): Promise<Args> {
   while (args.length > 0) {
     const arg = args.shift()!;
     if (arg.startsWith('--')) {
-      let key: string | undefined, value: string | boolean | undefined;
+      let key: string | undefined;
+      let value: string | boolean | undefined;
       if (arg.includes('=')) {
         [key, value] = arg.slice(2).split('=', 2);
-      } else if (args.length > 0) {
+      } else {
         key = arg.slice(2);
-        if (boolFalseArgs.includes(key)) {
+
+        if (boolTrueArgs.includes(key)) {
+          value = true;
+        } else if (boolFalseArgs.includes(key)) {
           key = key.slice(3);
           value = false;
-        } else if (boolTrueArgs.includes(key)) {
-          value = true;
-        } else {
+        } else if (args.length > 0) {
           value = args.shift()!;
         }
       }
