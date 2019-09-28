@@ -77,7 +77,7 @@ export async function parseArgs(...args: string[]): Promise<Args> {
         }
       }
 
-      if (key && value) {
+      if (key !== undefined && value !== undefined) {
         if (key === 'sources') {
           parsedArgs.sources = parseSources(value as string);
         } else if (key === 'reveal') {
