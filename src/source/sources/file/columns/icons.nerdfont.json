@@ -24,6 +24,18 @@
       "code": "﬒",
       "color": "#999999"
     },
+    "excel": {
+      "code": "",
+      "color": "#207245"
+    },
+    "word": {
+      "code": "",
+      "color": "#185abd"
+    },
+    "ppt": {
+      "code": "",
+      "color": "#cb4a32"
+    },
     "stylus": {
       "code": "",
       "color": "#8dc149"
@@ -390,6 +402,7 @@
     "db": "sql",
     "sql": "sql",
     "dump": "sql",
+    "accdb": "sql",
     "clj": "clojure",
     "cljc": "clojure",
     "cljs": "clojure",
@@ -441,7 +454,17 @@
     "gzip": "archive",
     "rar": "archive",
     "7z": "archive",
-    "iso": "archive"
+    "iso": "archive",
+    "doc": "word",
+    "docx": "word",
+    "docm": "word",
+    "csv": "excel",
+    "xls": "excel",
+    "xlsx": "excel",
+    "xlsm": "excel",
+    "ppt": "ppt",
+    "pptx": "ppt",
+    "pptm": "ppt"
   },
   "filenames": {
     "gruntfile": "gruntfile",
