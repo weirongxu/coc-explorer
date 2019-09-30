@@ -60,6 +60,10 @@
       "code": "",
       "color": "#519aba"
     },
+    "webpack": {
+      "code": "ﰩ",
+      "color": "#519aba"
+    },
     "markdown": {
       "code": "",
       "color": "#519aba"
@@ -249,7 +253,7 @@
       "color": "#e37933"
     },
     "gitconfig": {
-      "code": "",
+      "code": "",
       "color": "#41535b"
     },
     "bashrc": {
@@ -486,6 +490,7 @@
     "docker-compose.yml": "docker",
     ".gitconfig": "gitconfig",
     ".gitignore": "gitconfig",
+    "webpack": "webpack",
     ".bashrc": "bashrc",
     ".zshrc": "bashrc",
     ".bashprofile": "bashrc",
