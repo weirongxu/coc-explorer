@@ -28,10 +28,17 @@ Object.entries(nerdfontJson.icons).forEach(([name, icon]) => {
 });
 hlGroupManager.register(nerdfontHighlights);
 
+const getBasename = (filename: string): string => {
+  if (filename.includes('.')) {
+    return getBasename(pathLib.basename(filename, pathLib.extname(filename)));
+  } else {
+    return filename;
+  }
+};
+
 const getIcon = (filename: string): undefined | { name: string; code: string; color: string } => {
-  const ext = pathLib.extname(filename);
-  const extname = ext.slice(1);
-  const basename = pathLib.basename(filename, ext);
+  const extname = pathLib.extname(filename).slice(1);
+  const basename = getBasename(filename);
 
   if (nerdfont.filenames.hasOwnProperty(basename)) {
     const name = nerdfont.filenames[basename];
@@ -75,8 +82,8 @@ fileColumnManager.registerColumn('icon', {
       if (enableNerdfont) {
         row.add(
           expandStore.isExpanded(item.fullpath)
-          ? nerdfontJson.icons.folderOpened.code
-          : nerdfontJson.icons.folderClosed.code,
+            ? nerdfontJson.icons.folderOpened.code
+            : nerdfontJson.icons.folderClosed.code,
           filenameHighlights.directory,
         );
       } else {
