@@ -468,7 +468,7 @@ export class FileSource extends ExplorerSource<FileItem> {
                   canceled = true;
                   break;
                 } else if (answer === 'rename') {
-                  targetPath = (await nvim.call('input', [`Rename: ${targetPath} -> `, targetPath])) as string;
+                  targetPath = (await nvim.call('input', [`Rename: ${targetPath} -> `, targetPath, 'file'])) as string;
                   continue;
                 }
               } else {
@@ -524,7 +524,7 @@ export class FileSource extends ExplorerSource<FileItem> {
     this.addAction(
       'addFile',
       async (items) => {
-        let filename = (await nvim.call('input', 'Input a new filename: ')) as string;
+        let filename = (await nvim.call('input', ['Input a new filename: ', '', 'file'])) as string;
         filename = filename.trim();
         if (!filename) {
           return;
@@ -545,7 +545,7 @@ export class FileSource extends ExplorerSource<FileItem> {
     this.addAction(
       'addDirectory',
       async (items) => {
-        let directoryPath = (await nvim.call('input', 'Input a new directory name: ')) as string;
+        let directoryPath = (await nvim.call('input', ['Input a new directory name: ', '', 'file'])) as string;
         directoryPath = directoryPath.trim();
         if (!directoryPath) {
           return;
@@ -565,7 +565,7 @@ export class FileSource extends ExplorerSource<FileItem> {
     this.addItemAction(
       'rename',
       async (item) => {
-        const targetPath = (await nvim.call('input', [`Rename: ${item.fullpath} ->`, item.fullpath])) as string;
+        const targetPath = (await nvim.call('input', [`Rename: ${item.fullpath} ->`, item.fullpath, 'file'])) as string;
         if (targetPath.length == 0) {
           return;
         }
