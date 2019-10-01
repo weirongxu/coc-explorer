@@ -29,7 +29,7 @@ Object.entries(nerdfontJson.icons).forEach(([name, icon]) => {
 hlGroupManager.register(nerdfontHighlights);
 
 const getBasename = (filename: string): string => {
-  if (filename.includes('.')) {
+  if (filename.replace(/^\./, '').includes('.')) {
     return getBasename(pathLib.basename(filename, pathLib.extname(filename)));
   } else {
     return filename;
