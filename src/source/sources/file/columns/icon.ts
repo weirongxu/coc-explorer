@@ -2,7 +2,7 @@ import { expandStore } from '../file-source';
 import { fileColumnManager } from '../column-manager';
 import { sourceIcons, enableNerdfont } from '../../../source';
 import pathLib from 'path';
-// reference:
+// modified from:
 //   icon code from https://github.com/ryanoasis/vim-devicons/blob/830f0fe48a337ed26384c43929032786f05c8d24/plugin/webdevicons.vim#L129
 //   icon color from https://github.com/microsoft/vscode/blob/e75e71f41911633be838344377df26842f2b8c7c/extensions/theme-seti/icons/vs-seti-icon-theme.json
 import nerdfontJson from './icons.nerdfont.json';

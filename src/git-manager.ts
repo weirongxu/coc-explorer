@@ -77,8 +77,71 @@ class GitCommand {
     return GitFormat.unmodified;
   }
 
-  private parseStatusLine(gitRoot: string, line: string): [string, GitFormat, GitFormat] {
-    return [pathLib.join(gitRoot, line.slice(3)), this.parseStatusFormat(line[0]), this.parseStatusFormat(line[1])];
+  private parsePath(str: string, startIndex: number): [number, string] {
+    let index = startIndex;
+    let path = '';
+    let inPath = false;
+    let inQuote = false;
+    let inEscape = false;
+    while (index < str.length) {
+      const ch = str[index];
+      if (!inPath && !inQuote) {
+        if (ch === '"') {
+          inQuote = true;
+          index += 1;
+        }
+        inPath = true;
+        continue;
+      } else {
+        if (inQuote) {
+          if (inEscape) {
+            path += ch === 't' ? '\t' : ch;
+            inEscape = false;
+          } else {
+            if (ch === '"') {
+              return [index + 1, path];
+            } else if (ch === '\\') {
+              inEscape = true;
+            } else {
+              path += ch;
+            }
+          }
+        } else {
+          if (ch === ' ') {
+            return [index, path];
+          } else {
+            path += ch;
+          }
+        }
+      }
+      index += 1;
+    }
+    return [index, path];
+  }
+
+  private parseStatusLine(gitRoot: string, line: string) {
+    const xFormat = this.parseStatusFormat(line[0]);
+    const yFormat = this.parseStatusFormat(line[1]);
+    const originPath = line.slice(3);
+    const paths: string[] = [];
+    let index = 0;
+    const remain = this.parsePath(originPath, index);
+    index = remain[0];
+    paths.push(remain[1]);
+    if (index != originPath.length) {
+      const arrow = ' -> ';
+      if (originPath.slice(index, index + arrow.length) === ' -> ') {
+        index += arrow.length;
+        const remain = this.parsePath(originPath, index);
+        paths.push(remain[1]);
+      }
+    }
+    return [xFormat, yFormat, ...paths.map((p) => pathLib.join(gitRoot, p))] as [
+      GitFormat,
+      GitFormat,
+      string,
+      string | undefined,
+    ];
   }
 
   async status(root: string): Promise<Record<string, GitStatus>> {
@@ -91,7 +154,7 @@ class GitCommand {
     const output = await this.spawn(args, { cwd: root });
     const lines = output.split('\n');
     lines.forEach((line) => {
-      const [fullpath, x_, y] = this.parseStatusLine(root, line);
+      const [x_, y, leftpath, rightpath] = this.parseStatusLine(root, line);
       const x = [GitFormat.untracked, GitFormat.ignored].includes(x_) ? GitFormat.unmodified : x_;
 
       const changedList = [GitFormat.modified, GitFormat.added, GitFormat.deleted, GitFormat.renamed, GitFormat.copied];
@@ -109,6 +172,7 @@ class GitCommand {
       const ignored = x === GitFormat.ignored;
       const untracked = x === GitFormat.untracked;
 
+      const fullpath = rightpath ? rightpath : leftpath;
       gitStatus[fullpath] = {
         fullpath,
         x,
