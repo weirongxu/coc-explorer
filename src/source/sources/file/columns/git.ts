@@ -10,8 +10,6 @@ const highlights = {
 };
 hlGroupManager.register(highlights);
 
-const showIgnored = fileColumnManager.getColumnConfig<boolean>('git.showIgnored')!;
-
 const getIconConf = (name: string) => {
   return fileColumnManager.getColumnConfig<string>('git.icon.' + name)!;
 };
@@ -40,7 +38,7 @@ fileColumnManager.registerColumn('git', (fileSource) => ({
   },
   async load(item) {
     const folderPath = item ? (item.directory ? item.fullpath : pathLib.dirname(item.fullpath)) : fileSource.root;
-    await gitManager.reload(folderPath, showIgnored);
+    await gitManager.reload(folderPath);
   },
   beforeDraw() {
     fileSource.gitChangedLineIndexes = [];

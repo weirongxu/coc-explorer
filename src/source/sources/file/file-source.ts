@@ -122,7 +122,7 @@ export class FileSource extends ExplorerSource<FileItem> {
             debounce(1000, async (bufnr) => {
               const bufinfo = await nvim.call('getbufinfo', [bufnr]);
               if (bufinfo[0] && bufinfo[0].name) {
-                await gitManager.reload(pathLib.dirname(bufinfo[0].name as string), this.showHiddenFiles);
+                await gitManager.reload(pathLib.dirname(bufinfo[0].name as string));
                 await this.render();
               }
             }),

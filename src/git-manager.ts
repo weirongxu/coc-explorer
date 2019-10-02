@@ -2,6 +2,9 @@ import { spawn } from 'child_process';
 import { config } from './util';
 import pathLib from 'path';
 import { onError } from './logger';
+import { fileColumnManager } from './source/sources/file/column-manager';
+
+const showIgnored = fileColumnManager.getColumnConfig<boolean>('git.showIgnored')!;
 
 export enum GitFormat {
   mixed = '*',
@@ -78,7 +81,7 @@ class GitCommand {
     return [pathLib.join(gitRoot, line.slice(3)), this.parseStatusFormat(line[0]), this.parseStatusFormat(line[1])];
   }
 
-  async status(root: string, showIgnored: boolean): Promise<Record<string, GitStatus>> {
+  async status(root: string): Promise<Record<string, GitStatus>> {
     const gitStatus: Record<string, GitStatus> = {};
 
     const args = ['status', '--porcelain', '-u'];
@@ -175,10 +178,10 @@ class GitManager {
     return this.rootCache[folderPath];
   }
 
-  async reload(folderPath: string, showIgnored: boolean) {
+  async reload(folderPath: string) {
     const root = await this.getGitRoot(folderPath);
     if (root) {
-      this.statusCache[root] = await this.cmd.status(root, showIgnored);
+      this.statusCache[root] = await this.cmd.status(root);
       this.mixedStatusCache[root] = {};
 
       // generate mixed status cache
