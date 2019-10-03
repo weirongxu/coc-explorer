@@ -1,18 +1,13 @@
 import { diagnosticManager as cocDiagnosticManager } from 'coc.nvim';
 import pathLib from 'path';
-import { config } from './util';
-
-const diagnosticCountMax = config.get<number>('file.diagnosticCountMax')!;
 
 class DiagnosticManager {
-  errorMaxWidth = 0;
-  warningMaxWidth = 0;
   errorNeedRender = false;
   warningNeedRender = false;
   errorPathCount: Record<string, number> = {};
   warningPathCount: Record<string, number> = {};
-  errorMixedCount: Record<string, string> = {};
-  warningMixedCount: Record<string, string> = {};
+  errorMixedCount: Record<string, number> = {};
+  warningMixedCount: Record<string, number> = {};
 
   private lastReloadTime = 0;
 
@@ -59,7 +54,7 @@ class DiagnosticManager {
     this.reload();
 
     if (this.errorNeedRender) {
-      const errorMixedCount: Record<string, number> = {};
+      this.errorMixedCount = {};
 
       Object.entries(this.errorPathCount).forEach(([fullpath, count]) => {
         const relativePath = pathLib.relative(root, fullpath);
@@ -67,24 +62,13 @@ class DiagnosticManager {
 
         for (let i = 1; i <= parts.length; i++) {
           const frontalPath = pathLib.join(root, parts.slice(0, i).join(pathLib.sep));
-          const cache = errorMixedCount[frontalPath];
-          if (cache) {
-            errorMixedCount[frontalPath] += count;
+          if (this.errorMixedCount[frontalPath]) {
+            this.errorMixedCount[frontalPath] += count;
           } else {
-            errorMixedCount[frontalPath] = count;
+            this.errorMixedCount[frontalPath] = count;
           }
         }
       });
-
-      this.errorMixedCount = {};
-      Object.entries(errorMixedCount).forEach(([fullpath, count]) => {
-        if (count > diagnosticCountMax) {
-          this.errorMixedCount[fullpath] = '●';
-        } else {
-          this.errorMixedCount[fullpath] = count.toString();
-        }
-      });
-      this.errorMaxWidth = Math.max(...Object.values(this.errorMixedCount).map((d) => d.length));
     }
   }
 
@@ -92,7 +76,7 @@ class DiagnosticManager {
     this.reload();
 
     if (this.warningNeedRender) {
-      const warningMixedCount: Record<string, number> = {};
+      this.warningMixedCount = {};
 
       Object.entries(this.warningPathCount).forEach(([fullpath, count]) => {
         const relativePath = pathLib.relative(root, fullpath);
@@ -100,24 +84,13 @@ class DiagnosticManager {
 
         for (let i = 1; i <= parts.length; i++) {
           const frontalPath = pathLib.join(root, parts.slice(0, i).join(pathLib.sep));
-          const cache = warningMixedCount[frontalPath];
-          if (cache) {
-            warningMixedCount[frontalPath] += count;
+          if (this.warningMixedCount[frontalPath]) {
+            this.warningMixedCount[frontalPath] += count;
           } else {
-            warningMixedCount[frontalPath] = count;
+            this.warningMixedCount[frontalPath] = count;
           }
         }
       });
-
-      this.warningMixedCount = {};
-      Object.entries(warningMixedCount).forEach(([fullpath, count]) => {
-        if (count > diagnosticCountMax) {
-          this.warningMixedCount[fullpath] = '●';
-        } else {
-          this.warningMixedCount[fullpath] = count.toString();
-        }
-      });
-      this.warningMaxWidth = Math.max(...Object.values(this.warningMixedCount).map((d) => d.length));
     }
   }
 }
