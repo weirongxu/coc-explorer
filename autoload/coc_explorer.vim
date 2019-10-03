@@ -91,7 +91,7 @@ function! coc_explorer#init_buf()
 endfunction
 
 function! coc_explorer#is_float_window(winnr)
-  if has('nvim')
+  if has('nvim') && exists('*nvim_win_get_config')
     let winid = win_getid(a:winnr)
     return nvim_win_get_config(winid)['relative'] != ''
   else
