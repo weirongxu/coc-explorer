@@ -1,5 +1,6 @@
 import { bufferColumnManager } from '../column-manager';
 import { hlGroupManager } from '../../../highlight-manager';
+import { max } from '../../../../util';
 
 const highlights = {
   bufnr: hlGroupManager.hlLinkGroupCommand('BufferBufnr', 'Special'),
@@ -11,7 +12,7 @@ let maxBufnrWidth = 0;
 
 bufferColumnManager.registerColumn('bufnr', (source) => ({
   beforeDraw() {
-    maxBufnrWidth = Math.max(...source.items.map((item) => item.bufnrStr.length));
+    maxBufnrWidth = max(source.items.map((item) => item.bufnrStr.length));
   },
   draw(row, item) {
     row.add(item.bufnrStr.padStart(maxBufnrWidth), highlights.bufnr);

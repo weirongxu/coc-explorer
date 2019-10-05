@@ -1,7 +1,7 @@
 import { fileColumnManager } from '../column-manager';
 import { hlGroupManager } from '../../../highlight-manager';
 import { diagnosticManager } from '../../../../diagnostic-manager';
-import { config } from '../../../../util';
+import { config, max } from '../../../../util';
 import { expandStore } from '../file-source';
 
 const highlights = {
@@ -28,7 +28,7 @@ fileColumnManager.registerColumn('diagnosticWarning', (fileSource) => ({
         warningMixedCountStr[fullpath] = count.toString();
       }
     });
-    warningMaxWidth = Math.max(...Object.values(warningMixedCountStr).map((d) => d.length));
+    warningMaxWidth = max(Object.values(warningMixedCountStr).map((d) => d.length));
   },
   draw(row, item) {
     if (Object.keys(warningMixedCountStr).length > 0) {

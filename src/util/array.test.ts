@@ -1,4 +1,4 @@
-import { flatten, chunk, sum, findLast } from '.';
+import { flatten, chunk, sum, findLast, max, min } from '.';
 
 test('flatten', () => {
   expect(flatten([1, 2, 3, [4, 5, [6, 7]]])).toEqual([1, 2, 3, 4, 5, 6, 7]);
@@ -10,6 +10,14 @@ test('chunk', () => {
 
 test('sum', () => {
   expect(sum([1, 2, 3, 4, 5])).toEqual(15);
+});
+
+test('max', () => {
+  expect(max([1, 2, 3, 4, 5])).toEqual(5);
+});
+
+test('min', () => {
+  expect(min([1, 2, 3, 4, 5])).toEqual(1);
 });
 
 test('findLast', () => {

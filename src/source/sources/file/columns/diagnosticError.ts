@@ -2,7 +2,7 @@ import { fileColumnManager } from '../column-manager';
 import { hlGroupManager } from '../../../highlight-manager';
 import { diagnosticManager } from '../../../../diagnostic-manager';
 import { expandStore } from '../file-source';
-import { config } from '../../../../util';
+import { config, max } from '../../../../util';
 
 const diagnosticCountMax = config.get<number>('file.diagnosticCountMax')!;
 let errorMixedCountStr: Record<string, string> = {};
@@ -28,7 +28,7 @@ fileColumnManager.registerColumn('diagnosticError', (fileSource) => ({
         errorMixedCountStr[fullpath] = count.toString();
       }
     });
-    errorMaxWidth = Math.max(...Object.values(errorMixedCountStr).map((d) => d.length));
+    errorMaxWidth = max(Object.values(errorMixedCountStr).map((d) => d.length));
   },
   draw(row, item) {
     if (Object.keys(diagnosticManager.errorMixedCount).length > 0) {

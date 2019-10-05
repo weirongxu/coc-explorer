@@ -3,7 +3,7 @@ import { fileColumnManager } from '../column-manager';
 import { indentChars, topLevel } from './indent';
 import { FileItem, expandStore } from '../file-source';
 import { workspace } from 'coc.nvim';
-import { fsReadlink } from '../../../../util';
+import { fsReadlink, min, max } from '../../../../util';
 
 export const highlights = {
   directory: hlGroupManager.hlLinkGroupCommand('FileDirectory', 'PreProc'),
@@ -89,10 +89,7 @@ fileColumnManager.registerColumn('filename', (fileSource) => ({
       item.data.filename.indentWidth = indentWidth(item);
     });
     await loadUsedWidth(flatItems);
-    const fullTreeWidth = Math.min(
-      maxWidth,
-      Math.max(minWidth, Math.max(...flatItems.map((item) => item.data.filename.usedWidth))),
-    );
+    const fullTreeWidth = min([maxWidth, max([minWidth, max(flatItems.map((item) => item.data.filename.usedWidth))])]);
     await loadTruncateItems(fullTreeWidth, flatItems);
   },
   draw(row, item) {
