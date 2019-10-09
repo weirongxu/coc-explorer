@@ -1,4 +1,5 @@
 import fs from 'fs';
+import os from 'os';
 import { promisify } from 'util';
 import rimraf from 'rimraf';
 import trash from 'trash';
@@ -37,6 +38,18 @@ export const copyFileOrDirectory = async (sourcePath: string, targetPath: string
   } else {
     await fsCopyFile(sourcePath, targetPath);
   }
+};
+
+export const normalizePath = (path: string): string => {
+  let _path = pathLib.normalize(path);
+  if (_path[0] === '~') {
+    _path = pathLib.join(os.homedir(), _path.slice(1));
+  }
+  if (isWindows) {
+    const driveChar = _path[0];
+    _path = driveChar.toUpperCase() + _path.slice(1);
+  }
+  return _path;
 };
 
 export const listDrive = async (): Promise<string[]> => {

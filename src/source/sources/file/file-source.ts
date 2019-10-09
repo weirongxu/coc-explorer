@@ -4,7 +4,7 @@ import open from 'open';
 import pathLib from 'path';
 import { diagnosticManager } from '../../../diagnostic-manager';
 import { gitManager } from '../../../git-manager';
-import { onError, log } from '../../../logger';
+import { onError } from '../../../logger';
 import {
   activeMode,
   autoReveal,
@@ -27,6 +27,7 @@ import {
   debounce,
   listDrive,
   isWindows,
+  normalizePath,
 } from '../../../util';
 import { hlGroupManager } from '../../highlight-manager';
 import { ExplorerSource, sourceIcons } from '../../source';
@@ -107,7 +108,7 @@ export class FileSource extends ExplorerSource<FileItem> {
               if (bufnr !== this.explorer.bufnr) {
                 const bufinfo = await nvim.call('getbufinfo', [bufnr]);
                 if (bufinfo[0] && bufinfo[0].name) {
-                  const fullpath = pathLib.normalize(bufinfo[0].name);
+                  const fullpath = normalizePath(bufinfo[0].name);
                   const item = await this.revealItemByPath(fullpath);
                   if (item !== null) {
                     await execNotifyBlock(async () => {
@@ -650,7 +651,7 @@ export class FileSource extends ExplorerSource<FileItem> {
 
   async revealItemByPath(path: string, items: FileItem[] = this.items): Promise<FileItem | null> {
     for (const item of items) {
-      if (item.directory && path.startsWith(item.fullpath + '/')) {
+      if (item.directory && path.startsWith(item.fullpath + pathLib.sep)) {
         expandStore.expand(item.fullpath);
         if (!item.children) {
           item.children = await this.listFiles(item.fullpath, item);
