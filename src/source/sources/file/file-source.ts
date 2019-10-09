@@ -107,7 +107,8 @@ export class FileSource extends ExplorerSource<FileItem> {
               if (bufnr !== this.explorer.bufnr) {
                 const bufinfo = await nvim.call('getbufinfo', [bufnr]);
                 if (bufinfo[0] && bufinfo[0].name) {
-                  const item = await this.revealItemByPath(bufinfo[0].name as string);
+                  const fullpath = pathLib.normalize(bufinfo[0].name);
+                  const item = await this.revealItemByPath(fullpath);
                   if (item !== null) {
                     await execNotifyBlock(async () => {
                       await this.render({ storeCursor: false, notify: true });
@@ -605,7 +606,6 @@ export class FileSource extends ExplorerSource<FileItem> {
               callback: async (drive) => {
                 this.root = drive + '\\';
                 expandStore.expand(this.root);
-                log('error', this.root);
                 await this.reload(null);
               },
             })),
