@@ -1,10 +1,10 @@
-import { events, workspace } from 'coc.nvim';
+import { events, workspace, listManager } from 'coc.nvim';
 import fs from 'fs';
 import open from 'open';
 import pathLib from 'path';
 import { diagnosticManager } from '../../../diagnostic-manager';
 import { gitManager } from '../../../git-manager';
-import { onError } from '../../../logger';
+import { onError, log } from '../../../logger';
 import {
   activeMode,
   autoReveal,
@@ -25,6 +25,8 @@ import {
   fsLstat,
   fsStat,
   debounce,
+  listDrive,
+  isWindows,
 } from '../../../util';
 import { hlGroupManager } from '../../highlight-manager';
 import { ExplorerSource, sourceIcons } from '../../source';
@@ -32,6 +34,7 @@ import { sourceManager } from '../../source-manager';
 import { SourceViewBuilder } from '../../view-builder';
 import { fileColumnManager } from './column-manager';
 import './load';
+import { explorerDrives } from '../../../lists/drives';
 
 const guardTargetPath = async (path: string) => {
   if (await fsExists(path)) {
@@ -590,6 +593,29 @@ export class FileSource extends ExplorerSource<FileItem> {
       'use system application open file or directory',
       { multi: false },
     );
+
+    if (isWindows) {
+      this.addAction(
+        'listDrive',
+        async () => {
+          const drives = await listDrive()
+          explorerDrives.setExplorerDrives(drives.map((drive) => ({
+            name: drive,
+            callback: async (drive) => {
+              this.root = drive + '\\';
+              expandStore.expand(this.root);
+              log('error', this.root);
+              await this.reload(null);
+            },
+          })));
+          const disposable = listManager.registerList(explorerDrives);
+          await listManager.start(['--normal', '--number-select', 'explorerActions'])
+          disposable.dispose();
+        },
+        '',
+        { multi: false },
+      );
+    }
 
     this.addItemsAction(
       'gitStage',

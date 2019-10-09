@@ -1,8 +1,8 @@
-import { spawn } from 'child_process';
 import { config } from './util';
 import pathLib from 'path';
 import { onError } from './logger';
 import { fileColumnManager } from './source/sources/file/column-manager';
+import { execCli } from './util/cli';
 
 const showIgnored = fileColumnManager.getColumnConfig<boolean>('git.showIgnored')!;
 
@@ -43,21 +43,8 @@ export type GitMixedStatus = {
 
 class GitCommand {
   spawn(args: string[], { cwd }: { cwd?: string } = {}) {
-    const streams = spawn(config.get<string>('git.command')!, args, {
+    return execCli(config.get<string>('git.command')!, args, {
       cwd,
-    });
-
-    let output = '';
-    streams.stdout.on('data', (data: Buffer) => {
-      output += data.toString();
-    });
-    return new Promise<string>((resolve, reject) => {
-      streams.stdout.on('error', (error) => {
-        reject(error);
-      });
-      streams.stdout.on('end', () => {
-        resolve(output);
-      });
     });
   }
 

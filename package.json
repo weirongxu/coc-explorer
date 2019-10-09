@@ -346,7 +346,7 @@
     }
   },
   "scripts": {
-    "clean": "rm -rf lib",
+    "clean": "rimraf lib",
     "build": "webpack --mode production",
     "dev": "webpack --mode development --watch",
     "prepare": "yarn run clean && yarn run build",

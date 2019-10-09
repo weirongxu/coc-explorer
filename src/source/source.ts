@@ -1,6 +1,6 @@
 import { Buffer, Disposable, listManager, workspace } from 'coc.nvim';
 import { Range } from 'vscode-languageserver-protocol';
-import { explorerActions } from '../actions-list';
+import { explorerActions } from '../lists/actions';
 import { Explorer } from '../explorer';
 import { onError } from '../logger';
 import { Action, ActionSyms, mappings, reverseMappings } from '../mappings';

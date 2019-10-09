@@ -10,6 +10,7 @@ export * from './fs';
 export * from './neovim-notify';
 export * from './throttle-debounce';
 export * from './vim';
+export * from './platform';
 
 export const outputChannel = workspace.createOutputChannel('explorer');
 

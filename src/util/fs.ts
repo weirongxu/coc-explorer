@@ -3,6 +3,8 @@ import { promisify } from 'util';
 import rimraf from 'rimraf';
 import trash from 'trash';
 import pathLib from 'path';
+import { execCli } from './cli';
+import { isWindows } from './platform';
 
 export const fsOpen = promisify(fs.open);
 export const fsClose = promisify(fs.close);
@@ -34,5 +36,18 @@ export const copyFileOrDirectory = async (sourcePath: string, targetPath: string
     }
   } else {
     await fsCopyFile(sourcePath, targetPath);
+  }
+};
+
+export const listDrive = async (): Promise<string[]> => {
+  if (isWindows) {
+    const content = await execCli('wmic', ['logicaldisk', 'get', 'name']);
+    const list = content
+      .split('\n')
+      .map((d) => d.trim())
+      .filter((d) => d.endsWith(':'));
+    return list;
+  } else {
+    throw new Error('not support listDrive in ' + process.platform);
   }
 };

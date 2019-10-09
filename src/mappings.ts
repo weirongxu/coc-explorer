@@ -45,7 +45,7 @@ const Actions = {
   help: 0,
   quit: 0,
   systemExecute: 0,
-  windowsDrive: 0,
+  listDrive: 0,
 
   diagnosticPrev: 0,
   diagnosticNext: 0,
@@ -99,7 +99,7 @@ export const defaultMappings: Record<keyof typeof MappingMode, OriginalMappings>
     '?': 'help',
     q: 'quit',
     X: 'systemExecute',
-    gd: 'windowsDrive',
+    gd: 'listDrive',
 
     '[d': 'diagnosticPrev',
     ']d': 'diagnosticNext',

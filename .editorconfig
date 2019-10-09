@@ -1,0 +1,14 @@
+root = true
+
+[*]
+end_of_line = lf
+indent_style = space
+indent_size = 2
+charset = utf-8
+[Makefile]
+indent_style = tab
+indent_size = 4
+[*.{snip,go}]
+indent_style = tab
+[*.{md,php,py,java,c,h,cpp,rs}]
+indent_size = 4
