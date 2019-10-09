@@ -598,18 +598,20 @@ export class FileSource extends ExplorerSource<FileItem> {
       this.addAction(
         'listDrive',
         async () => {
-          const drives = await listDrive()
-          explorerDrives.setExplorerDrives(drives.map((drive) => ({
-            name: drive,
-            callback: async (drive) => {
-              this.root = drive + '\\';
-              expandStore.expand(this.root);
-              log('error', this.root);
-              await this.reload(null);
-            },
-          })));
+          const drives = await listDrive();
+          explorerDrives.setExplorerDrives(
+            drives.map((drive) => ({
+              name: drive,
+              callback: async (drive) => {
+                this.root = drive + '\\';
+                expandStore.expand(this.root);
+                log('error', this.root);
+                await this.reload(null);
+              },
+            })),
+          );
           const disposable = listManager.registerList(explorerDrives);
-          await listManager.start(['--normal', '--number-select', 'explorerActions'])
+          await listManager.start(['--normal', '--number-select', 'explorerActions']);
           disposable.dispose();
         },
         '',
