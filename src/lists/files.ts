@@ -82,7 +82,7 @@ export default class FilesList extends BasicList {
       if (!this.ignore) {
         args.push('--no-ignore');
       }
-      if (this.recursive) {
+      if (!this.recursive) {
         args.push('--max-depth', '1');
       }
       return { cmd: 'fd', args };
