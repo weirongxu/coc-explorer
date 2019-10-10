@@ -45,7 +45,7 @@ export const normalizePath = (path: string): string => {
   if (_path[0] === '~') {
     _path = pathLib.join(os.homedir(), _path.slice(1));
   }
-  if (isWindows) {
+  if (isWindows && /[a-z]:/.test(_path)) {
     const driveChar = _path[0];
     _path = driveChar.toUpperCase() + _path.slice(1);
   }
