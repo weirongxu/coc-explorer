@@ -47,6 +47,9 @@ const Actions = {
   systemExecute: 0,
   listDrive: 0,
 
+  search: 0,
+  searchRecursive: 0,
+
   diagnosticPrev: 0,
   diagnosticNext: 0,
 
@@ -100,6 +103,9 @@ export const defaultMappings: Record<keyof typeof MappingMode, OriginalMappings>
     q: 'quit',
     X: 'systemExecute',
     gd: 'listDrive',
+
+    f: 'search',
+    F: 'searchRecursive',
 
     '[d': 'diagnosticPrev',
     ']d': 'diagnosticNext',

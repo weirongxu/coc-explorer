@@ -266,11 +266,12 @@ export class Explorer {
     if (mode === 'v') {
       const range = await workspace.getSelectedRange(
         'v',
-        // @ts-ignore FIXME upgrade to latest coc.nvim
         document,
       );
-      for (let line = range.start.line; line <= range.end.line; line++) {
-        lineIndexes.push(line);
+      if (range) {
+        for (let line = range.start.line; line <= range.end.line; line++) {
+          lineIndexes.push(line);
+        }
       }
     } else {
       const line = ((await nvim.call('line', '.')) as number) - 1;

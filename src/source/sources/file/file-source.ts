@@ -35,7 +35,9 @@ import { sourceManager } from '../../source-manager';
 import { SourceViewBuilder } from '../../view-builder';
 import { fileColumnManager } from './column-manager';
 import './load';
-import { explorerDrives } from '../../../lists/drives';
+import { driveList } from '../../../lists/drives';
+import { filesList } from '../../../lists/files';
+import { URI } from 'vscode-uri';
 
 const guardTargetPath = async (path: string) => {
   if (await fsExists(path)) {
@@ -593,7 +595,7 @@ export class FileSource extends ExplorerSource<FileItem> {
         }
       },
       'use system application open file or directory',
-      { multi: false },
+      { multi: true },
     );
 
     if (isWindows) {
@@ -601,7 +603,7 @@ export class FileSource extends ExplorerSource<FileItem> {
         'listDrive',
         async () => {
           const drives = await listDrive();
-          explorerDrives.setExplorerDrives(
+          driveList.setExplorerDrives(
             drives.map((drive) => ({
               name: drive,
               callback: async (drive) => {
@@ -611,14 +613,32 @@ export class FileSource extends ExplorerSource<FileItem> {
               },
             })),
           );
-          const disposable = listManager.registerList(explorerDrives);
-          await listManager.start(['--normal', '--number-select', 'explorerActions']);
+          const disposable = listManager.registerList(driveList);
+          await listManager.start(['--normal', '--number-select', driveList.name]);
           disposable.dispose();
         },
         '',
         { multi: false },
       );
     }
+
+    this.addAction(
+      'search',
+      async (items) => {
+        await this.searchByCocList(items ? pathLib.dirname(items[0].fullpath) : this.root, false);
+      },
+      '',
+      { multi: false },
+    );
+
+    this.addAction(
+      'searchRecursive',
+      async (items) => {
+        await this.searchByCocList(items ? pathLib.dirname(items[0].fullpath) : this.root, true);
+      },
+      '',
+      { multi: false },
+    );
 
     this.addItemsAction(
       'gitStage',
@@ -647,6 +667,25 @@ export class FileSource extends ExplorerSource<FileItem> {
       : item.parent
       ? item.parent.fullpath
       : this.root;
+  }
+
+  async searchByCocList(path: string, recursive: boolean) {
+    filesList.ignore = !this.showHiddenFiles;
+    filesList.rootPath = path;
+    filesList.recursive = recursive;
+    filesList.revealCallback = async (loc) => {
+      const item = await this.revealItemByPath(URI.parse(loc.uri).fsPath);
+      if (item !== null) {
+        await execNotifyBlock(async () => {
+          await this.render({ storeCursor: false, notify: true });
+          await this.gotoItem(item, { notify: true });
+          this.nvim.command('redraw', true);
+        });
+      }
+    };
+    const disposable = listManager.registerList(filesList);
+    await listManager.start([filesList.name]);
+    disposable.dispose();
   }
 
   async revealItemByPath(path: string, items: FileItem[] = this.items): Promise<FileItem | null> {

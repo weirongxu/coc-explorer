@@ -1,6 +1,6 @@
 import { Buffer, Disposable, listManager, workspace } from 'coc.nvim';
 import { Range } from 'vscode-languageserver-protocol';
-import { explorerActions } from '../lists/actions';
+import { explorerActionList } from '../lists/actions';
 import { Explorer } from '../explorer';
 import { onError } from '../logger';
 import { Action, ActionSyms, mappings, reverseMappings } from '../mappings';
@@ -407,7 +407,7 @@ export abstract class ExplorerSource<Item extends BaseItem<Item>> {
 
   async actionMenu(items: Item[] | null) {
     const actions = items === null ? this.rootActions : this.actions;
-    explorerActions.setExplorerActions(
+    explorerActionList.setExplorerActions(
       Object.entries(actions)
         .map(([name, { callback, description }]) => ({
           name,
@@ -420,8 +420,8 @@ export abstract class ExplorerSource<Item extends BaseItem<Item>> {
         }))
         .filter((a) => a.name !== 'actionMenu'),
     );
-    const disposable = listManager.registerList(explorerActions);
-    await listManager.start(['--normal', '--number-select', 'explorerActions']);
+    const disposable = listManager.registerList(explorerActionList);
+    await listManager.start(['--normal', '--number-select', explorerActionList.name]);
     disposable.dispose();
   }
 
@@ -613,7 +613,6 @@ export abstract class ExplorerSource<Item extends BaseItem<Item>> {
     await new Promise((resolve) => {
       ['<esc>', 'q'].forEach((key) => {
         disposables.push(
-          // @ts-ignore FIXME upgrade to latest coc.nvim
           workspace.registerLocalKeymap(
             'n',
             key,

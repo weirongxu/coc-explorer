@@ -1,4 +1,5 @@
 import { diagnosticManager as cocDiagnosticManager } from 'coc.nvim';
+import { URI } from 'vscode-uri';
 import pathLib from 'path';
 
 class DiagnosticManager {
@@ -23,19 +24,17 @@ class DiagnosticManager {
 
     cocDiagnosticManager.getDiagnosticList().forEach((diagnostic) => {
       const uri = diagnostic.location.uri;
-      if (uri.startsWith('file://')) {
-        const path = uri.slice(7);
-        if (diagnostic.severity === 'Error') {
-          if (!(path in errorPathCountNum)) {
-            errorPathCountNum[path] = 0;
-          }
-          errorPathCountNum[path] += 1;
-        } else {
-          if (!(path in warningPathCountNum)) {
-            warningPathCountNum[path] = 0;
-          }
-          warningPathCountNum[path] += 1;
+      const path = URI.parse(uri).fsPath;
+      if (diagnostic.severity === 'Error') {
+        if (!(path in errorPathCountNum)) {
+          errorPathCountNum[path] = 0;
         }
+        errorPathCountNum[path] += 1;
+      } else {
+        if (!(path in warningPathCountNum)) {
+          warningPathCountNum[path] = 0;
+        }
+        warningPathCountNum[path] += 1;
       }
     });
 

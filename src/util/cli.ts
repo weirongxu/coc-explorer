@@ -1,4 +1,5 @@
 import { spawn, SpawnOptionsWithoutStdio } from 'child_process';
+import which from 'which';
 
 export const execCli = (name: string, args: string[], options?: SpawnOptionsWithoutStdio) => {
   const streams = spawn(name, args, options);
@@ -15,4 +16,13 @@ export const execCli = (name: string, args: string[], options?: SpawnOptionsWith
       resolve(output);
     });
   });
+};
+
+export const executable = async (cmd: string): Promise<boolean> => {
+  try {
+    await which(cmd);
+  } catch (e) {
+    return false;
+  }
+  return true;
 };

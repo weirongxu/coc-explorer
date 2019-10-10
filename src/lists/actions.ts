@@ -10,7 +10,7 @@ interface Action {
   callback: (item: any, arg: string) => void | Promise<void>;
 }
 
-export class ExplorerActions extends BasicList {
+export class ExplorerActionList extends BasicList {
   readonly defaultAction = 'do';
   readonly name = 'explorerActions';
   private explorerActions: Action[] = [];
@@ -45,7 +45,7 @@ export class ExplorerActions extends BasicList {
     }));
   }
 
-  public doHighlight() {
+  doHighlight() {
     const { nvim } = this;
     nvim.pauseNotification();
     nvim.command('syntax match CocExplorerActionName /\\v^\\w+/', true);
@@ -58,4 +58,4 @@ export class ExplorerActions extends BasicList {
   }
 }
 
-export const explorerActions = new ExplorerActions(workspace.nvim);
+export const explorerActionList = new ExplorerActionList(workspace.nvim);

@@ -6,19 +6,16 @@ interface DriveItem {
   callback: (drive: string) => void | Promise<void>;
 }
 
-export class ExplorerDrives extends BasicList {
+export class DriveList extends BasicList {
   readonly defaultAction = 'do';
-  readonly name = 'explorerActions';
+  readonly name = 'explorerDrives';
   private explorerDrives: DriveItem[] = [];
 
   constructor(nvim: Neovim) {
     super(nvim);
 
-    this.addAction('do', (item) => {
-      new Promise(async (resolve) => {
-        await item.data.callback(item.data.drive);
-        resolve();
-      }).catch(onError);
+    this.addAction('do', async (item) => {
+      await item.data.callback(item.data.drive);
     });
   }
 
@@ -28,15 +25,15 @@ export class ExplorerDrives extends BasicList {
 
   async loadItems() {
     return this.explorerDrives.map((drive) => ({
-      label: `${drive.name} - change to ${drive.name}/`,
+      label: `${drive.name} - go to ${drive.name}/`,
       data: {
         drive: drive.name,
         callback: drive.callback,
-      }
+      },
     }));
   }
 
-  public doHighlight() {
+  doHighlight() {
     const { nvim } = this;
     nvim.pauseNotification();
     nvim.command('syntax match CocExplorerDriveName /\\v^[\\w:]+/', true);
@@ -47,4 +44,4 @@ export class ExplorerDrives extends BasicList {
   }
 }
 
-export const explorerDrives = new ExplorerDrives(workspace.nvim);
+export const driveList = new DriveList(workspace.nvim);

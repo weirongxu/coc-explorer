@@ -2,7 +2,7 @@ import { config } from './util';
 import pathLib from 'path';
 import { onError } from './logger';
 import { fileColumnManager } from './source/sources/file/column-manager';
-import { execCli } from './util/cli';
+import { execCli } from './util';
 
 const showIgnored = fileColumnManager.getColumnConfig<boolean>('git.showIgnored')!;
 
@@ -57,8 +57,9 @@ class GitCommand {
 
   private parseStatusFormat(format: string): GitFormat {
     for (const name in GitFormat) {
-      if (format === GitFormat[name]) {
-        return GitFormat[name] as GitFormat;
+      const it = Reflect.get(GitFormat, name) as GitFormat;
+      if (format === it) {
+        return it as GitFormat;
       }
     }
     return GitFormat.unmodified;

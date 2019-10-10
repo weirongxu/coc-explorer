@@ -38,5 +38,6 @@ export const registerLogger = (logger_: Logger) => {
 };
 
 export const onError = (error: Error) => {
+  // tslint:disable-next-line: ban
   log('error', error);
 };

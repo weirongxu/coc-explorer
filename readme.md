@@ -1,6 +1,8 @@
 # coc-explorer
 
-**Experimental, maybe has breaking changes and bugs.**
+Explorer extension for [coc.nvim](https://github.com/neoclide/coc.nvim)
+
+**Note: Still under development, maybe has some breaking changes.**
 
 [![Build Status](https://travis-ci.com/weirongxu/coc-explorer.svg?branch=master)](https://travis-ci.com/weirongxu/coc-explorer)
 
@@ -20,7 +22,7 @@
    ```
 2. Configuration custom vim mapping
    ```
-   :nmap ge :CocCommand explorer --toggle<CR>
+   :nmap ge :CocCommand explorer<CR>
    ```
 3. Open explorer
    ```
@@ -45,6 +47,7 @@
   - [x] Git status
   - [x] Highlight current buffer in real time (neovim only)
   - [x] Icons, use [nerdfont](https://github.com/ryanoasis/nerd-fonts)
+  - [x] Coc-list
   - [ ] LSP
     - [x] diagnostic
     - [ ] file rename
@@ -58,7 +61,7 @@
 ## Command
 
 ```
-:CocCommand explorer [options] [path]
+:CocCommand explorer [options] [root-path]
 ```
 
 ### Example
@@ -67,12 +70,12 @@
 :CocCommand explorer
     \ --toggle
     \ --sources=buffer+,file+
-    \ --file-columns=git,selection,clip,indent,filename,size /cwd/path/to
+    \ --file-columns=git,selection,clip,indent,filename,size /root/path
 ```
 
 ### Options
 
-#### `[path]`
+#### `[root-path]`
 
 Explorer root, default: `getcwd()`
 

@@ -10,6 +10,7 @@
     "ban": [
       true,
       ["workspace", "showMessage"],
+      ["log"],
       ["prettyPrint"]
     ]
   }
