@@ -4,7 +4,7 @@ import open from 'open';
 import pathLib from 'path';
 import { diagnosticManager } from '../../../diagnostic-manager';
 import { gitManager } from '../../../git-manager';
-import { onError } from '../../../logger';
+import { onError, log } from '../../../logger';
 import {
   activeMode,
   autoReveal,
@@ -110,8 +110,7 @@ export class FileSource extends ExplorerSource<FileItem> {
               if (bufnr !== this.explorer.bufnr) {
                 const bufinfo = await nvim.call('getbufinfo', [bufnr]);
                 if (bufinfo[0] && bufinfo[0].name) {
-                  const fullpath = normalizePath(bufinfo[0].name);
-                  const item = await this.revealItemByPath(fullpath);
+                  const item = await this.revealItemByPath(bufinfo[0].name);
                   if (item !== null) {
                     await execNotifyBlock(async () => {
                       await this.render({ storeCursor: false, notify: true });
@@ -689,6 +688,7 @@ export class FileSource extends ExplorerSource<FileItem> {
   }
 
   async revealItemByPath(path: string, items: FileItem[] = this.items): Promise<FileItem | null> {
+    path = normalizePath(path);
     for (const item of items) {
       if (item.directory && path.startsWith(item.fullpath + pathLib.sep)) {
         expandStore.expand(item.fullpath);
