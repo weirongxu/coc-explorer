@@ -57,7 +57,7 @@ export type FileItem = {
   writable: boolean;
   hidden: boolean;
   symbolicLink: boolean;
-  lstat: fs.Stats;
+  lstat: fs.Stats | null;
   isFirstInLevel: boolean;
   isLastInLevel: boolean;
   parent?: FileItem;
@@ -722,7 +722,7 @@ export class FileSource extends ExplorerSource<FileItem> {
         try {
           const fullpath = pathLib.join(path, file);
           const stat = await fsStat(fullpath).catch(() => {});
-          const lstat = await fsLstat(fullpath);
+          const lstat = await fsLstat(fullpath).catch(() => {});
           const executable = await fsAccess(fullpath, fs.constants.X_OK);
           const writable = await fsAccess(fullpath, fs.constants.W_OK);
           const readable = await fsAccess(fullpath, fs.constants.R_OK);
@@ -737,10 +737,10 @@ export class FileSource extends ExplorerSource<FileItem> {
             readable,
             writable,
             hidden: file.startsWith('.'),
-            symbolicLink: lstat.isSymbolicLink(),
+            symbolicLink: lstat ? lstat.isSymbolicLink() : false,
             isFirstInLevel: false,
             isLastInLevel: false,
-            lstat,
+            lstat: lstat || null,
             parent: parent || undefined,
             data: {},
           };

@@ -417,4 +417,3 @@ export class Explorer {
 }
 
 import { FileSource, FileItem } from './source/sources/file/file-source';
-import { toString } from 'stack-utils';
