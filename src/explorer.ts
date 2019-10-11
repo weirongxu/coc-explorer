@@ -129,9 +129,9 @@ export class Explorer {
 
     const { nvim } = this;
 
-    const cwd = workspace.rootPath || workspace.cwd;
+    const rootPath = workspace.rootPath || workspace.cwd;
 
-    await this.initArgs(cwd, argStrings);
+    await this.initArgs(rootPath, argStrings);
     this.revealFilepath = this.args.revealPath || (await nvim.call('expand', '%:p'));
 
     const [bufnr, inited] = (await nvim.call('coc_explorer#create', [
@@ -180,15 +180,15 @@ export class Explorer {
     });
   }
 
-  private async initArgs(cwd: string, argStrings: string[]) {
+  private async initArgs(rootPath: string, argStrings: string[]) {
     if (
       !this.lastCwd ||
       !this.lastArgStrings ||
-      this.lastCwd !== cwd ||
+      this.lastCwd !== rootPath ||
       this.lastArgStrings.toString() !== argStrings.toString()
     ) {
       this.lastArgStrings = argStrings;
-      this._args = await parseArgs(cwd, ...argStrings);
+      this._args = await parseArgs(rootPath, ...argStrings);
       this._sources = this.args.sources
         .map((sourceArg) => {
           if (sourceManager.registeredSources[sourceArg.name]) {

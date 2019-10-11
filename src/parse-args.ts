@@ -15,7 +15,7 @@ export interface Args {
   bufferColumns: string[];
   fileColumns: string[];
   revealPath: string | null;
-  cwd: string;
+  rootPath: string;
 }
 
 const boolTrueArgs = ['toggle', 'tab-isolate'];
@@ -42,13 +42,13 @@ export function parseSources(sources: string): ArgsSource[] {
   });
 }
 
-export async function parseArgs(cwd: string, ...args: string[]): Promise<Args> {
+export async function parseArgs(rootPath: string, ...args: string[]): Promise<Args> {
   const parsedArgs: Args = {
     sources: config.get<ArgsSource[]>('sources')!,
     toggle: config.get<boolean>('toggle')!,
     width: config.get<number>('width')!,
     position: config.get<ArgPosition>('position')!,
-    cwd,
+    rootPath,
     bufferColumns: config.get<string[]>('buffer.columns')!,
     fileColumns: config.get<string[]>('file.columns')!,
     revealPath: null,
@@ -91,10 +91,10 @@ export async function parseArgs(cwd: string, ...args: string[]): Promise<Args> {
           parsedArgs.fileColumns = (value as string).split(',');
         }
       } else {
-        parsedArgs.cwd = arg;
+        parsedArgs.rootPath = arg;
       }
     } else {
-      parsedArgs.cwd = arg;
+      parsedArgs.rootPath = arg;
     }
   }
 
