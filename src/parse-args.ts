@@ -1,4 +1,3 @@
-import { workspace } from 'coc.nvim';
 import { config } from './util';
 
 export interface ArgsSource {
@@ -43,9 +42,7 @@ export function parseSources(sources: string): ArgsSource[] {
   });
 }
 
-export async function parseArgs(...args: string[]): Promise<Args> {
-  const cwd = workspace.cwd;
-
+export async function parseArgs(cwd: string, ...args: string[]): Promise<Args> {
   const parsedArgs: Args = {
     sources: config.get<ArgsSource[]>('sources')!,
     toggle: config.get<boolean>('toggle')!,

@@ -77,7 +77,7 @@ Explorer extension for [coc.nvim](https://github.com/neoclide/coc.nvim)
 
 #### `[root-path]`
 
-Explorer root, default: `getcwd()`
+Explorer root, default: `workspace.rootPath` or `workspace.cwd`
 
 #### `--sources`
 

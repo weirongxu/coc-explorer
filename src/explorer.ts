@@ -26,6 +26,7 @@ export class Explorer {
   private _args?: Args;
   private _sources?: ExplorerSource<any>[];
   private lastArgStrings?: string[];
+  private lastCwd?: string;
   /**
    * mappings[key][mode] = '<Plug>(coc-action-mode-key)'
    */
@@ -128,7 +129,9 @@ export class Explorer {
 
     const { nvim } = this;
 
-    await this.initArgs(argStrings);
+    const cwd = workspace.rootPath || workspace.cwd;
+
+    await this.initArgs(cwd, argStrings);
     this.revealFilepath = this.args.revealPath || (await nvim.call('expand', '%:p'));
 
     const [bufnr, inited] = (await nvim.call('coc_explorer#create', [
@@ -177,10 +180,15 @@ export class Explorer {
     });
   }
 
-  private async initArgs(argStrings: string[]) {
-    if (!this.lastArgStrings || this.lastArgStrings.toString() !== argStrings.toString()) {
+  private async initArgs(cwd: string, argStrings: string[]) {
+    if (
+      !this.lastCwd ||
+      !this.lastArgStrings ||
+      this.lastCwd !== cwd ||
+      this.lastArgStrings.toString() !== argStrings.toString()
+    ) {
       this.lastArgStrings = argStrings;
-      this._args = await parseArgs(...argStrings);
+      this._args = await parseArgs(cwd, ...argStrings);
       this._sources = this.args.sources
         .map((sourceArg) => {
           if (sourceManager.registeredSources[sourceArg.name]) {
@@ -264,10 +272,7 @@ export class Explorer {
     const lineIndexes: number[] = [];
     const document = await workspace.document;
     if (mode === 'v') {
-      const range = await workspace.getSelectedRange(
-        'v',
-        document,
-      );
+      const range = await workspace.getSelectedRange('v', document);
       if (range) {
         for (let line = range.start.line; line <= range.end.line; line++) {
           lineIndexes.push(line);
@@ -412,3 +417,4 @@ export class Explorer {
 }
 
 import { FileSource, FileItem } from './source/sources/file/file-source';
+import { toString } from 'stack-utils';
