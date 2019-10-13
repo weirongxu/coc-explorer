@@ -4,7 +4,7 @@ import open from 'open';
 import pathLib from 'path';
 import { diagnosticManager } from '../../../diagnostic-manager';
 import { gitManager } from '../../../git-manager';
-import { onError, log } from '../../../logger';
+import { onError } from '../../../logger';
 import {
   activeMode,
   autoReveal,

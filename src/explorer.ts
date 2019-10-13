@@ -353,13 +353,21 @@ export class Explorer {
         const sourceLineIndex = storeCursor.lineIndex - source.startLine;
         const storeItem: null | Item = await source.getItemByIndex(sourceLineIndex);
         return async (notify = false) => {
-          await this.nvim.call('winrestview', storeView);
-          await source.gotoItem(storeItem, { lineIndex: sourceLineIndex, col: storeCursor.col, notify });
+          await execNotifyBlock(async () => {
+            this.nvim.call('winrestview', [storeView], true);
+            await source.gotoItem(storeItem, {
+              lineIndex: sourceLineIndex,
+              col: storeCursor.col,
+              notify: true,
+            });
+          }, notify);
         };
       }
     }
-    return async () => {
-      await this.nvim.call('winrestview', storeView);
+    return async (notify = false) => {
+      await execNotifyBlock(() => {
+        this.nvim.call('winrestview', storeView, true);
+      }, notify);
     };
   }
 

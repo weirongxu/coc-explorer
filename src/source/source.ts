@@ -502,7 +502,7 @@ export abstract class ExplorerSource<Item extends BaseItem<Item>> {
 
     const { nvim } = this;
 
-    let restore: (() => Promise<void>) | null = null;
+    let restore: ((notify: boolean) => Promise<void>) | null = null;
     if (storeCursor) {
       restore = await this.explorer.storeCursor();
     }
@@ -514,7 +514,7 @@ export abstract class ExplorerSource<Item extends BaseItem<Item>> {
       await this.partRender(true);
 
       if (restore) {
-        await restore();
+        await restore(true);
       }
 
       if (workspace.env.isVim) {
