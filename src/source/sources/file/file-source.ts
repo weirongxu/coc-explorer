@@ -616,7 +616,7 @@ export class FileSource extends ExplorerSource<FileItem> {
           await listManager.start(['--normal', '--number-select', driveList.name]);
           disposable.dispose();
         },
-        '',
+        'list drives',
         { multi: false },
       );
     }
@@ -626,7 +626,7 @@ export class FileSource extends ExplorerSource<FileItem> {
       async (items) => {
         await this.searchByCocList(items ? pathLib.dirname(items[0].fullpath) : this.root, false);
       },
-      '',
+      'search by coc-list',
       { multi: false },
     );
 
@@ -635,7 +635,7 @@ export class FileSource extends ExplorerSource<FileItem> {
       async (items) => {
         await this.searchByCocList(items ? pathLib.dirname(items[0].fullpath) : this.root, true);
       },
-      '',
+      'search by coc-list recursively',
       { multi: false },
     );
 
