@@ -80,8 +80,9 @@ export const expandStore = {
 
 const hl = hlGroupManager.hlLinkGroupCommand.bind(hlGroupManager);
 const highlights = {
-  title: hl('FileRoot', 'Identifier'),
-  expandIcon: hl('FileExpandIcon', 'Special'),
+  title: hl('FileRoot', 'Constant'),
+  name: hl('FileRootName', 'Identifier'),
+  expandIcon: hl('FileExpandIcon', 'Direcoty'),
   fullpath: hl('FileFullpath', 'Comment'),
 };
 hlGroupManager.register(highlights);
@@ -808,7 +809,7 @@ export class FileSource extends ExplorerSource<FileItem> {
       row.add(' ');
       row.add(`[FILE${this.showHiddenFiles ? ' I' : ''}]:`, highlights.title);
       row.add(' ');
-      row.add(pathLib.basename(this.root));
+      row.add(pathLib.basename(this.root), highlights.name);
       row.add(' ');
       row.add(this.root, highlights.fullpath);
     });

@@ -39,7 +39,7 @@ export interface BufferItem {
 const hl = hlGroupManager.hlLinkGroupCommand.bind(hlGroupManager);
 
 const highlights = {
-  title: hl('BufferRoot', 'Identifier'),
+  title: hl('BufferRoot', 'Constant'),
   expandIcon: hl('BufferExpandIcon', 'Special'),
 };
 

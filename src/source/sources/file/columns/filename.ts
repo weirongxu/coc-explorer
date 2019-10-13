@@ -6,8 +6,7 @@ import { workspace } from 'coc.nvim';
 import { fsReadlink, min, max } from '../../../../util';
 
 export const highlights = {
-  directory: hlGroupManager.hlLinkGroupCommand('FileDirectory', 'PreProc'),
-  nameActive: hlGroupManager.hlLinkGroupCommand('FileNameActive', 'String'),
+  directory: hlGroupManager.hlLinkGroupCommand('FileDirectory', 'Directory'),
   linkTarget: hlGroupManager.hlLinkGroupCommand('FileLinkTarget', 'Comment'),
 };
 hlGroupManager.register(highlights);
