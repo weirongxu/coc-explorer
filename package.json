@@ -24,6 +24,12 @@
     "*"
   ],
   "contributes": {
+    "commands": [
+      {
+        "title": "Open explorer",
+        "command": "explorer"
+      }
+    ],
     "configuration": {
       "type": "object",
       "title": "Explorer",

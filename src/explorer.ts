@@ -129,7 +129,8 @@ export class Explorer {
 
     const { nvim } = this;
 
-    const rootPath = workspace.rootPath || workspace.cwd;
+    // const rootPath = workspace.rootPath || workspace.cwd;
+    const rootPath = workspace.cwd;
 
     await this.initArgs(rootPath, argStrings);
     this.revealFilepath = this.args.revealPath || (await nvim.call('expand', '%:p'));
