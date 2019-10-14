@@ -410,17 +410,17 @@ export class Explorer {
 
   async renderAll({ notify = false, storeCursor = false } = {}) {
     await execNotifyBlock(async () => {
-      const store = await this.storeCursor();
+      const store = storeCursor ? await this.storeCursor() : null;
 
       // await this.clearContent();
       for (const source of this.sources) {
-        await source.render({ notify, storeCursor: storeCursor });
+        await source.render({ notify: true, storeCursor: false });
       }
 
       if (store) {
-        await store();
+        await store(true);
       }
-    });
+    }, notify);
   }
 }
 
