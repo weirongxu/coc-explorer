@@ -1,20 +1,13 @@
 import { events, workspace } from 'coc.nvim';
 import pathLib from 'path';
-import {
-  activeMode,
-  avoidOnBufEnter,
-  config,
-  execNotifyBlock,
-  onBufEnter,
-  openStrategy,
-  debounce,
-} from '../../../util';
+import { activeMode, config, onBufEnter, debounce } from '../../../util';
 import { hlGroupManager } from '../../highlight-manager';
 import { ExplorerSource, sourceIcons } from '../../source';
 import { sourceManager } from '../../source-manager';
 import { SourceViewBuilder } from '../../view-builder';
 import { bufferColumnManager } from './column-manager';
 import './load';
+import { initBufferActions } from './buffer-actions';
 
 const regex = /^\s*(\d+)(.+?)"(.+?)".*/;
 
@@ -74,135 +67,7 @@ export class BufferSource extends ExplorerSource<BufferItem> {
       });
     }
 
-    this.addAction(
-      'toggleHidden',
-      async () => {
-        this.showHiddenBuffers = !this.showHiddenBuffers;
-      },
-      'toggle visibility of unlisted buffers',
-      { reload: true },
-    );
-    this.addAction(
-      'shrink',
-      async () => {
-        this.expanded = false;
-        await this.reload(null);
-        await this.gotoRoot();
-      },
-      'shrink root node',
-    );
-    this.addRootAction(
-      'expand',
-      async () => {
-        this.expanded = true;
-        await this.reload(null);
-      },
-      'expand root node',
-    );
-
-    this.addItemsAction(
-      'expand',
-      async (items) => {
-        await this.doAction('open', items);
-      },
-      'open buffer',
-    );
-    this.addItemAction(
-      'open',
-      async (item) => {
-        if (openStrategy === 'vsplit') {
-          await this.doAction('openInVsplit', item);
-        } else if (openStrategy === 'select') {
-          await this.selectWindowsUI(
-            async (winnr) => {
-              await avoidOnBufEnter(async () => {
-                await this.nvim.command(`${winnr}wincmd w`);
-              });
-              await nvim.command(`buffer ${item.bufnr}`);
-            },
-            async () => {
-              await this.doAction('openInVsplit', item);
-            },
-          );
-        } else if (openStrategy === 'previousBuffer') {
-          const prevWinnr = await this.prevWinnr();
-          if (prevWinnr) {
-            await avoidOnBufEnter(async () => {
-              await nvim.command(`${prevWinnr}wincmd w`);
-            });
-            await nvim.command(`buffer ${item.bufnr}`);
-          } else {
-            await this.doAction('openInVsplit', item);
-          }
-        }
-      },
-      'open buffer',
-      { multi: false },
-    );
-    this.addItemAction(
-      'drop',
-      async (item) => {
-        if (!item.hidden) {
-          const info = (await nvim.call('getbufinfo', item.bufnr)) as any[];
-          if (info.length && info[0].windows.length) {
-            const winid = info[0].windows[0];
-            await nvim.call('win_gotoid', winid);
-            return;
-          }
-        }
-        await nvim.command(`buffer ${item.bufnr}`);
-      },
-      'open buffer via drop command',
-      { multi: false },
-    );
-    this.addItemAction(
-      'openInTab',
-      async (item) => {
-        const escaped = await nvim.call('fnameescape', item.bufname);
-        await nvim.command(`tabe ${escaped}`);
-      },
-      'open buffer via tab',
-    );
-    this.addItemAction(
-      'openInSplit',
-      async (item) => {
-        await nvim.command(`sbuffer ${item.bufnr}`);
-      },
-      'open buffer via split command',
-    );
-    this.addItemAction(
-      'openInVsplit',
-      async (item) => {
-        await execNotifyBlock(() => {
-          nvim.command(`vertical sbuffer ${item.bufnr}`, true);
-          if (this.explorer.position === 'left') {
-            nvim.command('wincmd L', true);
-          } else {
-            nvim.command('wincmd H', true);
-          }
-        });
-      },
-      'open buffer via vsplit command',
-    );
-
-    this.addItemAction(
-      'delete',
-      async (item) => {
-        await nvim.command(`bdelete ${item.bufnr}`);
-      },
-      'delete buffer',
-      { reload: true },
-    );
-    this.addItemAction(
-      'deleteForever',
-      async (item) => {
-        await nvim.command(`bwipeout ${item.bufnr}`);
-      },
-      'bwipeout buffer',
-      {
-        reload: true,
-      },
-    );
+    initBufferActions(this);
   }
 
   async loadItems() {
