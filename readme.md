@@ -12,7 +12,7 @@ Explorer extension for [coc.nvim](https://github.com/neoclide/coc.nvim)
 
 ## Requirements
 
-- `>= vim 8.0` or `>= neovim 0.3.1`
+`>= vim 8.0` or `>= neovim 0.3.1`
 
 ## Usage
 
@@ -47,7 +47,7 @@ Explorer extension for [coc.nvim](https://github.com/neoclide/coc.nvim)
   - [x] Git status
   - [x] Highlight current buffer in real time (neovim only)
   - [x] Icons, use [nerdfont](https://github.com/ryanoasis/nerd-fonts)
-  - [x] Coc-list
+  - [x] Search files by Coc-list
   - [ ] LSP
     - [x] diagnostic
     - [ ] file rename
@@ -77,7 +77,10 @@ Explorer extension for [coc.nvim](https://github.com/neoclide/coc.nvim)
 
 #### `[root-path]`
 
-Explorer root, default: `workspace.cwd`
+Explorer root, default:
+
+- `getcwd()` when `buftype` is `nofile`
+- `workspace.rootPath`
 
 #### `--sources`
 

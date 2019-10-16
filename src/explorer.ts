@@ -18,6 +18,7 @@ export class Explorer {
   previousBufnr?: number;
   revealFilepath?: string;
   isHelpUI: boolean = false;
+  rootPaths: Set<string> = new Set();
   onDidAutoload = new Emitter<void>();
   onDidInit = new Emitter<number>();
 
@@ -26,7 +27,7 @@ export class Explorer {
   private _args?: Args;
   private _sources?: ExplorerSource<any>[];
   private lastArgStrings?: string[];
-  private lastCwd?: string;
+  private lastRootPath?: string;
   /**
    * mappings[key][mode] = '<Plug>(coc-action-mode-key)'
    */
@@ -129,10 +130,20 @@ export class Explorer {
 
     const { nvim } = this;
 
-    // const rootPath = workspace.rootPath || workspace.cwd;
-    const rootPath = workspace.cwd;
+    let useGetcwd = false;
+    const buftype = await nvim.getVar('&buftype');
+    if (buftype === 'nofile') {
+      useGetcwd = true;
+    } else {
+      const bufname = await nvim.call('bufname', []);
+      if (!bufname) {
+        useGetcwd = true;
+      }
+    }
+    const rootPath = useGetcwd ? await nvim.call('getcwd', []) : workspace.rootPath;
 
     await this.initArgs(rootPath, argStrings);
+    this.rootPaths.add(this.args.rootPath);
     this.revealFilepath = this.args.revealPath || (await nvim.call('expand', '%:p'));
 
     const [bufnr, inited] = (await nvim.call('coc_explorer#create', [
@@ -183,9 +194,9 @@ export class Explorer {
 
   private async initArgs(rootPath: string, argStrings: string[]) {
     if (
-      !this.lastCwd ||
+      !this.lastRootPath ||
       !this.lastArgStrings ||
-      this.lastCwd !== rootPath ||
+      this.lastRootPath !== rootPath ||
       this.lastArgStrings.toString() !== argStrings.toString()
     ) {
       this.lastArgStrings = argStrings;
