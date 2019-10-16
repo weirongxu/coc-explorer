@@ -70,6 +70,7 @@ export abstract class ExplorerSource<Item extends BaseItem<Item>> {
 
   private _explorer?: Explorer;
   private _expanded?: boolean;
+  private bindedExplorer = false;
 
   constructor() {
     this.addAction(
@@ -255,6 +256,11 @@ export abstract class ExplorerSource<Item extends BaseItem<Item>> {
   }
 
   bindExplorer(explorer: Explorer, expanded: boolean) {
+    if (this.bindedExplorer) {
+      return;
+    }
+    this.bindedExplorer = true;
+
     this._explorer = explorer;
     this._expanded = expanded;
 

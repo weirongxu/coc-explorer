@@ -26,8 +26,8 @@ export class Explorer {
   private _bufnr?: number;
   private _args?: Args;
   private _sources?: ExplorerSource<any>[];
+  private _rootPath?: string;
   private lastArgStrings?: string[];
-  private lastRootPath?: string;
   /**
    * mappings[key][mode] = '<Plug>(coc-action-mode-key)'
    */
@@ -64,6 +64,13 @@ export class Explorer {
       throw Error('Explorer sources not initialized yet');
     }
     return this._sources;
+  }
+
+  get rootPath(): string {
+    if (!this._rootPath) {
+      throw Error('Explorer rootPath not initialized yet');
+    }
+    return this._rootPath;
   }
 
   get buffer(): Buffer {
@@ -130,21 +137,7 @@ export class Explorer {
 
     const { nvim } = this;
 
-    let useGetcwd = false;
-    const buftype = await nvim.getVar('&buftype');
-    if (buftype === 'nofile') {
-      useGetcwd = true;
-    } else {
-      const bufname = await nvim.call('bufname', []);
-      if (!bufname) {
-        useGetcwd = true;
-      }
-    }
-    const rootPath = useGetcwd ? await nvim.call('getcwd', []) : workspace.rootPath;
-
-    await this.initArgs(rootPath, argStrings);
-    this.rootPaths.add(this.args.rootPath);
-    this.revealFilepath = this.args.revealPath || (await nvim.call('expand', '%:p'));
+    await this.initArgs(argStrings);
 
     const [bufnr, inited] = (await nvim.call('coc_explorer#create', [
       this._bufnr,
@@ -192,15 +185,25 @@ export class Explorer {
     });
   }
 
-  private async initArgs(rootPath: string, argStrings: string[]) {
-    if (
-      !this.lastRootPath ||
-      !this.lastArgStrings ||
-      this.lastRootPath !== rootPath ||
-      this.lastArgStrings.toString() !== argStrings.toString()
-    ) {
+  private async getRootPath() {
+    let useGetcwd = false;
+    const buftype = await this.nvim.getVar('&buftype');
+    if (buftype === 'nofile') {
+      useGetcwd = true;
+    } else {
+      const bufname = await this.nvim.call('bufname', []);
+      if (!bufname) {
+        useGetcwd = true;
+      }
+    }
+    return useGetcwd ? ((await this.nvim.call('getcwd', [])) as string) : workspace.rootPath;
+  }
+
+  private async initArgs(argStrings: string[]) {
+    if (!this.lastArgStrings || this.lastArgStrings.toString() !== argStrings.toString()) {
+      this._args = await parseArgs(...argStrings);
       this.lastArgStrings = argStrings;
-      this._args = await parseArgs(rootPath, ...argStrings);
+
       this._sources = this.args.sources
         .map((sourceArg) => {
           if (sourceManager.registeredSources[sourceArg.name]) {
@@ -215,6 +218,9 @@ export class Explorer {
         })
         .filter((source): source is ExplorerSource<any> => source !== null);
     }
+    this._rootPath = this.args.rootPath || (await this.getRootPath());
+    this.revealFilepath = this.args.revealPath || ((await this.nvim.call('expand', '%:p')) as string);
+    this.rootPaths.add(this.rootPath);
   }
 
   async prompt(msg: string): Promise<'yes' | 'no' | null>;

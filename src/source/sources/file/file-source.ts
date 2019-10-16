@@ -150,7 +150,7 @@ export class FileSource extends ExplorerSource<FileItem> {
       });
     }
 
-    this.root = pathLib.join(this.explorer.args.rootPath);
+    this.root = pathLib.join(this.explorer.rootPath);
 
     if (this.expanded) {
       expandStore.expand(this.root);
