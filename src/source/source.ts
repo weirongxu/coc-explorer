@@ -489,6 +489,8 @@ export abstract class ExplorerSource<Item extends BaseItem<Item>> {
   abstract draw(builder: SourceViewBuilder<Item>): void | Promise<void>;
   async loaded(_sourceItem: null | Item): Promise<void> {}
 
+  opened(_notify = false): void | Promise<void> {}
+
   async reload(
     sourceItem: null | Item,
     { render = true, notify = false }: { buffer?: Buffer; render?: boolean; notify?: boolean } = {},

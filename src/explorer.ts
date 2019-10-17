@@ -1,5 +1,5 @@
 import { Buffer, Emitter, events, ExtensionContext, Window, workspace } from 'coc.nvim';
-import { onError, log } from './logger';
+import { onError } from './logger';
 import { Action, mappings } from './mappings';
 import { ArgPosition, Args, parseArgs } from './parse-args';
 import './source/load';
@@ -162,6 +162,10 @@ export class Explorer {
     }
 
     await execNotifyBlock(async () => {
+      for (const source of this.sources) {
+        await source.opened(true);
+      }
+
       await this.reloadAll({ render: false });
 
       const firstFileSource = this.sources.find((s) => s instanceof FileSource) as FileSource | undefined;
@@ -200,17 +204,10 @@ export class Explorer {
   }
 
   private async initArgs(argStrings: string[]) {
-    const isChangedArgs = !this.lastArgStrings || this.lastArgStrings.toString() !== argStrings.toString();
-    if (isChangedArgs) {
+    if (!this.lastArgStrings || this.lastArgStrings.toString() !== argStrings.toString()) {
       this._args = await parseArgs(...argStrings);
       this.lastArgStrings = argStrings;
-    }
 
-    this._rootPath = this.args.rootPath || (await this.getRootPath());
-    this.revealFilepath = this.args.revealPath || ((await this.nvim.call('expand', '%:p')) as string);
-    this.rootPaths.add(this._rootPath);
-
-    if (isChangedArgs) {
       this._sources = this.args.sources
         .map((sourceArg) => {
           if (sourceManager.registeredSources[sourceArg.name]) {
@@ -225,6 +222,10 @@ export class Explorer {
         })
         .filter((source): source is ExplorerSource<any> => source !== null);
     }
+
+    this._rootPath = this.args.rootPath || (await this.getRootPath());
+    this.revealFilepath = this.args.revealPath || ((await this.nvim.call('expand', '%:p')) as string);
+    this.rootPaths.add(this._rootPath);
   }
 
   async prompt(msg: string): Promise<'yes' | 'no' | null>;

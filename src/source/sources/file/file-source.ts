@@ -150,13 +150,15 @@ export class FileSource extends ExplorerSource<FileItem> {
       });
     }
 
+    initFileActions(this);
+  }
+
+  opened(_notify = false) {
     this.root = pathLib.join(this.explorer.rootPath);
 
     if (this.expanded) {
       expandStore.expand(this.root);
     }
-
-    initFileActions(this);
   }
 
   getPutTargetDir(item: FileItem | null) {
