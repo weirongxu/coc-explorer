@@ -85,21 +85,21 @@
           "default": true
         },
         "explorer.activeMode": {
-          "description": "Explorer is very active to render",
+          "description": "Render explorer when after open or save buffer",
           "type": "boolean",
           "default": true
         },
         "explorer.openAction.strategy": {
           "description": "Strategy for open action",
           "enum": [
+            "select",
             "vsplit",
-            "previousBuffer",
-            "select"
+            "previousBuffer"
           ],
           "default": "select"
         },
         "explorer.openAction.select.filterFloatWindows": {
-          "description": "Filter float windows in select strategy",
+          "description": "Filter floating windows in select strategy",
           "type": "boolean",
           "default": true
         },
@@ -127,7 +127,6 @@
                 "description": "Explorer source name",
                 "type": "string",
                 "enum": [
-                  "tab",
                   "file",
                   "buffer"
                 ]
@@ -282,7 +281,7 @@
           "default": "C"
         },
         "explorer.file.column.git.icon.unmerged": {
-          "description": "Icon for git unmerged status ⮀",
+          "description": "Icon for git unmerged status",
           "type": "string",
           "default": "U"
         },
@@ -318,16 +317,6 @@
           "description": "Whether to display the alignment line",
           "type": "boolean"
         },
-        "explorer.file.column.icon.expanded": {
-          "description": "Icon expanded directory",
-          "type": "string",
-          "default": "-"
-        },
-        "explorer.file.column.icon.shrinked": {
-          "description": "Icon shrinked directory",
-          "type": "string",
-          "default": "+"
-        },
         "explorer.file.column.filename.minWidth": {
           "description": "Filename min with",
           "type": "integer",
@@ -337,11 +326,6 @@
           "description": "Filename max width",
           "type": "integer",
           "default": 80
-        },
-        "explorer.file.column.readonly.chars": {
-          "description": "Readonly chars for File source",
-          "type": "string",
-          "default": "[O]"
         },
         "explorer.git.command": {
           "description": "Git command",
@@ -357,6 +341,7 @@
     "dev": "webpack --mode development --watch",
     "prepare": "yarn run clean && yarn run build",
     "lint": "tslint -p .",
+    "gen:doc": "ts-node ./scripts/gen_doc.ts",
     "test": "yarn run lint && jest --runInBand --detectOpenHandles --forceExit"
   },
   "dependencies": {
@@ -366,6 +351,7 @@
   "devDependencies": {
     "@types/command-exists": "^1.2.0",
     "@types/jest": "^24.0.15",
+    "@types/json-schema": "^7.0.3",
     "@types/minimatch": "^3.0.3",
     "@types/node": "^12.7.12",
     "@types/rimraf": "^2.0.2",
