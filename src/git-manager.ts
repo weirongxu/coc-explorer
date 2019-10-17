@@ -1,8 +1,7 @@
-import { config } from './util';
 import pathLib from 'path';
 import { onError } from './logger';
 import { fileColumnManager } from './source/sources/file/column-manager';
-import { execCli } from './util';
+import { config, execCli } from './util';
 
 const showIgnored = fileColumnManager.getColumnConfig<boolean>('git.showIgnored')!;
 
