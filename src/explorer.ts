@@ -195,7 +195,7 @@ export class Explorer {
     if (buftype === 'nofile') {
       useGetcwd = true;
     } else {
-      const bufname = await this.nvim.call('bufname', []);
+      const bufname = await this.nvim.call('bufname', ['%']);
       if (!bufname) {
         useGetcwd = true;
       }
