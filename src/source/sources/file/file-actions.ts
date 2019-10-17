@@ -353,6 +353,9 @@ export function initFileActions(file: FileSource) {
         });
         file.cutItems.clear();
         await file.render();
+      } else {
+        // tslint:disable-next-line: ban
+        workspace.showMessage('Copy items or cut items is empty', 'error');
       }
     },
     'paste files to here',
