@@ -176,7 +176,9 @@
               "bufnr",
               "name",
               "modified",
-              "bufname"
+              "readonly",
+              "bufname",
+              "fullpath"
             ]
           },
           "default": [
@@ -184,7 +186,8 @@
             "bufnr",
             "name",
             "modified",
-            "bufname"
+            "readonly",
+            "fullpath"
           ]
         },
         "explorer.file.autoReveal": {
@@ -221,7 +224,6 @@
               "icon",
               "filename",
               "size",
-              "readonly",
               "modified",
               "created",
               "accessed"
@@ -235,7 +237,6 @@
             "indent",
             "icon",
             "filename",
-            "readonly",
             "size",
             "modified"
           ]

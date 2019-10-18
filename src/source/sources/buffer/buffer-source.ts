@@ -1,6 +1,6 @@
 import { events, workspace } from 'coc.nvim';
 import pathLib from 'path';
-import { activeMode, config, onBufEnter, debounce } from '../../../util';
+import { activeMode, config, onBufEnter, debounce, normalizePath } from '../../../util';
 import { hlGroupManager } from '../../highlight-manager';
 import { ExplorerSource, sourceIcons } from '../../source';
 import { sourceManager } from '../../source-manager';
@@ -16,6 +16,7 @@ export interface BufferItem {
   bufnr: number;
   bufnrStr: string;
   bufname: string;
+  fullpath: string;
   basename: string;
   unlisted: boolean;
   current: boolean;
@@ -93,6 +94,7 @@ export class BufferSource extends ExplorerSource<BufferItem> {
         bufnr: parseInt(bufnr),
         bufnrStr: bufnr,
         bufname,
+        fullpath: pathLib.resolve(normalizePath(bufname)),
         basename: pathLib.basename(bufname),
         unlisted: flags.includes('u'),
         current: flags.includes('%'),

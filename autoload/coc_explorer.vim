@@ -213,7 +213,7 @@ endfunction
 
 function! coc_explorer#execute_syntax_highlights(syntax_highlights)
   for sh in a:syntax_highlights
-    execute printf('syntax region %s matchgroup=%sNone start=/\V<%s|/ end=/\V|%s>/ concealends contained', sh['group'], sh['group'], sh['markerID'],  sh['markerID'])
+    execute printf('syntax region %s matchgroup=%sGroup start=/\V<%s|/ end=/\V|%s>/ concealends contained', sh['group'], sh['group'], sh['markerID'],  sh['markerID'])
     execute printf('syntax match %sMatch /\V<%s|\.\*|%s>/ contains=%s', sh['group'], sh['markerID'], sh['markerID'], sh['group'])
     execute sh['command']
   endfor

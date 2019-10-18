@@ -121,7 +121,6 @@ Explorer file columns, supported columns:
 - icon
 - filename
 - indent
-- readonly
 - clip
 - size
 - diagnosticError
@@ -148,12 +147,12 @@ Explorer file columns, supported columns:
 - `explorer.icon.selected`: Selection selected chars for File source, type: `string`, default: `✓`
 - `explorer.icon.unselected`: Selection unselected chars for File source, type: `string`, default: ` `
 - `explorer.buffer.showHiddenBuffers`: Default show hidden buffers, type: `boolean`, default: `false`
-- `explorer.buffer.columns`: Default columns for buffer source, type: `array`, default: `["selection","bufnr","name","modified","bufname"]`
+- `explorer.buffer.columns`: Default columns for buffer source, type: `array`, default: `["selection","bufnr","name","modified","readonly","fullpath"]`
 - `explorer.file.autoReveal`: Explorer will automatically expand to the current buffer, type: `boolean`, default: `true`
 - `explorer.file.diagnosticCountMax`: Maximum count of diagnostic column, type: `number`, default: `99`
 - `explorer.file.showHiddenFiles`: Default show hidden files, type: `boolean`, default: `false`
 - `explorer.file.autoExpandSingleDirectory`: Automatically expand a single directory, type: `boolean`, default: `true`
-- `explorer.file.columns`: Default columns for file source, type: `array`, default: `["git","selection","clip","diagnosticError","indent","icon","filename","readonly","size","modified"]`
+- `explorer.file.columns`: Default columns for file source, type: `array`, default: `["git","selection","clip","diagnosticError","indent","icon","filename","size","modified"]`
 - `explorer.file.column.git.showIgnored`: Show ignored files in git column, type: `boolean`, default: `false`
 - `explorer.file.column.git.icon.mixed`: Icon for git mixed status, type: `string`, default: `*`
 - `explorer.file.column.git.icon.unmodified`: Icon for git unmodified status, type: `string`, default: ` `

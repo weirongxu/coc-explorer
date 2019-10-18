@@ -13,7 +13,6 @@ export type FileColumn =
   | 'icon'
   | 'filename'
   | 'size'
-  | 'readonly'
   | 'modified'
   | 'created'
   | 'accessed'
