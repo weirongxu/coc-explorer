@@ -5,6 +5,7 @@ import './columns/filename';
 import './columns/indent';
 import './columns/clip';
 import './columns/size';
+import './columns/readonly';
 import './columns/modified';
 import './columns/created';
 import './columns/accessed';

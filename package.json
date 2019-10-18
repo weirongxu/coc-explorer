@@ -226,7 +226,8 @@
               "size",
               "modified",
               "created",
-              "accessed"
+              "accessed",
+              "readonly"
             ]
           },
           "default": [
@@ -238,7 +239,8 @@
             "icon",
             "filename",
             "size",
-            "modified"
+            "modified",
+            "readonly"
           ]
         },
         "explorer.file.column.git.showIgnored": {

@@ -152,7 +152,7 @@ Explorer file columns, supported columns:
 - `explorer.file.diagnosticCountMax`: Maximum count of diagnostic column, type: `number`, default: `99`
 - `explorer.file.showHiddenFiles`: Default show hidden files, type: `boolean`, default: `false`
 - `explorer.file.autoExpandSingleDirectory`: Automatically expand a single directory, type: `boolean`, default: `true`
-- `explorer.file.columns`: Default columns for file source, type: `array`, default: `["git","selection","clip","diagnosticError","indent","icon","filename","size","modified"]`
+- `explorer.file.columns`: Default columns for file source, type: `array`, default: `["git","selection","clip","diagnosticError","indent","icon","filename","size","modified","readonly"]`
 - `explorer.file.column.git.showIgnored`: Show ignored files in git column, type: `boolean`, default: `false`
 - `explorer.file.column.git.icon.mixed`: Icon for git mixed status, type: `string`, default: `*`
 - `explorer.file.column.git.icon.unmodified`: Icon for git unmodified status, type: `string`, default: ` `
