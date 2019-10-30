@@ -89,6 +89,11 @@
           "type": "boolean",
           "default": true
         },
+        "explorer.quitOnOpen": {
+          "description": "quit",
+          "type": "boolean",
+          "default": true
+        },
         "explorer.openAction.strategy": {
           "description": "Strategy for open action",
           "enum": [

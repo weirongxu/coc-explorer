@@ -36,7 +36,7 @@ async function attach(headLevel: number, attachTitle: string, markdownPath: stri
   const lines: string[] = ['', hint];
   rows.forEach((row) => {
     let line = `- \`${row.key}\``;
-    let descriptions: string[] = [];
+    const descriptions: string[] = [];
     if (row.description) {
       descriptions.push(row.description);
     }

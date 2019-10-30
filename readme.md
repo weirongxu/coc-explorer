@@ -218,6 +218,13 @@ Explorer file columns, supported columns:
     "f": "search",
     "F": "searchRecursive",
 
+    gf: 'gotoSource:file',
+    gb: 'gotoSource:buffer',
+
+    '[[': 'sourcePrev',
+    ']]': 'sourceNext',
+
+
     "[d": "diagnosticPrev",
     "]d": "diagnosticNext",
 

@@ -4,7 +4,7 @@ import { explorerActionList } from '../lists/actions';
 import { Explorer } from '../explorer';
 import { onError } from '../logger';
 import { Action, ActionSyms, mappings, reverseMappings } from '../mappings';
-import { config, execNotifyBlock, findLast } from '../util';
+import { config, execNotifyBlock, findLast, enableWrapscan } from '../util';
 import { SourceRowBuilder, SourceViewBuilder } from './view-builder';
 import { hlGroupManager } from './highlight-manager';
 
@@ -143,6 +143,44 @@ export abstract class ExplorerSource<Item extends BaseItem<Item>> {
       },
       'toggle item selection',
       { multi: false, select: true },
+    );
+
+    this.addAction(
+      'gotoSource',
+      async (_items, name) => {
+        const source = this.explorer.sources.find((s) => s.name === name);
+        if (source) {
+          await source.gotoLineIndex(0);
+        }
+      },
+      'go to source',
+    );
+
+    this.addAction(
+      'sourceNext',
+      async () => {
+        const sourceIndex = this.explorer.sources.findIndex((s) => s === this);
+        const nextSource = this.explorer.sources[sourceIndex + 1];
+        if (nextSource) {
+          await nextSource.gotoLineIndex(0);
+        } else if (await enableWrapscan()) {
+          await this.explorer.sources[0].gotoLineIndex(0);
+        }
+      },
+      'go to next source',
+    );
+    this.addAction(
+      'sourcePrev',
+      async () => {
+        const sourceIndex = this.explorer.sources.findIndex((s) => s === this);
+        const prevSource = this.explorer.sources[sourceIndex - 1];
+        if (prevSource) {
+          await prevSource.gotoLineIndex(0);
+        } else if (await enableWrapscan()) {
+          await this.explorer.sources[this.explorer.sources.length - 1].gotoLineIndex(0);
+        }
+      },
+      'go to previous source',
     );
 
     this.addAction(
