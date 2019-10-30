@@ -65,6 +65,7 @@ export function initBufferActions(buffer: BufferSource) {
           await buffer.doAction('openInVsplit', item);
         }
       }
+      await buffer.openedItem();
     },
     'open buffer',
     { multi: false },
@@ -77,10 +78,12 @@ export function initBufferActions(buffer: BufferSource) {
         if (info.length && info[0].windows.length) {
           const winid = info[0].windows[0];
           await nvim.call('win_gotoid', winid);
+          await buffer.openedItem();
           return;
         }
       }
       await nvim.command(`buffer ${item.bufnr}`);
+      await buffer.openedItem();
     },
     'open buffer via drop command',
     { multi: false },
@@ -90,6 +93,7 @@ export function initBufferActions(buffer: BufferSource) {
     async (item) => {
       const escaped = await nvim.call('fnameescape', item.bufname);
       await nvim.command(`tabe ${escaped}`);
+      await buffer.openedItem();
     },
     'open buffer via tab',
   );
@@ -97,19 +101,21 @@ export function initBufferActions(buffer: BufferSource) {
     'openInSplit',
     async (item) => {
       await nvim.command(`sbuffer ${item.bufnr}`);
+      await buffer.openedItem();
     },
     'open buffer via split command',
   );
   buffer.addItemAction(
     'openInVsplit',
     async (item) => {
-      await execNotifyBlock(() => {
+      await execNotifyBlock(async () => {
         nvim.command(`vertical sbuffer ${item.bufnr}`, true);
         if (buffer.explorer.position === 'left') {
           nvim.command('wincmd L', true);
         } else {
           nvim.command('wincmd H', true);
         }
+        await buffer.openedItem();
       });
     },
     'open buffer via vsplit command',

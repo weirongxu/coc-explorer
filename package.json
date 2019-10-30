@@ -90,9 +90,9 @@
           "default": true
         },
         "explorer.quitOnOpen": {
-          "description": "quit",
+          "description": "quit explorer when open action",
           "type": "boolean",
-          "default": true
+          "default": false
         },
         "explorer.openAction.strategy": {
           "description": "Strategy for open action",

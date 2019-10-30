@@ -128,6 +128,7 @@ export function initFileActions(file: FileSource) {
             await file.doAction('openInVsplit', item);
           }
         }
+        await file.openedItem();
       }
     },
     'open file or directory',
@@ -138,6 +139,7 @@ export function initFileActions(file: FileSource) {
     async (item) => {
       if (!item.directory) {
         await nvim.command(`split ${item.fullpath}`);
+        await file.openedItem();
       }
     },
     'open file via split command',
@@ -154,6 +156,7 @@ export function initFileActions(file: FileSource) {
             nvim.command('wincmd H', true);
           }
         });
+        await file.openedItem();
       }
     },
     'open file via vsplit command',
@@ -163,6 +166,7 @@ export function initFileActions(file: FileSource) {
     async (item) => {
       if (!item.directory) {
         await nvim.command(`tabedit ${item.fullpath}`);
+        await file.openedItem();
       }
     },
     'open file in tab',
@@ -174,6 +178,7 @@ export function initFileActions(file: FileSource) {
         await file.doAction('expand', item);
       } else {
         await nvim.command(`drop ${item.fullpath}`);
+        await file.openedItem();
       }
     },
     'open file via drop command',

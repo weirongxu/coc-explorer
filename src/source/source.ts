@@ -528,6 +528,11 @@ export abstract class ExplorerSource<Item extends BaseItem<Item>> {
   async loaded(_sourceItem: null | Item): Promise<void> {}
 
   opened(_notify = false): void | Promise<void> {}
+  async openedItem() {
+    if (config.get<boolean>('quitOnOpen')) {
+      await this.explorer.quit();
+    }
+  }
 
   async reload(
     sourceItem: null | Item,
