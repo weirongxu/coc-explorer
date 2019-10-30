@@ -1,33 +1,33 @@
 import { SourceRowBuilder } from './view-builder';
-import { ExplorerSource, BaseItem } from './source';
-import { config } from '../util';
+import { ExplorerSource, BaseTreeNode } from './source';
 import { Disposable } from 'coc.nvim';
 
-export interface ColumnDraw<Item> {
+export interface ColumnDraw<
+  TreeNode extends BaseTreeNode<TreeNode>,
+> {
   init?(): void;
 
   validate?(): boolean | Promise<boolean>;
 
-  load?(sourceTtem: Item | null): void | Promise<void>;
+  load?(sourceNode: TreeNode): void | Promise<void>;
 
-  beforeDraw?(): void | Promise<void>;
+  /**
+   * @returns Redraw
+   */
+  beforeDraw?(nodes: TreeNode[]): boolean | void | Promise<boolean | void>;
 
-  draw(row: SourceRowBuilder, item: Item): void;
+  draw(row: SourceRowBuilder, node: TreeNode): void;
 }
 
 export class BaseColumnManager<
-  Item extends BaseItem<Item>,
-  S extends ExplorerSource<Item>,
-  C extends ColumnDraw<Item>
+  TreeNode extends BaseTreeNode<TreeNode>,
+  S extends ExplorerSource<TreeNode>,
+  C extends ColumnDraw<TreeNode>,
 > {
   registeredColumns: Record<string, (fileSource: S) => C> = {};
   columnDraws: C[] = [];
 
   constructor(public columns: string[]) {}
-
-  getColumnConfig<T>(name: string, defaultValue?: T): T {
-    return config.get('file.column.' + name, defaultValue)!;
-  }
 
   async init(source: S) {
     this.columnDraws = [];
@@ -56,21 +56,30 @@ export class BaseColumnManager<
     });
   }
 
-  async load(sourceItem: Item | null) {
+  async load(sourceNode: TreeNode) {
     for (const fileColumn of this.columnDraws) {
-      await (fileColumn.load && fileColumn.load(sourceItem));
+      await (fileColumn.load && fileColumn.load(sourceNode));
     }
   }
 
-  async beforeDraw() {
+  /**
+   * @returns Redraw
+   */
+  async beforeDraw(nodes: TreeNode[]): Promise<boolean> {
+    let redraw = false;
     for (const fileColumn of this.columnDraws) {
-      await (fileColumn.beforeDraw && fileColumn.beforeDraw());
+      if (fileColumn.beforeDraw) {
+        if (await fileColumn.beforeDraw(nodes)) {
+          redraw = true;
+        }
+      }
     }
+    return redraw;
   }
 
-  drawItem(row: SourceRowBuilder, item: Item) {
+  drawNode(row: SourceRowBuilder, node: TreeNode) {
     this.columnDraws.forEach((column) => {
-      column.draw(row, item);
+      column.draw(row, node);
     });
   }
 }

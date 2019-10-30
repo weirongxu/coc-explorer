@@ -2,7 +2,6 @@ import { fileColumnManager } from '../column-manager';
 import { hlGroupManager } from '../../../highlight-manager';
 import { diagnosticManager } from '../../../../diagnostic-manager';
 import { config, max } from '../../../../util';
-import { expandStore } from '../file-source';
 
 const highlights = {
   warning: hlGroupManager.hlLinkGroupCommand('FileDiagnosticWarning', 'CocWarningSign'),
@@ -30,13 +29,13 @@ fileColumnManager.registerColumn('diagnosticWarning', (fileSource) => ({
     });
     warningMaxWidth = max(Object.values(warningMixedCountStr).map((d) => d.length));
   },
-  draw(row, item) {
+  draw(row, node) {
     if (Object.keys(warningMixedCountStr).length > 0) {
-      if (item.fullpath in warningMixedCountStr) {
-        if (item.directory && expandStore.isExpanded(item.fullpath)) {
+      if (node.fullpath in warningMixedCountStr) {
+        if (node.directory && fileSource.expandStore.isExpanded(node)) {
           row.add(' '.padStart(warningMaxWidth), highlights.warning);
         } else {
-          const count = warningMixedCountStr[item.fullpath];
+          const count = warningMixedCountStr[node.fullpath];
           row.add(count.toString().padStart(warningMaxWidth), highlights.warning);
           fileSource.diagnosisLineIndexes.push(row.line);
         }

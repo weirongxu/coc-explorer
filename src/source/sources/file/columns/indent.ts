@@ -1,7 +1,7 @@
 import { hlGroupManager } from '../../../highlight-manager';
 import { enableNerdfont } from '../../../source';
 import { fileColumnManager } from '../column-manager';
-import { FileItem } from '../file-source';
+import { FileNode } from '../file-source';
 
 export const indentChars = fileColumnManager.getColumnConfig<string>('indent.chars');
 export const topLevel = fileColumnManager.getColumnConfig<string>('indent.topLevel');
@@ -21,37 +21,37 @@ hlGroupManager.register(highlights);
  * │
  * └
  */
-function printIndentLine(item: FileItem) {
+function printIndentLine(node: FileNode) {
   let row = '';
-  if (!item.parent && !topLevel) {
+  if (!node.parent && !topLevel) {
     return row;
   }
-  if (item.isLastInLevel) {
+  if (node.isLastInLevel) {
     row = '└ ';
   } else {
     row = '│ ';
   }
-  let curItem = item.parent;
-  while (curItem) {
-    if (!curItem.parent && !topLevel) {
+  let curNode = node.parent;
+  while (curNode) {
+    if (!curNode.parent && !topLevel) {
       break;
     }
-    if (curItem.isLastInLevel) {
+    if (curNode.isLastInLevel) {
       row = '  ' + row;
     } else {
       row = '│ ' + row;
     }
-    curItem = curItem.parent;
+    curNode = curNode.parent;
   }
   return row;
 }
 
 fileColumnManager.registerColumn('indent', {
-  draw(row, item) {
+  draw(row, node) {
     if (indentLine) {
-      row.add(printIndentLine(item), highlights.line);
+      row.add(printIndentLine(node), highlights.line);
     } else {
-      row.add(indentChars.repeat(item.level - (topLevel ? 0 : 1)));
+      row.add(indentChars.repeat(node.level - (topLevel ? 0 : 1)));
     }
   },
 });

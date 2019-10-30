@@ -21,7 +21,7 @@ export const activate = async (context: ExtensionContext) => {
       if (!paths.includes(context.extensionPath)) {
         await nvim.command(`execute 'noa set rtp^='.fnameescape('${context.extensionPath.replace(/'/g, "''")}')`);
       }
-      explorer.onDidAutoload.fire();
+      explorer.emitterDidAutoload.fire();
     })
     .catch(onError);
 

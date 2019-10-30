@@ -2,11 +2,12 @@ import { Buffer, Emitter, events, ExtensionContext, Window, workspace } from 'co
 import { onError } from './logger';
 import { Action, mappings } from './mappings';
 import { ArgPosition, Args, parseArgs } from './parse-args';
-import './source/load';
-import { BaseItem, ExplorerSource } from './source/source';
-import { sourceManager } from './source/source-manager';
-import { execNotifyBlock, autoReveal } from './util';
 import { hlGroupManager } from './source/highlight-manager';
+import { IndexesManager } from './indexes-manager';
+import './source/load';
+import { BaseTreeNode, ExplorerSource } from './source/source';
+import { sourceManager } from './source/source-manager';
+import { autoReveal, execNotifyBlock } from './util';
 
 export class Explorer {
   // id for matchaddpos
@@ -18,9 +19,10 @@ export class Explorer {
   previousBufnr?: number;
   revealFilepath?: string;
   isHelpUI: boolean = false;
-  rootPaths: Set<string> = new Set();
-  onDidAutoload = new Emitter<void>();
-  onDidInit = new Emitter<number>();
+  rootPathRecords: Set<string> = new Set();
+  indexesManager = new IndexesManager(this);
+  emitterDidAutoload = new Emitter<void>();
+  emitterDidInit = new Emitter<number>();
 
   private _buffer?: Buffer;
   private _bufnr?: number;
@@ -46,7 +48,7 @@ export class Explorer {
       }),
     );
 
-    this.onDidAutoload.event(() => {
+    this.emitterDidAutoload.event(() => {
       this.registerMappings().catch(onError);
       hlGroupManager.registerHighlightSyntax().catch(onError);
     });
@@ -154,7 +156,7 @@ export class Explorer {
     this._bufnr = bufnr;
 
     if (!inited) {
-      this.onDidInit.fire(this._bufnr);
+      this.emitterDidInit.fire(this._bufnr);
     }
 
     if (this.isHelpUI) {
@@ -166,14 +168,23 @@ export class Explorer {
         await source.opened(true);
       }
 
-      await this.reloadAll({ render: false });
+      const firstFileSource = this.sources.find((s) => s instanceof FileSource) as
+        | FileSource
+        | undefined;
+      let node: FileNode | null = null;
 
-      const firstFileSource = this.sources.find((s) => s instanceof FileSource) as FileSource | undefined;
-      let item: FileItem | null = null;
+      if (firstFileSource) {
+        firstFileSource.root = this.rootPath;
+      }
+
+      await this.reloadAll({ render: false });
 
       if (firstFileSource) {
         if (this.revealFilepath && autoReveal) {
-          item = await firstFileSource.revealItemByPath(this.revealFilepath);
+          node = await firstFileSource.revealNodeByPath(
+            this.revealFilepath,
+            firstFileSource.rootNode.children,
+          );
         }
       }
 
@@ -181,7 +192,11 @@ export class Explorer {
 
       if (firstFileSource) {
         if (this.revealFilepath && autoReveal) {
-          await firstFileSource.gotoItem(item, { col: 1, notify: true });
+          if (node !== null) {
+            await firstFileSource.gotoNode(node, { col: 1, notify: true });
+          } else {
+            await firstFileSource.gotoRoot({ col: 1, notify: true });
+          }
         } else if (!inited) {
           await firstFileSource.gotoRoot({ col: 1, notify: true });
         }
@@ -224,8 +239,9 @@ export class Explorer {
     }
 
     this._rootPath = this.args.rootPath || (await this.getRootPath());
-    this.revealFilepath = this.args.revealPath || ((await this.nvim.call('expand', '%:p')) as string);
-    this.rootPaths.add(this._rootPath);
+    this.revealFilepath =
+      this.args.revealPath || ((await this.nvim.call('expand', '%:p')) as string);
+    this.rootPathRecords.add(this._rootPath);
   }
 
   async prompt(msg: string): Promise<'yes' | 'no' | null>;
@@ -306,27 +322,28 @@ export class Explorer {
       lineIndexes.push(line);
     }
 
-    const itemsGroup: Map<ExplorerSource<any>, Set<object | null>> = new Map();
+    const nodesGroup: Map<ExplorerSource<any>, Set<object | null>> = new Map();
 
     for (const lineIndex of lineIndexes) {
       const [source] = this.findSourceByLineIndex(lineIndex);
       if (source) {
-        if (!itemsGroup.has(source)) {
-          itemsGroup.set(source, new Set());
+        if (!nodesGroup.has(source)) {
+          nodesGroup.set(source, new Set());
         }
         const relativeLineIndex = lineIndex - source.startLine;
 
-        const [, item] = source.lines[relativeLineIndex];
-        itemsGroup.get(source)!.add(item);
+        nodesGroup
+          .get(source)!
+          .add(relativeLineIndex === 0 ? null : source.flattenNodes[relativeLineIndex]);
       }
     }
 
     await Promise.all(
-      Array.from(itemsGroup.entries()).map(async ([source, items]) => {
-        if (items.has(null)) {
+      Array.from(nodesGroup.entries()).map(async ([source, nodes]) => {
+        if (nodes.has(null)) {
           await source.doRootAction(action.name, action.arg);
         } else {
-          await source.doAction(action.name, Array.from(items).filter((item) => item), action.arg);
+          await source.doAction(action.name, Array.from(nodes).filter((item) => item), action.arg);
         }
       }),
     );
@@ -365,7 +382,7 @@ export class Explorer {
     return 0;
   }
 
-  async storeCursor<Item extends BaseItem<Item>>() {
+  async storeCursor() {
     const storeCursor = await this.currentCursor();
     let storeView = await this.nvim.call('winsaveview');
     storeView = { topline: storeView.topline };
@@ -374,11 +391,13 @@ export class Explorer {
       const source = this.sources[sourceIndex];
       if (source) {
         const sourceLineIndex = storeCursor.lineIndex - source.startLine;
-        const storeItem: null | Item = await source.getItemByIndex(sourceLineIndex);
+        const storeNode: BaseTreeNode<any> = source.getNodeByLine(
+          sourceLineIndex,
+        );
         return async (notify = false) => {
           await execNotifyBlock(async () => {
             this.nvim.call('winrestview', [storeView], true);
-            await source.gotoItem(storeItem, {
+            await source.gotoNode(storeNode, {
               lineIndex: sourceLineIndex,
               col: storeCursor.col,
               notify: true,
@@ -423,7 +442,11 @@ export class Explorer {
 
   async reloadAll({ render = true, notify = false } = {}) {
     await execNotifyBlock(async () => {
-      await Promise.all(this.sources.map((source) => source.reload(null, { render: false, notify: true })));
+      await Promise.all(
+        this.sources.map((source) =>
+          source.reload(source.rootNode, { render: false, notify: true }),
+        ),
+      );
 
       if (render) {
         await this.renderAll({ notify: true, storeCursor: false });
@@ -447,4 +470,4 @@ export class Explorer {
   }
 }
 
-import { FileSource, FileItem } from './source/sources/file/file-source';
+import { FileNode, FileSource } from './source/sources/file/file-source';

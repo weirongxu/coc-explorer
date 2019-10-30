@@ -1,22 +1,11 @@
-import { BufferItem, BufferSource } from './buffer-source';
+import { BufferNode, BufferSource } from './buffer-source';
 import { config } from '../../../util';
 import { ColumnDraw, BaseColumnManager } from '../../base-column-manager';
 
-export type BufferColumn =
-  | 'selection'
-  | 'bufname'
-  | 'modified'
-  | 'bufnr'
-  | string;
+export type BufferColumn = 'selection' | 'bufname' | 'modified' | 'bufnr' | string;
 
-export interface BufferColumnDraw extends ColumnDraw<BufferItem> {}
+export interface BufferColumnDraw extends ColumnDraw<BufferNode> {}
 
-class BufferColumnManager extends BaseColumnManager<
-  BufferItem,
-  BufferSource,
-  BufferColumnDraw
-> {}
+class BufferColumnManager extends BaseColumnManager<BufferNode, BufferSource, BufferColumnDraw> {}
 
-export const bufferColumnManager = new BufferColumnManager(
-  config.get<BufferColumn[]>('buffer.columns')!,
-);
+export const bufferColumnManager = new BufferColumnManager(config.get<BufferColumn[]>('buffer.columns')!);

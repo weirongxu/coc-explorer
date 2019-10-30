@@ -3,11 +3,11 @@ import { onError } from '../logger';
 
 interface Action {
   name: string;
-  items: any[] | null;
+  nodes: any[] | null;
   key?: string;
   root: boolean;
   description: string;
-  callback: (item: any, arg: string) => void | Promise<void>;
+  callback: (node: any, arg: string) => void | Promise<void>;
 }
 
 export class ExplorerActionList extends BasicList {
@@ -23,7 +23,7 @@ export class ExplorerActionList extends BasicList {
         if (item.data.root) {
           await item.data.callback();
         } else {
-          await item.data.callback(item.data.items);
+          await item.data.callback(item.data.nodes);
         }
         resolve();
       }).catch(onError);
@@ -40,7 +40,7 @@ export class ExplorerActionList extends BasicList {
       data: {
         root: action.root,
         callback: action.callback,
-        items: action.items,
+        nodes: action.nodes,
       },
     }));
   }

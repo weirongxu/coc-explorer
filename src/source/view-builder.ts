@@ -22,17 +22,23 @@ export class SourceViewBuilder<Item> {
     this.currentLine = 0;
   }
 
-  newRoot(draw: (row: SourceRowBuilder) => void) {
+  drawLine(draw: (row: SourceRowBuilder) => void): string {
     const row = new SourceRowBuilder(this, this.currentLine);
     draw(row);
-    this.lines.push([row.content, null]);
-    this.currentLine++;
+    return row.content;
   }
 
-  newItem(item: Item, draw: (row: SourceRowBuilder) => void) {
-    const row = new SourceRowBuilder(this, this.currentLine);
-    draw(row);
-    this.lines.push([row.content, item]);
+  newRoot(draw: (row: SourceRowBuilder) => void): string {
+    const content = this.drawLine(draw);
+    this.lines.push([content, null]);
     this.currentLine++;
+    return content;
+  }
+
+  newNode(item: Item, draw: (row: SourceRowBuilder) => void): string {
+    const content = this.drawLine(draw);
+    this.lines.push([content, item]);
+    this.currentLine++;
+    return content;
   }
 }

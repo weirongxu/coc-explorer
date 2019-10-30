@@ -7,9 +7,9 @@ const highlights = {
 hlGroupManager.register(highlights);
 
 bufferColumnManager.registerColumn('bufname', {
-  draw(row, item) {
-    if (item.basename !== item.bufname) {
-      row.add(item.bufname, highlights.bufname);
+  draw(row, node) {
+    if (node.basename !== node.bufname) {
+      row.add(node.bufname, highlights.bufname);
       row.add(' ');
     }
   },

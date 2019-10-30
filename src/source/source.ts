@@ -18,8 +18,8 @@ export type ActionOptions = {
 export const enableNerdfont = config.get<string>('icon.enableNerdfont')!;
 
 export const sourceIcons = {
-  expanded: config.get<string>('icon.expanded') || (enableNerdfont ? '' : '-'),
-  shrinked: config.get<string>('icon.shrinked') || (enableNerdfont ? '' : '+'),
+  expanded: config.get<string>('icon.expanded') || (enableNerdfont ? '' : '-'),
+  shrinked: config.get<string>('icon.shrinked') || (enableNerdfont ? '' : '+'),
   selected: config.get<string>('icon.selected')!,
   unselected: config.get<string>('icon.unselected')!,
 };
@@ -34,19 +34,39 @@ const helpHightlights = {
 };
 hlGroupManager.register(helpHightlights);
 
-export interface BaseItem<Item extends BaseItem<any>> {
-  uid: string;
-  parent?: Item;
+export interface BaseTreeNode<TreeNode extends BaseTreeNode<TreeNode>> {
+  isRoot?: boolean;
+  uid: string | null;
+  level: number;
+  drawnLine: string;
+  expandable?: boolean;
+  parent?: BaseTreeNode<TreeNode>;
+  children?: TreeNode[];
 }
 
-export abstract class ExplorerSource<Item extends BaseItem<Item>> {
+export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>> {
   abstract name: string;
   startLine: number = 0;
   endLine: number = 0;
-  items: Item[] = [];
-  lines: [string, null | Item][] = [];
-  selectedItems: Set<Item> = new Set();
+  abstract rootNode: TreeNode;
+  flattenNodes: (TreeNode)[] = [];
+  showHidden: boolean = false;
+  selectedNodes: Set<TreeNode> = new Set();
   relativeHlRanges: Record<string, Range[]> = {};
+  viewBuilder = new SourceViewBuilder<TreeNode>();
+  expandStore = {
+    record: new Map<null | string, boolean>(),
+    expand(node: TreeNode) {
+      this.record.set(node.uid, true);
+    },
+    shrink(node: TreeNode) {
+      this.record.set(node.uid, false);
+    },
+    isExpanded(node: TreeNode) {
+      return this.record.get(node.uid) || false;
+    },
+  };
+
   abstract hlSrcId: number;
 
   actions: Record<
@@ -54,7 +74,7 @@ export abstract class ExplorerSource<Item extends BaseItem<Item>> {
     {
       description: string;
       options: Partial<ActionOptions>;
-      callback: (items: Item[], arg: string) => void | Promise<void>;
+      callback: (nodes: TreeNode[], arg: string) => void | Promise<void>;
     }
   > = {};
   rootActions: Record<
@@ -69,13 +89,20 @@ export abstract class ExplorerSource<Item extends BaseItem<Item>> {
   nvim = workspace.nvim;
 
   private _explorer?: Explorer;
-  private _expanded?: boolean;
   private bindedExplorer = false;
 
   constructor() {
     this.addAction(
+      'toggleHidden',
+      async () => {
+        this.showHidden = !this.showHidden;
+      },
+      'toggle visibility of hidden node',
+      { reload: true, multi: false },
+    );
+    this.addAction(
       'normal',
-      async (_item, arg) => {
+      async (_node, arg) => {
         await this.nvim.command('normal ' + arg);
       },
       'execute vim normal mode commands',
@@ -91,66 +118,65 @@ export abstract class ExplorerSource<Item extends BaseItem<Item>> {
     );
     this.addAction(
       'refresh',
-      async (items) => {
-        const item = items ? items[0] : null;
-        await this.reload(item);
+      async () => {
+        await this.reload(this.rootNode);
       },
       'refresh',
       { multi: false },
     );
     this.addAction(
       'help',
-      async (items) => {
-        await this.renderHelp(items === null);
+      async (nodes) => {
+        await this.renderHelp(nodes === null);
       },
       'show help',
       { multi: false },
     );
     this.addAction(
       'actionMenu',
-      async (items) => {
-        await this.actionMenu(items);
+      async (nodes) => {
+        await this.actionMenu(nodes);
       },
       'show actions in coc-list',
     );
-    this.addItemAction(
+    this.addNodeAction(
       'select',
-      async (item) => {
-        this.selectedItems.add(item);
+      async (node) => {
+        this.selectedNodes.add(node);
         await this.render();
       },
-      'toggle item selection',
+      'toggle node selection',
       { multi: false, select: true },
     );
-    this.addItemAction(
+    this.addNodeAction(
       'unselect',
-      async (item) => {
-        this.selectedItems.delete(item);
+      async (node) => {
+        this.selectedNodes.delete(node);
         await this.render();
       },
-      'toggle item selection',
+      'toggle node selection',
       { multi: false, select: true },
     );
-    this.addItemAction(
+    this.addNodeAction(
       'toggleSelection',
-      async (item) => {
-        if (this.selectedItems.has(item)) {
-          await this.doAction('unselect', item);
+      async (node) => {
+        if (this.selectedNodes.has(node)) {
+          await this.doAction('unselect', node);
         } else {
-          await this.doAction('select', item);
+          await this.doAction('select', node);
         }
         await this.render();
       },
-      'toggle item selection',
+      'toggle node selection',
       { multi: false, select: true },
     );
 
     this.addAction(
       'diagnosticPrev',
-      async (items) => {
-        const item = items ? items[0] : null;
+      async (nodes) => {
+        const node = nodes ? nodes[0] : this.rootNode;
         if (this instanceof FileSource) {
-          const lineIndex = this.lines.findIndex(([, it]) => it === item);
+          const lineIndex = this.getLineByNode(node);
           const prevIndex = findLast(this.diagnosisLineIndexes, (idx) => idx < lineIndex);
           if (prevIndex !== undefined) {
             await this.gotoLineIndex(prevIndex);
@@ -162,7 +188,8 @@ export abstract class ExplorerSource<Item extends BaseItem<Item>> {
           (source) => source instanceof FileSource && source.diagnosisLineIndexes.length > 0,
         ) as undefined | FileSource;
         if (fileSource) {
-          const prevIndex = fileSource.diagnosisLineIndexes[fileSource.diagnosisLineIndexes.length - 1];
+          const prevIndex =
+            fileSource.diagnosisLineIndexes[fileSource.diagnosisLineIndexes.length - 1];
           if (prevIndex !== undefined) {
             await fileSource.gotoLineIndex(prevIndex);
           }
@@ -173,10 +200,10 @@ export abstract class ExplorerSource<Item extends BaseItem<Item>> {
 
     this.addAction(
       'diagnosticNext',
-      async (items) => {
-        const item = items ? items[0] : null;
+      async (nodes) => {
+        const node = nodes ? nodes[0] : this.rootNode;
         if (this instanceof FileSource) {
-          const lineIndex = this.lines.findIndex(([, it]) => it === item);
+          const lineIndex = this.getLineByNode(node);
           const nextIndex = this.diagnosisLineIndexes.find((idx) => idx > lineIndex);
           if (nextIndex !== undefined) {
             await this.gotoLineIndex(nextIndex);
@@ -186,9 +213,9 @@ export abstract class ExplorerSource<Item extends BaseItem<Item>> {
         const sourceIndex = this.explorer.sources.findIndex((s) => s === this);
         const fileSource = this.explorer.sources
           .slice(sourceIndex + 1)
-          .find((source) => source instanceof FileSource && source.diagnosisLineIndexes.length > 0) as
-          | undefined
-          | FileSource;
+          .find(
+            (source) => source instanceof FileSource && source.diagnosisLineIndexes.length > 0,
+          ) as undefined | FileSource;
         if (fileSource) {
           const nextIndex = fileSource.diagnosisLineIndexes[0];
           if (nextIndex !== undefined) {
@@ -201,10 +228,10 @@ export abstract class ExplorerSource<Item extends BaseItem<Item>> {
 
     this.addAction(
       'gitPrev',
-      async (items) => {
-        const item = items ? items[0] : null;
+      async (nodes) => {
+        const node = nodes ? nodes[0] : this.rootNode;
         if (this instanceof FileSource) {
-          const lineIndex = this.lines.findIndex(([, it]) => it === item);
+          const lineIndex = this.getLineByNode(node);
           const prevIndex = findLast(this.gitChangedLineIndexes, (idx) => idx < lineIndex);
           if (prevIndex !== undefined) {
             await this.gotoLineIndex(prevIndex);
@@ -217,7 +244,8 @@ export abstract class ExplorerSource<Item extends BaseItem<Item>> {
           (source) => source instanceof FileSource && source.gitChangedLineIndexes.length > 0,
         ) as undefined | FileSource;
         if (fileSource) {
-          const prevIndex = fileSource.gitChangedLineIndexes[fileSource.gitChangedLineIndexes.length - 1];
+          const prevIndex =
+            fileSource.gitChangedLineIndexes[fileSource.gitChangedLineIndexes.length - 1];
           if (prevIndex !== undefined) {
             await fileSource.gotoLineIndex(prevIndex);
           }
@@ -228,10 +256,10 @@ export abstract class ExplorerSource<Item extends BaseItem<Item>> {
 
     this.addAction(
       'gitNext',
-      async (items) => {
-        const item = items ? items[0] : null;
+      async (nodes) => {
+        const node = nodes ? nodes[0] : this.rootNode;
         if (this instanceof FileSource) {
-          const lineIndex = this.lines.findIndex(([, it]) => it === item);
+          const lineIndex = this.getLineByNode(node);
           const nextIndex = this.gitChangedLineIndexes.find((idx) => idx > lineIndex);
           if (nextIndex !== undefined) {
             await this.gotoLineIndex(nextIndex);
@@ -241,9 +269,9 @@ export abstract class ExplorerSource<Item extends BaseItem<Item>> {
         const sourceIndex = this.explorer.sources.findIndex((s) => s === this);
         const fileSource = this.explorer.sources
           .slice(sourceIndex + 1)
-          .find((source) => source instanceof FileSource && source.gitChangedLineIndexes.length > 0) as
-          | undefined
-          | FileSource;
+          .find(
+            (source) => source instanceof FileSource && source.gitChangedLineIndexes.length > 0,
+          ) as undefined | FileSource;
         if (fileSource) {
           const nextIndex = fileSource.gitChangedLineIndexes[0];
           if (nextIndex !== undefined) {
@@ -262,7 +290,7 @@ export abstract class ExplorerSource<Item extends BaseItem<Item>> {
     this.bindedExplorer = true;
 
     this._explorer = explorer;
-    this._expanded = expanded;
+    this.expanded = expanded;
 
     // init
     Promise.resolve(this.init()).catch(onError);
@@ -288,21 +316,30 @@ export abstract class ExplorerSource<Item extends BaseItem<Item>> {
   }
 
   get expanded() {
-    if (this._expanded !== undefined) {
-      return this._expanded;
-    }
-    throw new Error(`source(${this.name}) unbound to explorer`);
+    return this.expandStore.isExpanded(this.rootNode);
   }
 
   set expanded(expanded: boolean) {
-    this._expanded = expanded;
+    if (expanded) {
+      this.expandStore.expand(this.rootNode);
+    } else {
+      this.expandStore.shrink(this.rootNode);
+    }
+  }
+
+  get height() {
+    return this.flattenNodes.length;
   }
 
   init() {}
 
+  addGlobalAction(name: ActionSyms, callback: (node: TreeNode, line: number) => void) {
+    // TODO
+  }
+
   addAction(
     name: ActionSyms,
-    callback: (items: Item[] | null, arg: string) => void | Promise<void>,
+    callback: (nodes: TreeNode[] | null, arg: string) => void | Promise<void>,
     description: string,
     options: Partial<ActionOptions> = {},
   ) {
@@ -327,9 +364,9 @@ export abstract class ExplorerSource<Item extends BaseItem<Item>> {
     this.rootActions[name] = { callback, options, description };
   }
 
-  addItemsAction(
+  addNodesAction(
     name: ActionSyms,
-    callback: (item: Item[], arg: string) => void | Promise<void>,
+    callback: (node: TreeNode[], arg: string) => void | Promise<void>,
     description: string,
     options: Partial<ActionOptions> = {},
   ) {
@@ -340,16 +377,16 @@ export abstract class ExplorerSource<Item extends BaseItem<Item>> {
     };
   }
 
-  addItemAction(
+  addNodeAction(
     name: ActionSyms,
-    callback: (item: Item, arg: string) => void | Promise<void>,
+    callback: (node: TreeNode, arg: string) => void | Promise<void>,
     description: string,
     options: Partial<ActionOptions> = {},
   ) {
     this.actions[name] = {
-      callback: async (items: Item[], arg) => {
-        for (const item of items) {
-          await callback(item, arg);
+      callback: async (nodes: TreeNode[], arg) => {
+        for (const node of nodes) {
+          await callback(node, arg);
         }
       },
       description,
@@ -367,15 +404,14 @@ export abstract class ExplorerSource<Item extends BaseItem<Item>> {
 
     await action.callback(arg);
 
-    if (render) {
-      await this.render();
-    }
     if (reload) {
-      await this.reload(null);
+      await this.reload(this.rootNode);
+    } else if (render) {
+      await this.render();
     }
   }
 
-  async doAction(name: ActionSyms, items: Item | Item[], arg: string = '') {
+  async doAction(name: ActionSyms, nodes: TreeNode | TreeNode[], arg: string = '') {
     const action = this.actions[name];
     if (!action) {
       return;
@@ -383,26 +419,25 @@ export abstract class ExplorerSource<Item extends BaseItem<Item>> {
 
     const { multi = true, render = false, reload = false, select = false } = action.options;
 
-    const finalItems = Array.isArray(items) ? items : [items];
+    const finalNodes = Array.isArray(nodes) ? nodes : [nodes];
     if (select) {
-      await action.callback(finalItems, arg);
+      await action.callback(finalNodes, arg);
     } else if (multi) {
-      if (this.selectedItems.size > 0) {
-        const items = Array.from(this.selectedItems);
-        this.selectedItems.clear();
-        await action.callback(items, arg);
+      if (this.selectedNodes.size > 0) {
+        const nodes = Array.from(this.selectedNodes);
+        this.selectedNodes.clear();
+        await action.callback(nodes, arg);
       } else {
-        await action.callback(finalItems, arg);
+        await action.callback(finalNodes, arg);
       }
     } else {
-      await action.callback([finalItems[0]], arg);
+      await action.callback([finalNodes[0]], arg);
     }
 
-    if (render) {
-      await this.render();
-    }
     if (reload) {
-      await this.reload(null);
+      await this.reload(this.rootNode);
+    } else if (render) {
+      await this.render();
     }
   }
 
@@ -411,15 +446,15 @@ export abstract class ExplorerSource<Item extends BaseItem<Item>> {
     await this.nvim.call('setreg', ['"', content]);
   }
 
-  async actionMenu(items: Item[] | null) {
-    const actions = items === null ? this.rootActions : this.actions;
+  async actionMenu(nodes: TreeNode[] | null) {
+    const actions = nodes === null ? this.rootActions : this.actions;
     explorerActionList.setExplorerActions(
       Object.entries(actions)
         .map(([name, { callback, description }]) => ({
           name,
-          items,
+          nodes,
           mappings,
-          root: items === null,
+          root: nodes === null,
           key: reverseMappings[name],
           description,
           callback,
@@ -432,16 +467,23 @@ export abstract class ExplorerSource<Item extends BaseItem<Item>> {
   }
 
   isSelectedAny() {
-    return this.selectedItems.size !== 0;
+    return this.selectedNodes.size !== 0;
   }
 
-  isSelectedItem(item: Item) {
-    return this.selectedItems.has(item);
+  isSelectedNode(node: TreeNode) {
+    return this.selectedNodes.has(node);
   }
 
-  getItemByIndex(lineIndex: number) {
-    const line = this.lines[lineIndex];
-    return line ? line[1] : null;
+  getNodeByLine(lineIndex: number): TreeNode {
+    return this.flattenNodes[lineIndex];
+  }
+
+  getLineByNode(node: TreeNode): number {
+    if (node) {
+      return this.flattenNodes.findIndex((it) => it.uid === node.uid);
+    } else {
+      return 0;
+    }
   }
 
   async gotoLineIndex(lineIndex: number, col?: number, notify = false) {
@@ -449,8 +491,8 @@ export abstract class ExplorerSource<Item extends BaseItem<Item>> {
       const finalCol = col === undefined ? await this.explorer.currentCol() : col;
       const win = await this.explorer.win;
       if (win) {
-        if (lineIndex >= this.lines.length) {
-          lineIndex = this.lines.length - 1;
+        if (lineIndex >= this.height) {
+          lineIndex = this.height - 1;
         }
         win.setCursor([this.startLine + lineIndex + 1, finalCol - 1], true);
         if (workspace.env.isVim) {
@@ -465,17 +507,24 @@ export abstract class ExplorerSource<Item extends BaseItem<Item>> {
     await this.gotoLineIndex(0, finalCol, notify);
   }
 
-  async gotoItem(
-    item: Item | null,
-    { lineIndex: fallbackLineIndex, col, notify = false }: { lineIndex?: number; col?: number; notify?: boolean } = {},
+  /**
+   * if node is null, move to root, otherwise move to node
+   */
+  async gotoNode(
+    node: TreeNode,
+    {
+      lineIndex: fallbackLineIndex,
+      col,
+      notify = false,
+    }: { lineIndex?: number; col?: number; notify?: boolean } = {},
   ) {
-    if (item === null) {
-      await this.gotoRoot({ col, notify });
-      return;
-    }
-
+    // if ('isRoot' in node) {
+    //   await this.gotoRoot({ col, notify });
+    //   return;
+    // }
+    //
     const finalCol = col === undefined ? await this.explorer.currentCol() : col;
-    const lineIndex = this.lines.findIndex(([, it]) => it !== null && it.uid === item.uid);
+    const lineIndex = this.flattenNodes.findIndex((it) => it.uid === node.uid);
     if (lineIndex !== -1) {
       await this.gotoLineIndex(lineIndex, finalCol, notify);
     } else if (fallbackLineIndex !== undefined) {
@@ -485,25 +534,178 @@ export abstract class ExplorerSource<Item extends BaseItem<Item>> {
     }
   }
 
-  abstract loadItems(sourceItem: null | Item): Promise<Item[]>;
-  abstract draw(builder: SourceViewBuilder<Item>): void | Promise<void>;
-  async loaded(_sourceItem: null | Item): Promise<void> {}
+  abstract loadChildren(sourceNode: TreeNode): Promise<TreeNode[]>;
+  async loaded(_sourceNode: TreeNode): Promise<void> {}
+  abstract beforeDraw(nodes: (TreeNode)[]): void | Promise<void>;
+  abstract drawNode(node: TreeNode, prevNode: TreeNode, nextNode: TreeNode): void | Promise<void>;
+
+  flattenNode(node: TreeNode) {
+    return [node, ...(node.children ? this.flattenChildren(node.children) : [])];
+  }
+
+  flattenChildren(nodes: TreeNode[]) {
+    const stack = [...nodes];
+    const res = [];
+    while (stack.length) {
+      const node = stack.shift()!;
+      res.push(node);
+      if (node.children && Array.isArray(node.children) && this.expandStore.isExpanded(node)) {
+        for (let i = node.children.length - 1; i >= 0; i--) {
+          stack.unshift(node.children[i]);
+        }
+      }
+    }
+    return res;
+  }
+
+  async drawNodes(nodes: (TreeNode)[]) {
+    await this.beforeDraw(nodes);
+    for (let i = 0, len = nodes.length; i < len; i++) {
+      const node = nodes[i];
+      await this.drawNode(
+        node,
+        i === 0 ? this.rootNode : nodes[i - 1],
+        i === len - 1 ? this.rootNode : nodes[i + 1],
+      );
+    }
+  }
 
   opened(_notify = false): void | Promise<void> {}
 
   async reload(
-    sourceItem: null | Item,
+    sourceNode: TreeNode,
     { render = true, notify = false }: { buffer?: Buffer; render?: boolean; notify?: boolean } = {},
   ) {
-    this.selectedItems = new Set();
-    this.items = await this.loadItems(sourceItem);
-    await this.loaded(sourceItem);
+    this.selectedNodes = new Set();
+    this.rootNode.children = this.expanded ? await this.loadChildren(sourceNode) : [];
+    await this.loaded(sourceNode);
     if (render) {
       await this.render({ notify });
     }
   }
 
-  async render({ notify = false, storeCursor = true }: { notify?: boolean; storeCursor?: boolean } = {}) {
+  private offsetAfterLine(afterLine: number, offset: number) {
+    this.explorer.indexesManager.offsetLines(this.startLine + afterLine + 1, offset);
+    const sourceIndex = this.explorer.sources.indexOf(this);
+    this.endLine += offset;
+    this.explorer.sources.slice(sourceIndex + 1).forEach((source) => {
+      source.startLine += offset;
+      source.endLine += offset;
+    });
+  }
+
+  setLines(lines: string[], startIndex: number, endIndex: number, notify = false) {
+    return this.explorer.setLines(
+      lines,
+      this.startLine + startIndex,
+      this.startLine + endIndex,
+      notify,
+    );
+  }
+
+  private async expandNodeRender(node: TreeNode, notify = false) {
+    await execNotifyBlock(async () => {
+      const nodeIndex = this.flattenNodes.findIndex((it) => it.uid === node.uid);
+      if (nodeIndex === -1) {
+        return;
+      }
+      const parentLevel = node.level;
+      let endIndex = this.flattenNodes.length;
+      for (let i = nodeIndex + 1, len = this.flattenNodes.length; i < len; i++) {
+        if (this.flattenNodes[i].level <= parentLevel) {
+          endIndex = i;
+          break;
+        }
+      }
+      if (this.expandStore.isExpanded(node) && node.children) {
+        const displayedNodes = this.flattenNode(node);
+        await this.drawNodes(displayedNodes);
+        this.flattenNodes = this.flattenNodes
+          .slice(0, nodeIndex)
+          .concat(displayedNodes)
+          .concat(this.flattenNodes.slice(endIndex));
+        this.offsetAfterLine(nodeIndex + 1, displayedNodes.length - (endIndex - (nodeIndex + 1)));
+        await this.setLines(
+          displayedNodes.map((node) => node.drawnLine),
+          nodeIndex,
+          endIndex,
+          true,
+        );
+      }
+    }, notify);
+  }
+
+  private async expandNodeRecursive(node: TreeNode, recursive: boolean) {
+    if (node.expandable) {
+      this.expandStore.expand(node);
+      node.children = await this.loadChildren(node);
+      if (
+        recursive ||
+        (node.children.length === 1 &&
+          node.children[0].expandable &&
+          config.get<boolean>('autoExpandSingleNode')!)
+      ) {
+        await Promise.all(
+          node.children.map(async (child) => {
+            await this.expandNodeRecursive(child, recursive);
+          }),
+        );
+      }
+    }
+  }
+
+  async expandNode(node: TreeNode, { recursive = false, notify = false } = {}) {
+    await execNotifyBlock(async () => {
+      await this.expandNodeRecursive(node, recursive);
+      await this.expandNodeRender(node, true);
+    }, notify);
+  }
+
+  private async shrinkNodeRender(node: TreeNode, notify = false) {
+    await execNotifyBlock(async () => {
+      const nodeIndex = this.flattenNodes.findIndex((it) => it.uid === node.uid);
+      if (nodeIndex === -1) {
+        return;
+      }
+      const parentLevel = node.level;
+      let endIndex = this.flattenNodes.length;
+      for (let i = nodeIndex + 1, len = this.flattenNodes.length; i < len; i++) {
+        if (this.flattenNodes[i].level <= parentLevel) {
+          endIndex = i;
+          break;
+        }
+      }
+      await this.drawNodes([node]);
+      this.flattenNodes.splice(nodeIndex + 1, endIndex - (nodeIndex + 1));
+      this.offsetAfterLine(endIndex, -(endIndex - (nodeIndex + 1)));
+      await this.setLines([node.drawnLine], nodeIndex, endIndex, true);
+    }, notify);
+  }
+
+  private async shrinkNodeRecursive(node: TreeNode, recursive: boolean) {
+    if (node.expandable) {
+      this.expandStore.shrink(node);
+      if (recursive || config.get<boolean>('autoShrinkChildren')!) {
+        if (node.children) {
+          for (const child of node.children) {
+            await this.shrinkNodeRecursive(child, recursive);
+          }
+        }
+      }
+    }
+  }
+
+  async shrinkNode(node: TreeNode, { recursive = false, notify = false } = {}) {
+    await execNotifyBlock(async () => {
+      await this.shrinkNodeRecursive(node, recursive);
+      await this.shrinkNodeRender(node, true);
+    }, notify);
+  }
+
+  async render({
+    notify = false,
+    storeCursor = true,
+  }: { notify?: boolean; storeCursor?: boolean } = {}) {
     if (this.explorer.isHelpUI) {
       return;
     }
@@ -516,9 +718,9 @@ export abstract class ExplorerSource<Item extends BaseItem<Item>> {
     }
 
     await execNotifyBlock(async () => {
-      const builder = new SourceViewBuilder<Item>();
-      await this.draw(builder);
-      this.lines = builder.lines;
+      this.flattenNodes = this.flattenNode(this.rootNode);
+
+      await this.drawNodes(this.flattenNodes);
       await this.partRender(true);
 
       if (restore) {
@@ -537,7 +739,7 @@ export abstract class ExplorerSource<Item extends BaseItem<Item>> {
       const isLastSource = this.explorer.sources.length - 1 == sourceIndex;
 
       await this.explorer.setLines(
-        this.lines.map(([content]) => content),
+        this.flattenNodes.map((node) => node.drawnLine),
         this.startLine,
         isLastSource ? -1 : this.endLine,
         true,
@@ -546,7 +748,7 @@ export abstract class ExplorerSource<Item extends BaseItem<Item>> {
       let lineNumber = this.startLine;
       this.explorer.sources.slice(sourceIndex).forEach((source) => {
         source.startLine = lineNumber;
-        lineNumber += source.lines.length;
+        lineNumber += source.height;
         source.endLine = lineNumber;
       });
     }, notify);
@@ -576,10 +778,12 @@ export abstract class ExplorerSource<Item extends BaseItem<Item>> {
     const width = await this.nvim.call('winwidth', '%');
     const storeCursor = await this.explorer.storeCursor();
 
-    builder.newItem(null, (row) => {
-      row.add(`Help for [${this.name}${isRoot ? ' root' : ''}], (use q or <esc> return to explorer)`);
+    builder.newNode(null, (row) => {
+      row.add(
+        `Help for [${this.name}${isRoot ? ' root' : ''}], (use q or <esc> return to explorer)`,
+      );
     });
-    builder.newItem(null, (row) => {
+    builder.newNode(null, (row) => {
       row.add('—'.repeat(width), helpHightlights.line);
     });
 
@@ -596,14 +800,14 @@ export abstract class ExplorerSource<Item extends BaseItem<Item>> {
       if (!actions.every((action) => action.name in registeredActions)) {
         return;
       }
-      builder.newItem(null, (row) => {
+      builder.newNode(null, (row) => {
         row.add(' ');
         row.add(key, helpHightlights.mappingKey);
         row.add(' - ');
         drawAction(row, actions[0]);
       });
       actions.slice(1).forEach((action) => {
-        builder.newItem(null, (row) => {
+        builder.newNode(null, (row) => {
           row.add(' '.repeat(key.length + 4));
 
           drawAction(row, action);

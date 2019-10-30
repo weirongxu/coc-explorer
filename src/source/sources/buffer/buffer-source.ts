@@ -4,15 +4,18 @@ import { activeMode, config, onBufEnter, debounce, normalizePath } from '../../.
 import { hlGroupManager } from '../../highlight-manager';
 import { ExplorerSource, sourceIcons } from '../../source';
 import { sourceManager } from '../../source-manager';
-import { SourceViewBuilder } from '../../view-builder';
 import { bufferColumnManager } from './column-manager';
 import './load';
 import { initBufferActions } from './buffer-actions';
 
 const regex = /^\s*(\d+)(.+?)"(.+?)".*/;
 
-export interface BufferItem {
-  uid: string;
+export interface BufferNode {
+  uid: string | null;
+  level: number;
+  drawnLine: string;
+  parent?: BufferNode;
+  children?: BufferNode[];
   bufnr: number;
   bufnrStr: string;
   bufname: string;
@@ -39,10 +42,31 @@ const highlights = {
 
 hlGroupManager.register(highlights);
 
-export class BufferSource extends ExplorerSource<BufferItem> {
+export class BufferSource extends ExplorerSource<BufferNode> {
   name = 'buffer';
   hlSrcId = workspace.createNameSpace('coc-explorer-buffer');
   showHiddenBuffers: boolean = config.get<boolean>('buffer.showHiddenBuffers')!;
+  rootNode = {
+    uid: null,
+    level: 0,
+    drawnLine: '',
+    children: [] as BufferNode[],
+    bufnr: 0,
+    bufnrStr: '0',
+    bufname: '',
+    fullpath: '',
+    basename: '',
+    unlisted: true,
+    current: false,
+    previous: false,
+    visible: false,
+    hidden: false,
+    modifiable: false,
+    readonly: true,
+    terminal: false,
+    modified: false,
+    readErrors: false,
+  };
 
   async init() {
     const { nvim } = this;
@@ -50,18 +74,18 @@ export class BufferSource extends ExplorerSource<BufferItem> {
     await bufferColumnManager.init(this);
 
     if (activeMode) {
-      this.explorer.onDidInit.event(() => {
+      this.explorer.emitterDidInit.event(() => {
         if (!workspace.env.isVim) {
           events.on(
             ['BufCreate', 'BufHidden', 'BufUnload', 'BufWritePost', 'InsertLeave'],
             debounce(500, async () => {
-              await this.reload(null);
+              await this.reload(this.rootNode);
             }),
           );
         } else {
           onBufEnter(500, async (bufnr) => {
             if (bufnr === this.explorer.bufnr) {
-              await this.reload(null, { render: false });
+              await this.reload(this.rootNode, { render: false });
             }
           });
         }
@@ -71,16 +95,12 @@ export class BufferSource extends ExplorerSource<BufferItem> {
     initBufferActions(this);
   }
 
-  async loadItems() {
-    if (!this.expanded) {
-      return [];
-    }
-
+  async loadChildren() {
     const { nvim } = this;
     const lsCommand = this.showHiddenBuffers ? 'ls!' : 'ls';
     const content = (await nvim.call('execute', lsCommand)) as string;
 
-    return content.split(/\n/).reduce<BufferItem[]>((res, line) => {
+    return content.split(/\n/).reduce<BufferNode[]>((res, line) => {
       const matches = line.match(regex);
       if (!matches) {
         return res;
@@ -91,6 +111,9 @@ export class BufferSource extends ExplorerSource<BufferItem> {
       const bufname = matches[3];
       res.push({
         uid: this.name + '-' + bufnr,
+        level: 1,
+        drawnLine: '',
+        parent: this.rootNode,
         bufnr: parseInt(bufnr),
         bufnrStr: bufnr,
         bufname,
@@ -111,22 +134,25 @@ export class BufferSource extends ExplorerSource<BufferItem> {
     }, []);
   }
 
-  async loaded(sourceItem: BufferItem) {
-    await bufferColumnManager.load(sourceItem);
+  async loaded(sourceNode: BufferNode) {
+    await bufferColumnManager.load(sourceNode);
   }
 
-  async draw(builder: SourceViewBuilder<BufferItem>) {
-    await bufferColumnManager.beforeDraw();
+  async beforeDraw(nodes: BufferNode[]) {
+    await bufferColumnManager.beforeDraw(nodes);
+  }
 
-    builder.newRoot((row) => {
-      row.add(this.expanded ? sourceIcons.expanded : sourceIcons.shrinked, highlights.expandIcon);
-      row.add(' ');
-      row.add(`[BUFFER${this.showHiddenBuffers ? ' I' : ''}]`, highlights.title);
-    });
-    for (const item of this.items) {
-      builder.newItem(item, (row) => {
+  drawNode(node: BufferNode) {
+    if (!node.parent) {
+      node.drawnLine = this.viewBuilder.drawLine((row) => {
+        row.add(this.expanded ? sourceIcons.expanded : sourceIcons.shrinked, highlights.expandIcon);
+        row.add(' ');
+        row.add(`[BUFFER${this.showHidden ? ' I' : ''}]`, highlights.title);
+      });
+    } else {
+      node.drawnLine = this.viewBuilder.drawLine((row) => {
         row.add('  ');
-        bufferColumnManager.drawItem(row, item);
+        bufferColumnManager.drawNode(row, node);
       });
     }
   }

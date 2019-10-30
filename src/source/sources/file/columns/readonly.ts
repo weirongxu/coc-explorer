@@ -9,9 +9,9 @@ const highlights = {
 hlGroupManager.register(highlights);
 
 fileColumnManager.registerColumn('readonly', {
-  draw(row, item) {
-    if (item.readonly) {
-      row.add(item.readonly ? (enableNerdfont ? '' : 'RO') : '', highlights.readonly);
+  draw(row, node) {
+    if (node.readonly) {
+      row.add(node.readonly ? (enableNerdfont ? '' : 'RO') : '', highlights.readonly);
       row.add(' ');
     }
   },

@@ -200,7 +200,13 @@ class GitManager {
   cmd = new GitCommand();
 
   private rootCache: Record<string, string> = {};
+  /**
+   * statusCache[rootPath][filepath] = GitStatus
+   **/
   private statusCache: Record<string, Record<string, GitStatus>> = {};
+  /**
+   * mixedStatusCache[rootPath][filepath] = GitStatus
+   **/
   private mixedStatusCache: Record<string, Record<string, GitMixedStatus>> = {};
 
   async getGitRoot(folderPath: string): Promise<string | undefined> {

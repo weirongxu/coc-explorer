@@ -1,4 +1,4 @@
-import { FileItem, FileSource } from './file-source';
+import { FileNode, FileSource } from './file-source';
 import { config } from '../../../util';
 import { ColumnDraw, BaseColumnManager } from '../../base-column-manager';
 
@@ -18,8 +18,12 @@ export type FileColumn =
   | 'accessed'
   | string;
 
-export interface FileColumnDraw extends ColumnDraw<FileItem> {}
+export interface FileColumnDraw extends ColumnDraw<FileNode> {}
 
-class FileColumnManager extends BaseColumnManager<FileItem, FileSource, FileColumnDraw> {}
+class FileColumnManager extends BaseColumnManager<FileNode, FileSource, FileColumnDraw> {
+  getColumnConfig<T>(name: string, defaultValue?: T): T {
+    return config.get('file.column.' + name, defaultValue)!;
+  }
+}
 
 export const fileColumnManager = new FileColumnManager(config.get<FileColumn[]>('file.columns')!);

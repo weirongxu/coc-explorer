@@ -31,11 +31,11 @@ const highlights = {
 hlGroupManager.register(highlights);
 
 fileColumnManager.registerColumn('clip', (source) => ({
-  draw(row, item) {
-    if (source.copyItems.size === 0 && source.cutItems.size === 0) {
+  draw(row, node) {
+    if (source.copiedNodes.size === 0 && source.cutNodes.size === 0) {
       return;
     }
-    const chars = source.copyItems.has(item) ? copy : source.cutItems.has(item) ? cut : space;
+    const chars = source.copiedNodes.has(node) ? copy : source.cutNodes.has(node) ? cut : space;
     row.add(chars, highlights.clip);
   },
 }));

@@ -84,6 +84,16 @@
           "type": "boolean",
           "default": true
         },
+        "explorer.autoExpandSingleNode": {
+          "description": "Automatically expand next node when it's a single node",
+          "type": "boolean",
+          "default": true
+        },
+        "explorer.autoShrinkChildren": {
+          "description": "Automatically shrink children",
+          "type": "boolean",
+          "default": true
+        },
         "explorer.activeMode": {
           "description": "Render explorer when after open or save buffer",
           "type": "boolean",
@@ -205,11 +215,6 @@
           "type": "boolean",
           "default": false
         },
-        "explorer.file.autoExpandSingleDirectory": {
-          "description": "Automatically expand a single directory",
-          "type": "boolean",
-          "default": true
-        },
         "explorer.file.columns": {
           "description": "Default columns for file source",
           "type": "array",
@@ -320,13 +325,8 @@
           "description": "Whether to display the alignment line",
           "type": "boolean"
         },
-        "explorer.file.column.filename.minWidth": {
-          "description": "Filename min with",
-          "type": "integer",
-          "default": 40
-        },
-        "explorer.file.column.filename.maxWidth": {
-          "description": "Filename max width",
+        "explorer.file.column.filename.width": {
+          "description": "Filename with",
           "type": "integer",
           "default": 80
         },

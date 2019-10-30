@@ -8,8 +8,8 @@ const highlights = {
 hlGroupManager.register(highlights);
 
 bufferColumnManager.registerColumn('modified', {
-  draw(row, item) {
-    row.add(item.modified ? '+' : item.modifiable ? '' : '-', highlights.modified);
+  draw(row, node) {
+    row.add(node.modified ? '+' : node.modifiable ? '' : '-', highlights.modified);
     row.add(' ');
   },
 });

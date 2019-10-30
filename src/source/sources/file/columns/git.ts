@@ -36,13 +36,15 @@ fileColumnManager.registerColumn('git', (fileSource) => ({
       return false;
     }
   },
-  async load(item) {
-    const folderPath = item ? (item.directory ? item.fullpath : pathLib.dirname(item.fullpath)) : fileSource.root;
+  async load(node) {
+    const folderPath =
+      'isRoot' in node ? fileSource.root : node.directory ? node.fullpath : pathLib.dirname(node.fullpath);
     await gitManager.reload(folderPath);
   },
-  beforeDraw() {
-    fileSource.gitChangedLineIndexes = [];
-  },
+  // TODO remove
+  // beforeDraw() {
+  //   fileSource.gitChangedLineIndexes = [];
+  // },
   draw(row, item) {
     const showFormat = (f: string, staged: boolean) => {
       if (f.trim().length > 0) {

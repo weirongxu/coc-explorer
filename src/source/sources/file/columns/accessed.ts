@@ -8,9 +8,9 @@ const highlights = {
 hlGroupManager.register(highlights);
 
 fileColumnManager.registerColumn('accessed', {
-  draw(row, item) {
-    if (item.lstat) {
-      row.add(dayjs(item.lstat.atime).format('YY/MM/DD HH:mm:ss'), highlights.time);
+  draw(row, node) {
+    if (node.lstat) {
+      row.add(dayjs(node.lstat.atime).format('YY/MM/DD HH:mm:ss'), highlights.time);
     } else {
       row.add('                 ');
     }

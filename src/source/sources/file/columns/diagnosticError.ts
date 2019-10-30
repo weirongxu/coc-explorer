@@ -1,7 +1,6 @@
 import { fileColumnManager } from '../column-manager';
 import { hlGroupManager } from '../../../highlight-manager';
 import { diagnosticManager } from '../../../../diagnostic-manager';
-import { expandStore } from '../file-source';
 import { config, max } from '../../../../util';
 
 const diagnosticCountMax = config.get<number>('file.diagnosticCountMax')!;
@@ -30,13 +29,13 @@ fileColumnManager.registerColumn('diagnosticError', (fileSource) => ({
     });
     errorMaxWidth = max(Object.values(errorMixedCountStr).map((d) => d.length));
   },
-  draw(row, item) {
+  draw(row, node) {
     if (Object.keys(diagnosticManager.errorMixedCount).length > 0) {
-      if (item.fullpath in diagnosticManager.errorMixedCount) {
-        if (item.directory && expandStore.isExpanded(item.fullpath)) {
+      if (node.fullpath in diagnosticManager.errorMixedCount) {
+        if (node.directory && fileSource.expandStore.isExpanded(node)) {
           row.add(' '.padStart(errorMaxWidth), highlights.error);
         } else {
-          const count = errorMixedCountStr[item.fullpath];
+          const count = errorMixedCountStr[node.fullpath];
           row.add(count.padStart(errorMaxWidth), highlights.error);
           fileSource.diagnosisLineIndexes.push(row.line);
         }

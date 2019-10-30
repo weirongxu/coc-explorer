@@ -8,9 +8,9 @@ const highlights = {
 hlGroupManager.register(highlights);
 
 fileColumnManager.registerColumn('size', {
-  draw(row, item) {
-    if (item.lstat) {
-      row.add(prettyBytes(item.lstat.size).padStart(10), highlights.size);
+  draw(row, node) {
+    if (node.lstat) {
+      row.add(prettyBytes(node.lstat.size).padStart(10), highlights.size);
     } else {
       row.add(' '.repeat(10));
     }
