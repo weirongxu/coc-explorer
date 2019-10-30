@@ -1,6 +1,6 @@
 {
   "name": "coc-explorer",
-  "version": "0.0.34",
+  "version": "0.0.35",
   "description": "explorer for coc.nvim",
   "main": "lib/index.js",
   "types": "lib/index.d.ts",
@@ -98,6 +98,11 @@
           "description": "Render explorer when after open or save buffer",
           "type": "boolean",
           "default": true
+        },
+        "explorer.quitOnOpen": {
+          "description": "quit explorer when open action",
+          "type": "boolean",
+          "default": false
         },
         "explorer.openAction.strategy": {
           "description": "Strategy for open action",

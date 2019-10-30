@@ -138,6 +138,7 @@ Explorer file columns, supported columns:
 - `explorer.width`: Explorer window width for open in left or right side, type: `number`, default: `40`
 - `explorer.toggle`: Close the explorer if it exists, type: `boolean`, default: `true`
 - `explorer.activeMode`: Render explorer when after open or save buffer, type: `boolean`, default: `true`
+- `explorer.quitOnOpen`: quit explorer when open action, type: `boolean`, default: `false`
 - `explorer.openAction.strategy`: Strategy for open action, type: `select | vsplit | previousBuffer`, default: `select`
 - `explorer.openAction.select.filterFloatWindows`: Filter floating windows in select strategy, type: `boolean`, default: `true`
 - `explorer.sources`: Explorer sources, type: `array`, default: `[{"name":"buffer","expand":false},{"name":"file","expand":true}]`
@@ -217,6 +218,13 @@ Explorer file columns, supported columns:
 
     "f": "search",
     "F": "searchRecursive",
+
+    gf: 'gotoSource:file',
+    gb: 'gotoSource:buffer',
+
+    '[[': 'sourcePrev',
+    ']]': 'sourceNext',
+
 
     "[d": "diagnosticPrev",
     "]d": "diagnosticNext",

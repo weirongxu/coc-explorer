@@ -13,3 +13,9 @@ export async function supportSetbufline() {
 export function supportBufferHighlight() {
   return !workspace.env.isVim || workspace.env.textprop;
 }
+
+export async function enableWrapscan() {
+  const wrapscan = await nvim.getOption('wrapscan');
+  return !!wrapscan;
+}
+

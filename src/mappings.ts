@@ -50,6 +50,10 @@ const Actions = {
   search: 0,
   searchRecursive: 0,
 
+  gotoSource: 1,
+  sourcePrev: 0,
+  sourceNext: 0,
+
   diagnosticPrev: 0,
   diagnosticNext: 0,
 
@@ -106,6 +110,12 @@ export const defaultMappings: Record<keyof typeof MappingMode, OriginalMappings>
 
     f: 'search',
     F: 'searchRecursive',
+
+    gf: 'gotoSource:file',
+    gb: 'gotoSource:buffer',
+
+    '[[': 'sourcePrev',
+    ']]': 'sourceNext',
 
     '[d': 'diagnosticPrev',
     ']d': 'diagnosticNext',

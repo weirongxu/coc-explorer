@@ -1,5 +1,5 @@
 function! coc_explorer#create(bufnr, position, width, toggle, name)
-  let status = coc_explorer#create_buffer(a:bufnr, a:position, a:width, a:toggle, a:name)
+  let status = coc_explorer#init_buffer(a:bufnr, a:position, a:width, a:toggle, a:name)
 
   if status ==# 'quit'
     return [-1, v:true]
@@ -18,7 +18,7 @@ function! coc_explorer#create(bufnr, position, width, toggle, name)
 endfunction
 
 " returns is 'quit' or 'resume' or 'create'
-function! coc_explorer#create_buffer(bufnr, position, width, toggle, name)
+function! coc_explorer#init_buffer(bufnr, position, width, toggle, name)
   let name = '['.a:name.']'
   if a:position ==# 'tab'
     execute 'silent keepalt tabnew '.name
@@ -141,6 +141,7 @@ function! coc_explorer#select_wins(explrer_bufname, filterFloatWindows)
     redraw!
     let select_winnr = -1
     while 1
+      echo 'Please use the letter on ths status to select the window, or use <ESC> to cancel'
       let nr = getchar()
       if nr == 27
         break

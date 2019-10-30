@@ -268,10 +268,6 @@ export class Explorer {
     }
   }
 
-  async quit() {
-    await this.nvim.command('quit');
-  }
-
   async registerMappings() {
     this.mappings = {};
     Object.entries(mappings).forEach(([key, actions]) => {
@@ -467,6 +463,10 @@ export class Explorer {
         await store(true);
       }
     }, notify);
+  }
+
+  async quit() {
+    await this.nvim.command(`bdelete ${this.buffer.id}`);
   }
 }
 
