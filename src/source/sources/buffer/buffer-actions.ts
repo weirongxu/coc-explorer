@@ -43,7 +43,7 @@ export function initBufferActions(buffer: BufferSource) {
       if (openStrategy === 'vsplit') {
         await buffer.doAction('openInVsplit', item);
       } else if (openStrategy === 'select') {
-        await buffer.selectWindowsUI(
+        await buffer.explorer.selectWindowsUI(
           async (winnr) => {
             await avoidOnBufEnter(async () => {
               await buffer.nvim.command(`${winnr}wincmd w`);

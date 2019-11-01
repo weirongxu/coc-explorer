@@ -595,24 +595,6 @@ export abstract class ExplorerSource<Item extends BaseItem<Item>> {
     }, notify);
   }
 
-  /**
-   * select windows from current tabpage
-   */
-  async selectWindowsUI(
-    selected: (winnr: number) => void | Promise<void>,
-    nothingChoice: () => void | Promise<void> = () => {},
-  ) {
-    const winnr = await this.nvim.call('coc_explorer#select_wins', [
-      this.explorer.name,
-      config.get<boolean>('openAction.select.filterFloatWindows')!,
-    ]);
-    if (winnr > 0) {
-      await Promise.resolve(selected(winnr));
-    } else if (winnr == 0) {
-      await Promise.resolve(nothingChoice());
-    }
-  }
-
   async renderHelp(isRoot: boolean) {
     this.explorer.isHelpUI = true;
     const builder = new SourceViewBuilder<null>();

@@ -5,7 +5,7 @@ import { ArgPosition, Args, parseArgs } from './parse-args';
 import './source/load';
 import { BaseItem, ExplorerSource } from './source/source';
 import { sourceManager } from './source/source-manager';
-import { execNotifyBlock, autoReveal } from './util';
+import { execNotifyBlock, autoReveal, config } from './util';
 import { hlGroupManager } from './source/highlight-manager';
 
 export class Explorer {
@@ -444,6 +444,24 @@ export class Explorer {
 
   async quit() {
     await this.nvim.command(`bdelete ${this.buffer.id}`);
+  }
+
+  /**
+   * select windows from current tabpage
+   */
+  async selectWindowsUI(
+    selected: (winnr: number) => void | Promise<void>,
+    nothingChoice: () => void | Promise<void> = () => {},
+  ) {
+    const winnr = await this.nvim.call('coc_explorer#select_wins', [
+      this.name,
+      config.get<boolean>('openAction.select.filterFloatWindows')!,
+    ]);
+    if (winnr > 0) {
+      await Promise.resolve(selected(winnr));
+    } else if (winnr == 0) {
+      await Promise.resolve(nothingChoice());
+    }
   }
 }
 

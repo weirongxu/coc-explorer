@@ -106,7 +106,7 @@ export function initFileActions(file: FileSource) {
         if (openStrategy === 'vsplit') {
           await file.doAction('openInVsplit', item);
         } else if (openStrategy === 'select') {
-          await file.selectWindowsUI(
+          await file.explorer.selectWindowsUI(
             async (winnr) => {
               await avoidOnBufEnter(async () => {
                 await file.nvim.command(`${winnr}wincmd w`);
