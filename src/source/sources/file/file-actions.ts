@@ -105,6 +105,7 @@ export function initFileActions(file: FileSource) {
       } else {
         if (openStrategy === 'vsplit') {
           await file.doAction('openInVsplit', item);
+          await file.quitOnOpen();
         } else if (openStrategy === 'select') {
           await file.explorer.selectWindowsUI(
             async (winnr) => {
@@ -112,9 +113,11 @@ export function initFileActions(file: FileSource) {
                 await file.nvim.command(`${winnr}wincmd w`);
               });
               await nvim.command(`edit ${item.fullpath}`);
+              await file.quitOnOpen();
             },
             async () => {
               await file.doAction('openInVsplit', item);
+              await file.quitOnOpen();
             },
           );
         } else if (openStrategy === 'previousBuffer') {
@@ -127,8 +130,8 @@ export function initFileActions(file: FileSource) {
           } else {
             await file.doAction('openInVsplit', item);
           }
+          await file.quitOnOpen();
         }
-        await file.openedItem();
       }
     },
     'open file or directory',
@@ -139,7 +142,7 @@ export function initFileActions(file: FileSource) {
     async (item) => {
       if (!item.directory) {
         await nvim.command(`split ${item.fullpath}`);
-        await file.openedItem();
+        await file.quitOnOpen();
       }
     },
     'open file via split command',
@@ -148,15 +151,15 @@ export function initFileActions(file: FileSource) {
     'openInVsplit',
     async (item) => {
       if (!item.directory) {
-        await execNotifyBlock(() => {
+        await execNotifyBlock(async () => {
           nvim.command(`vsplit ${item.fullpath}`, true);
           if (file.explorer.position === 'left') {
             nvim.command('wincmd L', true);
           } else {
             nvim.command('wincmd H', true);
           }
+          await file.quitOnOpen();
         });
-        await file.openedItem();
       }
     },
     'open file via vsplit command',
@@ -165,8 +168,8 @@ export function initFileActions(file: FileSource) {
     'openInTab',
     async (item) => {
       if (!item.directory) {
+        await file.quitOnOpen();
         await nvim.command(`tabedit ${item.fullpath}`);
-        await file.openedItem();
       }
     },
     'open file in tab',
@@ -178,7 +181,7 @@ export function initFileActions(file: FileSource) {
         await file.doAction('expand', item);
       } else {
         await nvim.command(`drop ${item.fullpath}`);
-        await file.openedItem();
+        await file.quitOnOpen();
       }
     },
     'open file via drop command',

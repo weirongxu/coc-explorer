@@ -443,7 +443,10 @@ export class Explorer {
   }
 
   async quit() {
-    await this.nvim.command(`bdelete ${this.buffer.id}`);
+    const win = await this.win;
+    if (win) {
+      await win.close(true);
+    }
   }
 
   /**
