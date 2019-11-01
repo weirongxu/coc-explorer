@@ -141,9 +141,9 @@ function! coc_explorer#select_wins(explrer_bufname, filterFloatWindows)
     redraw!
     let select_winnr = -1
     while 1
-      echo 'Please use the letter on ths status to select the window, or use <ESC> to cancel'
+      echo 'Please use the letter on statusline to select window, or use <ESC> to cancel'
       let nr = getchar()
-      if nr == 27
+      if nr == 27 " ESC
         break
       else
         let select_winnr = get(char_idx_mapto_winnr, string(nr - char2nr('a')), -1)

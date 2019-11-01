@@ -7,7 +7,7 @@ import { IndexesManager } from './indexes-manager';
 import './source/load';
 import { BaseTreeNode, ExplorerSource } from './source/source';
 import { sourceManager } from './source/source-manager';
-import { autoReveal, execNotifyBlock } from './util';
+import { execNotifyBlock, autoReveal, config } from './util';
 
 export class Explorer {
   // id for matchaddpos
@@ -466,7 +466,28 @@ export class Explorer {
   }
 
   async quit() {
-    await this.nvim.command(`bdelete ${this.buffer.id}`);
+    const win = await this.win;
+    if (win) {
+      await win.close(true);
+    }
+  }
+
+  /**
+   * select windows from current tabpage
+   */
+  async selectWindowsUI(
+    selected: (winnr: number) => void | Promise<void>,
+    noChoice: () => void | Promise<void> = () => {},
+  ) {
+    const winnr = await this.nvim.call('coc_explorer#select_wins', [
+      this.name,
+      config.get<boolean>('openAction.select.filterFloatWindows')!,
+    ]);
+    if (winnr > 0) {
+      await Promise.resolve(selected(winnr));
+    } else if (winnr === -1) {
+      await Promise.resolve(noChoice());
+    }
   }
 }
 

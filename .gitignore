@@ -5,4 +5,5 @@ yarn-error.log*
 /lib
 /mini_vimrc/db.json
 /mini_vimrc/package.json
-memos.json
+/memos.json
+/history.json
