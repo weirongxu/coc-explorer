@@ -451,7 +451,7 @@ export class Explorer {
    */
   async selectWindowsUI(
     selected: (winnr: number) => void | Promise<void>,
-    nothingChoice: () => void | Promise<void> = () => {},
+    noChoice: () => void | Promise<void> = () => {},
   ) {
     const winnr = await this.nvim.call('coc_explorer#select_wins', [
       this.name,
@@ -459,8 +459,8 @@ export class Explorer {
     ]);
     if (winnr > 0) {
       await Promise.resolve(selected(winnr));
-    } else if (winnr == 0) {
-      await Promise.resolve(nothingChoice());
+    } else if (winnr === -1) {
+      await Promise.resolve(noChoice());
     }
   }
 }
