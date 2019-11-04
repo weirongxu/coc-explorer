@@ -12,7 +12,7 @@ export interface ColumnDraw<
   load?(sourceNode: TreeNode): void | Promise<void>;
 
   /**
-   * @returns Redraw
+   * @returns isRedraw
    */
   beforeDraw?(nodes: TreeNode[]): boolean | void | Promise<boolean | void>;
 

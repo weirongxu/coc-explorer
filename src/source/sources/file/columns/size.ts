@@ -5,7 +5,6 @@ import { hlGroupManager } from '../../../highlight-manager';
 const highlights = {
   size: hlGroupManager.hlLinkGroupCommand('FileSize', 'Constant'),
 };
-hlGroupManager.register(highlights);
 
 fileColumnManager.registerColumn('size', {
   draw(row, node) {

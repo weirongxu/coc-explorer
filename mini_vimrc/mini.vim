@@ -7,6 +7,7 @@ let &runtimepath .= ',' . expand('<sfile>:h:h')
 
 nmap ge :CocCommand explorer<CR>
 
+set termguicolors
 filetype plugin indent on
 syntax on
 set hidden

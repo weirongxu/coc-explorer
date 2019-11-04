@@ -57,7 +57,6 @@ const highlights = {
   expandIcon: hl('FileExpandIcon', 'Direcoty'),
   fullpath: hl('FileFullpath', 'Comment'),
 };
-hlGroupManager.register(highlights);
 
 export class FileSource extends ExplorerSource<FileNode> {
   name = 'file';

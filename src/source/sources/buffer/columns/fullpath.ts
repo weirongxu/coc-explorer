@@ -4,7 +4,6 @@ import { hlGroupManager } from '../../../highlight-manager';
 const highlights = {
   fullpath: hlGroupManager.hlLinkGroupCommand('BufferFullpath', 'Comment'),
 };
-hlGroupManager.register(highlights);
 
 bufferColumnManager.registerColumn('fullpath', {
   draw(row, node) {

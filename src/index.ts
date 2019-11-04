@@ -8,9 +8,7 @@ export const activate = async (context: ExtensionContext) => {
   const { nvim } = workspace;
   registerLogger(logger);
 
-  hlGroupManager.register(
-    hlGroupManager.hlGroupCommand('SelectUI', 'ctermbg=27 ctermfg=0 guibg=#1593e5 guifg=#ffffff'),
-  );
+  hlGroupManager.hlGroupCommand('SelectUI', 'ctermbg=27 ctermfg=0 guibg=#1593e5 guifg=#ffffff');
 
   const explorer = new Explorer(context);
 
@@ -19,7 +17,9 @@ export const activate = async (context: ExtensionContext) => {
     .then(async (rtp) => {
       const paths = (rtp as string).split(',');
       if (!paths.includes(context.extensionPath)) {
-        await nvim.command(`execute 'noa set rtp^='.fnameescape('${context.extensionPath.replace(/'/g, "''")}')`);
+        await nvim.command(
+          `execute 'noa set rtp^='.fnameescape('${context.extensionPath.replace(/'/g, "''")}')`,
+        );
       }
       explorer.emitterDidAutoload.fire();
     })

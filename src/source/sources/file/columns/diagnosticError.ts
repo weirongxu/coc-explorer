@@ -10,7 +10,6 @@ let errorMaxWidth = 0;
 const highlights = {
   error: hlGroupManager.hlLinkGroupCommand('FileDiagnosticError', 'CocErrorSign'),
 };
-hlGroupManager.register(highlights);
 
 fileColumnManager.registerColumn('diagnosticError', (fileSource) => ({
   load() {

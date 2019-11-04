@@ -40,8 +40,6 @@ const highlights = {
   expandIcon: hl('BufferExpandIcon', 'Special'),
 };
 
-hlGroupManager.register(highlights);
-
 export class BufferSource extends ExplorerSource<BufferNode> {
   name = 'buffer';
   hlSrcId = workspace.createNameSpace('coc-explorer-buffer');

@@ -6,8 +6,6 @@ const highlights = {
   readonly: hlGroupManager.hlLinkGroupCommand('FileReadonly', 'Operator'),
 };
 
-hlGroupManager.register(highlights);
-
 fileColumnManager.registerColumn('readonly', {
   draw(row, node) {
     if (node.readonly) {

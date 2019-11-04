@@ -1,13 +1,21 @@
-import { HighlightCommand } from './highlight-manager';
+import { HighlightCommand, HighlightColumnHideCommand } from './highlight-manager';
 
 export class SourceRowBuilder {
   content = '';
 
   constructor(public view: SourceViewBuilder<any>, public line: number) {}
 
-  add(content: string, hlGroup?: HighlightCommand) {
-    if (hlGroup && content) {
-      content = `<${hlGroup.markerID}|` + content + `|${hlGroup.markerID}>`;
+  addColumn(hlColumnHideCmd: HighlightColumnHideCommand, block: () => void) {
+    const markerID = hlColumnHideCmd.markerID;
+    this.content += `<${markerID}|`;
+    block();
+    this.content += `|${markerID}>`;
+  }
+
+  add(content: string, hlCmd?: HighlightCommand) {
+    if (hlCmd && content) {
+      const markerID = hlCmd.markerID;
+      content = `<${markerID}|${content}|${markerID}>`;
     }
     this.content += content;
   }

@@ -28,14 +28,21 @@ const space = ' '.repeat(width);
 const highlights = {
   clip: hlGroupManager.hlLinkGroupCommand('FileClip', 'Statement'),
 };
-hlGroupManager.register(highlights);
+
+const hlColumn = hlGroupManager.hlColumnHide('FileClip');
 
 fileColumnManager.registerColumn('clip', (source) => ({
-  draw(row, node) {
+  async beforeDraw() {
     if (source.copiedNodes.size === 0 && source.cutNodes.size === 0) {
-      return;
+      await hlColumn.hide();
+    } else {
+      await hlColumn.show();
     }
-    const chars = source.copiedNodes.has(node) ? copy : source.cutNodes.has(node) ? cut : space;
-    row.add(chars, highlights.clip);
+  },
+  draw(row, node) {
+    row.addColumn(hlColumn, () => {
+      const chars = source.copiedNodes.has(node) ? copy : source.cutNodes.has(node) ? cut : space;
+      row.add(chars, highlights.clip);
+    });
   },
 }));

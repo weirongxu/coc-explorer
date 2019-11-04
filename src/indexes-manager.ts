@@ -1,11 +1,11 @@
 import { Explorer } from './explorer';
 
-interface BaseIndexItem {
+interface BaseIndexNode {
   line: number;
 }
 
-export class BaseIndexes<IndexItem extends BaseIndexItem> {
-  items: IndexItem[] = [];
+export class BaseIndexes<IndexNode extends BaseIndexNode> {
+  nodes: IndexNode[] = [];
   explorer?: Explorer;
 
   bindExplorer(explorer: Explorer) {
@@ -23,20 +23,20 @@ export class IndexesManager {
   removeLines(startLineOrLines: number | number[], endLineOptional?: number) {
     if (Array.isArray(startLineOrLines)) {
       this.indexMap.forEach((i) => {
-        i.items = i.items.filter((it) => !startLineOrLines.includes(it.line));
+        i.nodes = i.nodes.filter((it) => !startLineOrLines.includes(it.line));
       });
     } else {
       const startLine = startLineOrLines;
       const endLine = endLineOptional === undefined ? Infinity : endLineOptional;
       this.indexMap.forEach((i) => {
-        i.items = i.items.filter((item) => startLine <= item.line && item.line <= endLine);
+        i.nodes = i.nodes.filter((item) => startLine <= item.line && item.line <= endLine);
       });
     }
   }
 
   offsetLines(startLine: number, offset: number) {
     this.indexMap.forEach((m) => {
-      m.items.forEach((item) => {
+      m.nodes.forEach((item) => {
         if (startLine <= item.line) {
           item.line += offset;
         }

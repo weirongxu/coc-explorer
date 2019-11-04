@@ -3,50 +3,71 @@ import { execNotifyBlock } from '../util';
 
 export type HighlightCommand = {
   group: string;
-  command: string;
+  commands: string[];
   markerID: number;
+};
+
+export type HighlightColumnHideCommand = {
+  markerID: number;
+  hide: () => Promise<void>;
+  show: () => Promise<void>;
 };
 
 class HighlightManager {
   static maxMarkerID = 0;
 
   nvim = workspace.nvim;
-  highlightCommands: HighlightCommand[] = [];
+  highlightCommands: string[] = [];
 
   createMarkerID() {
     HighlightManager.maxMarkerID += 1;
     return HighlightManager.maxMarkerID;
   }
 
+  hlColumnHide(groupName: string): HighlightColumnHideCommand {
+    const group = `CocExplorerColumn${groupName}`;
+    const markerID = this.createMarkerID();
+    const hide = async () => {
+      await this.nvim.command(`syntax match ${group} conceal /\\V<${markerID}|\\.\\*|${markerID}>/`);
+    };
+    const show = async () => {
+      await this.nvim.command(`syntax match ${group} conceal /\\V<${markerID}|\\||${markerID}>/`);
+    };
+    return {
+      markerID,
+      hide,
+      show,
+    };
+  }
+
   hlLinkGroupCommand(groupName: string, targetGroup: string): HighlightCommand {
     const group = `CocExplorer${groupName}`;
+    const markerID = this.createMarkerID();
+    const commands = [
+      `syntax region ${group} concealends matchgroup=${group}Marker start=/\\V<${markerID}|/ end=/\\V|${markerID}>/`,
+      `highlight default link ${group} ${targetGroup}`,
+    ];
+    this.highlightCommands.push(...commands);
     return {
       group,
-      command: `highlight default link ${group} ${targetGroup}`,
-      markerID: this.createMarkerID(),
+      commands,
+      markerID,
     };
   }
 
   hlGroupCommand(groupName: string, hlArgs: string): HighlightCommand {
     const group = `CocExplorer${groupName}`;
+    const markerID = this.createMarkerID();
+    const commands = [
+      `syntax region ${group} concealends matchgroup=${group}Marker start=/\\V<${markerID}|/ end=/\\V|${markerID}>/`,
+      `highlight default ${group} ${hlArgs}`,
+    ];
+    this.highlightCommands.push(...commands);
     return {
       group,
-      command: `highlight default ${group} ${hlArgs}`,
-      markerID: this.createMarkerID(),
+      commands,
+      markerID,
     };
-  }
-
-  register(highlights: HighlightCommand[]): void;
-  register(highlights: Record<string, HighlightCommand>): void;
-  register(highlights: HighlightCommand): void;
-  register(highlights: HighlightCommand | HighlightCommand[] | Record<string, HighlightCommand>) {
-    if (Array.isArray(highlights)) {
-      this.highlightCommands.push(...highlights);
-    } else if ('group' in highlights && typeof highlights.group === 'string') {
-      this.highlightCommands.push(highlights as HighlightCommand);
-    } else {
-      this.register(Object.values(highlights));
-    }
   }
 
   async registerHighlightSyntax(notify = false) {

@@ -13,7 +13,6 @@ if (enableNerdfont && indentLine === undefined) {
 const highlights = {
   line: hlGroupManager.hlLinkGroupCommand('IndentLine', 'Comment'),
 };
-hlGroupManager.register(highlights);
 
 /**
  * indentLine

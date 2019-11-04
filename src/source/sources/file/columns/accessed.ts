@@ -5,7 +5,6 @@ import dayjs from 'dayjs';
 const highlights = {
   time: hlGroupManager.hlLinkGroupCommand('TimeAccessed', 'Identifier'),
 };
-hlGroupManager.register(highlights);
 
 fileColumnManager.registerColumn('accessed', {
   draw(row, node) {

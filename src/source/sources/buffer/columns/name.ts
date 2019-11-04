@@ -5,8 +5,6 @@ const highlights = {
   nameVisible: hlGroupManager.hlLinkGroupCommand('BufferNameVisible', 'String'),
 };
 
-hlGroupManager.register(highlights);
-
 bufferColumnManager.registerColumn('name', {
   draw(row, node) {
     if (node.visible) {

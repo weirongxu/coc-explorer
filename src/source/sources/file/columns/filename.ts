@@ -9,7 +9,6 @@ export const highlights = {
   directory: hlGroupManager.hlLinkGroupCommand('FileDirectory', 'Directory'),
   linkTarget: hlGroupManager.hlLinkGroupCommand('FileLinkTarget', 'Comment'),
 };
-hlGroupManager.register(highlights);
 
 const nvim = workspace.nvim;
 

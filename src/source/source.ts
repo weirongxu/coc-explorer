@@ -32,7 +32,6 @@ const helpHightlights = {
   arg: hl('HelpArg', 'Identifier'),
   description: hl('HelpDescription', 'Comment'),
 };
-hlGroupManager.register(helpHightlights);
 
 export interface BaseTreeNode<TreeNode extends BaseTreeNode<TreeNode>> {
   isRoot?: boolean;

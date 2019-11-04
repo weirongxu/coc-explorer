@@ -6,7 +6,6 @@ const highlights = {
   bufnr: hlGroupManager.hlLinkGroupCommand('BufferBufnr', 'Special'),
 };
 
-hlGroupManager.register(highlights);
 
 let maxBufnrWidth = 0;
 

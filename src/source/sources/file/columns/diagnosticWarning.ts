@@ -6,7 +6,6 @@ import { config, max } from '../../../../util';
 const highlights = {
   warning: hlGroupManager.hlLinkGroupCommand('FileDiagnosticWarning', 'CocWarningSign'),
 };
-hlGroupManager.register(highlights);
 
 const diagnosticCountMax = config.get<number>('file.diagnosticCountMax')!;
 let warningMixedCountStr: Record<string, string> = {};

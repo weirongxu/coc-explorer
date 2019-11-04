@@ -5,8 +5,6 @@ const highlights = {
   modified: hlGroupManager.hlLinkGroupCommand('BufferModified', 'Operator'),
 };
 
-hlGroupManager.register(highlights);
-
 bufferColumnManager.registerColumn('modified', {
   draw(row, node) {
     row.add(node.modified ? '+' : node.modifiable ? '' : '-', highlights.modified);

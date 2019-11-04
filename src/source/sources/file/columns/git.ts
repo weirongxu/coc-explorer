@@ -8,7 +8,6 @@ const highlights = {
   stage: hlGroupManager.hlLinkGroupCommand('FileGitStage', 'Comment'),
   unstage: hlGroupManager.hlLinkGroupCommand('FileGitUnstage', 'Operator'),
 };
-hlGroupManager.register(highlights);
 
 const getIconConf = (name: string) => {
   return fileColumnManager.getColumnConfig<string>('git.icon.' + name)!;
@@ -38,7 +37,11 @@ fileColumnManager.registerColumn('git', (fileSource) => ({
   },
   async load(node) {
     const folderPath =
-      'isRoot' in node ? fileSource.root : node.directory ? node.fullpath : pathLib.dirname(node.fullpath);
+      'isRoot' in node
+        ? fileSource.root
+        : node.directory
+        ? node.fullpath
+        : pathLib.dirname(node.fullpath);
     await gitManager.reload(folderPath);
   },
   // TODO remove
@@ -47,11 +50,11 @@ fileColumnManager.registerColumn('git', (fileSource) => ({
   // },
   draw(row, item) {
     const showFormat = (f: string, staged: boolean) => {
-      if (f.trim().length > 0) {
-        row.add(f, staged ? highlights.stage : highlights.unstage);
-      } else {
-        row.add(f);
-      }
+      // if (f.trim().length > 0) {
+      row.add(f, staged ? highlights.stage : highlights.unstage);
+      // } else {
+      //   row.add(f);
+      // }
     };
     const status = gitManager.getStatus(item.fullpath);
     if (status) {

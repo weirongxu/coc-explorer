@@ -25,7 +25,6 @@ export const nerdfontHighlights: Record<string, HighlightCommand> = {};
 Object.entries(nerdfontJson.icons).forEach(([name, icon]) => {
   nerdfontHighlights[name] = hlGroupManager.hlGroupCommand(`FileIconNerdfont_${name}`, `guifg=${icon.color}`);
 });
-hlGroupManager.register(nerdfontHighlights);
 
 const getBasename = (filename: string): string => {
   if (filename.replace(/^\./, '').includes('.')) {

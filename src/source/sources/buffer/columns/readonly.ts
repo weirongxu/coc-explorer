@@ -6,8 +6,6 @@ const highlights = {
   readonly: hlGroupManager.hlLinkGroupCommand('BufferReadonly', 'Operator'),
 };
 
-hlGroupManager.register(highlights);
-
 bufferColumnManager.registerColumn('readonly', {
   draw(row, node) {
     if (node.readonly) {

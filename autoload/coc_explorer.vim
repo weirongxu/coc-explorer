@@ -69,7 +69,7 @@ function! coc_explorer#init_win(position, width)
   endif
 
   silent setlocal colorcolumn=
-        \ conceallevel=0 concealcursor=nc nocursorcolumn
+        \ conceallevel=3 concealcursor=nc nocursorcolumn
         \ nofoldenable foldcolumn=0
         \ nolist
         \ nonumber norelativenumber
@@ -207,16 +207,14 @@ function! coc_explorer#clear_mappings(mappings)
   endif
 endfunction
 
-function! coc_explorer#register_syntax_highlights(syntax_highlights)
-  let s:coc_explorer_syntax_highlights = a:syntax_highlights
-  autocmd Syntax coc-explorer call coc_explorer#execute_syntax_highlights(s:coc_explorer_syntax_highlights)
+function! coc_explorer#register_syntax_highlights(syntax_highlight_cmds)
+  let s:coc_explorer_syntax_highlight_cmds = a:syntax_highlight_cmds
+  autocmd Syntax coc-explorer call coc_explorer#execute_syntax_highlights(s:coc_explorer_syntax_highlight_cmds)
 endfunction
 
-function! coc_explorer#execute_syntax_highlights(syntax_highlights)
-  for sh in a:syntax_highlights
-    execute printf('syntax region %s matchgroup=%sGroup start=/\V<%s|/ end=/\V|%s>/ concealends contained', sh['group'], sh['group'], sh['markerID'],  sh['markerID'])
-    execute printf('syntax match %sMatch /\V<%s|\.\*|%s>/ contains=%s', sh['group'], sh['markerID'], sh['markerID'], sh['group'])
-    execute sh['command']
+function! coc_explorer#execute_syntax_highlights(syntax_highlight_cmds)
+  for cmd in a:syntax_highlight_cmds
+    execute cmd
   endfor
 endfunction
 
