@@ -153,9 +153,9 @@ export function initFileActions(file: FileSource) {
       if (!item.directory) {
         await execNotifyBlock(async () => {
           nvim.command(`vsplit ${item.fullpath}`, true);
-          if (file.explorer.position === 'left') {
+          if (file.explorer.args.position === 'left') {
             nvim.command('wincmd L', true);
-          } else {
+          } else if (file.explorer.args.position === 'right') {
             nvim.command('wincmd H', true);
           }
           await file.quitOnOpen();
