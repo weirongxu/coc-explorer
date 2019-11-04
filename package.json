@@ -347,7 +347,7 @@
     "clean": "rimraf lib",
     "build": "webpack --mode production",
     "dev": "webpack --mode development --watch",
-    "prepare": "yarn run clean && yarn run build",
+    "prepublish": "yarn run clean && yarn run build",
     "lint": "tslint -p .",
     "gen:doc": "ts-node ./scripts/gen_doc.ts",
     "test": "yarn run lint && jest --runInBand --detectOpenHandles --forceExit"
