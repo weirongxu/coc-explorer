@@ -267,9 +267,9 @@ export function initFileActions(file: FileSource) {
       nodes.forEach((node) => {
         file.copiedNodes.add(node);
       });
+      await file.renderNodes(nodes);
     },
     'copy file for paste',
-    { render: true },
   );
   file.addNodesAction(
     'cutFile',
@@ -279,9 +279,9 @@ export function initFileActions(file: FileSource) {
       nodes.forEach((node) => {
         file.cutNodes.add(node);
       });
+      await file.renderNodes(nodes);
     },
     'cut file for paste',
-    { render: true },
   );
   file.addNodeAction(
     'pasteFile',
@@ -329,14 +329,14 @@ export function initFileActions(file: FileSource) {
         await checkNodesExists(file.copiedNodes, async (node, targetPath) => {
           await copyFileOrDirectory(node.fullpath, targetPath);
         });
+        await file.renderNodes(Array.from(file.copiedNodes));
         file.copiedNodes.clear();
-        await file.render();
       } else if (file.cutNodes.size > 0) {
         await checkNodesExists(file.cutNodes, async (node, targetPath) => {
           await fsRename(node.fullpath, targetPath);
         });
+        await file.renderNodes(Array.from(file.cutNodes));
         file.cutNodes.clear();
-        await file.render();
       } else {
         // tslint:disable-next-line: ban
         workspace.showMessage('Copied files or cut files is empty', 'error');

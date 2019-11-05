@@ -137,7 +137,7 @@ export class BufferSource extends ExplorerSource<BufferNode> {
   }
 
   async beforeDraw(nodes: BufferNode[]) {
-    await bufferColumnManager.beforeDraw(nodes);
+    return await bufferColumnManager.beforeDraw(nodes);
   }
 
   drawNode(node: BufferNode) {

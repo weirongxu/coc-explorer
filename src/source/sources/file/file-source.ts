@@ -310,7 +310,7 @@ export class FileSource extends ExplorerSource<FileNode> {
   }
 
   async beforeDraw(nodes: FileNode[]) {
-    await fileColumnManager.beforeDraw(nodes);
+    return await fileColumnManager.beforeDraw(nodes);
   }
 
   drawNode(node: FileNode, prevNode: FileNode, nextNode: FileNode) {

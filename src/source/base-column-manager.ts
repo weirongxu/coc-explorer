@@ -63,7 +63,7 @@ export class BaseColumnManager<
   }
 
   /**
-   * @returns Redraw
+   * @returns return true to redraw all rows
    */
   async beforeDraw(nodes: TreeNode[]): Promise<boolean> {
     let redraw = false;

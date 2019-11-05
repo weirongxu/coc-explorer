@@ -330,7 +330,7 @@ export class Explorer {
 
         nodesGroup
           .get(source)!
-          .add(relativeLineIndex === 0 ? null : source.flattenNodes[relativeLineIndex]);
+          .add(relativeLineIndex === 0 ? null : source.flattenedNodes[relativeLineIndex]);
       }
     }
 
