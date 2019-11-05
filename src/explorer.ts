@@ -1,7 +1,7 @@
 import { Buffer, Emitter, events, ExtensionContext, Window, workspace } from 'coc.nvim';
 import { onError } from './logger';
 import { Action, mappings } from './mappings';
-import { ArgPosition, Args, parseArgs } from './parse-args';
+import { Args, parseArgs } from './parse-args';
 import { hlGroupManager } from './source/highlight-manager';
 import { IndexesManager } from './indexes-manager';
 import './source/load';
@@ -14,7 +14,6 @@ export class Explorer {
   static colorId = 10800;
 
   name = 'coc-explorer';
-  position: ArgPosition = 'left';
   nvim = workspace.nvim;
   previousBufnr?: number;
   revealFilepath?: string;

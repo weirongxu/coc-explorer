@@ -113,9 +113,9 @@ export function initBufferActions(buffer: BufferSource) {
     async (node) => {
       await execNotifyBlock(async () => {
         nvim.command(`vertical sbuffer ${node.bufnr}`, true);
-        if (buffer.explorer.position === 'left') {
+        if (buffer.explorer.args.position === 'left') {
           nvim.command('wincmd L', true);
-        } else {
+        } else if (buffer.explorer.args.position === 'right') {
           nvim.command('wincmd H', true);
         }
         await buffer.quitOnOpen();
