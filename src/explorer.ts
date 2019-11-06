@@ -1,6 +1,6 @@
 import { Buffer, Emitter, events, ExtensionContext, Window, workspace } from 'coc.nvim';
 import { onError } from './logger';
-import { Action, mappings } from './mappings';
+import { Action, mappings, ActionMode } from './mappings';
 import { Args, parseArgs } from './parse-args';
 import { hlGroupManager } from './source/highlight-manager';
 import { IndexesManager } from './indexes-manager';
@@ -271,7 +271,10 @@ export class Explorer {
     this.mappings = {};
     Object.entries(mappings).forEach(([key, actions]) => {
       this.mappings[key] = {};
-      (['n', 'v'] as ('n' | 'v')[]).forEach((mode) => {
+      (['n', 'v'] as (ActionMode)[]).forEach((mode) => {
+        if (mode === 'v' && ['o', 'j', 'k'].includes(key)) {
+          return;
+        }
         const plugKey = `explorer-action-${mode}-${key.replace(/\<(.*)\>/, '[$1]')}`;
         this.context.subscriptions.push(
           workspace.registerKeymap([mode], plugKey, async () => {
@@ -294,74 +297,75 @@ export class Explorer {
     await this.nvim.call('coc_explorer#clear_mappings', [this.mappings]);
   }
 
-  async doActions(actions: Action[], mode: 'n' | 'v' = 'n') {
-    for (const action of actions) {
-      await this.doAction(action, mode);
-    }
-  }
-
-  private _doAction?: (action: Action, mode: 'n' | 'v') => Promise<void>;
-  async doAction(action: Action, mode: 'n' | 'v' = 'n') {
-    if (!this._doAction) {
-      this._doAction = queueAsyncFunction(async (action: Action, mode: 'n' | 'v' = 'n') => {
-        const { nvim } = this;
-        const now = Date.now();
-
-        const lineIndexes: number[] = [];
-        const document = await workspace.document;
-        if (mode === 'v') {
-          const range = await workspace.getSelectedRange('v', document);
-          if (range) {
-            for (let line = range.start.line; line <= range.end.line; line++) {
-              lineIndexes.push(line);
-            }
-          }
-        } else {
-          const line = ((await nvim.call('line', '.')) as number) - 1;
-          lineIndexes.push(line);
-        }
-
-        const nodesGroup: Map<ExplorerSource<any>, Set<object | null>> = new Map();
-
-        for (const lineIndex of lineIndexes) {
-          const [source] = this.findSourceByLineIndex(lineIndex);
-          if (source) {
-            if (!nodesGroup.has(source)) {
-              nodesGroup.set(source, new Set());
-            }
-            const relativeLineIndex = lineIndex - source.startLine;
-
-            nodesGroup
-              .get(source)!
-              .add(relativeLineIndex === 0 ? null : source.flattenedNodes[relativeLineIndex]);
-          }
-        }
-
-        await Promise.all(
-          Array.from(nodesGroup.entries()).map(async ([source, nodes]) => {
-            if (nodes.has(null)) {
-              await source.doRootAction(action.name, action.arg);
-            } else {
-              await source.doAction(
-                action.name,
-                Array.from(nodes).filter((item) => item),
-                action.arg,
-              );
-            }
-          }),
-        );
-
-        if (enableDebug) {
-          let actionDisplay = action.name;
-          if (action.arg) {
-            actionDisplay += ':' + action.arg;
-          }
-          // tslint:disable-next-line: ban
-          workspace.showMessage(`action(${actionDisplay}): ${Date.now() - now}ms`, 'more');
+  private _doActions?: (actions: Action[], mode: ActionMode) => Promise<void>;
+  async doActions(actions: Action[], mode: ActionMode = 'n') {
+    if (!this._doActions) {
+      this._doActions = queueAsyncFunction(async (actions: Action[], mode: ActionMode) => {
+        for (const action of actions) {
+          await this.doAction(action, mode);
         }
       });
     }
-    await this._doAction(action, mode);
+    await this._doActions(actions, mode);
+  }
+
+  async doAction(action: Action, mode: ActionMode = 'n') {
+    const { nvim } = this;
+    const now = Date.now();
+
+    const lineIndexes: number[] = [];
+    const document = await workspace.document;
+    if (mode === 'v') {
+      const range = await workspace.getSelectedRange('v', document);
+      if (range) {
+        for (let line = range.start.line; line <= range.end.line; line++) {
+          lineIndexes.push(line);
+        }
+      }
+    } else {
+      const line = ((await nvim.call('line', '.')) as number) - 1;
+      lineIndexes.push(line);
+    }
+
+    const nodesGroup: Map<ExplorerSource<any>, Set<object | null>> = new Map();
+
+    for (const lineIndex of lineIndexes) {
+      const [source] = this.findSourceByLineIndex(lineIndex);
+      if (source) {
+        if (!nodesGroup.has(source)) {
+          nodesGroup.set(source, new Set());
+        }
+        const relativeLineIndex = lineIndex - source.startLine;
+
+        nodesGroup
+          .get(source)!
+          .add(relativeLineIndex === 0 ? null : source.flattenedNodes[relativeLineIndex]);
+      }
+    }
+
+    await Promise.all(
+      Array.from(nodesGroup.entries()).map(async ([source, nodes]) => {
+        if (nodes.has(null)) {
+          await source.doRootAction(action.name, action.arg);
+        } else {
+          await source.doAction(
+            action.name,
+            Array.from(nodes).filter((item) => item),
+            action.arg,
+            mode
+          );
+        }
+      }),
+    );
+
+    if (enableDebug) {
+      let actionDisplay = action.name;
+      if (action.arg) {
+        actionDisplay += ':' + action.arg;
+      }
+      // tslint:disable-next-line: ban
+      workspace.showMessage(`action(${actionDisplay}): ${Date.now() - now}ms`, 'more');
+    }
   }
 
   private findSourceByLineIndex(lineIndex: number) {
@@ -371,6 +375,12 @@ export class Explorer {
     } else {
       return [this.sources[sourceIndex], sourceIndex] as [ExplorerSource<any>, number];
     }
+  }
+
+  async currentIsExplorerWin() {
+    const win = await this.win;
+    const curWin = await this.nvim.window;
+    return win?.id === curWin.id;
   }
 
   async currentCursor() {
@@ -437,7 +447,9 @@ export class Explorer {
       const win = await this.win;
       if (win) {
         win.setCursor([lineIndex + 1, finalCol - 1], true);
-        this.nvim.command('redraw!', true);
+        if (!await this.currentIsExplorerWin()) {
+          this.nvim.command('redraw!', true);
+        }
       }
     }, notify);
   }

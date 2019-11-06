@@ -1,10 +1,10 @@
-import { Buffer, Disposable, listManager, workspace } from 'coc.nvim';
+import { Buffer, Disposable, listManager, workspace, Document } from 'coc.nvim';
 import { Range } from 'vscode-languageserver-protocol';
 import { explorerActionList } from '../lists/actions';
 import { Explorer } from '../explorer';
 import { onError } from '../logger';
-import { Action, ActionSyms, mappings, reverseMappings } from '../mappings';
-import { config, execNotifyBlock, findLast, enableWrapscan } from '../util';
+import { Action, ActionSyms, mappings, reverseMappings, ActionMode } from '../mappings';
+import { config, execNotifyBlock, findLast, enableWrapscan, prettyPrint } from '../util';
 import { SourceRowBuilder, SourceViewBuilder } from './view-builder';
 import { hlGroupManager } from './highlight-manager';
 
@@ -73,7 +73,7 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>> {
     {
       description: string;
       options: Partial<ActionOptions>;
-      callback: (nodes: TreeNode[], arg: string) => void | Promise<void>;
+      callback: (nodes: TreeNode[], arg: string, mode: ActionMode) => void | Promise<void>;
     }
   > = {};
   rootActions: Record<
@@ -81,7 +81,7 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>> {
     {
       description: string;
       options: Partial<ActionOptions>;
-      callback: (arg: string) => void | Promise<void>;
+      callback: (arg: string, mode: ActionMode) => void | Promise<void>;
     }
   > = {};
   hlIds: number[] = []; // hightlight match ids for vim8.0
@@ -91,6 +91,8 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>> {
   private bindedExplorer = false;
 
   constructor() {
+    const { nvim } = this;
+
     this.addAction(
       'toggleHidden',
       async () => {
@@ -124,7 +126,7 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>> {
     this.addAction(
       'normal',
       async (_node, arg) => {
-        await this.nvim.command('normal <c-q>' + arg);
+        await this.nvim.command('normal ' + arg);
       },
       'execute vim normal mode commands',
       { multi: false },
@@ -397,12 +399,12 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>> {
 
   addAction(
     name: ActionSyms,
-    callback: (nodes: TreeNode[] | null, arg: string) => void | Promise<void>,
+    callback: (nodes: TreeNode[] | null, arg: string, mode: ActionMode) => void | Promise<void>,
     description: string,
     options: Partial<ActionOptions> = {},
   ) {
     this.rootActions[name] = {
-      callback: (arg: string) => callback(null, arg),
+      callback: (arg, mode) => callback(null, arg, mode),
       description,
       options,
     };
@@ -415,7 +417,7 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>> {
 
   addRootAction(
     name: ActionSyms,
-    callback: (arg: string) => void | Promise<void>,
+    callback: (arg: string, mode: ActionMode) => void | Promise<void>,
     description: string,
     options: Partial<ActionOptions> = {},
   ) {
@@ -424,7 +426,7 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>> {
 
   addNodesAction(
     name: ActionSyms,
-    callback: (node: TreeNode[], arg: string) => void | Promise<void>,
+    callback: (node: TreeNode[], arg: string, mode: ActionMode) => void | Promise<void>,
     description: string,
     options: Partial<ActionOptions> = {},
   ) {
@@ -437,14 +439,14 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>> {
 
   addNodeAction(
     name: ActionSyms,
-    callback: (node: TreeNode, arg: string) => void | Promise<void>,
+    callback: (node: TreeNode, arg: string, mode: ActionMode) => void | Promise<void>,
     description: string,
     options: Partial<ActionOptions> = {},
   ) {
     this.actions[name] = {
-      callback: async (nodes: TreeNode[], arg) => {
+      callback: async (nodes: TreeNode[], arg, mode) => {
         for (const node of nodes) {
-          await callback(node, arg);
+          await callback(node, arg, mode);
         }
       },
       description,
@@ -452,7 +454,7 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>> {
     };
   }
 
-  async doRootAction(name: ActionSyms, arg: string = '') {
+  async doRootAction(name: ActionSyms, arg: string = '', mode: ActionMode = 'n') {
     const action = this.rootActions[name];
     if (!action) {
       return;
@@ -460,7 +462,7 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>> {
 
     const { render = false, reload = false } = action.options;
 
-    await action.callback(arg);
+    await action.callback(arg, mode);
 
     if (reload) {
       await this.reload(this.rootNode);
@@ -469,7 +471,12 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>> {
     }
   }
 
-  async doAction(name: ActionSyms, nodes: TreeNode | TreeNode[], arg: string = '') {
+  async doAction(
+    name: ActionSyms,
+    nodes: TreeNode | TreeNode[],
+    arg: string = '',
+    mode: ActionMode = 'n',
+  ) {
     const action = this.actions[name];
     if (!action) {
       return;
@@ -479,17 +486,17 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>> {
 
     const finalNodes = Array.isArray(nodes) ? nodes : [nodes];
     if (select) {
-      await action.callback(finalNodes, arg);
+      await action.callback(finalNodes, arg, mode);
     } else if (multi) {
       if (this.selectedNodes.size > 0) {
         const nodes = Array.from(this.selectedNodes);
         this.selectedNodes.clear();
-        await action.callback(nodes, arg);
+        await action.callback(nodes, arg, mode);
       } else {
-        await action.callback(finalNodes, arg);
+        await action.callback(finalNodes, arg, mode);
       }
     } else {
-      await action.callback([finalNodes[0]], arg);
+      await action.callback([finalNodes[0]], arg, mode);
     }
 
     if (reload) {

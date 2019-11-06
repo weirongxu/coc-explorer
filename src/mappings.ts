@@ -75,8 +75,8 @@ type OriginalMappings = Record<string, false | string | string[]>;
 export const defaultMappings: Record<keyof typeof MappingMode, OriginalMappings> = {
   none: {},
   default: {
-    'k': 'nodePrev',
-    'j': 'nodeNext',
+    k: 'nodePrev',
+    j: 'nodeNext',
 
     '*': 'toggleSelection',
     '<tab>': 'actionMenu',
@@ -138,6 +138,8 @@ export type Action = {
   arg: string;
 };
 
+export type ActionMode = 'n' | 'v';
+
 type Mappings = Record<string, Action[]>;
 
 export const mappings: Mappings = {};
@@ -160,7 +162,9 @@ Object.entries({
   ...config.get<OriginalMappings>('keyMappings', {}),
 }).forEach(([key, actions]) => {
   if (actions) {
-    mappings[key] = Array.isArray(actions) ? actions.map((action) => parseAction(action)) : [parseAction(actions)];
+    mappings[key] = Array.isArray(actions)
+      ? actions.map((action) => parseAction(action))
+      : [parseAction(actions)];
   }
 });
 
