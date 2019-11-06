@@ -357,10 +357,7 @@ export class Explorer {
             actionDisplay += ':' + action.arg;
           }
           // tslint:disable-next-line: ban
-          workspace.showMessage(
-            `action(${actionDisplay}): ${Date.now() - now}ms`,
-            'more',
-          );
+          workspace.showMessage(`action(${actionDisplay}): ${Date.now() - now}ms`, 'more');
         }
       });
     }
@@ -376,9 +373,6 @@ export class Explorer {
     }
   }
 
-  /**
-   * current cursor
-   */
   async currentCursor() {
     const win = await this.win;
     if (win) {
@@ -390,6 +384,14 @@ export class Explorer {
       };
     }
     return null;
+  }
+
+  async currentLineIndex() {
+    const cursor = await this.currentCursor();
+    if (cursor) {
+      return cursor.lineIndex;
+    }
+    return 0;
   }
 
   async currentCol() {
@@ -427,6 +429,17 @@ export class Explorer {
         this.nvim.call('winrestview', storeView, true);
       }, notify);
     };
+  }
+
+  async gotoLineIndex(lineIndex: number, col?: number, notify = false) {
+    await execNotifyBlock(async () => {
+      const finalCol = col === undefined ? await this.currentCol() : col;
+      const win = await this.win;
+      if (win) {
+        win.setCursor([lineIndex + 1, finalCol - 1], true);
+        this.nvim.command('redraw!', true);
+      }
+    }, notify);
   }
 
   async setLines(lines: string[], start: number, end: number, notify = false) {

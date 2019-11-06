@@ -102,9 +102,9 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>> {
     this.addAction(
       'nodePrev',
       async () => {
-        const line = await this.getCurrentLine();
+        const line = await this.explorer.currentLineIndex();
         if (line !== null) {
-          await this.gotoLineIndex(line - 1, 1);
+          await this.explorer.gotoLineIndex(line - 1, 1);
         }
       },
       'previous node',
@@ -113,9 +113,9 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>> {
     this.addAction(
       'nodeNext',
       async () => {
-        const line = await this.getCurrentLine();
+        const line = await this.explorer.currentLineIndex();
         if (line !== null) {
-          await this.gotoLineIndex(line + 1, 1);
+          await this.explorer.gotoLineIndex(line + 1, 1);
         }
       },
       'next node',
@@ -544,7 +544,7 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>> {
     }
   }
 
-  async getCurrentLine() {
+  async currentLineIndex() {
     const cursor = await this.explorer.currentCursor();
     if (cursor) {
       return cursor.lineIndex - this.startLine;
@@ -554,17 +554,13 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>> {
   }
 
   async gotoLineIndex(lineIndex: number, col?: number, notify = false) {
-    await execNotifyBlock(async () => {
-      const finalCol = col === undefined ? await this.explorer.currentCol() : col;
-      const win = await this.explorer.win;
-      if (win) {
-        if (lineIndex >= this.height) {
-          lineIndex = this.height - 1;
-        }
-        win.setCursor([this.startLine + lineIndex + 1, finalCol - 1], true);
-        this.nvim.command('redraw!', true);
-      }
-    }, notify);
+    if (lineIndex < 0) {
+      lineIndex = 0;
+    }
+    if (lineIndex > this.height) {
+      lineIndex = this.height - 1;
+    }
+    await this.explorer.gotoLineIndex(this.startLine + lineIndex, col, notify);
   }
 
   async gotoRoot({ col, notify = false }: { col?: number; notify?: boolean } = {}) {
