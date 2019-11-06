@@ -100,9 +100,31 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>> {
       { reload: true, multi: false },
     );
     this.addAction(
+      'nodePrev',
+      async () => {
+        const line = await this.getCurrentLine();
+        if (line !== null) {
+          await this.gotoLineIndex(line - 1, 1);
+        }
+      },
+      'previous node',
+      { multi: false },
+    );
+    this.addAction(
+      'nodeNext',
+      async () => {
+        const line = await this.getCurrentLine();
+        if (line !== null) {
+          await this.gotoLineIndex(line + 1, 1);
+        }
+      },
+      'next node',
+      { multi: false },
+    );
+    this.addAction(
       'normal',
       async (_node, arg) => {
-        await this.nvim.command('normal ' + arg);
+        await this.nvim.command('normal <c-q>' + arg);
       },
       'execute vim normal mode commands',
       { multi: false },
@@ -522,6 +544,15 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>> {
     }
   }
 
+  async getCurrentLine() {
+    const cursor = await this.explorer.currentCursor();
+    if (cursor) {
+      return cursor.lineIndex - this.startLine;
+    } else {
+      return null;
+    }
+  }
+
   async gotoLineIndex(lineIndex: number, col?: number, notify = false) {
     await execNotifyBlock(async () => {
       const finalCol = col === undefined ? await this.explorer.currentCol() : col;
@@ -531,9 +562,7 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>> {
           lineIndex = this.height - 1;
         }
         win.setCursor([this.startLine + lineIndex + 1, finalCol - 1], true);
-        if (workspace.env.isVim) {
-          this.nvim.command('redraw', true);
-        }
+        this.nvim.command('redraw!', true);
       }
     }, notify);
   }

@@ -50,6 +50,9 @@ const Actions = {
   search: 0,
   searchRecursive: 0,
 
+  nodePrev: 0,
+  nodeNext: 0,
+
   gotoSource: 1,
   sourcePrev: 0,
   sourceNext: 0,
@@ -72,13 +75,16 @@ type OriginalMappings = Record<string, false | string | string[]>;
 export const defaultMappings: Record<keyof typeof MappingMode, OriginalMappings> = {
   none: {},
   default: {
+    'k': 'nodePrev',
+    'j': 'nodeNext',
+
     '*': 'toggleSelection',
     '<tab>': 'actionMenu',
 
     h: 'shrink',
     l: 'expand',
-    J: ['toggleSelection', 'normal:j'],
-    K: ['toggleSelection', 'normal:k'],
+    J: ['toggleSelection', 'nodeNext'],
+    K: ['toggleSelection', 'nodePrev'],
     gl: 'expandRecursive',
     gh: 'shrinkRecursive',
     o: 'expandOrShrink',

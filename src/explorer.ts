@@ -7,7 +7,7 @@ import { IndexesManager } from './indexes-manager';
 import './source/load';
 import { BaseTreeNode, ExplorerSource } from './source/source';
 import { sourceManager } from './source/source-manager';
-import { execNotifyBlock, autoReveal, config } from './util';
+import { execNotifyBlock, autoReveal, config, enableDebug, queueAsyncFunction } from './util';
 
 export class Explorer {
   // id for matchaddpos
@@ -300,48 +300,71 @@ export class Explorer {
     }
   }
 
+  private _doAction?: (action: Action, mode: 'n' | 'v') => Promise<void>;
   async doAction(action: Action, mode: 'n' | 'v' = 'n') {
-    const { nvim } = this;
+    if (!this._doAction) {
+      this._doAction = queueAsyncFunction(async (action: Action, mode: 'n' | 'v' = 'n') => {
+        const { nvim } = this;
+        const now = Date.now();
 
-    const lineIndexes: number[] = [];
-    const document = await workspace.document;
-    if (mode === 'v') {
-      const range = await workspace.getSelectedRange('v', document);
-      if (range) {
-        for (let line = range.start.line; line <= range.end.line; line++) {
+        const lineIndexes: number[] = [];
+        const document = await workspace.document;
+        if (mode === 'v') {
+          const range = await workspace.getSelectedRange('v', document);
+          if (range) {
+            for (let line = range.start.line; line <= range.end.line; line++) {
+              lineIndexes.push(line);
+            }
+          }
+        } else {
+          const line = ((await nvim.call('line', '.')) as number) - 1;
           lineIndexes.push(line);
         }
-      }
-    } else {
-      const line = ((await nvim.call('line', '.')) as number) - 1;
-      lineIndexes.push(line);
-    }
 
-    const nodesGroup: Map<ExplorerSource<any>, Set<object | null>> = new Map();
+        const nodesGroup: Map<ExplorerSource<any>, Set<object | null>> = new Map();
 
-    for (const lineIndex of lineIndexes) {
-      const [source] = this.findSourceByLineIndex(lineIndex);
-      if (source) {
-        if (!nodesGroup.has(source)) {
-          nodesGroup.set(source, new Set());
+        for (const lineIndex of lineIndexes) {
+          const [source] = this.findSourceByLineIndex(lineIndex);
+          if (source) {
+            if (!nodesGroup.has(source)) {
+              nodesGroup.set(source, new Set());
+            }
+            const relativeLineIndex = lineIndex - source.startLine;
+
+            nodesGroup
+              .get(source)!
+              .add(relativeLineIndex === 0 ? null : source.flattenedNodes[relativeLineIndex]);
+          }
         }
-        const relativeLineIndex = lineIndex - source.startLine;
 
-        nodesGroup
-          .get(source)!
-          .add(relativeLineIndex === 0 ? null : source.flattenedNodes[relativeLineIndex]);
-      }
-    }
+        await Promise.all(
+          Array.from(nodesGroup.entries()).map(async ([source, nodes]) => {
+            if (nodes.has(null)) {
+              await source.doRootAction(action.name, action.arg);
+            } else {
+              await source.doAction(
+                action.name,
+                Array.from(nodes).filter((item) => item),
+                action.arg,
+              );
+            }
+          }),
+        );
 
-    await Promise.all(
-      Array.from(nodesGroup.entries()).map(async ([source, nodes]) => {
-        if (nodes.has(null)) {
-          await source.doRootAction(action.name, action.arg);
-        } else {
-          await source.doAction(action.name, Array.from(nodes).filter((item) => item), action.arg);
+        if (enableDebug) {
+          let actionDisplay = action.name;
+          if (action.arg) {
+            actionDisplay += ':' + action.arg;
+          }
+          // tslint:disable-next-line: ban
+          workspace.showMessage(
+            `action(${actionDisplay}): ${Date.now() - now}ms`,
+            'more',
+          );
         }
-      }),
-    );
+      });
+    }
+    await this._doAction(action, mode);
   }
 
   private findSourceByLineIndex(lineIndex: number) {
@@ -386,9 +409,7 @@ export class Explorer {
       const source = this.sources[sourceIndex];
       if (source) {
         const sourceLineIndex = storeCursor.lineIndex - source.startLine;
-        const storeNode: BaseTreeNode<any> = source.getNodeByLine(
-          sourceLineIndex,
-        );
+        const storeNode: BaseTreeNode<any> = source.getNodeByLine(sourceLineIndex);
         return async (notify = false) => {
           await execNotifyBlock(async () => {
             this.nvim.call('winrestview', [storeView], true);

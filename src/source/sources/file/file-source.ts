@@ -120,7 +120,6 @@ export class FileSource extends ExplorerSource<FileNode> {
                     await execNotifyBlock(async () => {
                       await this.render({ storeCursor: false, notify: true });
                       await this.gotoNode(node, { notify: true });
-                      nvim.command('redraw', true);
                     });
                   }
                 }
@@ -195,7 +194,6 @@ export class FileSource extends ExplorerSource<FileNode> {
         await execNotifyBlock(async () => {
           await this.render({ storeCursor: false, notify: true });
           await this.gotoNode(node, { notify: true });
-          this.nvim.command('redraw', true);
         });
       }
     };

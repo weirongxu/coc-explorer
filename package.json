@@ -339,6 +339,11 @@
           "description": "Git command",
           "type": "string",
           "default": "git"
+        },
+        "explorer.debug": {
+          "description": "Enable debug",
+          "type": "boolean",
+          "default": false
         }
       }
     }
