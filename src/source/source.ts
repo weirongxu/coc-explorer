@@ -733,6 +733,7 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>> {
     await execNotifyBlock(async () => {
       await this.expandNodeRecursive(node, recursive);
       await this.expandNodeRender(node, true);
+      await this.gotoNode(node, { notify: true });
     }, notify);
   }
 
@@ -774,6 +775,7 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>> {
     await execNotifyBlock(async () => {
       await this.shrinkNodeRecursive(node, recursive);
       await this.shrinkNodeRender(node, true);
+      await this.gotoNode(node, { notify: true });
     }, notify);
   }
 

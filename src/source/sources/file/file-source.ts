@@ -280,19 +280,6 @@ export class FileSource extends ExplorerSource<FileNode> {
     return this.sortFiles(files.filter((r): r is FileNode => r !== null));
   }
 
-  async shrinkRecursiveNodes(nodes: FileNode[]) {
-    await Promise.all(
-      nodes.map(async (node) => {
-        if (node.directory) {
-          this.expandStore.shrink(node);
-          if (node.children) {
-            await this.shrinkRecursiveNodes(node.children);
-          }
-        }
-      }),
-    );
-  }
-
   async loadChildren(node: FileNode): Promise<FileNode[]> {
     if (this.expandStore.isExpanded(node)) {
       return this.listFiles(node.fullpath, node);
