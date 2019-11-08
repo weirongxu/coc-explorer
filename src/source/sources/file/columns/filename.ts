@@ -38,7 +38,7 @@ function indentWidth(node: FileNode) {
   }
 }
 
-const truncateCache: Map<[number, string, string], [string, string]> = new Map();
+const truncateCache: Map<string, [string, string]> = new Map();
 async function loadTruncateNodes(fullTreeWidth: number, flatNodes: FileNode[]) {
   await Promise.all(
     flatNodes.map(async (node) => {
@@ -53,7 +53,7 @@ async function loadTruncateNodes(fullTreeWidth: number, flatNodes: FileNode[]) {
             })
             .catch(() => '')
         : '';
-      const key = [node.level, name, linkTarget] as [number, string, string];
+      const key = [node.level, name, linkTarget].join('-');
       if (!truncateCache.has(key)) {
         const remainWidth = fullTreeWidth - getFilenameAttr(node).indentWidth;
         truncateCache.set(key, await nvim.call('coc_explorer#truncate', [name, linkTarget, remainWidth, '..']));

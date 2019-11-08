@@ -1,10 +1,10 @@
-import { Buffer, Disposable, listManager, workspace, Document } from 'coc.nvim';
+import { Buffer, Disposable, listManager, workspace } from 'coc.nvim';
 import { Range } from 'vscode-languageserver-protocol';
 import { explorerActionList } from '../lists/actions';
 import { Explorer } from '../explorer';
 import { onError } from '../logger';
 import { Action, ActionSyms, mappings, reverseMappings, ActionMode } from '../mappings';
-import { config, execNotifyBlock, findLast, enableWrapscan, prettyPrint } from '../util';
+import { config, execNotifyBlock, findLast, enableWrapscan } from '../util';
 import { SourceRowBuilder, SourceViewBuilder } from './view-builder';
 import { hlGroupManager } from './highlight-manager';
 

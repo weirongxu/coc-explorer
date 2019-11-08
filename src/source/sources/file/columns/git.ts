@@ -61,7 +61,7 @@ fileColumnManager.registerColumn('git', (fileSource) => ({
       showFormat(statusIcons[status.x], true);
       showFormat(statusIcons[status.y], false);
       row.add(' ');
-      fileSource.gitChangedLineIndexes.push(row.line);
+      // fileSource.gitChangedLineIndexes.push(row.line);
     } else {
       row.add('   ');
     }

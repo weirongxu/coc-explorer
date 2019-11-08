@@ -66,9 +66,8 @@ export function initFileActions(file: FileSource) {
   file.addRootAction(
     'shrinkRecursive',
     async () => {
-      file.expanded = true;
-      await file.shrinkRecursiveNodes(file.rootNode.children);
-      await file.render();
+      file.expanded = false;
+      await file.shrinkNode(file.rootNode);
       await file.gotoRoot();
     },
     'shrink root node recursively',
@@ -213,17 +212,15 @@ export function initFileActions(file: FileSource) {
     'shrinkRecursive',
     async (node) => {
       if (node.directory && file.expandStore.isExpanded(node)) {
-        await file.shrinkRecursiveNodes([node]);
+        await file.shrinkNode(node, { recursive: true });
       } else if (node.parent) {
-        file.expandStore.shrink(node.parent);
-        if (node.parent.children) {
-          await file.shrinkRecursiveNodes(node.parent.children);
-        }
-        await file.gotoNode(node.parent);
+        await execNotifyBlock(async () => {
+          await file.shrinkNode(node.parent!, { notify: true, recursive: true });
+          await file.gotoNode(node.parent!, { notify: true });
+        });
       } else {
         await file.doRootAction('shrinkRecursive');
       }
-      await file.render();
     },
     'shrink directory recursively',
   );

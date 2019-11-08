@@ -92,7 +92,7 @@ export default class FilesList extends BasicList {
         args.push('/S');
       }
       return { cmd: 'dir', args };
-    } else if (executable('find')) {
+    } else if (await executable('find')) {
       args.push('.');
       if (!this.recursive) {
         args.push('-maxdepth', '1');

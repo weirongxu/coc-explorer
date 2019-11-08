@@ -2,9 +2,7 @@ import { SourceRowBuilder } from './view-builder';
 import { ExplorerSource, BaseTreeNode } from './source';
 import { Disposable } from 'coc.nvim';
 
-export interface ColumnDraw<
-  TreeNode extends BaseTreeNode<TreeNode>,
-> {
+export interface ColumnDraw<TreeNode extends BaseTreeNode<TreeNode>> {
   init?(): void;
 
   validate?(): boolean | Promise<boolean>;
@@ -22,7 +20,7 @@ export interface ColumnDraw<
 export class BaseColumnManager<
   TreeNode extends BaseTreeNode<TreeNode>,
   S extends ExplorerSource<TreeNode>,
-  C extends ColumnDraw<TreeNode>,
+  C extends ColumnDraw<TreeNode>
 > {
   registeredColumns: Record<string, (fileSource: S) => C> = {};
   columnDraws: C[] = [];

@@ -27,11 +27,27 @@ class HighlightManager {
   hlColumnHide(groupName: string): HighlightColumnHideCommand {
     const group = `CocExplorerColumn${groupName}`;
     const markerID = this.createMarkerID();
+    let isInited = false;
     const hide = async () => {
-      await this.nvim.command(`syntax match ${group} conceal /\\V<${markerID}|\\.\\*|${markerID}>/`);
+      await execNotifyBlock(() => {
+        if (isInited) {
+          this.nvim.command(`silent syntax clear ${group}`, true);
+        }
+        this.nvim.command(
+          `syntax match ${group} conceal /\\V<${markerID}|\\.\\*|${markerID}>/`,
+          true,
+        );
+      }).catch();
+      isInited = true;
     };
     const show = async () => {
-      await this.nvim.command(`syntax match ${group} conceal /\\V<${markerID}|\\||${markerID}>/`);
+      await execNotifyBlock(() => {
+        if (isInited) {
+          this.nvim.command(`silent syntax clear ${group}`, true);
+        }
+        this.nvim.command(`syntax match ${group} conceal /\\V<${markerID}|\\||${markerID}>/`, true);
+      }).catch();
+      isInited = true;
     };
     return {
       markerID,

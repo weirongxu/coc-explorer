@@ -36,13 +36,6 @@ export class SourceViewBuilder<Item> {
     return row.content;
   }
 
-  newRoot(draw: (row: SourceRowBuilder) => void): string {
-    const content = this.drawLine(draw);
-    this.lines.push([content, null]);
-    this.currentLine++;
-    return content;
-  }
-
   newNode(item: Item, draw: (row: SourceRowBuilder) => void): string {
     const content = this.drawLine(draw);
     this.lines.push([content, item]);

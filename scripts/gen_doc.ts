@@ -57,17 +57,17 @@ async function attach(headLevel: number, attachTitle: string, markdownPath: stri
   await fsp.writeFile(markdownPath, markdownLines.join('\n'));
 }
 
-function genCommandDoc() {
-  const cmds = Pkg.contributes.commands as Cmd[];
-  const rows: Row[] = [];
-  cmds.forEach((cmd) => {
-    rows.push({
-      key: cmd.command,
-      description: cmd.title,
-    });
-  });
-  return rows;
-}
+// function genCommandDoc() {
+//   const cmds = Pkg.contributes.commands as Cmd[];
+//   const rows: Row[] = [];
+//   cmds.forEach((cmd) => {
+//     rows.push({
+//       key: cmd.command,
+//       description: cmd.title,
+//     });
+//   });
+//   return rows;
+// }
 
 function genConfigurationDoc() {
   const conf = Pkg.contributes.configuration.properties;
