@@ -264,7 +264,7 @@ export function initFileActions(file: FileSource) {
       nodes.forEach((node) => {
         file.copiedNodes.add(node);
       });
-      await file.renderNodes(nodes);
+      file.requestRenderNodes(nodes);
     },
     'copy file for paste',
   );
@@ -276,7 +276,7 @@ export function initFileActions(file: FileSource) {
       nodes.forEach((node) => {
         file.cutNodes.add(node);
       });
-      await file.renderNodes(nodes);
+      file.requestRenderNodes(nodes);
     },
     'cut file for paste',
   );
@@ -326,13 +326,13 @@ export function initFileActions(file: FileSource) {
         await checkNodesExists(file.copiedNodes, async (node, targetPath) => {
           await copyFileOrDirectory(node.fullpath, targetPath);
         });
-        await file.renderNodes(Array.from(file.copiedNodes));
+        file.requestRenderNodes(Array.from(file.copiedNodes));
         file.copiedNodes.clear();
       } else if (file.cutNodes.size > 0) {
         await checkNodesExists(file.cutNodes, async (node, targetPath) => {
           await fsRename(node.fullpath, targetPath);
         });
-        await file.renderNodes(Array.from(file.cutNodes));
+        file.requestRenderNodes(Array.from(file.cutNodes));
         file.cutNodes.clear();
       } else {
         // tslint:disable-next-line: ban

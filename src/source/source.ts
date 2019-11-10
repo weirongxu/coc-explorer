@@ -89,6 +89,7 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>> {
 
   private _explorer?: Explorer;
   private bindedExplorer = false;
+  private requestedRenderNodes: Set<TreeNode> = new Set();
 
   constructor() {
     const { nvim } = this;
@@ -166,7 +167,7 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>> {
       'select',
       async (node) => {
         this.selectedNodes.add(node);
-        await this.renderNodes([node]);
+        this.requestRenderNodes([node]);
       },
       'toggle node selection',
       { multi: false, select: true },
@@ -175,7 +176,7 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>> {
       'unselect',
       async (node) => {
         this.selectedNodes.delete(node);
-        await this.renderNodes([node]);
+        this.requestRenderNodes([node]);
       },
       'toggle node selection',
       { multi: false, select: true },
@@ -777,6 +778,17 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>> {
       await this.shrinkNodeRender(node, true);
       await this.gotoNode(node, { notify: true });
     }, notify);
+  }
+
+  requestRenderNodes(nodes: TreeNode[]) {
+    nodes.forEach((node) => {
+      this.requestedRenderNodes.add(node);
+    });
+  }
+
+  async doRequestRenderNodes() {
+    await this.renderNodes(Array.from(this.requestedRenderNodes));
+    this.requestedRenderNodes.clear();
   }
 
   async renderNodes(nodes: TreeNode[]) {

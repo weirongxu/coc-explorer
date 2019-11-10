@@ -304,6 +304,9 @@ export class Explorer {
         for (const action of actions) {
           await this.doAction(action, mode);
         }
+        await Promise.all(this.sources.map(async (source) => {
+          return source.doRequestRenderNodes();
+        }));
       });
     }
     await this._doActions(actions, mode);
