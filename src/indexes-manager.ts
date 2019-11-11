@@ -1,20 +1,8 @@
 import { Explorer } from './explorer';
-
-interface BaseIndexNode {
-  line: number;
-}
-
-export class BaseIndexes<IndexNode extends BaseIndexNode> {
-  nodes: IndexNode[] = [];
-  explorer?: Explorer;
-
-  bindExplorer(explorer: Explorer) {
-    this.explorer = explorer;
-  }
-}
+import { BaseIndexes } from './indexes/base-indexes';
 
 export class IndexesManager {
-  indexMap: Map<string, BaseIndexes<{ line: number }>> = new Map();
+  indexMap: Map<string, BaseIndexes> = new Map();
 
   constructor(public explorer: Explorer) {}
 
@@ -23,28 +11,28 @@ export class IndexesManager {
   removeLines(startLineOrLines: number | number[], endLineOptional?: number) {
     if (Array.isArray(startLineOrLines)) {
       this.indexMap.forEach((i) => {
-        i.nodes = i.nodes.filter((it) => !startLineOrLines.includes(it.line));
+        i.lines = i.lines.filter((line) => !startLineOrLines.includes(line));
       });
     } else {
       const startLine = startLineOrLines;
       const endLine = endLineOptional === undefined ? Infinity : endLineOptional;
       this.indexMap.forEach((i) => {
-        i.nodes = i.nodes.filter((item) => startLine <= item.line && item.line <= endLine);
+        i.lines = i.lines.filter((line) => startLine <= line && line <= endLine);
       });
     }
   }
 
   offsetLines(startLine: number, offset: number) {
     this.indexMap.forEach((m) => {
-      m.nodes.forEach((item) => {
-        if (startLine <= item.line) {
-          item.line += offset;
+      m.lines.forEach((line) => {
+        if (startLine <= line) {
+          line += offset;
         }
       });
     });
   }
 
-  addIndexes(name: string, indexes: BaseIndexes<any>) {
+  addIndexes(name: string, indexes: BaseIndexes) {
     indexes.bindExplorer(this.explorer);
     this.indexMap.set(name, indexes);
   }

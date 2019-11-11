@@ -2,7 +2,6 @@ import { events, workspace, listManager } from 'coc.nvim';
 import fs from 'fs';
 import pathLib from 'path';
 import { diagnosticManager } from '../../../diagnostic-manager';
-import { gitManager } from '../../../git-manager';
 import { onError } from '../../../logger';
 import {
   activeMode,
@@ -26,10 +25,10 @@ import { filesList } from '../../../lists/files';
 import { URI } from 'vscode-uri';
 import { initFileActions } from './file-actions';
 import { homedir } from 'os';
-import { GitIndexes } from '../../../indexes/git-indexes';
+import { DiagnosticIndexes } from '../../../indexes/diagnostic-indexes';
 
 export type FileNode = {
-  uid: string | null;
+  uid: string;
   level: number;
   drawnLine: string;
   parent?: FileNode;
@@ -68,7 +67,7 @@ export class FileSource extends ExplorerSource<FileNode> {
   diagnosisLineIndexes: number[] = [];
   gitChangedLineIndexes: number[] = [];
   rootNode = {
-    uid: null,
+    uid: this.name + '//',
     level: 0,
     drawnLine: '',
     isRoot: true,
@@ -102,9 +101,11 @@ export class FileSource extends ExplorerSource<FileNode> {
     const { nvim } = this;
 
     await fileColumnManager.init(this);
+    let diagnosticIndexes: DiagnosticIndexes | undefined;
 
-    if (fileColumnManager.columns.includes('git')) {
-      this.explorer.indexesManager.addIndexes('git', new GitIndexes());
+    if (fileColumnManager.columns.includes('diagnostic')) {
+      diagnosticIndexes = new DiagnosticIndexes(this);
+      this.explorer.indexesManager.addIndexes('diagnostic', diagnosticIndexes);
     }
 
     if (activeMode) {
@@ -126,17 +127,6 @@ export class FileSource extends ExplorerSource<FileNode> {
               }
             });
           }
-
-          events.on(
-            'BufWritePost',
-            debounce(1000, async (bufnr) => {
-              const bufinfo = await nvim.call('getbufinfo', [bufnr]);
-              if (bufinfo[0] && bufinfo[0].name) {
-                await gitManager.reload(pathLib.dirname(bufinfo[0].name as string));
-                await this.render();
-              }
-            }),
-          );
 
           events.on(
             ['InsertLeave', 'TextChanged'],
@@ -247,7 +237,7 @@ export class FileSource extends ExplorerSource<FileNode> {
           const readable = await fsAccess(fullpath, fs.constants.R_OK);
           const directory = stat ? stat.isDirectory() : false;
           const node: FileNode = {
-            uid: fullpath,
+            uid: this.name + '//' + fullpath,
             level: parent ? parent.level + 1 : 1,
             drawnLine: '',
             parent: parent || undefined,

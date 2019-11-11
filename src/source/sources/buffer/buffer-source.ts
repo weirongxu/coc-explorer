@@ -11,7 +11,7 @@ import { initBufferActions } from './buffer-actions';
 const regex = /^\s*(\d+)(.+?)"(.+?)".*/;
 
 export interface BufferNode {
-  uid: string | null;
+  uid: string;
   level: number;
   drawnLine: string;
   parent?: BufferNode;
@@ -45,7 +45,7 @@ export class BufferSource extends ExplorerSource<BufferNode> {
   hlSrcId = workspace.createNameSpace('coc-explorer-buffer');
   showHiddenBuffers: boolean = config.get<boolean>('buffer.showHiddenBuffers')!;
   rootNode = {
-    uid: null,
+    uid: this.name + '//',
     level: 0,
     drawnLine: '',
     children: [] as BufferNode[],
@@ -108,7 +108,7 @@ export class BufferSource extends ExplorerSource<BufferNode> {
       const flags = matches[2];
       const bufname = matches[3];
       res.push({
-        uid: this.name + '-' + bufnr,
+        uid: this.name + '//' + bufnr,
         level: 1,
         drawnLine: '',
         parent: this.rootNode,

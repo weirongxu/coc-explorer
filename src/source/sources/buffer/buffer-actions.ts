@@ -5,14 +5,6 @@ export function initBufferActions(buffer: BufferSource) {
   const { nvim } = buffer;
 
   buffer.addAction(
-    'toggleHidden',
-    async () => {
-      buffer.showHiddenBuffers = !buffer.showHiddenBuffers;
-    },
-    'toggle visibility of unlisted buffers',
-    { reload: true },
-  );
-  buffer.addAction(
     'shrink',
     async () => {
       buffer.expanded = false;

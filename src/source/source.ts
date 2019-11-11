@@ -35,7 +35,7 @@ const helpHightlights = {
 
 export interface BaseTreeNode<TreeNode extends BaseTreeNode<TreeNode>> {
   isRoot?: boolean;
-  uid: string | null;
+  uid: string;
   level: number;
   drawnLine: string;
   expandable?: boolean;
@@ -54,7 +54,7 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>> {
   relativeHlRanges: Record<string, Range[]> = {};
   viewBuilder = new SourceViewBuilder<TreeNode>();
   expandStore = {
-    record: new Map<null | string, boolean>(),
+    record: new Map<string, boolean>(),
     expand(node: TreeNode) {
       this.record.set(node.uid, true);
     },
@@ -208,8 +208,7 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>> {
     this.addAction(
       'sourceNext',
       async () => {
-        const sourceIndex = this.explorer.sources.findIndex((s) => s === this);
-        const nextSource = this.explorer.sources[sourceIndex + 1];
+        const nextSource = this.explorer.sources[this.currentSourceIndex() + 1];
         if (nextSource) {
           await nextSource.gotoLineIndex(0);
         } else if (await enableWrapscan()) {
@@ -221,8 +220,7 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>> {
     this.addAction(
       'sourcePrev',
       async () => {
-        const sourceIndex = this.explorer.sources.findIndex((s) => s === this);
-        const prevSource = this.explorer.sources[sourceIndex - 1];
+        const prevSource = this.explorer.sources[this.currentSourceIndex() - 1];
         if (prevSource) {
           await prevSource.gotoLineIndex(0);
         } else if (await enableWrapscan()) {
@@ -243,9 +241,8 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>> {
             await this.gotoLineIndex(prevIndex);
           }
         }
-        const sourceIndex = this.explorer.sources.findIndex((s) => s === this);
         const fileSource = findLast(
-          this.explorer.sources.slice(0, sourceIndex),
+          this.explorer.sources.slice(0, this.currentSourceIndex()),
           (source) => source instanceof FileSource && source.diagnosisLineIndexes.length > 0,
         ) as undefined | FileSource;
         if (fileSource) {
@@ -271,9 +268,8 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>> {
             return;
           }
         }
-        const sourceIndex = this.explorer.sources.findIndex((s) => s === this);
         const fileSource = this.explorer.sources
-          .slice(sourceIndex + 1)
+          .slice(this.currentSourceIndex() + 1)
           .find(
             (source) => source instanceof FileSource && source.diagnosisLineIndexes.length > 0,
           ) as undefined | FileSource;
@@ -299,9 +295,8 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>> {
             return;
           }
         }
-        const sourceIndex = this.explorer.sources.findIndex((s) => s === this);
         const fileSource = findLast(
-          this.explorer.sources.slice(0, sourceIndex),
+          this.explorer.sources.slice(0, this.currentSourceIndex()),
           (source) => source instanceof FileSource && source.gitChangedLineIndexes.length > 0,
         ) as undefined | FileSource;
         if (fileSource) {
@@ -327,9 +322,8 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>> {
             return;
           }
         }
-        const sourceIndex = this.explorer.sources.findIndex((s) => s === this);
         const fileSource = this.explorer.sources
-          .slice(sourceIndex + 1)
+          .slice(this.currentSourceIndex() + 1)
           .find(
             (source) => source instanceof FileSource && source.gitChangedLineIndexes.length > 0,
           ) as undefined | FileSource;
@@ -646,6 +640,10 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>> {
     }
   }
 
+  currentSourceIndex() {
+    return this.explorer.sources.indexOf(this);
+  }
+
   opened(_notify = false): void | Promise<void> {}
 
   async reload(
@@ -662,9 +660,8 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>> {
 
   private offsetAfterLine(afterLine: number, offset: number) {
     this.explorer.indexesManager.offsetLines(this.startLine + afterLine + 1, offset);
-    const sourceIndex = this.explorer.sources.indexOf(this);
     this.endLine += offset;
-    this.explorer.sources.slice(sourceIndex + 1).forEach((source) => {
+    this.explorer.sources.slice(this.currentSourceIndex() + 1).forEach((source) => {
       source.startLine += offset;
       source.endLine += offset;
     });
@@ -786,12 +783,14 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>> {
     });
   }
 
-  async doRequestRenderNodes() {
-    await this.renderNodes(Array.from(this.requestedRenderNodes));
-    this.requestedRenderNodes.clear();
+  async emitRequestRenderNodes(notify = false) {
+    if (this.requestedRenderNodes.size > 0) {
+      await this.renderNodes(Array.from(this.requestedRenderNodes), notify);
+      this.requestedRenderNodes.clear();
+    }
   }
 
-  async renderNodes(nodes: TreeNode[]) {
+  async renderNodes(nodes: TreeNode[], notify = false) {
     await execNotifyBlock(async () => {
       await Promise.all(
         nodes.map(async (node) => {
@@ -803,7 +802,7 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>> {
           await this.setLines([node.drawnLine], nodeIndex, nodeIndex + 1, true);
         }),
       );
-    });
+    }, notify);
   }
 
   async render({
@@ -825,21 +824,8 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>> {
       this.flattenedNodes = this.flattenByNode(this.rootNode);
 
       await this.drawNodes(this.flattenedNodes);
-      await this.partRender(true);
 
-      if (restore) {
-        await restore(true);
-      }
-
-      if (workspace.env.isVim) {
-        nvim.command('redraw', true);
-      }
-    }, notify);
-  }
-
-  private async partRender(notify = false) {
-    await execNotifyBlock(async () => {
-      const sourceIndex = this.explorer.sources.indexOf(this);
+      const sourceIndex = this.currentSourceIndex();
       const isLastSource = this.explorer.sources.length - 1 == sourceIndex;
 
       await this.explorer.setLines(
@@ -849,12 +835,21 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>> {
         true,
       );
 
+      // Update the startLine and endLine in the below
       let lineNumber = this.startLine;
       this.explorer.sources.slice(sourceIndex).forEach((source) => {
         source.startLine = lineNumber;
         lineNumber += source.height;
         source.endLine = lineNumber;
       });
+
+      if (restore) {
+        await restore(true);
+      }
+
+      if (workspace.env.isVim) {
+        nvim.command('redraw', true);
+      }
     }, notify);
   }
 
