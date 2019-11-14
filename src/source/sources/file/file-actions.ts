@@ -13,6 +13,7 @@ import {
   fsTouch,
   isWindows,
   listDrive,
+  prettyPrint,
 } from '../../../util';
 import { workspace, listManager } from 'coc.nvim';
 import open from 'open';
@@ -145,6 +146,8 @@ export function initFileActions(file: FileSource) {
             nvim.command('wincmd L', true);
           } else if (file.explorer.args.position === 'right') {
             nvim.command('wincmd H', true);
+          } else if (file.explorer.args.position === 'tab') {
+            nvim.command('wincmd L', true);
           }
           await file.quitOnOpen();
         });

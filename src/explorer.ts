@@ -441,7 +441,7 @@ export class Explorer {
     ]);
     if (winnr > 0) {
       await Promise.resolve(selected(winnr));
-    } else if (winnr === -1) {
+    } else if (winnr === 0) {
       await Promise.resolve(noChoice());
     }
   }

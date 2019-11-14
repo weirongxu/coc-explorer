@@ -109,6 +109,8 @@ export function initBufferActions(buffer: BufferSource) {
           nvim.command('wincmd L', true);
         } else if (buffer.explorer.args.position === 'right') {
           nvim.command('wincmd H', true);
+        } else if (buffer.explorer.args.position === 'tab') {
+          nvim.command('wincmd L', true);
         }
         await buffer.quitOnOpen();
       });
