@@ -1,7 +1,7 @@
 import { ExtensionContext, commands, workspace } from 'coc.nvim';
-import { Explorer } from './explorer';
 import { registerLogger, onError } from './logger';
 import { hlGroupManager } from './source/highlight-manager';
+import {ExplorerManager} from './explorer-manager';
 
 export const activate = async (context: ExtensionContext) => {
   const { subscriptions, logger } = context;
@@ -10,7 +10,7 @@ export const activate = async (context: ExtensionContext) => {
 
   hlGroupManager.hlGroupCommand('SelectUI', 'ctermbg=27 ctermfg=0 guibg=#1593e5 guifg=#ffffff');
 
-  const explorer = new Explorer(context);
+  const explorerManager = new ExplorerManager(context);
 
   nvim
     .getOption('runtimepath')
@@ -21,13 +21,13 @@ export const activate = async (context: ExtensionContext) => {
           `execute 'noa set rtp^='.fnameescape('${context.extensionPath.replace(/'/g, "''")}')`,
         );
       }
-      explorer.emitterDidAutoload.fire();
+      explorerManager.emitterDidAutoload.fire();
     })
     .catch(onError);
 
   subscriptions.push(
     commands.registerCommand('explorer', (...args) => {
-      explorer.open(args).catch(onError);
+      explorerManager.open(args).catch(onError);
     }),
   );
 };

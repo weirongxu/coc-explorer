@@ -8,6 +8,7 @@ let &runtimepath .= ',' . expand('<sfile>:h:h')
 
 nmap ge :CocCommand explorer<CR>
 nmap gE :CocCommand explorer --position=right<CR>
+nmap g<c-t> :CocCommand explorer --position=tab<CR>
 
 set termguicolors
 filetype plugin indent on

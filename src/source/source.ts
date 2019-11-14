@@ -44,11 +44,10 @@ export interface BaseTreeNode<TreeNode extends BaseTreeNode<TreeNode>> {
 }
 
 export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>> {
-  abstract name: string;
   startLine: number = 0;
   endLine: number = 0;
   abstract rootNode: TreeNode;
-  flattenedNodes: (TreeNode)[] = [];
+  flattenedNodes: TreeNode[] = [];
   showHidden: boolean = false;
   selectedNodes: Set<TreeNode> = new Set();
   relativeHlRanges: Record<string, Range[]> = {};
@@ -87,13 +86,9 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>> {
   hlIds: number[] = []; // hightlight match ids for vim8.0
   nvim = workspace.nvim;
 
-  private _explorer?: Explorer;
-  private bindedExplorer = false;
   private requestedRenderNodes: Set<TreeNode> = new Set();
 
-  constructor() {
-    const { nvim } = this;
-
+  constructor(public sourceName: string, public explorer: Explorer, expanded: boolean) {
     this.addAction(
       'toggleHidden',
       async () => {
@@ -197,7 +192,7 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>> {
     this.addAction(
       'gotoSource',
       async (_items, name) => {
-        const source = this.explorer.sources.find((s) => s.name === name);
+        const source = this.explorer.sources.find((s) => s.sourceName === name);
         if (source) {
           await source.gotoLineIndex(0);
         }
@@ -336,33 +331,21 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>> {
       },
       'go to next git changed',
     );
-  }
 
-  bindExplorer(explorer: Explorer, expanded: boolean) {
-    if (this.bindedExplorer) {
-      return;
-    }
-    this.bindedExplorer = true;
-
-    this._explorer = explorer;
-    this.expanded = expanded;
-
-    // init
     Promise.resolve(this.init()).catch(onError);
-  }
 
-  get explorer() {
-    if (this._explorer !== undefined) {
-      return this._explorer;
-    }
-    throw new Error(`source(${this.name}) unbound to explorer`);
+    setImmediate(() => {
+      this.expanded = expanded;
+    });
   }
 
   /**
    * @returns winnr
    */
   async prevWinnr() {
-    const winnr = (await this.nvim.call('bufwinnr', [this.explorer.previousBufnr])) as number;
+    const winnr = (await this.nvim.call('bufwinnr', [
+      this.explorer.explorerManager.previousBufnr,
+    ])) as number;
     if ((await this.explorer.winnr) !== winnr && winnr > 0) {
       return winnr;
     } else {
@@ -597,7 +580,7 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>> {
   /**
    * @returns return true to redraw all rows
    */
-  abstract beforeDraw(nodes: (TreeNode)[]): boolean | Promise<boolean>;
+  abstract beforeDraw(nodes: TreeNode[]): boolean | Promise<boolean>;
   abstract drawNode(node: TreeNode, prevNode: TreeNode, nextNode: TreeNode): void | Promise<void>;
 
   flattenByNode(node: TreeNode) {
@@ -861,7 +844,9 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>> {
 
     builder.newNode(null, (row) => {
       row.add(
-        `Help for [${this.name}${isRoot ? ' root' : ''}], (use q or <esc> return to explorer)`,
+        `Help for [${this.sourceName}${
+          isRoot ? ' root' : ''
+        }], (use q or <esc> return to explorer)`,
       );
     });
     builder.newNode(null, (row) => {
@@ -897,10 +882,15 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>> {
     });
 
     await execNotifyBlock(async () => {
-      await this.explorer.setLines(builder.lines.map(([content]) => content), 0, -1, true);
+      await this.explorer.setLines(
+        builder.lines.map(([content]) => content),
+        0,
+        -1,
+        true,
+      );
     });
 
-    await this.explorer.clearMappings();
+    await this.explorer.explorerManager.clearMappings();
 
     const disposables: Disposable[] = [];
     await new Promise((resolve) => {
@@ -925,7 +915,7 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>> {
   }
 
   async quitHelp() {
-    await this.explorer.executeMappings();
+    await this.explorer.explorerManager.executeMappings();
     this.explorer.isHelpUI = false;
   }
 

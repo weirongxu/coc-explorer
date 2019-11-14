@@ -1,5 +1,4 @@
-import { diagnosticManager as cocDiagnosticManager } from 'coc.nvim';
-import { URI } from 'vscode-uri';
+import { Uri, diagnosticManager as cocDiagnosticManager } from 'coc.nvim';
 import pathLib from 'path';
 
 class DiagnosticManager {
@@ -24,7 +23,7 @@ class DiagnosticManager {
 
     cocDiagnosticManager.getDiagnosticList().forEach((diagnostic) => {
       const uri = diagnostic.location.uri;
-      const path = URI.parse(uri).fsPath;
+      const path = Uri.parse(uri).fsPath;
       if (diagnostic.severity === 'Error') {
         if (!(path in errorPathCountNum)) {
           errorPathCountNum[path] = 0;

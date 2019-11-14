@@ -1,4 +1,4 @@
-import { events, workspace, listManager } from 'coc.nvim';
+import { events, workspace, listManager, Uri } from 'coc.nvim';
 import fs from 'fs';
 import pathLib from 'path';
 import { diagnosticManager } from '../../../diagnostic-manager';
@@ -22,7 +22,6 @@ import { sourceManager } from '../../source-manager';
 import { fileColumnManager } from './column-manager';
 import './load';
 import { filesList } from '../../../lists/files';
-import { URI } from 'vscode-uri';
 import { initFileActions } from './file-actions';
 import { homedir } from 'os';
 import { DiagnosticIndexes } from '../../../indexes/diagnostic-indexes';
@@ -58,7 +57,6 @@ const highlights = {
 };
 
 export class FileSource extends ExplorerSource<FileNode> {
-  name = 'file';
   hlSrcId = workspace.createNameSpace('coc-explorer-file');
   hlRevealedLineSrcId = workspace.createNameSpace('coc-explorer-file-revealed-line');
   showHidden: boolean = config.get<boolean>('file.showHiddenFiles')!;
@@ -67,7 +65,7 @@ export class FileSource extends ExplorerSource<FileNode> {
   diagnosisLineIndexes: number[] = [];
   gitChangedLineIndexes: number[] = [];
   rootNode = {
-    uid: this.name + '//',
+    uid: this.sourceName + '//',
     level: 0,
     drawnLine: '',
     isRoot: true,
@@ -109,56 +107,54 @@ export class FileSource extends ExplorerSource<FileNode> {
     }
 
     if (activeMode) {
-      this.explorer.emitterDidInit.event(() => {
-        if (!workspace.env.isVim) {
-          if (autoReveal) {
-            onBufEnter(200, async (bufnr) => {
-              if (bufnr !== this.explorer.bufnr) {
-                const bufinfo = await nvim.call('getbufinfo', [bufnr]);
-                if (bufinfo[0] && bufinfo[0].name) {
-                  const node = await this.revealNodeByPath(bufinfo[0].name, this.rootNode.children);
-                  if (node !== null) {
-                    await execNotifyBlock(async () => {
-                      await this.render({ storeCursor: false, notify: true });
-                      await this.gotoNode(node, { notify: true });
-                    });
-                  }
-                }
-              }
-            });
-          }
-
-          events.on(
-            ['InsertLeave', 'TextChanged'],
-            debounce(1000, async () => {
-              let needRender = false;
-              if (fileColumnManager.columns.includes('diagnosticError')) {
-                diagnosticManager.errorReload(this.root);
-                if (diagnosticManager.errorNeedRender) {
-                  needRender = true;
-                  diagnosticManager.errorNeedRender = false;
-                }
-              }
-              if (fileColumnManager.columns.includes('diagnosticWarning')) {
-                diagnosticManager.warningReload(this.root);
-                if (diagnosticManager.warningNeedRender) {
-                  needRender = true;
-                  diagnosticManager.warningNeedRender = false;
-                }
-              }
-              if (needRender) {
-                await this.render();
-              }
-            }),
-          );
-        } else {
+      if (!workspace.env.isVim) {
+        if (autoReveal) {
           onBufEnter(200, async (bufnr) => {
-            if (bufnr === this.explorer.bufnr) {
-              await this.reload(this.rootNode);
+            if (bufnr !== this.explorer.bufnr) {
+              const bufinfo = await nvim.call('getbufinfo', [bufnr]);
+              if (bufinfo[0] && bufinfo[0].name) {
+                const node = await this.revealNodeByPath(bufinfo[0].name, this.rootNode.children);
+                if (node !== null) {
+                  await execNotifyBlock(async () => {
+                    await this.render({ storeCursor: false, notify: true });
+                    await this.gotoNode(node, { notify: true });
+                  });
+                }
+              }
             }
           });
         }
-      });
+
+        events.on(
+          ['InsertLeave', 'TextChanged'],
+          debounce(1000, async () => {
+            let needRender = false;
+            if (fileColumnManager.columns.includes('diagnosticError')) {
+              diagnosticManager.errorReload(this.root);
+              if (diagnosticManager.errorNeedRender) {
+                needRender = true;
+                diagnosticManager.errorNeedRender = false;
+              }
+            }
+            if (fileColumnManager.columns.includes('diagnosticWarning')) {
+              diagnosticManager.warningReload(this.root);
+              if (diagnosticManager.warningNeedRender) {
+                needRender = true;
+                diagnosticManager.warningNeedRender = false;
+              }
+            }
+            if (needRender) {
+              await this.render();
+            }
+          }),
+        );
+      } else {
+        onBufEnter(200, async (bufnr) => {
+          if (bufnr === this.explorer.bufnr) {
+            await this.reload(this.rootNode);
+          }
+        });
+      }
     }
 
     initFileActions(this);
@@ -179,7 +175,7 @@ export class FileSource extends ExplorerSource<FileNode> {
     filesList.rootPath = path;
     filesList.recursive = recursive;
     filesList.revealCallback = async (loc) => {
-      const node = await this.revealNodeByPath(URI.parse(loc.uri).fsPath, this.rootNode.children);
+      const node = await this.revealNodeByPath(Uri.parse(loc.uri).fsPath, this.rootNode.children);
       if (node !== null) {
         await execNotifyBlock(async () => {
           await this.render({ storeCursor: false, notify: true });
@@ -237,7 +233,7 @@ export class FileSource extends ExplorerSource<FileNode> {
           const readable = await fsAccess(fullpath, fs.constants.R_OK);
           const directory = stat ? stat.isDirectory() : false;
           const node: FileNode = {
-            uid: this.name + '//' + fullpath,
+            uid: this.sourceName + '//' + fullpath,
             level: parent ? parent.level + 1 : 1,
             drawnLine: '',
             parent: parent || undefined,
@@ -312,4 +308,4 @@ export class FileSource extends ExplorerSource<FileNode> {
   }
 }
 
-sourceManager.registerSource(new FileSource());
+sourceManager.registerSource('file', FileSource);

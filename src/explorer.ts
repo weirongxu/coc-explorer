@@ -1,57 +1,31 @@
-import { Buffer, Emitter, events, ExtensionContext, Window, workspace } from 'coc.nvim';
-import { onError } from './logger';
-import { Action, mappings, ActionMode } from './mappings';
-import { Args, parseArgs } from './parse-args';
-import { hlGroupManager } from './source/highlight-manager';
+import { Buffer, ExtensionContext, Window, workspace } from 'coc.nvim';
+import { Action, ActionMode } from './mappings';
+import { Args } from './parse-args';
 import { IndexesManager } from './indexes-manager';
 import './source/load';
 import { BaseTreeNode, ExplorerSource } from './source/source';
 import { sourceManager } from './source/source-manager';
-import { execNotifyBlock, autoReveal, config, enableDebug, queueAsyncFunction } from './util';
+import { execNotifyBlock, autoReveal, config, enableDebug } from './util';
+import { ExplorerManager } from './explorer-manager';
 
 export class Explorer {
-  // id for matchaddpos
-  static colorId = 10800;
-
-  name = 'coc-explorer';
   nvim = workspace.nvim;
-  previousBufnr?: number;
-  revealFilepath?: string;
   isHelpUI: boolean = false;
-  rootPathRecords: Set<string> = new Set();
   indexesManager = new IndexesManager(this);
-  emitterDidAutoload = new Emitter<void>();
-  emitterDidInit = new Emitter<number>();
+  inited = false;
 
   private _buffer?: Buffer;
-  private _bufnr?: number;
   private _args?: Args;
   private _sources?: ExplorerSource<any>[];
   private _rootPath?: string;
-  private lastArgStrings?: string[];
-  /**
-   * mappings[key][mode] = '<Plug>(coc-action-mode-key)'
-   */
-  private mappings: Record<string, Record<string, string>> = {};
-  private registeredMapping: boolean = false;
-  private onRegisteredMapping = new Emitter<void>();
+  private lastArgSources?: string;
 
-  constructor(public context: ExtensionContext) {
-    const { subscriptions } = context;
-
-    subscriptions.push(
-      events.on('BufWinLeave', (bufnr) => {
-        if (bufnr !== this._bufnr) {
-          this.previousBufnr = bufnr;
-        }
-      }),
-    );
-
-    this.emitterDidAutoload.event(() => {
-      this.registerMappings().catch(onError);
-      hlGroupManager.registerHighlightSyntax().catch(onError);
-    });
-  }
+  constructor(
+    public explorerID: number,
+    public explorerManager: ExplorerManager,
+    public context: ExtensionContext,
+    public bufnr: number,
+  ) {}
 
   get args(): Args {
     if (!this._args) {
@@ -79,13 +53,6 @@ export class Explorer {
       this._buffer = this.nvim.createBuffer(this.bufnr);
     }
     return this._buffer;
-  }
-
-  get bufnr(): number {
-    if (!this._bufnr) {
-      throw Error('Explorer bufnr not initialized yet');
-    }
-    return this._bufnr;
   }
 
   get win(): Promise<Window | null> {
@@ -129,34 +96,14 @@ export class Explorer {
     });
   }
 
-  async open(argStrings: string[]) {
-    if (!this.registeredMapping) {
-      await new Promise((resolve) => {
-        this.onRegisteredMapping.event(resolve);
-      });
+  async open(args: Args) {
+    if (this.inited) {
+      await this.resume(args);
     }
 
-    const { nvim } = this;
+    this.inited = true;
 
-    await this.initArgs(argStrings);
-
-    const [bufnr, inited] = (await nvim.call('coc_explorer#create', [
-      this._bufnr,
-      this.args.position,
-      this.args.width,
-      this.args.toggle,
-      this.name,
-    ])) as [number, boolean];
-
-    if (bufnr === -1) {
-      return;
-    }
-
-    this._bufnr = bufnr;
-
-    if (!inited) {
-      this.emitterDidInit.fire(this._bufnr);
-    }
+    await this.initArgs(args);
 
     if (this.isHelpUI) {
       await this.sources[0].quitHelp();
@@ -179,9 +126,9 @@ export class Explorer {
       await this.reloadAll({ render: false });
 
       if (firstFileSource) {
-        if (this.revealFilepath && autoReveal) {
+        if (this.args.revealPath && autoReveal) {
           node = await firstFileSource.revealNodeByPath(
-            this.revealFilepath,
+            this.args.revealPath,
             firstFileSource.rootNode.children,
           );
         }
@@ -190,17 +137,35 @@ export class Explorer {
       await this.renderAll({ notify: true });
 
       if (firstFileSource) {
-        if (this.revealFilepath && autoReveal) {
+        if (this.args.revealPath && autoReveal) {
           if (node !== null) {
             await firstFileSource.gotoNode(node, { col: 1, notify: true });
           } else {
             await firstFileSource.gotoRoot({ col: 1, notify: true });
           }
-        } else if (!inited) {
-          await firstFileSource.gotoRoot({ col: 1, notify: true });
         }
       }
     });
+  }
+
+  async resume(args: Args) {
+    const win = await this.win;
+    if (win) {
+      if (args.toggle) {
+        await win.close(true);
+      } else {
+        await this.nvim.eval(`${win.number}wincmd w`);
+      }
+    } else {
+      await this.nvim.call('coc_explorer#resume', [this.bufnr, args.position, args.width]);
+    }
+  }
+
+  async quit() {
+    const win = await this.win;
+    if (win) {
+      await win.close(true);
+    }
   }
 
   private async getRootPath() {
@@ -217,30 +182,18 @@ export class Explorer {
     return useGetcwd ? ((await this.nvim.call('getcwd', [])) as string) : workspace.rootPath;
   }
 
-  private async initArgs(argStrings: string[]) {
-    if (!this.lastArgStrings || this.lastArgStrings.toString() !== argStrings.toString()) {
-      this._args = await parseArgs(...argStrings);
-      this.lastArgStrings = argStrings;
+  private async initArgs(args: Args) {
+    this._args = args;
+    if (!this.lastArgSources || this.lastArgSources !== args.sources.toString()) {
+      this.lastArgSources = args.sources.toString();
 
       this._sources = this.args.sources
-        .map((sourceArg) => {
-          if (sourceManager.registeredSources[sourceArg.name]) {
-            const source = sourceManager.registeredSources[sourceArg.name];
-            source.bindExplorer(this, sourceArg.expand);
-            return source;
-          } else {
-            // tslint:disable-next-line: ban
-            workspace.showMessage(`explorer source(${sourceArg.name}) not found`, 'error');
-            return null;
-          }
-        })
+        .map((sourceArg) => sourceManager.createSource(sourceArg.name, this, sourceArg.expand))
         .filter((source): source is ExplorerSource<any> => source !== null);
     }
 
     this._rootPath = this.args.rootPath || (await this.getRootPath());
-    this.revealFilepath =
-      this.args.revealPath || ((await this.nvim.call('expand', '%:p')) as string);
-    this.rootPathRecords.add(this._rootPath);
+    this.explorerManager.rootPathRecords.add(this._rootPath);
   }
 
   async prompt(msg: string): Promise<'yes' | 'no' | null>;
@@ -267,51 +220,17 @@ export class Explorer {
     }
   }
 
-  async registerMappings() {
-    this.mappings = {};
-    Object.entries(mappings).forEach(([key, actions]) => {
-      this.mappings[key] = {};
-      (['n', 'v'] as (ActionMode)[]).forEach((mode) => {
-        if (mode === 'v' && ['o', 'j', 'k'].includes(key)) {
-          return;
-        }
-        const plugKey = `explorer-action-${mode}-${key.replace(/\<(.*)\>/, '[$1]')}`;
-        this.context.subscriptions.push(
-          workspace.registerKeymap([mode], plugKey, async () => {
-            this.doActions(actions, mode).catch(onError);
-          }),
-        );
-        this.mappings[key][mode] = `<Plug>(coc-${plugKey})`;
-      });
-    });
-    await this.nvim.call('coc_explorer#register_mappings', [this.mappings]);
-    this.registeredMapping = true;
-    this.onRegisteredMapping.fire();
-  }
-
-  async executeMappings() {
-    await this.nvim.call('coc_explorer#execute_mappings', [this.mappings]);
-  }
-
-  async clearMappings() {
-    await this.nvim.call('coc_explorer#clear_mappings', [this.mappings]);
-  }
-
-  private _doActions?: (actions: Action[], mode: ActionMode) => Promise<void>;
   async doActions(actions: Action[], mode: ActionMode = 'n') {
-    if (!this._doActions) {
-      this._doActions = queueAsyncFunction(async (actions: Action[], mode: ActionMode) => {
-        for (const action of actions) {
-          await this.doAction(action, mode);
-        }
-        await execNotifyBlock(async () => {
-          await Promise.all(this.sources.map(async (source) => {
-            return source.emitRequestRenderNodes(true);
-          }));
-        });
-      });
+    for (const action of actions) {
+      await this.doAction(action, mode);
     }
-    await this._doActions(actions, mode);
+    await execNotifyBlock(async () => {
+      await Promise.all(
+        this.sources.map(async (source) => {
+          return source.emitRequestRenderNodes(true);
+        }),
+      );
+    });
   }
 
   async doAction(action: Action, mode: ActionMode = 'n') {
@@ -357,7 +276,7 @@ export class Explorer {
             action.name,
             Array.from(nodes).filter((item) => item),
             action.arg,
-            mode
+            mode,
           );
         }
       }),
@@ -380,12 +299,6 @@ export class Explorer {
     } else {
       return [this.sources[sourceIndex], sourceIndex] as [ExplorerSource<any>, number];
     }
-  }
-
-  async currentIsExplorerWin() {
-    const win = await this.win;
-    const curWin = await this.nvim.window;
-    return win?.id === curWin.id;
   }
 
   async currentCursor() {
@@ -452,7 +365,7 @@ export class Explorer {
       const win = await this.win;
       if (win) {
         win.setCursor([lineIndex + 1, finalCol - 1], true);
-        if (!await this.currentIsExplorerWin()) {
+        if (!(await this.explorerManager.currentExplorer())) {
           this.nvim.command('redraw!', true);
         }
       }
@@ -515,13 +428,6 @@ export class Explorer {
     }, notify);
   }
 
-  async quit() {
-    const win = await this.win;
-    if (win) {
-      await win.close(true);
-    }
-  }
-
   /**
    * select windows from current tabpage
    */
@@ -530,7 +436,7 @@ export class Explorer {
     noChoice: () => void | Promise<void> = () => {},
   ) {
     const winnr = await this.nvim.call('coc_explorer#select_wins', [
-      this.name,
+      this.explorerManager.bufferName,
       config.get<boolean>('openAction.select.filterFloatWindows')!,
     ]);
     if (winnr > 0) {

@@ -1,6 +1,6 @@
 import { events, workspace } from 'coc.nvim';
 import pathLib from 'path';
-import { activeMode, config, onBufEnter, debounce, normalizePath } from '../../../util';
+import { activeMode, onBufEnter, debounce, normalizePath } from '../../../util';
 import { hlGroupManager } from '../../highlight-manager';
 import { ExplorerSource, sourceIcons } from '../../source';
 import { sourceManager } from '../../source-manager';
@@ -41,11 +41,9 @@ const highlights = {
 };
 
 export class BufferSource extends ExplorerSource<BufferNode> {
-  name = 'buffer';
   hlSrcId = workspace.createNameSpace('coc-explorer-buffer');
-  showHiddenBuffers: boolean = config.get<boolean>('buffer.showHiddenBuffers')!;
   rootNode = {
-    uid: this.name + '//',
+    uid: this.sourceName + '//',
     level: 0,
     drawnLine: '',
     children: [] as BufferNode[],
@@ -67,27 +65,23 @@ export class BufferSource extends ExplorerSource<BufferNode> {
   };
 
   async init() {
-    const { nvim } = this;
-
     await bufferColumnManager.init(this);
 
     if (activeMode) {
-      this.explorer.emitterDidInit.event(() => {
-        if (!workspace.env.isVim) {
-          events.on(
-            ['BufCreate', 'BufHidden', 'BufUnload', 'BufWritePost', 'InsertLeave'],
-            debounce(500, async () => {
-              await this.reload(this.rootNode);
-            }),
-          );
-        } else {
-          onBufEnter(500, async (bufnr) => {
-            if (bufnr === this.explorer.bufnr) {
-              await this.reload(this.rootNode, { render: false });
-            }
-          });
-        }
-      });
+      if (!workspace.env.isVim) {
+        events.on(
+          ['BufCreate', 'BufHidden', 'BufUnload', 'BufWritePost', 'InsertLeave'],
+          debounce(500, async () => {
+            await this.reload(this.rootNode);
+          }),
+        );
+      } else {
+        onBufEnter(500, async (bufnr) => {
+          if (bufnr === this.explorer.bufnr) {
+            await this.reload(this.rootNode, { render: false });
+          }
+        });
+      }
     }
 
     initBufferActions(this);
@@ -95,7 +89,7 @@ export class BufferSource extends ExplorerSource<BufferNode> {
 
   async loadChildren() {
     const { nvim } = this;
-    const lsCommand = this.showHiddenBuffers ? 'ls!' : 'ls';
+    const lsCommand = this.showHidden ? 'ls!' : 'ls';
     const content = (await nvim.call('execute', lsCommand)) as string;
 
     return content.split(/\n/).reduce<BufferNode[]>((res, line) => {
@@ -108,7 +102,7 @@ export class BufferSource extends ExplorerSource<BufferNode> {
       const flags = matches[2];
       const bufname = matches[3];
       res.push({
-        uid: this.name + '//' + bufnr,
+        uid: this.sourceName + '//' + bufnr,
         level: 1,
         drawnLine: '',
         parent: this.rootNode,
@@ -156,4 +150,4 @@ export class BufferSource extends ExplorerSource<BufferNode> {
   }
 }
 
-sourceManager.registerSource(new BufferSource());
+sourceManager.registerSource('buffer', BufferSource);
