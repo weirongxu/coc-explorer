@@ -98,44 +98,6 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>> {
       { reload: true, multi: false },
     );
     this.addAction(
-      'nodePrev',
-      async () => {
-        const line = await this.explorer.currentLineIndex();
-        if (line !== null) {
-          await this.explorer.gotoLineIndex(line - 1, 1);
-        }
-      },
-      'previous node',
-      { multi: false },
-    );
-    this.addAction(
-      'nodeNext',
-      async () => {
-        const line = await this.explorer.currentLineIndex();
-        if (line !== null) {
-          await this.explorer.gotoLineIndex(line + 1, 1);
-        }
-      },
-      'next node',
-      { multi: false },
-    );
-    this.addAction(
-      'normal',
-      async (_node, arg) => {
-        await this.nvim.command('normal ' + arg);
-      },
-      'execute vim normal mode commands',
-      { multi: false },
-    );
-    this.addAction(
-      'quit',
-      async () => {
-        await this.explorer.quit();
-      },
-      'quit explorer',
-      { multi: false },
-    );
-    this.addAction(
       'refresh',
       async () => {
         await this.reload(this.rootNode);
@@ -154,7 +116,7 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>> {
     this.addAction(
       'actionMenu',
       async (nodes) => {
-        await this.actionMenu(nodes);
+        await this.listActionMenu(nodes);
       },
       'show actions in coc-list',
     );
@@ -187,42 +149,6 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>> {
       },
       'toggle node selection',
       { multi: false, select: true },
-    );
-
-    this.addAction(
-      'gotoSource',
-      async (_items, name) => {
-        const source = this.explorer.sources.find((s) => s.sourceName === name);
-        if (source) {
-          await source.gotoLineIndex(0);
-        }
-      },
-      'go to source',
-    );
-
-    this.addAction(
-      'sourceNext',
-      async () => {
-        const nextSource = this.explorer.sources[this.currentSourceIndex() + 1];
-        if (nextSource) {
-          await nextSource.gotoLineIndex(0);
-        } else if (await enableWrapscan()) {
-          await this.explorer.sources[0].gotoLineIndex(0);
-        }
-      },
-      'go to next source',
-    );
-    this.addAction(
-      'sourcePrev',
-      async () => {
-        const prevSource = this.explorer.sources[this.currentSourceIndex() - 1];
-        if (prevSource) {
-          await prevSource.gotoLineIndex(0);
-        } else if (await enableWrapscan()) {
-          await this.explorer.sources[this.explorer.sources.length - 1].gotoLineIndex(0);
-        }
-      },
-      'go to previous source',
     );
 
     this.addAction(
@@ -371,8 +297,17 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>> {
 
   init() {}
 
-  addGlobalAction(name: ActionSyms, callback: (node: TreeNode, line: number) => void) {
-    // TODO
+  addGlobalAction(
+    name: ActionSyms,
+    callback: (
+      nodes: BaseTreeNode<any>[] | null,
+      arg: string,
+      mode: ActionMode,
+    ) => void | Promise<void>,
+    description: string,
+    options: Partial<ActionOptions> = {},
+  ) {
+    this.explorer.addGlobalAction(name, callback, description, options);
   }
 
   addAction(
@@ -455,7 +390,7 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>> {
     arg: string = '',
     mode: ActionMode = 'n',
   ) {
-    const action = this.actions[name];
+    const action = this.actions[name] || this.explorer.globalActions[name];
     if (!action) {
       return;
     }
@@ -489,10 +424,14 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>> {
     await this.nvim.call('setreg', ['"', content]);
   }
 
-  async actionMenu(nodes: TreeNode[] | null) {
-    const actions = nodes === null ? this.rootActions : this.actions;
+  async listActionMenu(nodes: TreeNode[] | null) {
+    const actions = {
+      ...this.explorer.globalActions,
+      ...(nodes === null ? this.rootActions : this.actions),
+    };
     explorerActionList.setExplorerActions(
       Object.entries(actions)
+        .sort(([aName], [bName]) => aName.localeCompare(bName))
         .map(([name, { callback, description }]) => ({
           name,
           nodes,
@@ -853,7 +792,10 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>> {
       row.add('—'.repeat(width), helpHightlights.line);
     });
 
-    const registeredActions = isRoot ? this.rootActions : this.actions;
+    const registeredActions = {
+      ...this.explorer.globalActions,
+      ...(isRoot ? this.rootActions : this.actions),
+    };
     const drawAction = (row: SourceRowBuilder, action: Action) => {
       row.add(action.name, helpHightlights.action);
       if (action.arg) {

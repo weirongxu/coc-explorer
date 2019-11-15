@@ -1,11 +1,11 @@
 import { Buffer, ExtensionContext, Window, workspace } from 'coc.nvim';
-import { Action, ActionMode } from './mappings';
+import { Action, ActionMode, ActionSyms } from './mappings';
 import { Args } from './parse-args';
 import { IndexesManager } from './indexes-manager';
 import './source/load';
-import { BaseTreeNode, ExplorerSource } from './source/source';
+import { BaseTreeNode, ExplorerSource, ActionOptions } from './source/source';
 import { sourceManager } from './source/source-manager';
-import { execNotifyBlock, autoReveal, config, enableDebug } from './util';
+import { execNotifyBlock, autoReveal, config, enableDebug, enableWrapscan } from './util';
 import { ExplorerManager } from './explorer-manager';
 
 export class Explorer {
@@ -13,6 +13,14 @@ export class Explorer {
   isHelpUI: boolean = false;
   indexesManager = new IndexesManager(this);
   inited = false;
+  globalActions: Record<
+    string,
+    {
+      description: string;
+      options: Partial<ActionOptions>;
+      callback: (nodes: BaseTreeNode<any>[], arg: string, mode: ActionMode) => void | Promise<void>;
+    }
+  > = {};
 
   private _buffer?: Buffer;
   private _args?: Args;
@@ -25,7 +33,81 @@ export class Explorer {
     public explorerManager: ExplorerManager,
     public context: ExtensionContext,
     public bufnr: number,
-  ) {}
+  ) {
+    this.addGlobalAction(
+      'nodePrev',
+      async () => {
+        const line = await this.currentLineIndex();
+        if (line !== null) {
+          await this.gotoLineIndex(line - 1, 1);
+        }
+      },
+      'previous node',
+      { multi: false },
+    );
+    this.addGlobalAction(
+      'nodeNext',
+      async () => {
+        const line = await this.currentLineIndex();
+        if (line !== null) {
+          await this.gotoLineIndex(line + 1, 1);
+        }
+      },
+      'next node',
+      { multi: false },
+    );
+    this.addGlobalAction(
+      'normal',
+      async (_node, arg) => {
+        await this.nvim.command('normal ' + arg);
+      },
+      'execute vim normal mode commands',
+      { multi: false },
+    );
+    this.addGlobalAction(
+      'quit',
+      async () => {
+        await this.quit();
+      },
+      'quit explorer',
+      { multi: false },
+    );
+
+    this.addGlobalAction(
+      'gotoSource',
+      async (_nodes, name) => {
+        const source = this.sources.find((s) => s.sourceName === name);
+        if (source) {
+          await source.gotoLineIndex(0);
+        }
+      },
+      'go to source',
+    );
+    this.addGlobalAction(
+      'sourceNext',
+      async () => {
+        const nextSource = this.sources[(await this.currentSourceIndex()) + 1];
+        if (nextSource) {
+          await nextSource.gotoLineIndex(0);
+        } else if (await enableWrapscan()) {
+          await this.sources[0].gotoLineIndex(0);
+        }
+      },
+      'go to next source',
+    );
+    this.addGlobalAction(
+      'sourcePrev',
+      async () => {
+        const prevSource = this.sources[(await this.currentSourceIndex()) - 1];
+        if (prevSource) {
+          await prevSource.gotoLineIndex(0);
+        } else if (await enableWrapscan()) {
+          await this.sources[this.sources.length - 1].gotoLineIndex(0);
+        }
+      },
+      'go to previous source',
+    );
+  }
 
   get args(): Args {
     if (!this._args) {
@@ -220,6 +302,23 @@ export class Explorer {
     }
   }
 
+  addGlobalAction(
+    name: ActionSyms,
+    callback: (
+      nodes: BaseTreeNode<any>[] | null,
+      arg: string,
+      mode: ActionMode,
+    ) => void | Promise<void>,
+    description: string,
+    options: Partial<ActionOptions> = {},
+  ) {
+    this.globalActions[name] = {
+      callback,
+      description,
+      options,
+    };
+  }
+
   async doActions(actions: Action[], mode: ActionMode = 'n') {
     for (const action of actions) {
       await this.doAction(action, mode);
@@ -299,6 +398,13 @@ export class Explorer {
     } else {
       return [this.sources[sourceIndex], sourceIndex] as [ExplorerSource<any>, number];
     }
+  }
+
+  async currentSourceIndex() {
+    const lineIndex = await this.currentLineIndex();
+    return this.sources.findIndex(
+      (source) => lineIndex >= source.startLine && lineIndex <= source.endLine,
+    );
   }
 
   async currentCursor() {
