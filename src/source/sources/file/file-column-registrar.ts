@@ -1,8 +1,8 @@
 import { FileNode, FileSource } from './file-source';
 import { config } from '../../../util';
-import { ColumnDraw, BaseColumnManager } from '../../base-column-manager';
+import { Column, ColumnRegistrar } from '../../column-registrar';
 
-export type FileColumn =
+export type FileColumns =
   | 'git'
   | 'selection'
   | 'clip'
@@ -18,12 +18,12 @@ export type FileColumn =
   | 'accessed'
   | string;
 
-export interface FileColumnDraw extends ColumnDraw<FileNode> {}
+export interface FileColumn extends Column<FileNode> {}
 
-class FileColumnManager extends BaseColumnManager<FileNode, FileSource, FileColumnDraw> {
+export class FileColumnRegistrar extends ColumnRegistrar<FileNode, FileSource, FileColumn> {
   getColumnConfig<T>(name: string, defaultValue?: T): T {
     return config.get('file.column.' + name, defaultValue)!;
   }
 }
 
-export const fileColumnManager = new FileColumnManager(config.get<FileColumn[]>('file.columns')!);
+export const fileColumnRegistrar = new FileColumnRegistrar();

@@ -8,3 +8,19 @@ export class DiagnosticIndexes extends BaseIndexes {
 
   updateDiagnostics() {}
 }
+
+export class DiagnosticErrorIndexes extends BaseIndexes {
+  constructor(public fileSource: FileSource) {
+    super();
+  }
+
+  updateDiagnostics() {}
+}
+
+export class DiagnosticWarningIndexes extends BaseIndexes {
+  constructor(public fileSource: FileSource) {
+    super();
+  }
+
+  updateDiagnostics() {}
+}

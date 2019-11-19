@@ -1,18 +1,18 @@
 import { hlGroupManager } from '../../../highlight-manager';
-import { fileColumnManager } from '../column-manager';
+import { fileColumnRegistrar } from '../file-column-registrar';
 import { indentChars, topLevel } from './indent';
-import { FileNode } from '../file-source';
+import { FileNode, FileSource } from '../file-source';
 import { workspace } from 'coc.nvim';
 import { fsReadlink } from '../../../../util';
 
 export const highlights = {
-  directory: hlGroupManager.hlLinkGroupCommand('FileDirectory', 'Directory'),
-  linkTarget: hlGroupManager.hlLinkGroupCommand('FileLinkTarget', 'Comment'),
+  directory: hlGroupManager.linkGroup('FileDirectory', 'Directory'),
+  linkTarget: hlGroupManager.linkGroup('FileLinkTarget', 'Comment'),
 };
 
 const nvim = workspace.nvim;
 
-const width = fileColumnManager.getColumnConfig<number>('filename.width')!;
+const width = fileColumnRegistrar.getColumnConfig<number>('filename.width')!;
 
 const attrSymbol = Symbol('filename-attr');
 type FilenameAttr = {
@@ -21,17 +21,17 @@ type FilenameAttr = {
   truncatedLinkTarget?: string;
 };
 
-function getFilenameAttr(node: FileNode) {
+function getFilenameAttr(fileSource: FileSource, node: FileNode) {
   if (!Reflect.has(node, attrSymbol)) {
     Reflect.set(node, attrSymbol, {
-      indentWidth: indentWidth(node),
+      indentWidth: indentWidth(fileSource, node),
     } as FilenameAttr);
   }
   return Reflect.get(node, attrSymbol) as FilenameAttr;
 }
 
-function indentWidth(node: FileNode) {
-  if (fileColumnManager.columns.includes('indent') || fileColumnManager.columns.includes('indentLine')) {
+function indentWidth(fileSource: FileSource, node: FileNode) {
+  if (fileSource.columnManager.columnNames.includes('indent') || fileSource.columnManager.columnNames.includes('indentLine')) {
     return indentChars.length * (node.level - (topLevel ? 0 : 1));
   } else {
     return 0;
@@ -39,7 +39,11 @@ function indentWidth(node: FileNode) {
 }
 
 const truncateCache: Map<string, [string, string]> = new Map();
-async function loadTruncateNodes(fullTreeWidth: number, flatNodes: FileNode[]) {
+async function loadTruncateNodes(
+  fileSource: FileSource,
+  fullTreeWidth: number,
+  flatNodes: FileNode[],
+) {
   await Promise.all(
     flatNodes.map(async (node) => {
       let name = node.name;
@@ -55,22 +59,25 @@ async function loadTruncateNodes(fullTreeWidth: number, flatNodes: FileNode[]) {
         : '';
       const key = [node.level, name, linkTarget].join('-');
       if (!truncateCache.has(key)) {
-        const remainWidth = fullTreeWidth - getFilenameAttr(node).indentWidth;
-        truncateCache.set(key, await nvim.call('coc_explorer#truncate', [name, linkTarget, remainWidth, '..']));
+        const remainWidth = fullTreeWidth - getFilenameAttr(fileSource, node).indentWidth;
+        truncateCache.set(
+          key,
+          await nvim.call('coc_explorer#truncate', [name, linkTarget, remainWidth, '..']),
+        );
       }
       const cache = truncateCache.get(key)!;
-      getFilenameAttr(node).truncatedName = cache[0];
-      getFilenameAttr(node).truncatedLinkTarget = cache[1];
+      getFilenameAttr(fileSource, node).truncatedName = cache[0];
+      getFilenameAttr(fileSource, node).truncatedLinkTarget = cache[1];
     }),
   );
 }
 
-fileColumnManager.registerColumn('filename', (fileSource) => ({
+fileColumnRegistrar.registerColumn('filename', (fileSource) => ({
   async beforeDraw(nodes) {
-    await loadTruncateNodes(width, nodes);
+    await loadTruncateNodes(fileSource, width, nodes);
   },
   draw(row, node) {
-    const attr = getFilenameAttr(node);
+    const attr = getFilenameAttr(fileSource, node);
     if (node.directory) {
       row.add(attr.truncatedName!, highlights.directory);
       row.add(attr.truncatedLinkTarget!, highlights.linkTarget);

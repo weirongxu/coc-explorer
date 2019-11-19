@@ -1,18 +1,18 @@
-import { fileColumnManager } from '../column-manager';
+import { fileColumnRegistrar } from '../file-column-registrar';
 import { hlGroupManager } from '../../../highlight-manager';
 import { diagnosticManager } from '../../../../diagnostic-manager';
 import { config, max } from '../../../../util';
 
 const highlights = {
-  warning: hlGroupManager.hlLinkGroupCommand('FileDiagnosticWarning', 'CocWarningSign'),
+  warning: hlGroupManager.linkGroup('FileDiagnosticWarning', 'CocWarningSign'),
 };
 
 const diagnosticCountMax = config.get<number>('file.diagnosticCountMax')!;
 let warningMixedCountStr: Record<string, string> = {};
 let warningMaxWidth = 0;
 
-fileColumnManager.registerColumn('diagnosticWarning', (fileSource) => ({
-  load() {
+fileColumnRegistrar.registerColumn('diagnosticWarning', (fileSource) => ({
+  reload() {
     diagnosticManager.warningReload(fileSource.root);
   },
   beforeDraw() {
@@ -36,7 +36,8 @@ fileColumnManager.registerColumn('diagnosticWarning', (fileSource) => ({
         } else {
           const count = warningMixedCountStr[node.fullpath];
           row.add(count.toString().padStart(warningMaxWidth), highlights.warning);
-          fileSource.diagnosisLineIndexes.push(row.line);
+          // TODO remove
+          // fileSource.diagnosisLineIndexes.push(row.line);
         }
       } else {
         row.add(' '.repeat(warningMaxWidth));

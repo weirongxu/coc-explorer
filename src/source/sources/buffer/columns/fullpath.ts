@@ -1,11 +1,11 @@
-import { bufferColumnManager } from '../column-manager';
+import { bufferColumnRegistrar } from '../buffer-column-registrar';
 import { hlGroupManager } from '../../../highlight-manager';
 
 const highlights = {
-  fullpath: hlGroupManager.hlLinkGroupCommand('BufferFullpath', 'Comment'),
+  fullpath: hlGroupManager.linkGroup('BufferFullpath', 'Comment'),
 };
 
-bufferColumnManager.registerColumn('fullpath', {
+bufferColumnRegistrar.registerColumn('fullpath', {
   draw(row, node) {
     if (node.basename !== node.bufname) {
       row.add(node.fullpath, highlights.fullpath);

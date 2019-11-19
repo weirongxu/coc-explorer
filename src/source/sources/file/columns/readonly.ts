@@ -1,12 +1,12 @@
-import { fileColumnManager } from '../column-manager';
+import { fileColumnRegistrar } from '../file-column-registrar';
 import { hlGroupManager } from '../../../highlight-manager';
 import { enableNerdfont } from '../../../source';
 
 const highlights = {
-  readonly: hlGroupManager.hlLinkGroupCommand('FileReadonly', 'Operator'),
+  readonly: hlGroupManager.linkGroup('FileReadonly', 'Operator'),
 };
 
-fileColumnManager.registerColumn('readonly', {
+fileColumnRegistrar.registerColumn('readonly', {
   draw(row, node) {
     if (node.readonly) {
       row.add(node.readonly ? (enableNerdfont ? '' : 'RO') : '', highlights.readonly);

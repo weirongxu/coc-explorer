@@ -4,7 +4,7 @@ import { activeMode, onBufEnter, debounce, normalizePath } from '../../../util';
 import { hlGroupManager } from '../../highlight-manager';
 import { ExplorerSource, sourceIcons } from '../../source';
 import { sourceManager } from '../../source-manager';
-import { bufferColumnManager } from './column-manager';
+import { bufferColumnRegistrar } from './buffer-column-registrar';
 import './load';
 import { initBufferActions } from './buffer-actions';
 
@@ -33,7 +33,7 @@ export interface BufferNode {
   readErrors: boolean;
 }
 
-const hl = hlGroupManager.hlLinkGroupCommand.bind(hlGroupManager);
+const hl = hlGroupManager.linkGroup.bind(hlGroupManager);
 
 const highlights = {
   title: hl('BufferRoot', 'Constant'),
@@ -41,7 +41,6 @@ const highlights = {
 };
 
 export class BufferSource extends ExplorerSource<BufferNode> {
-  hlSrcId = workspace.createNameSpace('coc-explorer-buffer');
   rootNode = {
     uid: this.sourceName + '//',
     level: 0,
@@ -65,7 +64,7 @@ export class BufferSource extends ExplorerSource<BufferNode> {
   };
 
   async init() {
-    await bufferColumnManager.init(this);
+    await this.columnManager.registerColumns(this.explorer.args.bufferColumns, bufferColumnRegistrar);
 
     if (activeMode) {
       if (!workspace.env.isVim) {
@@ -126,14 +125,6 @@ export class BufferSource extends ExplorerSource<BufferNode> {
     }, []);
   }
 
-  async loaded(sourceNode: BufferNode) {
-    await bufferColumnManager.load(sourceNode);
-  }
-
-  async beforeDraw(nodes: BufferNode[]) {
-    return await bufferColumnManager.beforeDraw(nodes);
-  }
-
   drawNode(node: BufferNode) {
     if (!node.parent) {
       node.drawnLine = this.viewBuilder.drawLine((row) => {
@@ -144,7 +135,7 @@ export class BufferSource extends ExplorerSource<BufferNode> {
     } else {
       node.drawnLine = this.viewBuilder.drawLine((row) => {
         row.add('  ');
-        bufferColumnManager.drawNode(row, node);
+        this.columnManager.draw(node, row);
       });
     }
   }

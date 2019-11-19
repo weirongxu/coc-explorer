@@ -1,19 +1,19 @@
 import commandExists from 'command-exists';
 import { hlGroupManager } from '../../../highlight-manager';
-import { fileColumnManager } from '../column-manager';
-import { GitFormat, gitManager } from '../../../../git-manager';
+import { fileColumnRegistrar } from '../file-column-registrar';
+import { GitFormat, gitManager, GitMixedStatus } from '../../../../git-manager';
 import pathLib from 'path';
 import { events } from 'coc.nvim';
 import { debounce } from '../../../../util';
-import { GitIndexes } from '../../../../indexes/git-indexes';
+import { FileNode } from '../file-source';
 
 const highlights = {
-  stage: hlGroupManager.hlLinkGroupCommand('FileGitStage', 'Comment'),
-  unstage: hlGroupManager.hlLinkGroupCommand('FileGitUnstage', 'Operator'),
+  stage: hlGroupManager.linkGroup('FileGitStage', 'Comment'),
+  unstage: hlGroupManager.linkGroup('FileGitUnstage', 'Operator'),
 };
 
 const getIconConf = (name: string) => {
-  return fileColumnManager.getColumnConfig<string>('git.icon.' + name)!;
+  return fileColumnRegistrar.getColumnConfig<string>('git.icon.' + name)!;
 };
 
 const statusIcons = {
@@ -29,10 +29,15 @@ const statusIcons = {
   [GitFormat.ignored]: getIconConf('ignored'),
 };
 
-fileColumnManager.registerColumn('git', (fileSource) => ({
+fileColumnRegistrar.registerColumn('git', (fileSource) => ({
   init() {
-    const gitIndexes = new GitIndexes(fileSource);
-    fileSource.explorer.indexesManager.addIndexes('git', gitIndexes);
+    fileSource.explorer.indexesManager.addIndexes('git', fileSource.gitIndexes);
+
+    let prevStatuses: Record<string, GitMixedStatus> = {};
+
+    const statusEqual = (a: GitMixedStatus, b: GitMixedStatus) => {
+      return a.x === b.x && a.y === b.y;
+    };
 
     events.on(
       'BufWritePost',
@@ -42,7 +47,28 @@ fileColumnManager.registerColumn('git', (fileSource) => ({
           const path = pathLib.dirname(bufinfo[0].name as string);
           await gitManager.reload(path);
           const statuses = await gitManager.getStatuses(path);
-          await gitIndexes?.updateStatus(statuses);
+          // await fileSource.gitIndexes?.updateStatus(statuses);
+
+          const updatePaths: Set<string> = new Set();
+          for (const [path, status] of Object.entries(statuses)) {
+            if (path in prevStatuses) {
+              if (statusEqual(prevStatuses[path], status)) {
+                continue;
+              }
+              delete prevStatuses[path];
+            }
+            updatePaths.add(path);
+          }
+          for (const path of Object.keys(prevStatuses)) {
+            updatePaths.add(path);
+          }
+          const updateNodes = Array.from(updatePaths)
+            .map((path) => {
+              return fileSource.flattenedNodes.find((node) => node.fullpath === path);
+            })
+            .filter((node): node is FileNode => !!node);
+          await fileSource.renderNodes(updateNodes);
+          prevStatuses = statuses;
         }
       }),
     );
@@ -55,7 +81,7 @@ fileColumnManager.registerColumn('git', (fileSource) => ({
       return false;
     }
   },
-  async load(node) {
+  async reload(node) {
     const folderPath =
       'isRoot' in node
         ? fileSource.root
@@ -64,11 +90,11 @@ fileColumnManager.registerColumn('git', (fileSource) => ({
         : pathLib.dirname(node.fullpath);
     await gitManager.reload(folderPath);
   },
-  draw(row, item) {
+  draw(row, node) {
     const showFormat = (f: string, staged: boolean) => {
       row.add(f, staged ? highlights.stage : highlights.unstage);
     };
-    const status = gitManager.getStatus(item.fullpath);
+    const status = gitManager.getStatus(node.fullpath);
     if (status) {
       showFormat(statusIcons[status.x], true);
       showFormat(statusIcons[status.y], false);

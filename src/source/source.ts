@@ -4,9 +4,10 @@ import { explorerActionList } from '../lists/actions';
 import { Explorer } from '../explorer';
 import { onError } from '../logger';
 import { Action, ActionSyms, mappings, reverseMappings, ActionMode } from '../mappings';
-import { config, execNotifyBlock, findLast, enableWrapscan } from '../util';
+import { config, execNotifyBlock, findLast } from '../util';
 import { SourceRowBuilder, SourceViewBuilder } from './view-builder';
 import { hlGroupManager } from './highlight-manager';
+import { ColumnManager } from './column-manager';
 
 export type ActionOptions = {
   multi: boolean;
@@ -24,7 +25,7 @@ export const sourceIcons = {
   unselected: config.get<string>('icon.unselected')!,
 };
 
-const hl = hlGroupManager.hlLinkGroupCommand.bind(hlGroupManager);
+const hl = hlGroupManager.linkGroup.bind(hlGroupManager);
 const helpHightlights = {
   line: hl('HelpLine', 'Operator'),
   mappingKey: hl('HelpMappingKey', 'PreProc'),
@@ -51,7 +52,7 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>> {
   showHidden: boolean = false;
   selectedNodes: Set<TreeNode> = new Set();
   relativeHlRanges: Record<string, Range[]> = {};
-  viewBuilder = new SourceViewBuilder<TreeNode>();
+  viewBuilder = new SourceViewBuilder();
   expandStore = {
     record: new Map<string, boolean>(),
     expand(node: TreeNode) {
@@ -64,8 +65,7 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>> {
       return this.record.get(node.uid) || false;
     },
   };
-
-  abstract hlSrcId: number;
+  columnManager = new ColumnManager<TreeNode>(this);
 
   actions: Record<
     string,
@@ -258,9 +258,8 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>> {
       'go to next git changed',
     );
 
-    Promise.resolve(this.init()).catch(onError);
-
     setImmediate(() => {
+      Promise.resolve(this.init()).catch(onError);
       this.expanded = expanded;
     });
   }
@@ -368,7 +367,7 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>> {
   }
 
   async doRootAction(name: ActionSyms, arg: string = '', mode: ActionMode = 'n') {
-    const action = this.rootActions[name];
+    const action = this.rootActions[name] || this.explorer.globalActions[name];
     if (!action) {
       return;
     }
@@ -515,11 +514,18 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>> {
   }
 
   abstract loadChildren(sourceNode: TreeNode): Promise<TreeNode[]>;
-  async loaded(_sourceNode: TreeNode): Promise<void> {}
+
+  async loaded(sourceNode: TreeNode): Promise<void> {
+    await this.columnManager.reload(sourceNode);
+  }
+
   /**
    * @returns return true to redraw all rows
    */
-  abstract beforeDraw(nodes: TreeNode[]): boolean | Promise<boolean>;
+  async beforeDraw(nodes: TreeNode[]) {
+    return this.columnManager.beforeDraw(nodes);
+  }
+
   abstract drawNode(node: TreeNode, prevNode: TreeNode, nextNode: TreeNode): void | Promise<void>;
 
   flattenByNode(node: TreeNode) {
@@ -777,20 +783,25 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>> {
 
   async renderHelp(isRoot: boolean) {
     this.explorer.isHelpUI = true;
-    const builder = new SourceViewBuilder<null>();
+    const builder = new SourceViewBuilder();
     const width = await this.nvim.call('winwidth', '%');
     const storeCursor = await this.explorer.storeCursor();
+    const lines: string[] = [];
 
-    builder.newNode(null, (row) => {
-      row.add(
-        `Help for [${this.sourceName}${
-          isRoot ? ' root' : ''
-        }], (use q or <esc> return to explorer)`,
-      );
-    });
-    builder.newNode(null, (row) => {
-      row.add('—'.repeat(width), helpHightlights.line);
-    });
+    lines.push(
+      builder.drawLine((row) => {
+        row.add(
+          `Help for [${this.sourceName}${
+            isRoot ? ' root' : ''
+          }], (use q or <esc> return to explorer)`,
+        );
+      }),
+    );
+    lines.push(
+      builder.drawLine((row) => {
+        row.add('—'.repeat(width), helpHightlights.line);
+      }),
+    );
 
     const registeredActions = {
       ...this.explorer.globalActions,
@@ -808,28 +819,27 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>> {
       if (!actions.every((action) => action.name in registeredActions)) {
         return;
       }
-      builder.newNode(null, (row) => {
-        row.add(' ');
-        row.add(key, helpHightlights.mappingKey);
-        row.add(' - ');
-        drawAction(row, actions[0]);
-      });
+      lines.push(
+        builder.drawLine((row) => {
+          row.add(' ');
+          row.add(key, helpHightlights.mappingKey);
+          row.add(' - ');
+          drawAction(row, actions[0]);
+        }),
+      );
       actions.slice(1).forEach((action) => {
-        builder.newNode(null, (row) => {
-          row.add(' '.repeat(key.length + 4));
+        lines.push(
+          builder.drawLine((row) => {
+            row.add(' '.repeat(key.length + 4));
 
-          drawAction(row, action);
-        });
+            drawAction(row, action);
+          }),
+        );
       });
     });
 
     await execNotifyBlock(async () => {
-      await this.explorer.setLines(
-        builder.lines.map(([content]) => content),
-        0,
-        -1,
-        true,
-      );
+      await this.explorer.setLines(lines, 0, -1, true);
     });
 
     await this.explorer.explorerManager.clearMappings();

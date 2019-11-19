@@ -1,5 +1,5 @@
 import { Explorer } from '../explorer';
-import {BaseTreeNode} from '../source/source';
+import { BaseTreeNode } from '../source/source';
 
 export class BaseIndexes {
   lines: number[] = [];
@@ -9,6 +9,5 @@ export class BaseIndexes {
     this.explorer = explorer;
   }
 
-  updateNodes<TreeNode extends BaseTreeNode<TreeNode>>(nodes: TreeNode[]) {
-  }
+  updateNodes<TreeNode extends BaseTreeNode<TreeNode>>(nodes: TreeNode[]) {}
 }

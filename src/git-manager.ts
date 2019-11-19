@@ -1,9 +1,9 @@
 import pathLib from 'path';
 import { onError } from './logger';
-import { fileColumnManager } from './source/sources/file/column-manager';
+import { fileColumnRegistrar } from './source/sources/file/file-column-registrar';
 import { config, execCli } from './util';
 
-const showIgnored = fileColumnManager.getColumnConfig<boolean>('git.showIgnored')!;
+const showIgnored = fileColumnRegistrar.getColumnConfig<boolean>('git.showIgnored')!;
 
 export enum GitFormat {
   mixed = '*',

@@ -1,18 +1,18 @@
-import { HighlightCommand, HighlightColumnHideCommand } from './highlight-manager';
+import { Hightlight, HighlightConcealable } from './highlight-manager';
 
 export class SourceRowBuilder {
   content = '';
 
-  constructor(public view: SourceViewBuilder<any>, public line: number) {}
+  constructor(public view: SourceViewBuilder) {}
 
-  addColumn(hlColumnHideCmd: HighlightColumnHideCommand, block: () => void) {
-    const markerID = hlColumnHideCmd.markerID;
+  concealableColumn(hlConcealableCmd: HighlightConcealable, block: () => void) {
+    const markerID = hlConcealableCmd.markerID;
     this.content += `<${markerID}|`;
     block();
     this.content += `|${markerID}>`;
   }
 
-  add(content: string, hlCmd?: HighlightCommand) {
+  add(content: string, hlCmd?: Hightlight) {
     if (hlCmd && content) {
       const markerID = hlCmd.markerID;
       content = `<${markerID}|${content}|${markerID}>`;
@@ -21,25 +21,10 @@ export class SourceRowBuilder {
   }
 }
 
-export class SourceViewBuilder<Item> {
-  currentLine: number;
-  lines: [string, null | Item][] = [];
-
-  constructor() {
-    this.lines = [];
-    this.currentLine = 0;
-  }
-
+export class SourceViewBuilder {
   drawLine(draw: (row: SourceRowBuilder) => void): string {
-    const row = new SourceRowBuilder(this, this.currentLine);
+    const row = new SourceRowBuilder(this);
     draw(row);
     return row.content;
-  }
-
-  newNode(item: Item, draw: (row: SourceRowBuilder) => void): string {
-    const content = this.drawLine(draw);
-    this.lines.push([content, item]);
-    this.currentLine++;
-    return content;
   }
 }

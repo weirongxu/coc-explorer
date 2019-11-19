@@ -373,7 +373,7 @@ export class Explorer {
         } else {
           await source.doAction(
             action.name,
-            Array.from(nodes).filter((item) => item),
+            Array.from(nodes).filter((node) => node),
             action.arg,
             mode,
           );

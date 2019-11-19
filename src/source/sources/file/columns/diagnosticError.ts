@@ -1,4 +1,4 @@
-import { fileColumnManager } from '../column-manager';
+import { fileColumnRegistrar } from '../file-column-registrar';
 import { hlGroupManager } from '../../../highlight-manager';
 import { diagnosticManager } from '../../../../diagnostic-manager';
 import { config, max } from '../../../../util';
@@ -8,11 +8,11 @@ let errorMixedCountStr: Record<string, string> = {};
 let errorMaxWidth = 0;
 
 const highlights = {
-  error: hlGroupManager.hlLinkGroupCommand('FileDiagnosticError', 'CocErrorSign'),
+  error: hlGroupManager.linkGroup('FileDiagnosticError', 'CocErrorSign'),
 };
 
-fileColumnManager.registerColumn('diagnosticError', (fileSource) => ({
-  load() {
+fileColumnRegistrar.registerColumn('diagnosticError', (fileSource) => ({
+  reload() {
     diagnosticManager.errorReload(fileSource.root);
   },
   beforeDraw() {
@@ -36,7 +36,8 @@ fileColumnManager.registerColumn('diagnosticError', (fileSource) => ({
         } else {
           const count = errorMixedCountStr[node.fullpath];
           row.add(count.padStart(errorMaxWidth), highlights.error);
-          fileSource.diagnosisLineIndexes.push(row.line);
+          // TODO remove
+          // fileSource.diagnosisLineIndexes.push(row.line);
         }
       } else {
         row.add(' '.repeat(errorMaxWidth));

@@ -19,12 +19,13 @@ import {
 import { hlGroupManager } from '../../highlight-manager';
 import { ExplorerSource, sourceIcons } from '../../source';
 import { sourceManager } from '../../source-manager';
-import { fileColumnManager } from './column-manager';
+import { fileColumnRegistrar } from './file-column-registrar';
 import './load';
 import { filesList } from '../../../lists/files';
 import { initFileActions } from './file-actions';
 import { homedir } from 'os';
 import { DiagnosticIndexes } from '../../../indexes/diagnostic-indexes';
+import { GitIndexes } from '../../../indexes/git-indexes';
 
 export type FileNode = {
   uid: string;
@@ -48,7 +49,7 @@ export type FileNode = {
   data: Record<string, any>;
 };
 
-const hl = hlGroupManager.hlLinkGroupCommand.bind(hlGroupManager);
+const hl = hlGroupManager.linkGroup.bind(hlGroupManager);
 const highlights = {
   title: hl('FileRoot', 'Constant'),
   name: hl('FileRootName', 'Identifier'),
@@ -57,13 +58,13 @@ const highlights = {
 };
 
 export class FileSource extends ExplorerSource<FileNode> {
-  hlSrcId = workspace.createNameSpace('coc-explorer-file');
   hlRevealedLineSrcId = workspace.createNameSpace('coc-explorer-file-revealed-line');
   showHidden: boolean = config.get<boolean>('file.showHiddenFiles')!;
   copiedNodes: Set<FileNode> = new Set();
   cutNodes: Set<FileNode> = new Set();
   diagnosisLineIndexes: number[] = [];
   gitChangedLineIndexes: number[] = [];
+  gitIndexes = new GitIndexes(this);
   rootNode = {
     uid: this.sourceName + '//',
     level: 0,
@@ -98,10 +99,11 @@ export class FileSource extends ExplorerSource<FileNode> {
   async init() {
     const { nvim } = this;
 
-    await fileColumnManager.init(this);
+    await this.columnManager.registerColumns(this.explorer.args.fileColumns, fileColumnRegistrar);
+
     let diagnosticIndexes: DiagnosticIndexes | undefined;
 
-    if (fileColumnManager.columns.includes('diagnostic')) {
+    if (this.columnManager.columnNames.includes('diagnostic')) {
       diagnosticIndexes = new DiagnosticIndexes(this);
       this.explorer.indexesManager.addIndexes('diagnostic', diagnosticIndexes);
     }
@@ -129,14 +131,14 @@ export class FileSource extends ExplorerSource<FileNode> {
           ['InsertLeave', 'TextChanged'],
           debounce(1000, async () => {
             let needRender = false;
-            if (fileColumnManager.columns.includes('diagnosticError')) {
+            if (this.columnManager.columnNames.includes('diagnosticError')) {
               diagnosticManager.errorReload(this.root);
               if (diagnosticManager.errorNeedRender) {
                 needRender = true;
                 diagnosticManager.errorNeedRender = false;
               }
             }
-            if (fileColumnManager.columns.includes('diagnosticWarning')) {
+            if (this.columnManager.columnNames.includes('diagnosticWarning')) {
               diagnosticManager.warningReload(this.root);
               if (diagnosticManager.warningNeedRender) {
                 needRender = true;
@@ -277,11 +279,7 @@ export class FileSource extends ExplorerSource<FileNode> {
   async loaded(sourceNode: FileNode) {
     this.copiedNodes.clear();
     this.cutNodes.clear();
-    await fileColumnManager.load(sourceNode);
-  }
-
-  async beforeDraw(nodes: FileNode[]) {
-    return await fileColumnManager.beforeDraw(nodes);
+    await super.loaded(sourceNode);
   }
 
   drawNode(node: FileNode, prevNode: FileNode, nextNode: FileNode) {
@@ -301,8 +299,8 @@ export class FileSource extends ExplorerSource<FileNode> {
       node.isFirstInLevel = prevNodeLevel < node.level;
       node.isLastInLevel = nextNodeLevel < node.level;
 
-      node.drawnLine = this.viewBuilder.newNode(node, (row) => {
-        fileColumnManager.drawNode(row, node);
+      node.drawnLine = this.viewBuilder.drawLine((row) => {
+        this.columnManager.draw(node, row);
       });
     }
   }

@@ -1,10 +1,10 @@
-import { fileColumnManager } from '../column-manager';
+import { fileColumnRegistrar } from '../file-column-registrar';
 import { hlGroupManager } from '../../../highlight-manager';
 import { enableNerdfont } from '../../../source';
 import { max } from '../../../../util';
 
-let copy = fileColumnManager.getColumnConfig<string>('clip.copy');
-let cut = fileColumnManager.getColumnConfig<string>('clip.cut');
+let copy = fileColumnRegistrar.getColumnConfig<string>('clip.copy');
+let cut = fileColumnRegistrar.getColumnConfig<string>('clip.cut');
 if (enableNerdfont) {
   if (copy === undefined) {
     copy = '';
@@ -26,23 +26,20 @@ cut = cut.padEnd(width, ' ');
 const space = ' '.repeat(width);
 
 const highlights = {
-  clip: hlGroupManager.hlLinkGroupCommand('FileClip', 'Statement'),
+  clip: hlGroupManager.linkGroup('FileClip', 'Statement'),
 };
 
-const hlColumn = hlGroupManager.hlColumnHide('FileClip');
-
-fileColumnManager.registerColumn('clip', (source) => ({
+fileColumnRegistrar.registerColumn('clip', (source) => ({
+  concealable: hlGroupManager.concealable('FileClip'),
   async beforeDraw() {
     if (source.copiedNodes.size === 0 && source.cutNodes.size === 0) {
-      await hlColumn.hide();
+      await this.concealable?.hide();
     } else {
-      await hlColumn.show();
+      await this.concealable?.show();
     }
   },
   draw(row, node) {
-    row.addColumn(hlColumn, () => {
-      const chars = source.copiedNodes.has(node) ? copy : source.cutNodes.has(node) ? cut : space;
-      row.add(chars, highlights.clip);
-    });
+    const chars = source.copiedNodes.has(node) ? copy : source.cutNodes.has(node) ? cut : space;
+    row.add(chars, highlights.clip);
   },
 }));

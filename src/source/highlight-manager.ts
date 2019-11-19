@@ -1,13 +1,13 @@
 import { workspace } from 'coc.nvim';
 import { execNotifyBlock } from '../util';
 
-export type HighlightCommand = {
+export type Hightlight = {
   group: string;
   commands: string[];
   markerID: number;
 };
 
-export type HighlightColumnHideCommand = {
+export type HighlightConcealable = {
   markerID: number;
   hide: () => Promise<void>;
   show: () => Promise<void>;
@@ -24,8 +24,8 @@ class HighlightManager {
     return HighlightManager.maxMarkerID;
   }
 
-  hlColumnHide(groupName: string): HighlightColumnHideCommand {
-    const group = `CocExplorerColumn${groupName}`;
+  concealable(groupName: string): HighlightConcealable {
+    const group = `CocExplorerConcealable${groupName}`;
     const markerID = this.createMarkerID();
     let isInited = false;
     const hide = async () => {
@@ -56,7 +56,7 @@ class HighlightManager {
     };
   }
 
-  hlLinkGroupCommand(groupName: string, targetGroup: string): HighlightCommand {
+  linkGroup(groupName: string, targetGroup: string): Hightlight {
     const group = `CocExplorer${groupName}`;
     const markerID = this.createMarkerID();
     const commands = [
@@ -71,7 +71,7 @@ class HighlightManager {
     };
   }
 
-  hlGroupCommand(groupName: string, hlArgs: string): HighlightCommand {
+  group(groupName: string, hlArgs: string): Hightlight {
     const group = `CocExplorer${groupName}`;
     const markerID = this.createMarkerID();
     const commands = [

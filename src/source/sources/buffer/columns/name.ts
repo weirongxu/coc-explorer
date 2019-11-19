@@ -1,11 +1,11 @@
 import { hlGroupManager } from '../../../highlight-manager';
-import { bufferColumnManager } from '../column-manager';
+import { bufferColumnRegistrar } from '../buffer-column-registrar';
 
 const highlights = {
-  nameVisible: hlGroupManager.hlLinkGroupCommand('BufferNameVisible', 'String'),
+  nameVisible: hlGroupManager.linkGroup('BufferNameVisible', 'String'),
 };
 
-bufferColumnManager.registerColumn('name', {
+bufferColumnRegistrar.registerColumn('name', {
   draw(row, node) {
     if (node.visible) {
       row.add(node.basename, highlights.nameVisible);

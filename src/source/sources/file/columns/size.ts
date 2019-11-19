@@ -1,12 +1,12 @@
 import prettyBytes from 'pretty-bytes';
-import { fileColumnManager } from '../column-manager';
+import { fileColumnRegistrar } from '../file-column-registrar';
 import { hlGroupManager } from '../../../highlight-manager';
 
 const highlights = {
-  size: hlGroupManager.hlLinkGroupCommand('FileSize', 'Constant'),
+  size: hlGroupManager.linkGroup('FileSize', 'Constant'),
 };
 
-fileColumnManager.registerColumn('size', {
+fileColumnRegistrar.registerColumn('size', {
   draw(row, node) {
     if (node.lstat) {
       row.add(prettyBytes(node.lstat.size).padStart(10), highlights.size);

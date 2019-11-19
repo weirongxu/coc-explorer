@@ -1,15 +1,15 @@
-import { bufferColumnManager } from '../column-manager';
+import { bufferColumnRegistrar } from '../buffer-column-registrar';
 import { hlGroupManager } from '../../../highlight-manager';
 import { max } from '../../../../util';
 
 const highlights = {
-  bufnr: hlGroupManager.hlLinkGroupCommand('BufferBufnr', 'Special'),
+  bufnr: hlGroupManager.linkGroup('BufferBufnr', 'Special'),
 };
 
 
 let maxBufnrWidth = 0;
 
-bufferColumnManager.registerColumn('bufnr', (source) => ({
+bufferColumnRegistrar.registerColumn('bufnr', (source) => ({
   beforeDraw() {
     maxBufnrWidth = max(source.rootNode.children.map((node) => node.bufnrStr.length));
   },

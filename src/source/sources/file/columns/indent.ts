@@ -1,17 +1,17 @@
 import { hlGroupManager } from '../../../highlight-manager';
 import { enableNerdfont } from '../../../source';
-import { fileColumnManager } from '../column-manager';
+import { fileColumnRegistrar } from '../file-column-registrar';
 import { FileNode } from '../file-source';
 
-export const indentChars = fileColumnManager.getColumnConfig<string>('indent.chars');
-export const topLevel = fileColumnManager.getColumnConfig<string>('indent.topLevel');
-let indentLine = fileColumnManager.getColumnConfig<boolean | undefined>('indent.indentLine');
+export const indentChars = fileColumnRegistrar.getColumnConfig<string>('indent.chars');
+export const topLevel = fileColumnRegistrar.getColumnConfig<string>('indent.topLevel');
+let indentLine = fileColumnRegistrar.getColumnConfig<boolean | undefined>('indent.indentLine');
 if (enableNerdfont && indentLine === undefined) {
   indentLine = true;
 }
 
 const highlights = {
-  line: hlGroupManager.hlLinkGroupCommand('IndentLine', 'Comment'),
+  line: hlGroupManager.linkGroup('IndentLine', 'Comment'),
 };
 
 /**
@@ -45,7 +45,7 @@ function printIndentLine(node: FileNode) {
   return row;
 }
 
-fileColumnManager.registerColumn('indent', {
+fileColumnRegistrar.registerColumn('indent', {
   draw(row, node) {
     if (indentLine) {
       row.add(printIndentLine(node), highlights.line);
