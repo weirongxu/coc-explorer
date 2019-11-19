@@ -147,7 +147,7 @@ export const mappings: Mappings = {};
 /**
  * @example
  * parseAction('normal:j')
- * // { name: 'normal', arg: 'j' }
+ * // return { name: 'normal', arg: 'j' }
  */
 function parseAction(originalAction: string): Action {
   const [name, arg] = originalAction.split(/:(.+)/, 2) as [ActionSyms, string];

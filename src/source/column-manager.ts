@@ -1,7 +1,7 @@
 import { Column, ColumnRegistrar } from './column-registrar';
 import { BaseTreeNode, ExplorerSource } from './source';
 import { SourceRowBuilder } from './view-builder';
-import {prettyPrint} from '../util';
+import { prettyPrint } from '../util';
 
 export class ColumnManager<TreeNode extends BaseTreeNode<TreeNode>> {
   columnNames: string[] = [];
@@ -40,14 +40,14 @@ export class ColumnManager<TreeNode extends BaseTreeNode<TreeNode>> {
     }
   }
 
-  draw(node: TreeNode, row: SourceRowBuilder) {
+  draw(row: SourceRowBuilder, node: TreeNode, nodeIndex: number) {
     this.columns.forEach((column) => {
       if (column.concealable) {
         row.concealableColumn(column.concealable, () => {
-          column.draw(row, node);
+          column.draw(row, node, nodeIndex);
         });
       } else {
-        column.draw(row, node);
+        column.draw(row, node, nodeIndex);
       }
     });
   }

@@ -74,19 +74,19 @@ const getIcon = (filename: string): undefined | { name: string; code: string; co
   }
 };
 
-fileColumnRegistrar.registerColumn('icon', (fileSource) => ({
+fileColumnRegistrar.registerColumn('icon', (source) => ({
   draw(row, node) {
     if (node.directory) {
       if (enableNerdfont) {
         row.add(
-          fileSource.expandStore.isExpanded(node)
+          source.expandStore.isExpanded(node)
             ? nerdfontJson.icons.folderOpened.code
             : nerdfontJson.icons.folderClosed.code,
           filenameHighlights.directory,
         );
       } else {
         row.add(
-          fileSource.expandStore.isExpanded(node) ? sourceIcons.expanded : sourceIcons.shrinked,
+          source.expandStore.isExpanded(node) ? sourceIcons.expanded : sourceIcons.shrinked,
           filenameHighlights.directory,
         );
       }

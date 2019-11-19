@@ -21,17 +21,17 @@ type FilenameAttr = {
   truncatedLinkTarget?: string;
 };
 
-function getFilenameAttr(fileSource: FileSource, node: FileNode) {
+function getFilenameAttr(source: FileSource, node: FileNode) {
   if (!Reflect.has(node, attrSymbol)) {
     Reflect.set(node, attrSymbol, {
-      indentWidth: indentWidth(fileSource, node),
+      indentWidth: indentWidth(source, node),
     } as FilenameAttr);
   }
   return Reflect.get(node, attrSymbol) as FilenameAttr;
 }
 
-function indentWidth(fileSource: FileSource, node: FileNode) {
-  if (fileSource.columnManager.columnNames.includes('indent') || fileSource.columnManager.columnNames.includes('indentLine')) {
+function indentWidth(source: FileSource, node: FileNode) {
+  if (source.columnManager.columnNames.includes('indent') || source.columnManager.columnNames.includes('indentLine')) {
     return indentChars.length * (node.level - (topLevel ? 0 : 1));
   } else {
     return 0;
@@ -40,7 +40,7 @@ function indentWidth(fileSource: FileSource, node: FileNode) {
 
 const truncateCache: Map<string, [string, string]> = new Map();
 async function loadTruncateNodes(
-  fileSource: FileSource,
+  source: FileSource,
   fullTreeWidth: number,
   flatNodes: FileNode[],
 ) {
@@ -59,25 +59,25 @@ async function loadTruncateNodes(
         : '';
       const key = [node.level, name, linkTarget].join('-');
       if (!truncateCache.has(key)) {
-        const remainWidth = fullTreeWidth - getFilenameAttr(fileSource, node).indentWidth;
+        const remainWidth = fullTreeWidth - getFilenameAttr(source, node).indentWidth;
         truncateCache.set(
           key,
           await nvim.call('coc_explorer#truncate', [name, linkTarget, remainWidth, '..']),
         );
       }
       const cache = truncateCache.get(key)!;
-      getFilenameAttr(fileSource, node).truncatedName = cache[0];
-      getFilenameAttr(fileSource, node).truncatedLinkTarget = cache[1];
+      getFilenameAttr(source, node).truncatedName = cache[0];
+      getFilenameAttr(source, node).truncatedLinkTarget = cache[1];
     }),
   );
 }
 
-fileColumnRegistrar.registerColumn('filename', (fileSource) => ({
+fileColumnRegistrar.registerColumn('filename', (source) => ({
   async beforeDraw(nodes) {
-    await loadTruncateNodes(fileSource, width, nodes);
+    await loadTruncateNodes(source, width, nodes);
   },
   draw(row, node) {
-    const attr = getFilenameAttr(fileSource, node);
+    const attr = getFilenameAttr(source, node);
     if (node.directory) {
       row.add(attr.truncatedName!, highlights.directory);
       row.add(attr.truncatedLinkTarget!, highlights.linkTarget);

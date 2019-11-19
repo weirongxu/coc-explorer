@@ -24,8 +24,6 @@ import './load';
 import { filesList } from '../../../lists/files';
 import { initFileActions } from './file-actions';
 import { homedir } from 'os';
-import { DiagnosticIndexes } from '../../../indexes/diagnostic-indexes';
-import { GitIndexes } from '../../../indexes/git-indexes';
 
 export type FileNode = {
   uid: string;
@@ -64,7 +62,6 @@ export class FileSource extends ExplorerSource<FileNode> {
   cutNodes: Set<FileNode> = new Set();
   diagnosisLineIndexes: number[] = [];
   gitChangedLineIndexes: number[] = [];
-  gitIndexes = new GitIndexes(this);
   rootNode = {
     uid: this.sourceName + '//',
     level: 0,
@@ -100,13 +97,6 @@ export class FileSource extends ExplorerSource<FileNode> {
     const { nvim } = this;
 
     await this.columnManager.registerColumns(this.explorer.args.fileColumns, fileColumnRegistrar);
-
-    let diagnosticIndexes: DiagnosticIndexes | undefined;
-
-    if (this.columnManager.columnNames.includes('diagnostic')) {
-      diagnosticIndexes = new DiagnosticIndexes(this);
-      this.explorer.indexesManager.addIndexes('diagnostic', diagnosticIndexes);
-    }
 
     if (activeMode) {
       if (!workspace.env.isVim) {
@@ -282,7 +272,7 @@ export class FileSource extends ExplorerSource<FileNode> {
     await super.loaded(sourceNode);
   }
 
-  drawNode(node: FileNode, prevNode: FileNode, nextNode: FileNode) {
+  drawNode(node: FileNode, nodeIndex: number, prevNode: FileNode, nextNode: FileNode) {
     if (!node.parent) {
       node.drawnLine = this.viewBuilder.drawLine((row) => {
         row.add(this.expanded ? sourceIcons.expanded : sourceIcons.shrinked, highlights.expandIcon);
@@ -300,7 +290,7 @@ export class FileSource extends ExplorerSource<FileNode> {
       node.isLastInLevel = nextNodeLevel < node.level;
 
       node.drawnLine = this.viewBuilder.drawLine((row) => {
-        this.columnManager.draw(node, row);
+        this.columnManager.draw(row, node, nodeIndex);
       });
     }
   }

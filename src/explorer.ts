@@ -107,6 +107,39 @@ export class Explorer {
       },
       'go to previous source',
     );
+
+    this.addGlobalAction(
+      'diagnosticPrev',
+      async () => {
+        await this.gotoPrevLineIndex('diagnosticError', 'diagnosticWarning');
+      },
+      'go to previous diagnostic',
+    );
+
+    this.addGlobalAction(
+      'diagnosticNext',
+      async () => {
+        await this.gotoNextLineIndex('diagnosticError', 'diagnosticWarning');
+      },
+      'go to next diagnostic',
+    );
+
+
+    this.addGlobalAction(
+      'gitPrev',
+      async () => {
+        await this.gotoPrevLineIndex('git');
+      },
+      'go to previous git changed',
+    );
+
+    this.addGlobalAction(
+      'gitNext',
+      async () => {
+        await this.gotoNextLineIndex('git');
+      },
+      'go to next git changed',
+    );
   }
 
   get args(): Args {
@@ -389,6 +422,32 @@ export class Explorer {
       // tslint:disable-next-line: ban
       workspace.showMessage(`action(${actionDisplay}): ${Date.now() - now}ms`, 'more');
     }
+  }
+
+  addIndexes(name: string, index: number) {
+    this.indexesManager.addLine(name, index);
+  }
+
+  removeIndexes(name: string, index: number) {
+    this.indexesManager.removeLine(name, index);
+  }
+
+  async gotoPrevLineIndex(...names: string[]) {
+    const lineIndex = await this.indexesManager.prevLineIndex(...names);
+    if (lineIndex) {
+      await this.gotoLineIndex(lineIndex);
+      return true;
+    }
+    return false;
+  }
+
+  async gotoNextLineIndex(...names: string[]) {
+    const lineIndex = await this.indexesManager.nextLineIndex(...names);
+    if (lineIndex) {
+      await this.gotoLineIndex(lineIndex);
+      return true;
+    }
+    return false;
   }
 
   private findSourceByLineIndex(lineIndex: number) {

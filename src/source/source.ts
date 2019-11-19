@@ -4,7 +4,7 @@ import { explorerActionList } from '../lists/actions';
 import { Explorer } from '../explorer';
 import { onError } from '../logger';
 import { Action, ActionSyms, mappings, reverseMappings, ActionMode } from '../mappings';
-import { config, execNotifyBlock, findLast } from '../util';
+import { config, execNotifyBlock } from '../util';
 import { SourceRowBuilder, SourceViewBuilder } from './view-builder';
 import { hlGroupManager } from './highlight-manager';
 import { ColumnManager } from './column-manager';
@@ -149,113 +149,6 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>> {
       },
       'toggle node selection',
       { multi: false, select: true },
-    );
-
-    this.addAction(
-      'diagnosticPrev',
-      async (nodes) => {
-        const node = nodes ? nodes[0] : this.rootNode;
-        if (this instanceof FileSource) {
-          const lineIndex = this.getLineByNode(node);
-          const prevIndex = findLast(this.diagnosisLineIndexes, (idx) => idx < lineIndex);
-          if (prevIndex !== undefined) {
-            await this.gotoLineIndex(prevIndex);
-          }
-        }
-        const fileSource = findLast(
-          this.explorer.sources.slice(0, this.currentSourceIndex()),
-          (source) => source instanceof FileSource && source.diagnosisLineIndexes.length > 0,
-        ) as undefined | FileSource;
-        if (fileSource) {
-          const prevIndex =
-            fileSource.diagnosisLineIndexes[fileSource.diagnosisLineIndexes.length - 1];
-          if (prevIndex !== undefined) {
-            await fileSource.gotoLineIndex(prevIndex);
-          }
-        }
-      },
-      'go to previous diagnostic',
-    );
-
-    this.addAction(
-      'diagnosticNext',
-      async (nodes) => {
-        const node = nodes ? nodes[0] : this.rootNode;
-        if (this instanceof FileSource) {
-          const lineIndex = this.getLineByNode(node);
-          const nextIndex = this.diagnosisLineIndexes.find((idx) => idx > lineIndex);
-          if (nextIndex !== undefined) {
-            await this.gotoLineIndex(nextIndex);
-            return;
-          }
-        }
-        const fileSource = this.explorer.sources
-          .slice(this.currentSourceIndex() + 1)
-          .find(
-            (source) => source instanceof FileSource && source.diagnosisLineIndexes.length > 0,
-          ) as undefined | FileSource;
-        if (fileSource) {
-          const nextIndex = fileSource.diagnosisLineIndexes[0];
-          if (nextIndex !== undefined) {
-            await fileSource.gotoLineIndex(nextIndex);
-          }
-        }
-      },
-      'go to next diagnostic',
-    );
-
-    this.addAction(
-      'gitPrev',
-      async (nodes) => {
-        const node = nodes ? nodes[0] : this.rootNode;
-        if (this instanceof FileSource) {
-          const lineIndex = this.getLineByNode(node);
-          const prevIndex = findLast(this.gitChangedLineIndexes, (idx) => idx < lineIndex);
-          if (prevIndex !== undefined) {
-            await this.gotoLineIndex(prevIndex);
-            return;
-          }
-        }
-        const fileSource = findLast(
-          this.explorer.sources.slice(0, this.currentSourceIndex()),
-          (source) => source instanceof FileSource && source.gitChangedLineIndexes.length > 0,
-        ) as undefined | FileSource;
-        if (fileSource) {
-          const prevIndex =
-            fileSource.gitChangedLineIndexes[fileSource.gitChangedLineIndexes.length - 1];
-          if (prevIndex !== undefined) {
-            await fileSource.gotoLineIndex(prevIndex);
-          }
-        }
-      },
-      'go to previous git changed',
-    );
-
-    this.addAction(
-      'gitNext',
-      async (nodes) => {
-        const node = nodes ? nodes[0] : this.rootNode;
-        if (this instanceof FileSource) {
-          const lineIndex = this.getLineByNode(node);
-          const nextIndex = this.gitChangedLineIndexes.find((idx) => idx > lineIndex);
-          if (nextIndex !== undefined) {
-            await this.gotoLineIndex(nextIndex);
-            return;
-          }
-        }
-        const fileSource = this.explorer.sources
-          .slice(this.currentSourceIndex() + 1)
-          .find(
-            (source) => source instanceof FileSource && source.gitChangedLineIndexes.length > 0,
-          ) as undefined | FileSource;
-        if (fileSource) {
-          const nextIndex = fileSource.gitChangedLineIndexes[0];
-          if (nextIndex !== undefined) {
-            await fileSource.gotoLineIndex(nextIndex);
-          }
-        }
-      },
-      'go to next git changed',
     );
 
     setImmediate(() => {
@@ -418,6 +311,14 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>> {
     }
   }
 
+  addIndexes(name: string, relativeIndex: number) {
+    this.explorer.addIndexes(name, relativeIndex + this.startLine);
+  }
+
+  removeIndexes(name: string, relativeIndex: number) {
+    this.explorer.removeIndexes(name, relativeIndex + this.startLine);
+  }
+
   async copy(content: string) {
     await this.nvim.call('setreg', ['+', content]);
     await this.nvim.call('setreg', ['"', content]);
@@ -526,7 +427,12 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>> {
     return this.columnManager.beforeDraw(nodes);
   }
 
-  abstract drawNode(node: TreeNode, prevNode: TreeNode, nextNode: TreeNode): void | Promise<void>;
+  abstract drawNode(
+    node: TreeNode,
+    nodeIndex: number,
+    prevNode: TreeNode,
+    nextNode: TreeNode,
+  ): void | Promise<void>;
 
   flattenByNode(node: TreeNode) {
     return [node, ...(node.children ? this.flattenByNodes(node.children) : [])];
@@ -556,15 +462,12 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>> {
 
     for (let i = 0, len = nodes.length; i < len; i++) {
       const node = nodes[i];
-      const prevNode =
-        i === 0
-          ? this.flattenedNodes[this.flattenedNodes.findIndex((it) => it.uid === node.uid) - 1]
-          : nodes[i - 1];
-      const nextNode =
-        i === len - 1
-          ? this.flattenedNodes[this.flattenedNodes.findIndex((it) => it.uid === node.uid) + 1]
-          : nodes[i + 1];
-      await this.drawNode(node, prevNode, nextNode);
+      const nodeIndex = this.flattenedNodes.findIndex((it) => it.uid === node.uid);
+      if (nodeIndex > -1) {
+        const prevNode = i === 0 ? this.flattenedNodes[nodeIndex - 1] : nodes[i - 1];
+        const nextNode = i === len - 1 ? this.flattenedNodes[nodeIndex + 1] : nodes[i + 1];
+        await this.drawNode(node, nodeIndex, prevNode, nextNode);
+      }
     }
   }
 
@@ -586,12 +489,12 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>> {
     }
   }
 
-  private offsetAfterLine(afterLine: number, offset: number) {
-    this.explorer.indexesManager.offsetLines(this.startLine + afterLine + 1, offset);
+  private offsetAfterLine(offset: number, afterLine: number) {
+    this.explorer.indexesManager.offsetLines(offset, this.startLine + afterLine + 1);
     this.endLine += offset;
     this.explorer.sources.slice(this.currentSourceIndex() + 1).forEach((source) => {
       source.startLine += offset;
-      source.endLine += offset;
+      source.offsetAfterLine(offset, source.startLine);
     });
   }
 
@@ -620,12 +523,12 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>> {
       }
       if (this.expandStore.isExpanded(node) && node.children) {
         const flattenedNodes = this.flattenByNode(node);
-        await this.drawNodes(flattenedNodes);
         this.flattenedNodes = this.flattenedNodes
           .slice(0, nodeIndex)
           .concat(flattenedNodes)
           .concat(this.flattenedNodes.slice(endIndex));
-        this.offsetAfterLine(nodeIndex + 1, flattenedNodes.length - (endIndex - (nodeIndex + 1)));
+        this.offsetAfterLine(flattenedNodes.length - 1, nodeIndex + 1);
+        await this.drawNodes(flattenedNodes);
         await this.setLines(
           flattenedNodes.map((node) => node.drawnLine),
           nodeIndex,
@@ -677,9 +580,13 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>> {
           break;
         }
       }
-      await this.drawNodes([node]);
       this.flattenedNodes.splice(nodeIndex + 1, endIndex - (nodeIndex + 1));
-      this.offsetAfterLine(endIndex, -(endIndex - (nodeIndex + 1)));
+      this.explorer.indexesManager.removeLines(
+        this.startLine + nodeIndex + 1,
+        this.startLine + endIndex,
+      );
+      this.offsetAfterLine(-(endIndex - (nodeIndex + 1)), endIndex);
+      await this.drawNodes([node]);
       await this.setLines([node.drawnLine], nodeIndex, endIndex, true);
     }, notify);
   }
@@ -749,8 +656,17 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>> {
     }
 
     await execNotifyBlock(async () => {
+      const oldHeight = this.flattenedNodes.length;
       this.flattenedNodes = this.flattenByNode(this.rootNode);
+      const newHeight = this.flattenedNodes.length;
 
+      if (newHeight < oldHeight) {
+        this.explorer.indexesManager.removeLines(
+          this.startLine + newHeight + 1,
+          this.startLine + oldHeight + 1,
+        );
+      }
+      this.offsetAfterLine(newHeight - oldHeight, this.endLine);
       await this.drawNodes(this.flattenedNodes);
 
       const sourceIndex = this.currentSourceIndex();
@@ -759,17 +675,9 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>> {
       await this.explorer.setLines(
         this.flattenedNodes.map((node) => node.drawnLine),
         this.startLine,
-        isLastSource ? -1 : this.endLine,
+        isLastSource ? -1 : this.startLine + oldHeight,
         true,
       );
-
-      // Update the startLine and endLine in the below
-      let lineNumber = this.startLine;
-      this.explorer.sources.slice(sourceIndex).forEach((source) => {
-        source.startLine = lineNumber;
-        lineNumber += source.height;
-        source.endLine = lineNumber;
-      });
 
       if (restore) {
         await restore(true);
@@ -877,5 +785,3 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>> {
     }
   }
 }
-
-import { FileSource } from './sources/file/file-source';

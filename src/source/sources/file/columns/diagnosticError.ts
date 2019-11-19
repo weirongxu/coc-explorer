@@ -1,22 +1,23 @@
 import { fileColumnRegistrar } from '../file-column-registrar';
 import { hlGroupManager } from '../../../highlight-manager';
 import { diagnosticManager } from '../../../../diagnostic-manager';
-import { config, max } from '../../../../util';
+import { config } from '../../../../util';
 
 const diagnosticCountMax = config.get<number>('file.diagnosticCountMax')!;
 let errorMixedCountStr: Record<string, string> = {};
-let errorMaxWidth = 0;
+const errorMaxWidth = diagnosticCountMax.toString().length;
 
 const highlights = {
   error: hlGroupManager.linkGroup('FileDiagnosticError', 'CocErrorSign'),
 };
 
-fileColumnRegistrar.registerColumn('diagnosticError', (fileSource) => ({
+fileColumnRegistrar.registerColumn('diagnosticError', (source) => ({
+  concealable: hlGroupManager.concealable('FileDiagnosticError'),
   reload() {
-    diagnosticManager.errorReload(fileSource.root);
+    diagnosticManager.errorReload(source.root);
   },
   beforeDraw() {
-    fileSource.diagnosisLineIndexes = [];
+    source.diagnosisLineIndexes = [];
 
     errorMixedCountStr = {};
     Object.entries(diagnosticManager.errorMixedCount).forEach(([fullpath, count]) => {
@@ -26,23 +27,26 @@ fileColumnRegistrar.registerColumn('diagnosticError', (fileSource) => ({
         errorMixedCountStr[fullpath] = count.toString();
       }
     });
-    errorMaxWidth = max(Object.values(errorMixedCountStr).map((d) => d.length));
-  },
-  draw(row, node) {
-    if (Object.keys(diagnosticManager.errorMixedCount).length > 0) {
-      if (node.fullpath in diagnosticManager.errorMixedCount) {
-        if (node.directory && fileSource.expandStore.isExpanded(node)) {
-          row.add(' '.padStart(errorMaxWidth), highlights.error);
-        } else {
-          const count = errorMixedCountStr[node.fullpath];
-          row.add(count.padStart(errorMaxWidth), highlights.error);
-          // TODO remove
-          // fileSource.diagnosisLineIndexes.push(row.line);
-        }
-      } else {
-        row.add(' '.repeat(errorMaxWidth));
-      }
-      row.add(' ');
+    if (Object.keys(diagnosticManager.errorMixedCount).length) {
+      this.concealable?.show();
+    } else {
+      this.concealable?.hide();
     }
+  },
+  draw(row, node, nodeIndex) {
+    if (node.fullpath in diagnosticManager.errorMixedCount) {
+      if (node.directory && source.expandStore.isExpanded(node)) {
+        row.add(' '.padStart(errorMaxWidth));
+        source.removeIndexes('diagnosticError', nodeIndex);
+      } else {
+        const count = errorMixedCountStr[node.fullpath];
+        row.add(count.padStart(errorMaxWidth), highlights.error);
+        source.addIndexes('diagnosticError', nodeIndex);
+      }
+    } else {
+      row.add(' '.repeat(errorMaxWidth));
+      source.removeIndexes('diagnosticError', nodeIndex);
+    }
+    row.add(' ');
   },
 }));

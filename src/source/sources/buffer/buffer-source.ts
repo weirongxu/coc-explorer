@@ -125,7 +125,7 @@ export class BufferSource extends ExplorerSource<BufferNode> {
     }, []);
   }
 
-  drawNode(node: BufferNode) {
+  drawNode(node: BufferNode, nodeIndex: number) {
     if (!node.parent) {
       node.drawnLine = this.viewBuilder.drawLine((row) => {
         row.add(this.expanded ? sourceIcons.expanded : sourceIcons.shrinked, highlights.expandIcon);
@@ -135,7 +135,7 @@ export class BufferSource extends ExplorerSource<BufferNode> {
     } else {
       node.drawnLine = this.viewBuilder.drawLine((row) => {
         row.add('  ');
-        this.columnManager.draw(node, row);
+        this.columnManager.draw(row, node, nodeIndex);
       });
     }
   }
