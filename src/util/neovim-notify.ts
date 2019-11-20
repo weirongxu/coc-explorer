@@ -8,6 +8,6 @@ export async function execNotifyBlock(block: () => void | Promise<void>, notify 
   }
   await block();
   if (!notify) {
-    await nvim.resumeNotification();
+    return await nvim.resumeNotification();
   }
 }

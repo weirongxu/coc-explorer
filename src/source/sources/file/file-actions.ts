@@ -1,10 +1,9 @@
-import { FileSource, expandStore, FileItem } from './file-source';
+import { FileSource, FileNode } from './file-source';
 import pathLib from 'path';
 import {
   openStrategy,
   avoidOnBufEnter,
   execNotifyBlock,
-  config,
   fsExists,
   copyFileOrDirectory,
   fsRename,
@@ -30,19 +29,11 @@ export function initFileActions(file: FileSource) {
   const { nvim } = file;
 
   file.addAction(
-    'toggleHidden',
-    async () => {
-      file.showHiddenFiles = !file.showHiddenFiles;
-    },
-    'toggle visibility of hidden files',
-    { render: true, multi: false },
-  );
-  file.addAction(
     'gotoParent',
     async () => {
       file.root = pathLib.dirname(file.root);
-      expandStore.expand(file.root);
-      await file.reload(null);
+      file.expandStore.expand(file.rootNode);
+      await file.reload(file.rootNode);
     },
     'change directory to parent directory',
     { multi: false },
@@ -51,25 +42,23 @@ export function initFileActions(file: FileSource) {
   file.addRootAction(
     'expand',
     async () => {
-      expandStore.expand(file.root);
-      await file.reload(null);
+      file.expanded = true;
+      await file.reload(file.rootNode);
     },
     'expand root node',
   );
   file.addRootAction(
     'expandRecursive',
     async () => {
-      expandStore.expand(file.root);
-      await file.reload(null, { render: false });
-      await file.expandRecursiveItems(file.items);
+      await file.expandNode(file.rootNode, { recursive: true });
     },
     'expand root node recursively',
   );
   file.addRootAction(
     'shrink',
     async () => {
-      expandStore.shrink(file.root);
-      await file.reload(null);
+      file.expanded = false;
+      await file.reload(file.rootNode);
       await file.gotoRoot();
     },
     'shrink root node',
@@ -77,34 +66,33 @@ export function initFileActions(file: FileSource) {
   file.addRootAction(
     'shrinkRecursive',
     async () => {
-      expandStore.shrink(file.root);
-      await file.shrinkRecursiveItems(file.items);
-      await file.render();
+      file.expanded = false;
+      await file.shrinkNode(file.rootNode);
       await file.gotoRoot();
     },
     'shrink root node recursively',
   );
 
-  file.addItemAction(
+  file.addNodeAction(
     'cd',
-    async (item) => {
-      if (item.directory) {
-        file.root = item.fullpath;
-        expandStore.expand(file.root);
-        await file.reload(item);
+    async (node) => {
+      if (node.directory) {
+        file.root = node.fullpath;
+        file.expanded = true;
+        await file.reload(file.rootNode);
       }
     },
     'change directory to current node',
     { multi: false },
   );
-  file.addItemAction(
+  file.addNodeAction(
     'open',
-    async (item) => {
-      if (item.directory) {
-        await file.doAction('cd', item);
+    async (node) => {
+      if (node.directory) {
+        await file.doAction('cd', node);
       } else {
         if (openStrategy === 'vsplit') {
-          await file.doAction('openInVsplit', item);
+          await file.doAction('openInVsplit', node);
           await file.quitOnOpen();
         } else if (openStrategy === 'select') {
           await file.explorer.selectWindowsUI(
@@ -112,11 +100,11 @@ export function initFileActions(file: FileSource) {
               await avoidOnBufEnter(async () => {
                 await file.nvim.command(`${winnr}wincmd w`);
               });
-              await nvim.command(`edit ${item.fullpath}`);
+              await nvim.command(`edit ${node.fullpath}`);
               await file.quitOnOpen();
             },
             async () => {
-              await file.doAction('openInVsplit', item);
+              await file.doAction('openInVsplit', node);
               await file.quitOnOpen();
             },
           );
@@ -126,9 +114,9 @@ export function initFileActions(file: FileSource) {
             await avoidOnBufEnter(async () => {
               await nvim.command(`${prevWinnr}wincmd w`);
             });
-            await nvim.command(`edit ${item.fullpath}`);
+            await nvim.command(`edit ${node.fullpath}`);
           } else {
-            await file.doAction('openInVsplit', item);
+            await file.doAction('openInVsplit', node);
           }
           await file.quitOnOpen();
         }
@@ -137,26 +125,28 @@ export function initFileActions(file: FileSource) {
     'open file or directory',
     { multi: false },
   );
-  file.addItemAction(
+  file.addNodeAction(
     'openInSplit',
-    async (item) => {
-      if (!item.directory) {
-        await nvim.command(`split ${item.fullpath}`);
+    async (node) => {
+      if (!node.directory) {
+        await nvim.command(`split ${node.fullpath}`);
         await file.quitOnOpen();
       }
     },
     'open file via split command',
   );
-  file.addItemAction(
+  file.addNodeAction(
     'openInVsplit',
-    async (item) => {
-      if (!item.directory) {
+    async (node) => {
+      if (!node.directory) {
         await execNotifyBlock(async () => {
-          nvim.command(`vsplit ${item.fullpath}`, true);
+          nvim.command(`vsplit ${node.fullpath}`, true);
           if (file.explorer.args.position === 'left') {
             nvim.command('wincmd L', true);
           } else if (file.explorer.args.position === 'right') {
             nvim.command('wincmd H', true);
+          } else if (file.explorer.args.position === 'tab') {
+            nvim.command('wincmd L', true);
           }
           await file.quitOnOpen();
         });
@@ -164,72 +154,55 @@ export function initFileActions(file: FileSource) {
     },
     'open file via vsplit command',
   );
-  file.addItemAction(
+  file.addNodeAction(
     'openInTab',
-    async (item) => {
-      if (!item.directory) {
+    async (node) => {
+      if (!node.directory) {
         await file.quitOnOpen();
-        await nvim.command(`tabedit ${item.fullpath}`);
+        await nvim.command(`tabedit ${node.fullpath}`);
       }
     },
     'open file in tab',
   );
-  file.addItemAction(
+  file.addNodeAction(
     'drop',
-    async (item) => {
-      if (item.directory) {
-        await file.doAction('expand', item);
+    async (node) => {
+      if (node.directory) {
+        await file.doAction('expand', node);
       } else {
-        await nvim.command(`drop ${item.fullpath}`);
+        await nvim.command(`drop ${node.fullpath}`);
         await file.quitOnOpen();
       }
     },
     'open file via drop command',
   );
-  file.addItemAction(
+  file.addNodeAction(
     'expand',
-    async (item) => {
-      if (item.directory) {
-        const expandRecursive = async (item: FileItem) => {
-          expandStore.expand(item.fullpath);
-          if (!item.children) {
-            item.children = await file.listFiles(item.fullpath, item);
-          }
-          if (
-            item.children.length === 1 &&
-            item.children[0].directory &&
-            config.get<boolean>('file.autoExpandSingleDirectory')!
-          ) {
-            await expandRecursive(item.children[0]);
-          }
-        };
-        await expandRecursive(item);
-        await file.render();
+    async (node) => {
+      if (node.directory) {
+        await file.expandNode(node);
       } else {
-        await file.doAction('open', item);
+        await file.doAction('open', node);
       }
     },
     'expand directory or open file',
   );
-  file.addItemAction(
+  file.addNodeAction(
     'expandRecursive',
-    async (item) => {
-      await file.expandRecursiveItems([item]);
-      await file.render();
+    async (node) => {
+      await file.expandNode(node, { recursive: true });
     },
     'expand directory recursively',
   );
-  file.addItemAction(
+  file.addNodeAction(
     'shrink',
-    async (item) => {
-      if (item.directory && expandStore.isExpanded(item.fullpath)) {
-        expandStore.shrink(item.fullpath);
-        await file.render();
-      } else if (item.parent) {
-        expandStore.shrink(item.parent.fullpath);
+    async (node) => {
+      if (node.directory && file.expandStore.isExpanded(node)) {
+        await file.shrinkNode(node);
+      } else if (node.parent) {
         await execNotifyBlock(async () => {
-          await file.render({ notify: true });
-          await file.gotoItem(item.parent!, { notify: true });
+          await file.shrinkNode(node.parent!, { notify: true });
+          await file.gotoNode(node.parent!, { notify: true });
         });
       } else {
         await file.doRootAction('shrink');
@@ -237,32 +210,30 @@ export function initFileActions(file: FileSource) {
     },
     'shrink directory',
   );
-  file.addItemAction(
+  file.addNodeAction(
     'shrinkRecursive',
-    async (item) => {
-      if (item.directory && expandStore.isExpanded(item.fullpath)) {
-        await file.shrinkRecursiveItems([item]);
-      } else if (item.parent) {
-        expandStore.shrink(item.parent.fullpath);
-        if (item.parent.children) {
-          await file.shrinkRecursiveItems(item.parent.children);
-        }
-        await file.gotoItem(item.parent);
+    async (node) => {
+      if (node.directory && file.expandStore.isExpanded(node)) {
+        await file.shrinkNode(node, { recursive: true });
+      } else if (node.parent) {
+        await execNotifyBlock(async () => {
+          await file.shrinkNode(node.parent!, { notify: true, recursive: true });
+          await file.gotoNode(node.parent!, { notify: true });
+        });
       } else {
         await file.doRootAction('shrinkRecursive');
       }
-      await file.render();
     },
     'shrink directory recursively',
   );
-  file.addItemAction(
+  file.addNodeAction(
     'expandOrShrink',
-    async (item) => {
-      if (item.directory) {
-        if (expandStore.isExpanded(item.fullpath)) {
-          await file.doAction('shrink', item);
+    async (node) => {
+      if (node.directory) {
+        if (file.expandStore.isExpanded(node)) {
+          await file.doAction('shrink', node);
         } else {
-          await file.doAction('expand', item);
+          await file.doAction('expand', node);
         }
       }
     },
@@ -271,8 +242,8 @@ export function initFileActions(file: FileSource) {
 
   file.addAction(
     'copyFilepath',
-    async (items) => {
-      await file.copy(items ? items.map((it) => it.fullpath).join('\n') : file.root);
+    async (nodes) => {
+      await file.copy(nodes ? nodes.map((it) => it.fullpath).join('\n') : file.root);
       // tslint:disable-next-line: ban
       workspace.showMessage('Copy filepath to clipboard');
     },
@@ -280,51 +251,51 @@ export function initFileActions(file: FileSource) {
   );
   file.addAction(
     'copyFilename',
-    async (items) => {
-      await file.copy(items ? items.map((it) => it.name).join('\n') : pathLib.basename(file.root));
+    async (nodes) => {
+      await file.copy(nodes ? nodes.map((it) => it.name).join('\n') : pathLib.basename(file.root));
       // tslint:disable-next-line: ban
       workspace.showMessage('Copy filename to clipboard');
     },
     'copy filename to clipboard',
   );
-  file.addItemsAction(
+  file.addNodesAction(
     'copyFile',
-    async (items) => {
-      file.copyItems.clear();
-      file.cutItems.clear();
-      items.forEach((item) => {
-        file.copyItems.add(item);
+    async (nodes) => {
+      file.copiedNodes.clear();
+      file.cutNodes.clear();
+      nodes.forEach((node) => {
+        file.copiedNodes.add(node);
       });
+      file.requestRenderNodes(nodes);
     },
     'copy file for paste',
-    { render: true },
   );
-  file.addItemsAction(
+  file.addNodesAction(
     'cutFile',
-    async (items) => {
-      file.copyItems.clear();
-      file.cutItems.clear();
-      items.forEach((item) => {
-        file.cutItems.add(item);
+    async (nodes) => {
+      file.copiedNodes.clear();
+      file.cutNodes.clear();
+      nodes.forEach((node) => {
+        file.cutNodes.add(node);
       });
+      file.requestRenderNodes(nodes);
     },
     'cut file for paste',
-    { render: true },
   );
-  file.addItemAction(
+  file.addNodeAction(
     'pasteFile',
-    async (item) => {
-      const targetDir = file.getPutTargetDir(item);
-      const checkItemsExists = async (
-        items: Set<FileItem>,
-        callback: (item: FileItem, targetPath: string) => Promise<void>,
+    async (node) => {
+      const targetDir = file.getPutTargetDir(node);
+      const checkNodesExists = async (
+        nodes: Set<FileNode>,
+        callback: (node: FileNode, targetPath: string) => Promise<void>,
       ) => {
         let canceled = false;
-        for (const item of Array.from(items)) {
+        for (const node of Array.from(nodes)) {
           if (canceled) {
             break;
           }
-          let targetPath = pathLib.join(targetDir, item.name);
+          let targetPath = pathLib.join(targetDir, node.name);
           while (true) {
             if (await fsExists(targetPath)) {
               const answer = await file.explorer.prompt(`${targetPath} already exists. Skip?`, [
@@ -338,55 +309,64 @@ export function initFileActions(file: FileSource) {
                 canceled = true;
                 break;
               } else if (answer === 'rename') {
-                targetPath = (await nvim.call('input', [`Rename: ${targetPath} -> `, targetPath, 'file'])) as string;
+                targetPath = (await nvim.call('input', [
+                  `Rename: ${targetPath} -> `,
+                  targetPath,
+                  'file',
+                ])) as string;
                 continue;
               }
             } else {
-              await callback(item, targetPath);
-              await file.reload(null);
+              await callback(node, targetPath);
+              await file.reload(file.rootNode);
               break;
             }
           }
         }
       };
-      if (file.copyItems.size > 0) {
-        await checkItemsExists(file.copyItems, async (item, targetPath) => {
-          await copyFileOrDirectory(item.fullpath, targetPath);
+      if (file.copiedNodes.size > 0) {
+        await checkNodesExists(file.copiedNodes, async (node, targetPath) => {
+          await copyFileOrDirectory(node.fullpath, targetPath);
         });
-        file.copyItems.clear();
-        await file.render();
-      } else if (file.cutItems.size > 0) {
-        await checkItemsExists(file.cutItems, async (item, targetPath) => {
-          await fsRename(item.fullpath, targetPath);
+        file.requestRenderNodes(Array.from(file.copiedNodes));
+        file.copiedNodes.clear();
+      } else if (file.cutNodes.size > 0) {
+        await checkNodesExists(file.cutNodes, async (node, targetPath) => {
+          await fsRename(node.fullpath, targetPath);
         });
-        file.cutItems.clear();
-        await file.render();
+        file.requestRenderNodes(Array.from(file.cutNodes));
+        file.cutNodes.clear();
       } else {
         // tslint:disable-next-line: ban
-        workspace.showMessage('Copy items or cut items is empty', 'error');
+        workspace.showMessage('Copied files or cut files is empty', 'error');
       }
     },
     'paste files to here',
     { multi: false },
   );
-  file.addItemsAction(
+  file.addNodesAction(
     'delete',
-    async (items) => {
-      const list = items.map((item) => item.fullpath).join('\n');
-      if ((await file.explorer.prompt('Move these files or directories to trash?\n' + list)) === 'yes') {
-        await fsTrash(items.map((item) => item.fullpath));
+    async (nodes) => {
+      const list = nodes.map((node) => node.fullpath).join('\n');
+      if (
+        (await file.explorer.prompt('Move these files or directories to trash?\n' + list)) === 'yes'
+      ) {
+        await fsTrash(nodes.map((node) => node.fullpath));
       }
     },
     'move file or directory to trash',
     { reload: true },
   );
-  file.addItemsAction(
+  file.addNodesAction(
     'deleteForever',
-    async (items) => {
-      const list = items.map((item) => item.fullpath).join('\n');
-      if ((await file.explorer.prompt('Forever delete these files or directories?\n' + list)) === 'yes') {
-        for (const item of items) {
-          await fsRimraf(item.fullpath);
+    async (nodes) => {
+      const list = nodes.map((node) => node.fullpath).join('\n');
+      if (
+        (await file.explorer.prompt('Forever delete these files or directories?\n' + list)) ===
+        'yes'
+      ) {
+        for (const node of nodes) {
+          await fsRimraf(node.fullpath);
         }
       }
     },
@@ -396,20 +376,20 @@ export function initFileActions(file: FileSource) {
 
   file.addAction(
     'addFile',
-    async (items) => {
+    async (nodes) => {
       let filename = (await nvim.call('input', ['Input a new filename: ', '', 'file'])) as string;
       filename = filename.trim();
       if (!filename) {
         return;
       }
-      const targetPath = pathLib.join(file.getPutTargetDir(items ? items[0] : null), filename);
+      const targetPath = pathLib.join(file.getPutTargetDir(nodes ? nodes[0] : null), filename);
       await guardTargetPath(targetPath);
       await fsMkdir(pathLib.dirname(targetPath), { recursive: true });
       await fsTouch(targetPath);
-      await file.reload(null);
-      const addedItem = await file.revealItemByPath(targetPath);
-      if (addedItem) {
-        await file.gotoItem(addedItem);
+      await file.reload(file.rootNode);
+      const addedNode = await file.revealNodeByPath(targetPath);
+      if (addedNode) {
+        await file.gotoNode(addedNode);
       }
     },
     'add a new file',
@@ -417,35 +397,43 @@ export function initFileActions(file: FileSource) {
   );
   file.addAction(
     'addDirectory',
-    async (items) => {
-      let directoryPath = (await nvim.call('input', ['Input a new directory name: ', '', 'file'])) as string;
+    async (nodes) => {
+      let directoryPath = (await nvim.call('input', [
+        'Input a new directory name: ',
+        '',
+        'file',
+      ])) as string;
       directoryPath = directoryPath.trim();
       if (!directoryPath) {
         return;
       }
-      const targetPath = pathLib.join(file.getPutTargetDir(items ? items[0] : null), directoryPath);
+      const targetPath = pathLib.join(file.getPutTargetDir(nodes ? nodes[0] : null), directoryPath);
       await guardTargetPath(targetPath);
       await fsMkdir(targetPath, { recursive: true });
-      await file.reload(null);
-      const addedItem = await file.revealItemByPath(targetPath);
-      if (addedItem) {
-        await file.gotoItem(addedItem);
+      await file.reload(file.rootNode);
+      const addedNode = await file.revealNodeByPath(targetPath);
+      if (addedNode) {
+        await file.gotoNode(addedNode);
       }
     },
     'add a new directory',
     { multi: false },
   );
-  file.addItemAction(
+  file.addNodeAction(
     'rename',
-    async (item) => {
-      const targetPath = (await nvim.call('input', [`Rename: ${item.fullpath} ->`, item.fullpath, 'file'])) as string;
+    async (node) => {
+      const targetPath = (await nvim.call('input', [
+        `Rename: ${node.fullpath} ->`,
+        node.fullpath,
+        'file',
+      ])) as string;
       if (targetPath.length == 0) {
         return;
       }
       await guardTargetPath(targetPath);
       await fsMkdir(pathLib.dirname(targetPath), { recursive: true });
-      await fsRename(item.fullpath, targetPath);
-      await file.reload(null);
+      await fsRename(node.fullpath, targetPath);
+      await file.reload(file.rootNode);
     },
     'rename a file or directory',
     { multi: false },
@@ -453,9 +441,9 @@ export function initFileActions(file: FileSource) {
 
   file.addAction(
     'systemExecute',
-    async (items) => {
-      if (items) {
-        await Promise.all(items.map((item) => open(item.fullpath)));
+    async (nodes) => {
+      if (nodes) {
+        await Promise.all(nodes.map((node) => open(node.fullpath)));
       } else {
         await open(file.root);
       }
@@ -474,8 +462,8 @@ export function initFileActions(file: FileSource) {
             name: drive,
             callback: async (drive) => {
               file.root = drive + '\\';
-              expandStore.expand(file.root);
-              await file.reload(null);
+              file.expanded = true;
+              await file.reload(file.rootNode);
             },
           })),
         );
@@ -490,8 +478,8 @@ export function initFileActions(file: FileSource) {
 
   file.addAction(
     'search',
-    async (items) => {
-      await file.searchByCocList(items ? pathLib.dirname(items[0].fullpath) : file.root, false);
+    async (nodes) => {
+      await file.searchByCocList(nodes ? pathLib.dirname(nodes[0].fullpath) : file.root, false);
     },
     'search by coc-list',
     { multi: false },
@@ -499,27 +487,27 @@ export function initFileActions(file: FileSource) {
 
   file.addAction(
     'searchRecursive',
-    async (items) => {
-      await file.searchByCocList(items ? pathLib.dirname(items[0].fullpath) : file.root, true);
+    async (nodes) => {
+      await file.searchByCocList(nodes ? pathLib.dirname(nodes[0].fullpath) : file.root, true);
     },
     'search by coc-list recursively',
     { multi: false },
   );
 
-  file.addItemsAction(
+  file.addNodesAction(
     'gitStage',
-    async (items) => {
-      await gitManager.cmd.stage(...items.map((item) => item.fullpath));
-      await file.reload(null);
+    async (nodes) => {
+      await gitManager.cmd.stage(...nodes.map((node) => node.fullpath));
+      await file.reload(file.rootNode);
     },
     'add file to git index',
   );
 
-  file.addItemsAction(
+  file.addNodesAction(
     'gitUnstage',
-    async (items) => {
-      await gitManager.cmd.unstage(...items.map((item) => item.fullpath));
-      await file.reload(null);
+    async (nodes) => {
+      await gitManager.cmd.unstage(...nodes.map((node) => node.fullpath));
+      await file.reload(file.rootNode);
     },
     'reset file from git index',
   );

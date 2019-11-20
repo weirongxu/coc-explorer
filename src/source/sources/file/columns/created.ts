@@ -1,19 +1,18 @@
-import { fileColumnManager } from '../column-manager';
+import { fileColumnRegistrar } from '../file-column-registrar';
 import { hlGroupManager } from '../../../highlight-manager';
 import dayjs from 'dayjs';
 
 const highlights = {
-  time: hlGroupManager.hlLinkGroupCommand('TimeCreated', 'Identifier'),
+  time: hlGroupManager.linkGroup('TimeCreated', 'Identifier'),
 };
-hlGroupManager.register(highlights);
 
-fileColumnManager.registerColumn('created', {
-  draw(row, item) {
-    if (item.lstat) {
-      row.add(dayjs(item.lstat.ctime).format('YY/MM/DD HH:mm:ss'), highlights.time);
+fileColumnRegistrar.registerColumn('created', () => ({
+  draw(row, node) {
+    if (node.lstat) {
+      row.add(dayjs(node.lstat.ctime).format('YY/MM/DD HH:mm:ss'), highlights.time);
     } else {
       row.add('                 ');
     }
     row.add(' ');
   },
-});
+}));

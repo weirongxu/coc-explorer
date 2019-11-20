@@ -1,16 +1,15 @@
-import { bufferColumnManager } from '../column-manager';
+import { bufferColumnRegistrar } from '../buffer-column-registrar';
 import { hlGroupManager } from '../../../highlight-manager';
 
 const highlights = {
-  bufname: hlGroupManager.hlLinkGroupCommand('BufferBufname', 'Comment'),
+  bufname: hlGroupManager.linkGroup('BufferBufname', 'Comment'),
 };
-hlGroupManager.register(highlights);
 
-bufferColumnManager.registerColumn('bufname', {
-  draw(row, item) {
-    if (item.basename !== item.bufname) {
-      row.add(item.bufname, highlights.bufname);
+bufferColumnRegistrar.registerColumn('bufname', () => ({
+  draw(row, node) {
+    if (node.basename !== node.bufname) {
+      row.add(node.bufname, highlights.bufname);
       row.add(' ');
     }
   },
-});
+}));

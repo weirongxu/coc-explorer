@@ -12,6 +12,7 @@ export * from './throttle-debounce';
 export * from './vim';
 export * from './platform';
 export * from './cli';
+export * from './function';
 
 export const outputChannel = workspace.createOutputChannel('explorer');
 

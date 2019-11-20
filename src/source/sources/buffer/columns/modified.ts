@@ -1,15 +1,13 @@
-import { bufferColumnManager } from '../column-manager';
+import { bufferColumnRegistrar } from '../buffer-column-registrar';
 import { hlGroupManager } from '../../../highlight-manager';
 
 const highlights = {
-  modified: hlGroupManager.hlLinkGroupCommand('BufferModified', 'Operator'),
+  modified: hlGroupManager.linkGroup('BufferModified', 'Operator'),
 };
 
-hlGroupManager.register(highlights);
-
-bufferColumnManager.registerColumn('modified', {
-  draw(row, item) {
-    row.add(item.modified ? '+' : item.modifiable ? '' : '-', highlights.modified);
+bufferColumnRegistrar.registerColumn('modified', () => ({
+  draw(row, node) {
+    row.add(node.modified ? '+' : node.modifiable ? '' : '-', highlights.modified);
     row.add(' ');
   },
-});
+}));

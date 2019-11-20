@@ -1,8 +1,6 @@
-import { events, workspace, listManager } from 'coc.nvim';
+import { workspace, listManager, Uri } from 'coc.nvim';
 import fs from 'fs';
 import pathLib from 'path';
-import { diagnosticManager } from '../../../diagnostic-manager';
-import { gitManager } from '../../../git-manager';
 import { onError } from '../../../logger';
 import {
   activeMode,
@@ -14,23 +12,25 @@ import {
   fsReaddir,
   fsLstat,
   fsStat,
-  debounce,
   normalizePath,
 } from '../../../util';
 import { hlGroupManager } from '../../highlight-manager';
 import { ExplorerSource, sourceIcons } from '../../source';
 import { sourceManager } from '../../source-manager';
-import { SourceViewBuilder } from '../../view-builder';
-import { fileColumnManager } from './column-manager';
+import { fileColumnRegistrar } from './file-column-registrar';
 import './load';
 import { filesList } from '../../../lists/files';
-import { URI } from 'vscode-uri';
 import { initFileActions } from './file-actions';
+import { homedir } from 'os';
 
-export type FileItem = {
+export type FileNode = {
   uid: string;
-  name: string;
   level: number;
+  drawnLine: string;
+  parent?: FileNode;
+  children?: FileNode[];
+  expandable: boolean;
+  name: string;
   fullpath: string;
   directory: boolean;
   readonly: boolean;
@@ -42,146 +42,106 @@ export type FileItem = {
   lstat: fs.Stats | null;
   isFirstInLevel: boolean;
   isLastInLevel: boolean;
-  parent?: FileItem;
-  children?: FileItem[];
   data: Record<string, any>;
 };
 
-export const expandStore = {
-  record: {} as Record<string, boolean>,
-  expand(path: string) {
-    this.record[path] = true;
-  },
-  shrink(path: string) {
-    this.record[path] = false;
-  },
-  isExpanded(path: string) {
-    return this.record[path] || false;
-  },
-};
-
-const hl = hlGroupManager.hlLinkGroupCommand.bind(hlGroupManager);
+const hl = hlGroupManager.linkGroup.bind(hlGroupManager);
 const highlights = {
   title: hl('FileRoot', 'Constant'),
   name: hl('FileRootName', 'Identifier'),
   expandIcon: hl('FileExpandIcon', 'Direcoty'),
   fullpath: hl('FileFullpath', 'Comment'),
 };
-hlGroupManager.register(highlights);
 
-export class FileSource extends ExplorerSource<FileItem> {
-  name = 'file';
-  hlSrcId = workspace.createNameSpace('coc-explorer-file');
+export class FileSource extends ExplorerSource<FileNode> {
   hlRevealedLineSrcId = workspace.createNameSpace('coc-explorer-file-revealed-line');
-  root!: string;
-  showHiddenFiles: boolean = config.get<boolean>('file.showHiddenFiles')!;
-  copyItems: Set<FileItem> = new Set();
-  cutItems: Set<FileItem> = new Set();
-  diagnosisLineIndexes: number[] = [];
-  gitChangedLineIndexes: number[] = [];
+  showHidden: boolean = config.get<boolean>('file.showHiddenFiles')!;
+  copiedNodes: Set<FileNode> = new Set();
+  cutNodes: Set<FileNode> = new Set();
+  rootNode: FileNode = {
+    uid: this.sourceName + '//',
+    level: 0,
+    drawnLine: '',
+    name: 'root',
+    fullpath: homedir(),
+    expandable: true,
+    directory: true,
+    readonly: true,
+    executable: false,
+    readable: true,
+    writable: true,
+    hidden: false,
+    symbolicLink: true,
+    lstat: null,
+    isFirstInLevel: true,
+    isLastInLevel: true,
+    data: {},
+  };
+
+  get root() {
+    return this.rootNode.fullpath;
+  }
+
+  set root(root: string) {
+    this.rootNode.fullpath = root;
+    this.rootNode.children = undefined;
+  }
 
   async init() {
     const { nvim } = this;
 
-    await fileColumnManager.init(this);
+    await this.columnManager.registerColumns(this.explorer.args.fileColumns, fileColumnRegistrar);
 
     if (activeMode) {
-      this.explorer.onDidInit.event(() => {
-        if (!workspace.env.isVim) {
-          if (autoReveal) {
-            onBufEnter(200, async (bufnr) => {
-              if (bufnr !== this.explorer.bufnr) {
-                const bufinfo = await nvim.call('getbufinfo', [bufnr]);
-                if (bufinfo[0] && bufinfo[0].name) {
-                  const item = await this.revealItemByPath(bufinfo[0].name);
-                  if (item !== null) {
-                    await execNotifyBlock(async () => {
-                      await this.render({ storeCursor: false, notify: true });
-                      await this.gotoItem(item, { notify: true });
-                      nvim.command('redraw', true);
-                    });
-                  }
-                }
-              }
-            });
-          }
-
-          events.on(
-            'BufWritePost',
-            debounce(1000, async (bufnr) => {
+      if (!workspace.env.isVim) {
+        if (autoReveal) {
+          onBufEnter(200, async (bufnr) => {
+            if (bufnr !== this.explorer.bufnr) {
               const bufinfo = await nvim.call('getbufinfo', [bufnr]);
               if (bufinfo[0] && bufinfo[0].name) {
-                await gitManager.reload(pathLib.dirname(bufinfo[0].name as string));
-                await this.render();
-              }
-            }),
-          );
-
-          events.on(
-            ['InsertLeave', 'TextChanged'],
-            debounce(1000, async () => {
-              let needRender = false;
-              if (fileColumnManager.columns.includes('diagnosticError')) {
-                diagnosticManager.errorReload(this.root);
-                if (diagnosticManager.errorNeedRender) {
-                  needRender = true;
-                  diagnosticManager.errorNeedRender = false;
+                const node = await this.revealNodeByPath(bufinfo[0].name);
+                if (node !== null) {
+                  await execNotifyBlock(async () => {
+                    await this.render({ storeCursor: false, notify: true });
+                    await this.gotoNode(node, { notify: true });
+                  });
                 }
               }
-              if (fileColumnManager.columns.includes('diagnosticWarning')) {
-                diagnosticManager.warningReload(this.root);
-                if (diagnosticManager.warningNeedRender) {
-                  needRender = true;
-                  diagnosticManager.warningNeedRender = false;
-                }
-              }
-              if (needRender) {
-                await this.render();
-              }
-            }),
-          );
-        } else {
-          onBufEnter(200, async (bufnr) => {
-            if (bufnr === this.explorer.bufnr) {
-              await this.reload(null);
             }
           });
         }
-      });
+      } else {
+        onBufEnter(200, async (bufnr) => {
+          if (bufnr === this.explorer.bufnr) {
+            await this.reload(this.rootNode);
+          }
+        });
+      }
     }
 
     initFileActions(this);
   }
 
-  opened(_notify = false) {
-    this.root = pathLib.join(this.explorer.rootPath);
-
-    if (this.expanded) {
-      expandStore.expand(this.root);
-    }
-  }
-
-  getPutTargetDir(item: FileItem | null) {
-    return item === null
+  getPutTargetDir(node: FileNode | null) {
+    return node === null
       ? this.root
-      : item.directory && expandStore.isExpanded(item.fullpath)
-      ? item.fullpath
-      : item.parent
-      ? item.parent.fullpath
+      : node.directory && this.expandStore.isExpanded(node)
+      ? node.fullpath
+      : node.parent
+      ? node.parent.fullpath
       : this.root;
   }
 
   async searchByCocList(path: string, recursive: boolean) {
-    filesList.ignore = !this.showHiddenFiles;
+    filesList.ignore = !this.showHidden;
     filesList.rootPath = path;
     filesList.recursive = recursive;
     filesList.revealCallback = async (loc) => {
-      const item = await this.revealItemByPath(URI.parse(loc.uri).fsPath);
-      if (item !== null) {
+      const node = await this.revealNodeByPath(Uri.parse(loc.uri).fsPath);
+      if (node !== null) {
         await execNotifyBlock(async () => {
           await this.render({ storeCursor: false, notify: true });
-          await this.gotoItem(item, { notify: true });
-          this.nvim.command('redraw', true);
+          await this.gotoNode(node, { notify: true });
         });
       }
     };
@@ -190,23 +150,26 @@ export class FileSource extends ExplorerSource<FileItem> {
     disposable.dispose();
   }
 
-  async revealItemByPath(path: string, items: FileItem[] = this.items): Promise<FileItem | null> {
+  async revealNodeByPath(path: string, node: FileNode = this.rootNode): Promise<FileNode | null> {
     path = normalizePath(path);
-    for (const item of items) {
-      if (item.directory && path.startsWith(item.fullpath + pathLib.sep)) {
-        expandStore.expand(item.fullpath);
-        if (!item.children) {
-          item.children = await this.listFiles(item.fullpath, item);
-        }
-        return await this.revealItemByPath(path, item.children);
-      } else if (path === item.fullpath) {
-        return item;
+    if (node.directory && path.startsWith(node.fullpath + pathLib.sep)) {
+      this.expandStore.expand(node);
+      if (!node.children) {
+        node.children = await this.listFiles(node.fullpath, node);
       }
+      for (const child of node.children) {
+        const result = await this.revealNodeByPath(path, child);
+        if (result) {
+          return result;
+        }
+      }
+    } else if (path === node.fullpath) {
+      return node;
     }
     return null;
   }
 
-  sortFiles(files: FileItem[]) {
+  sortFiles(files: FileNode[]) {
     return files.sort((a, b) => {
       if (a.directory && !b.directory) {
         return -1;
@@ -218,39 +181,46 @@ export class FileSource extends ExplorerSource<FileItem> {
     });
   }
 
-  async listFiles(path: string, parent: FileItem | null) {
-    const files = await fsReaddir(path);
-    const results = await Promise.all(
-      files.map(async (file) => {
+  async listFiles(path: string, parent: FileNode | null | undefined) {
+    const filepaths = await fsReaddir(path);
+    const files = await Promise.all(
+      filepaths.map(async (filepath) => {
         try {
-          const fullpath = pathLib.join(path, file);
+          const hidden = filepath.startsWith('.');
+          if (!this.showHidden && hidden) {
+            return null;
+          }
+          const fullpath = pathLib.join(path, filepath);
           const stat = await fsStat(fullpath).catch(() => {});
           const lstat = await fsLstat(fullpath).catch(() => {});
           const executable = await fsAccess(fullpath, fs.constants.X_OK);
           const writable = await fsAccess(fullpath, fs.constants.W_OK);
           const readable = await fsAccess(fullpath, fs.constants.R_OK);
-          const item: FileItem = {
-            uid: this.name + '-' + fullpath,
-            name: file,
+          const directory = stat ? stat.isDirectory() : false;
+          const node: FileNode = {
+            uid: this.sourceName + '//' + fullpath,
             level: parent ? parent.level + 1 : 1,
+            drawnLine: '',
+            parent: parent || undefined,
+            expandable: directory,
+            name: filepath,
             fullpath,
-            directory: stat ? stat.isDirectory() : false,
+            directory: directory,
             readonly: !writable && readable,
             executable,
             readable,
             writable,
-            hidden: file.startsWith('.'),
+            hidden,
             symbolicLink: lstat ? lstat.isSymbolicLink() : false,
             isFirstInLevel: false,
             isLastInLevel: false,
             lstat: lstat || null,
-            parent: parent || undefined,
             data: {},
           };
-          if (expandStore.isExpanded(item.fullpath)) {
-            item.children = await this.listFiles(item.fullpath, item);
+          if (this.expandStore.isExpanded(node)) {
+            node.children = await this.listFiles(node.fullpath, node);
           }
-          return item;
+          return node;
         } catch (error) {
           onError(error);
           return null;
@@ -258,86 +228,54 @@ export class FileSource extends ExplorerSource<FileItem> {
       }),
     );
 
-    return this.sortFiles(results.filter((r): r is FileItem => r !== null));
+    return this.sortFiles(files.filter((r): r is FileNode => r !== null));
   }
 
-  async expandRecursiveItems(items: FileItem[]) {
-    await Promise.all(
-      items.map(async (item) => {
-        if (item.directory) {
-          expandStore.expand(item.fullpath);
-          if (!item.children) {
-            item.children = await this.listFiles(item.fullpath, item);
-          }
-          await this.expandRecursiveItems(item.children);
-        }
-      }),
-    );
-  }
-
-  async shrinkRecursiveItems(items: FileItem[]) {
-    await Promise.all(
-      items.map(async (item) => {
-        if (item.directory) {
-          expandStore.shrink(item.fullpath);
-          if (item.children) {
-            await this.shrinkRecursiveItems(item.children);
-          }
-        }
-      }),
-    );
-  }
-
-  async loadItems(_sourceItem: FileItem | null): Promise<FileItem[]> {
-    this.copyItems.clear();
-    this.cutItems.clear();
-    if (expandStore.isExpanded(this.root)) {
-      return this.listFiles(this.root, null);
+  async loadChildren(node: FileNode): Promise<FileNode[]> {
+    if (this.expandStore.isExpanded(node)) {
+      return this.listFiles(node.fullpath, node);
     } else {
       return [];
     }
   }
 
-  async loaded(sourceItem: FileItem | null) {
-    await fileColumnManager.load(sourceItem);
+  async loaded(sourceNode: FileNode) {
+    this.copiedNodes.clear();
+    this.cutNodes.clear();
+    await super.loaded(sourceNode);
   }
 
-  async draw(builder: SourceViewBuilder<FileItem>) {
-    await fileColumnManager.beforeDraw();
+  async renderPaths(paths: Set<string> | string[]) {
+    const nodes = Array.from(paths)
+      .map((path) => {
+        return this.flattenedNodes.find((node) => node.fullpath === path);
+      })
+      .filter((node): node is FileNode => !!node);
+    return await this.renderNodes(nodes);
+  }
 
-    const rootExpanded = expandStore.isExpanded(this.root);
-    builder.newRoot((row) => {
-      row.add(rootExpanded ? sourceIcons.expanded : sourceIcons.shrinked, highlights.expandIcon);
-      row.add(' ');
-      row.add(`[FILE${this.showHiddenFiles ? ' I' : ''}]:`, highlights.title);
-      row.add(' ');
-      row.add(pathLib.basename(this.root), highlights.name);
-      row.add(' ');
-      row.add(this.root, highlights.fullpath);
-    });
-    const drawSubDirectory = (items: FileItem[]) => {
-      items.forEach((item) => {
-        item.isFirstInLevel = false;
-        item.isLastInLevel = false;
+  drawNode(node: FileNode, nodeIndex: number, prevNode: FileNode, nextNode: FileNode) {
+    if (!node.parent) {
+      node.drawnLine = this.viewBuilder.drawLine((row) => {
+        row.add(this.expanded ? sourceIcons.expanded : sourceIcons.shrinked, highlights.expandIcon);
+        row.add(' ');
+        row.add(`[FILE${this.showHidden ? ' I' : ''}]:`, highlights.title);
+        row.add(' ');
+        row.add(pathLib.basename(this.root), highlights.name);
+        row.add(' ');
+        row.add(this.root, highlights.fullpath);
       });
-      const filteredItems = this.showHiddenFiles ? items : items.filter((item) => !item.hidden);
-      if (filteredItems.length > 0) {
-        filteredItems[0].isFirstInLevel = true;
-        filteredItems[filteredItems.length - 1].isLastInLevel = true;
-      }
-      for (const item of filteredItems) {
-        builder.newItem(item, (row) => {
-          fileColumnManager.drawItem(row, item);
-        });
-        if (expandStore.isExpanded(item.fullpath) && item.children) {
-          drawSubDirectory(item.children);
-        }
-      }
-    };
-    if (rootExpanded) {
-      drawSubDirectory(this.items);
+    } else {
+      const prevNodeLevel = prevNode ? prevNode.level : 0;
+      const nextNodeLevel = nextNode ? nextNode.level : 0;
+      node.isFirstInLevel = prevNodeLevel < node.level;
+      node.isLastInLevel = nextNodeLevel < node.level;
+
+      node.drawnLine = this.viewBuilder.drawLine((row) => {
+        this.columnManager.draw(row, node, nodeIndex);
+      });
     }
   }
 }
 
-sourceManager.registerSource(new FileSource());
+sourceManager.registerSource('file', FileSource);

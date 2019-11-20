@@ -1,11 +1,18 @@
-import { fileColumnManager } from '../column-manager';
+import { fileColumnRegistrar } from '../file-column-registrar';
 import { sourceIcons } from '../../../source';
+import { hlGroupManager } from '../../../highlight-manager';
 
-fileColumnManager.registerColumn('selection', (source) => ({
-  draw(row, item) {
+fileColumnRegistrar.registerColumn('selection', (source) => ({
+  concealable: hlGroupManager.concealable('FileSelection'),
+  async beforeDraw() {
     if (source.isSelectedAny()) {
-      row.add(source.isSelectedItem(item) ? sourceIcons.selected : sourceIcons.unselected);
-      row.add(' ');
+      await this.concealable?.show(source);
+    } else {
+      await this.concealable?.hide(source);
     }
+  },
+  draw(row, node) {
+    row.add(source.isSelectedNode(node) ? sourceIcons.selected : sourceIcons.unselected);
+    row.add(' ');
   },
 }));

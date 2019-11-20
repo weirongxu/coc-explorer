@@ -1,5 +1,4 @@
-import { expandStore } from '../file-source';
-import { fileColumnManager } from '../column-manager';
+import { fileColumnRegistrar } from '../file-column-registrar';
 import { sourceIcons, enableNerdfont } from '../../../source';
 import pathLib from 'path';
 // modified from:
@@ -7,7 +6,7 @@ import pathLib from 'path';
 //   icon color from https://github.com/microsoft/vscode/blob/e75e71f41911633be838344377df26842f2b8c7c/extensions/theme-seti/icons/vs-seti-icon-theme.json
 import nerdfontJson from './icons.nerdfont.json';
 import { highlights as filenameHighlights } from './filename';
-import { hlGroupManager, HighlightCommand } from '../../../highlight-manager';
+import { hlGroupManager, Hightlight } from '../../../highlight-manager';
 
 const nerdfont = nerdfontJson as {
   icons: Record<
@@ -22,11 +21,10 @@ const nerdfont = nerdfontJson as {
   patternMatches: Record<string, string>;
 };
 
-export const nerdfontHighlights: Record<string, HighlightCommand> = {};
+export const nerdfontHighlights: Record<string, Hightlight> = {};
 Object.entries(nerdfontJson.icons).forEach(([name, icon]) => {
-  nerdfontHighlights[name] = hlGroupManager.hlGroupCommand(`FileIconNerdfont_${name}`, `guifg=${icon.color}`);
+  nerdfontHighlights[name] = hlGroupManager.group(`FileIconNerdfont_${name}`, `guifg=${icon.color}`);
 });
-hlGroupManager.register(nerdfontHighlights);
 
 const getBasename = (filename: string): string => {
   if (filename.replace(/^\./, '').includes('.')) {
@@ -76,29 +74,29 @@ const getIcon = (filename: string): undefined | { name: string; code: string; co
   }
 };
 
-fileColumnManager.registerColumn('icon', {
-  draw(row, item) {
-    if (item.directory) {
+fileColumnRegistrar.registerColumn('icon', (source) => ({
+  draw(row, node) {
+    if (node.directory) {
       if (enableNerdfont) {
         row.add(
-          expandStore.isExpanded(item.fullpath)
+          source.expandStore.isExpanded(node)
             ? nerdfontJson.icons.folderOpened.code
             : nerdfontJson.icons.folderClosed.code,
           filenameHighlights.directory,
         );
       } else {
         row.add(
-          expandStore.isExpanded(item.fullpath) ? sourceIcons.expanded : sourceIcons.shrinked,
+          source.expandStore.isExpanded(node) ? sourceIcons.expanded : sourceIcons.shrinked,
           filenameHighlights.directory,
         );
       }
       row.add(' ');
     } else {
       if (enableNerdfont) {
-        const icon = getIcon(item.name.toLowerCase());
+        const icon = getIcon(node.name.toLowerCase());
         if (icon) {
           row.add(icon.code, nerdfontHighlights[icon.name]);
-        } else if (item.hidden) {
+        } else if (node.hidden) {
           row.add(nerdfont.icons.fileHidden.code, nerdfontHighlights['fileHidden']);
         } else {
           row.add(nerdfont.icons.file.code, nerdfontHighlights['file']);
@@ -109,4 +107,4 @@ fileColumnManager.registerColumn('icon', {
       row.add(' ');
     }
   },
-});
+}));

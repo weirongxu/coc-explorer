@@ -1,11 +1,18 @@
-import { bufferColumnManager } from '../column-manager';
+import { bufferColumnRegistrar } from '../buffer-column-registrar';
 import { sourceIcons } from '../../../source';
+import { hlGroupManager } from '../../../highlight-manager';
 
-bufferColumnManager.registerColumn('selection', (source) => ({
-  draw(row, item) {
+bufferColumnRegistrar.registerColumn('selection', (source) => ({
+  concealable: hlGroupManager.concealable('BufferSelection'),
+  async beforeDraw() {
     if (source.isSelectedAny()) {
-      row.add(source.isSelectedItem(item) ? sourceIcons.selected : sourceIcons.unselected);
-      row.add(' ');
+      await this.concealable?.show(source);
+    } else {
+      await this.concealable?.hide(source);
     }
+  },
+  draw(row, node) {
+    row.add(source.isSelectedNode(node) ? sourceIcons.selected : sourceIcons.unselected);
+    row.add(' ');
   },
 }));

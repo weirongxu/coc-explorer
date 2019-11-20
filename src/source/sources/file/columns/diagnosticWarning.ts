@@ -1,49 +1,73 @@
-import { fileColumnManager } from '../column-manager';
+import { fileColumnRegistrar } from '../file-column-registrar';
 import { hlGroupManager } from '../../../highlight-manager';
 import { diagnosticManager } from '../../../../diagnostic-manager';
-import { config, max } from '../../../../util';
-import { expandStore } from '../file-source';
-
-const highlights = {
-  warning: hlGroupManager.hlLinkGroupCommand('FileDiagnosticWarning', 'CocWarningSign'),
-};
-hlGroupManager.register(highlights);
+import { config, debounce } from '../../../../util';
+import { events } from 'coc.nvim';
 
 const diagnosticCountMax = config.get<number>('file.diagnosticCountMax')!;
-let warningMixedCountStr: Record<string, string> = {};
-let warningMaxWidth = 0;
+const warningMaxWidth = diagnosticCountMax.toString().length;
 
-fileColumnManager.registerColumn('diagnosticWarning', (fileSource) => ({
-  load() {
-    diagnosticManager.warningReload(fileSource.root);
+const highlights = {
+  warning: hlGroupManager.linkGroup('FileDiagnosticWarning', 'CocWarningSign'),
+};
+
+fileColumnRegistrar.registerColumn('diagnosticWarning', (source) => ({
+  concealable: hlGroupManager.concealable('FileDiagnosticWarning'),
+  init() {
+    let prevWarningMixedCount: Record<string, string> = {};
+
+    events.on(
+      ['InsertLeave', 'TextChanged'],
+      debounce(1000, async () => {
+        diagnosticManager.warningReload(source.root);
+
+        if (diagnosticManager.warningNeedRender) {
+          diagnosticManager.warningNeedRender = false;
+          const warningMixedCount = diagnosticManager.warningMixedCount;
+          const updatePaths: Set<string> = new Set();
+          for (const [fullpath, count] of Object.entries(warningMixedCount)) {
+            if (fullpath in prevWarningMixedCount) {
+              if (prevWarningMixedCount[fullpath] === count) {
+                continue;
+              }
+              delete prevWarningMixedCount[fullpath];
+            } else {
+              updatePaths.add(fullpath);
+            }
+          }
+          for (const [fullpath] of Object.keys(prevWarningMixedCount)) {
+            updatePaths.add(fullpath);
+          }
+          await source.renderPaths(updatePaths);
+          prevWarningMixedCount = warningMixedCount;
+        }
+      }),
+    );
+  },
+  reload() {
+    diagnosticManager.warningReload(source.root);
   },
   beforeDraw() {
-    fileSource.diagnosisLineIndexes = [];
-
-    warningMixedCountStr = {};
-    Object.entries(diagnosticManager.warningMixedCount).forEach(([fullpath, count]) => {
-      if (count > diagnosticCountMax) {
-        warningMixedCountStr[fullpath] = '●';
-      } else {
-        warningMixedCountStr[fullpath] = count.toString();
-      }
-    });
-    warningMaxWidth = max(Object.values(warningMixedCountStr).map((d) => d.length));
-  },
-  draw(row, item) {
-    if (Object.keys(warningMixedCountStr).length > 0) {
-      if (item.fullpath in warningMixedCountStr) {
-        if (item.directory && expandStore.isExpanded(item.fullpath)) {
-          row.add(' '.padStart(warningMaxWidth), highlights.warning);
-        } else {
-          const count = warningMixedCountStr[item.fullpath];
-          row.add(count.toString().padStart(warningMaxWidth), highlights.warning);
-          fileSource.diagnosisLineIndexes.push(row.line);
-        }
-      } else {
-        row.add(' '.repeat(warningMaxWidth));
-      }
-      row.add(' ');
+    if (Object.keys(diagnosticManager.warningMixedCount).length) {
+      this.concealable?.show(source);
+    } else {
+      this.concealable?.hide(source);
     }
+  },
+  draw(row, node, nodeIndex) {
+    if (node.fullpath in diagnosticManager.warningMixedCount) {
+      if (node.directory && source.expandStore.isExpanded(node)) {
+        row.add(' '.padStart(warningMaxWidth));
+        source.removeIndexes('diagnosticWarning', nodeIndex);
+      } else {
+        const count = diagnosticManager.warningMixedCount[node.fullpath];
+        row.add(count.padStart(warningMaxWidth), highlights.warning);
+        source.addIndexes('diagnosticWarning', nodeIndex);
+      }
+    } else {
+      row.add(' '.repeat(warningMaxWidth));
+      source.removeIndexes('diagnosticWarning', nodeIndex);
+    }
+    row.add(' ');
   },
 }));

@@ -1,54 +1,151 @@
-import { Buffer, Emitter, events, ExtensionContext, Window, workspace } from 'coc.nvim';
-import { onError } from './logger';
-import { Action, mappings } from './mappings';
-import { Args, parseArgs } from './parse-args';
+import { Buffer, ExtensionContext, Window, workspace } from 'coc.nvim';
+import { Action, ActionMode, ActionSyms } from './mappings';
+import { Args } from './parse-args';
+import { IndexesManager } from './indexes-manager';
 import './source/load';
-import { BaseItem, ExplorerSource } from './source/source';
+import { BaseTreeNode, ExplorerSource, ActionOptions } from './source/source';
 import { sourceManager } from './source/source-manager';
-import { execNotifyBlock, autoReveal, config } from './util';
-import { hlGroupManager } from './source/highlight-manager';
+import {
+  execNotifyBlock,
+  autoReveal,
+  config,
+  enableDebug,
+  enableWrapscan,
+  prettyPrint,
+} from './util';
+import { ExplorerManager } from './explorer-manager';
 
 export class Explorer {
-  // id for matchaddpos
-  static colorId = 10800;
-
-  name = 'coc-explorer';
   nvim = workspace.nvim;
-  previousBufnr?: number;
-  revealFilepath?: string;
   isHelpUI: boolean = false;
-  rootPaths: Set<string> = new Set();
-  onDidAutoload = new Emitter<void>();
-  onDidInit = new Emitter<number>();
+  indexesManager = new IndexesManager(this);
+  inited = false;
+  globalActions: Record<
+    string,
+    {
+      description: string;
+      options: Partial<ActionOptions>;
+      callback: (nodes: BaseTreeNode<any>[], arg: string, mode: ActionMode) => void | Promise<void>;
+    }
+  > = {};
 
   private _buffer?: Buffer;
-  private _bufnr?: number;
   private _args?: Args;
   private _sources?: ExplorerSource<any>[];
   private _rootPath?: string;
-  private lastArgStrings?: string[];
-  /**
-   * mappings[key][mode] = '<Plug>(coc-action-mode-key)'
-   */
-  private mappings: Record<string, Record<string, string>> = {};
-  private registeredMapping: boolean = false;
-  private onRegisteredMapping = new Emitter<void>();
+  private lastArgSources?: string;
 
-  constructor(public context: ExtensionContext) {
-    const { subscriptions } = context;
-
-    subscriptions.push(
-      events.on('BufWinLeave', (bufnr) => {
-        if (bufnr !== this._bufnr) {
-          this.previousBufnr = bufnr;
+  constructor(
+    public explorerID: number,
+    public explorerManager: ExplorerManager,
+    public context: ExtensionContext,
+    public bufnr: number,
+  ) {
+    this.addGlobalAction(
+      'nodePrev',
+      async () => {
+        const line = await this.currentLineIndex();
+        if (line !== null) {
+          await this.gotoLineIndex(line - 1, 1);
         }
-      }),
+      },
+      'previous node',
+      { multi: false },
+    );
+    this.addGlobalAction(
+      'nodeNext',
+      async () => {
+        const line = await this.currentLineIndex();
+        if (line !== null) {
+          await this.gotoLineIndex(line + 1, 1);
+        }
+      },
+      'next node',
+      { multi: false },
+    );
+    this.addGlobalAction(
+      'normal',
+      async (_node, arg) => {
+        await this.nvim.command('normal ' + arg);
+      },
+      'execute vim normal mode commands',
+      { multi: false },
+    );
+    this.addGlobalAction(
+      'quit',
+      async () => {
+        await this.quit();
+      },
+      'quit explorer',
+      { multi: false },
     );
 
-    this.onDidAutoload.event(() => {
-      this.registerMappings().catch(onError);
-      hlGroupManager.registerHighlightSyntax().catch(onError);
-    });
+    this.addGlobalAction(
+      'gotoSource',
+      async (_nodes, name) => {
+        const source = this.sources.find((s) => s.sourceName === name);
+        if (source) {
+          await source.gotoLineIndex(0);
+        }
+      },
+      'go to source',
+    );
+    this.addGlobalAction(
+      'sourceNext',
+      async () => {
+        const nextSource = this.sources[(await this.currentSourceIndex()) + 1];
+        if (nextSource) {
+          await nextSource.gotoLineIndex(0);
+        } else if (await enableWrapscan()) {
+          await this.sources[0].gotoLineIndex(0);
+        }
+      },
+      'go to next source',
+    );
+    this.addGlobalAction(
+      'sourcePrev',
+      async () => {
+        const prevSource = this.sources[(await this.currentSourceIndex()) - 1];
+        if (prevSource) {
+          await prevSource.gotoLineIndex(0);
+        } else if (await enableWrapscan()) {
+          await this.sources[this.sources.length - 1].gotoLineIndex(0);
+        }
+      },
+      'go to previous source',
+    );
+
+    this.addGlobalAction(
+      'diagnosticPrev',
+      async () => {
+        await this.gotoPrevLineIndex('diagnosticError', 'diagnosticWarning');
+      },
+      'go to previous diagnostic',
+    );
+
+    this.addGlobalAction(
+      'diagnosticNext',
+      async () => {
+        await this.gotoNextLineIndex('diagnosticError', 'diagnosticWarning');
+      },
+      'go to next diagnostic',
+    );
+
+    this.addGlobalAction(
+      'gitPrev',
+      async () => {
+        await this.gotoPrevLineIndex('git');
+      },
+      'go to previous git changed',
+    );
+
+    this.addGlobalAction(
+      'gitNext',
+      async () => {
+        await this.gotoNextLineIndex('git');
+      },
+      'go to next git changed',
+    );
   }
 
   get args(): Args {
@@ -77,13 +174,6 @@ export class Explorer {
       this._buffer = this.nvim.createBuffer(this.bufnr);
     }
     return this._buffer;
-  }
-
-  get bufnr(): number {
-    if (!this._bufnr) {
-      throw Error('Explorer bufnr not initialized yet');
-    }
-    return this._bufnr;
   }
 
   get win(): Promise<Window | null> {
@@ -127,34 +217,14 @@ export class Explorer {
     });
   }
 
-  async open(argStrings: string[]) {
-    if (!this.registeredMapping) {
-      await new Promise((resolve) => {
-        this.onRegisteredMapping.event(resolve);
-      });
+  async open(args: Args) {
+    if (this.inited) {
+      await this.resume(args);
     }
 
-    const { nvim } = this;
+    this.inited = true;
 
-    await this.initArgs(argStrings);
-
-    const [bufnr, inited] = (await nvim.call('coc_explorer#create', [
-      this._bufnr,
-      this.args.position,
-      this.args.width,
-      this.args.toggle,
-      this.name,
-    ])) as [number, boolean];
-
-    if (bufnr === -1) {
-      return;
-    }
-
-    this._bufnr = bufnr;
-
-    if (!inited) {
-      this.onDidInit.fire(this._bufnr);
-    }
+    await this.initArgs(args);
 
     if (this.isHelpUI) {
       await this.sources[0].quitHelp();
@@ -165,27 +235,54 @@ export class Explorer {
         await source.opened(true);
       }
 
-      await this.reloadAll({ render: false });
-
-      const firstFileSource = this.sources.find((s) => s instanceof FileSource) as FileSource | undefined;
-      let item: FileItem | null = null;
+      const firstFileSource = this.sources.find((s) => s instanceof FileSource) as
+        | FileSource
+        | undefined;
+      let node: FileNode | null = null;
 
       if (firstFileSource) {
-        if (this.revealFilepath && autoReveal) {
-          item = await firstFileSource.revealItemByPath(this.revealFilepath);
+        firstFileSource.root = this.rootPath;
+      }
+
+      if (firstFileSource) {
+        if (autoReveal && this.args.revealPath) {
+          node = await firstFileSource.revealNodeByPath(this.args.revealPath);
         }
       }
 
+      await this.reloadAll({ render: false, notify: true });
       await this.renderAll({ notify: true });
 
       if (firstFileSource) {
-        if (this.revealFilepath && autoReveal) {
-          await firstFileSource.gotoItem(item, { col: 1, notify: true });
-        } else if (!inited) {
-          await firstFileSource.gotoRoot({ col: 1, notify: true });
+        if (autoReveal) {
+          if (node !== null) {
+            await firstFileSource.gotoNode(node, { col: 1, notify: true });
+          } else {
+            await firstFileSource.gotoRoot({ col: 1, notify: true });
+          }
         }
       }
     });
+  }
+
+  async resume(args: Args) {
+    const win = await this.win;
+    if (win) {
+      if (args.toggle) {
+        await win.close(true);
+      } else {
+        await this.nvim.eval(`${win.number}wincmd w`);
+      }
+    } else {
+      await this.nvim.call('coc_explorer#resume', [this.bufnr, args.position, args.width]);
+    }
+  }
+
+  async quit() {
+    const win = await this.win;
+    if (win) {
+      await win.close(true);
+    }
   }
 
   private async getRootPath() {
@@ -202,29 +299,18 @@ export class Explorer {
     return useGetcwd ? ((await this.nvim.call('getcwd', [])) as string) : workspace.rootPath;
   }
 
-  private async initArgs(argStrings: string[]) {
-    if (!this.lastArgStrings || this.lastArgStrings.toString() !== argStrings.toString()) {
-      this._args = await parseArgs(...argStrings);
-      this.lastArgStrings = argStrings;
+  private async initArgs(args: Args) {
+    this._args = args;
+    if (!this.lastArgSources || this.lastArgSources !== args.sources.toString()) {
+      this.lastArgSources = args.sources.toString();
 
       this._sources = this.args.sources
-        .map((sourceArg) => {
-          if (sourceManager.registeredSources[sourceArg.name]) {
-            const source = sourceManager.registeredSources[sourceArg.name];
-            source.bindExplorer(this, sourceArg.expand);
-            return source;
-          } else {
-            // tslint:disable-next-line: ban
-            workspace.showMessage(`explorer source(${sourceArg.name}) not found`, 'error');
-            return null;
-          }
-        })
+        .map((sourceArg) => sourceManager.createSource(sourceArg.name, this, sourceArg.expand))
         .filter((source): source is ExplorerSource<any> => source !== null);
     }
 
     this._rootPath = this.args.rootPath || (await this.getRootPath());
-    this.revealFilepath = this.args.revealPath || ((await this.nvim.call('expand', '%:p')) as string);
-    this.rootPaths.add(this._rootPath);
+    this.explorerManager.rootPathRecords.add(this._rootPath);
   }
 
   async prompt(msg: string): Promise<'yes' | 'no' | null>;
@@ -251,41 +337,39 @@ export class Explorer {
     }
   }
 
-  async registerMappings() {
-    this.mappings = {};
-    Object.entries(mappings).forEach(([key, actions]) => {
-      this.mappings[key] = {};
-      (['n', 'v'] as ('n' | 'v')[]).forEach((mode) => {
-        const plugKey = `explorer-action-${mode}-${key.replace(/\<(.*)\>/, '[$1]')}`;
-        this.context.subscriptions.push(
-          workspace.registerKeymap([mode], plugKey, async () => {
-            this.doActions(actions, mode).catch(onError);
-          }),
-        );
-        this.mappings[key][mode] = `<Plug>(coc-${plugKey})`;
-      });
-    });
-    await this.nvim.call('coc_explorer#register_mappings', [this.mappings]);
-    this.registeredMapping = true;
-    this.onRegisteredMapping.fire();
+  addGlobalAction(
+    name: ActionSyms,
+    callback: (
+      nodes: BaseTreeNode<any>[] | null,
+      arg: string,
+      mode: ActionMode,
+    ) => void | Promise<void>,
+    description: string,
+    options: Partial<ActionOptions> = {},
+  ) {
+    this.globalActions[name] = {
+      callback,
+      description,
+      options,
+    };
   }
 
-  async executeMappings() {
-    await this.nvim.call('coc_explorer#execute_mappings', [this.mappings]);
-  }
-
-  async clearMappings() {
-    await this.nvim.call('coc_explorer#clear_mappings', [this.mappings]);
-  }
-
-  async doActions(actions: Action[], mode: 'n' | 'v' = 'n') {
+  async doActions(actions: Action[], mode: ActionMode = 'n') {
     for (const action of actions) {
       await this.doAction(action, mode);
     }
+    await execNotifyBlock(async () => {
+      await Promise.all(
+        this.sources.map(async (source) => {
+          return source.emitRequestRenderNodes(true);
+        }),
+      );
+    });
   }
 
-  async doAction(action: Action, mode: 'n' | 'v' = 'n') {
+  async doAction(action: Action, mode: ActionMode = 'n') {
     const { nvim } = this;
+    const now = Date.now();
 
     const lineIndexes: number[] = [];
     const document = await workspace.document;
@@ -301,30 +385,71 @@ export class Explorer {
       lineIndexes.push(line);
     }
 
-    const itemsGroup: Map<ExplorerSource<any>, Set<object | null>> = new Map();
+    const nodesGroup: Map<ExplorerSource<any>, Set<object | null>> = new Map();
 
     for (const lineIndex of lineIndexes) {
       const [source] = this.findSourceByLineIndex(lineIndex);
       if (source) {
-        if (!itemsGroup.has(source)) {
-          itemsGroup.set(source, new Set());
+        if (!nodesGroup.has(source)) {
+          nodesGroup.set(source, new Set());
         }
         const relativeLineIndex = lineIndex - source.startLine;
 
-        const [, item] = source.lines[relativeLineIndex];
-        itemsGroup.get(source)!.add(item);
+        nodesGroup
+          .get(source)!
+          .add(relativeLineIndex === 0 ? null : source.flattenedNodes[relativeLineIndex]);
       }
     }
 
     await Promise.all(
-      Array.from(itemsGroup.entries()).map(async ([source, items]) => {
-        if (items.has(null)) {
+      Array.from(nodesGroup.entries()).map(async ([source, nodes]) => {
+        if (nodes.has(null)) {
           await source.doRootAction(action.name, action.arg);
         } else {
-          await source.doAction(action.name, Array.from(items).filter((item) => item), action.arg);
+          await source.doAction(
+            action.name,
+            Array.from(nodes).filter((node) => node),
+            action.arg,
+            mode,
+          );
         }
       }),
     );
+
+    if (enableDebug) {
+      let actionDisplay = action.name;
+      if (action.arg) {
+        actionDisplay += ':' + action.arg;
+      }
+      // tslint:disable-next-line: ban
+      workspace.showMessage(`action(${actionDisplay}): ${Date.now() - now}ms`, 'more');
+    }
+  }
+
+  addIndexes(name: string, index: number) {
+    this.indexesManager.addLine(name, index);
+  }
+
+  removeIndexes(name: string, index: number) {
+    this.indexesManager.removeLine(name, index);
+  }
+
+  async gotoPrevLineIndex(...names: string[]) {
+    const lineIndex = await this.indexesManager.prevLineIndex(...names);
+    if (lineIndex) {
+      await this.gotoLineIndex(lineIndex);
+      return true;
+    }
+    return false;
+  }
+
+  async gotoNextLineIndex(...names: string[]) {
+    const lineIndex = await this.indexesManager.nextLineIndex(...names);
+    if (lineIndex) {
+      await this.gotoLineIndex(lineIndex);
+      return true;
+    }
+    return false;
   }
 
   private findSourceByLineIndex(lineIndex: number) {
@@ -336,9 +461,13 @@ export class Explorer {
     }
   }
 
-  /**
-   * current cursor
-   */
+  async currentSourceIndex() {
+    const lineIndex = await this.currentLineIndex();
+    return this.sources.findIndex(
+      (source) => lineIndex >= source.startLine && lineIndex <= source.endLine,
+    );
+  }
+
   async currentCursor() {
     const win = await this.win;
     if (win) {
@@ -352,6 +481,14 @@ export class Explorer {
     return null;
   }
 
+  async currentLineIndex() {
+    const cursor = await this.currentCursor();
+    if (cursor) {
+      return cursor.lineIndex;
+    }
+    return 0;
+  }
+
   async currentCol() {
     const cursor = await this.currentCursor();
     if (cursor) {
@@ -360,7 +497,7 @@ export class Explorer {
     return 0;
   }
 
-  async storeCursor<Item extends BaseItem<Item>>() {
+  async storeCursor() {
     const storeCursor = await this.currentCursor();
     let storeView = await this.nvim.call('winsaveview');
     storeView = { topline: storeView.topline };
@@ -369,11 +506,11 @@ export class Explorer {
       const source = this.sources[sourceIndex];
       if (source) {
         const sourceLineIndex = storeCursor.lineIndex - source.startLine;
-        const storeItem: null | Item = await source.getItemByIndex(sourceLineIndex);
+        const storeNode: BaseTreeNode<any> = source.getNodeByLine(sourceLineIndex);
         return async (notify = false) => {
           await execNotifyBlock(async () => {
             this.nvim.call('winrestview', [storeView], true);
-            await source.gotoItem(storeItem, {
+            await source.gotoNode(storeNode, {
               lineIndex: sourceLineIndex,
               col: storeCursor.col,
               notify: true,
@@ -387,6 +524,19 @@ export class Explorer {
         this.nvim.call('winrestview', storeView, true);
       }, notify);
     };
+  }
+
+  async gotoLineIndex(lineIndex: number, col?: number, notify = false) {
+    await execNotifyBlock(async () => {
+      const finalCol = col === undefined ? await this.currentCol() : col;
+      const win = await this.win;
+      if (win) {
+        win.setCursor([lineIndex + 1, finalCol - 1], true);
+        if (!(await this.explorerManager.currentExplorer())) {
+          this.nvim.command('redraw!', true);
+        }
+      }
+    }, notify);
   }
 
   async setLines(lines: string[], start: number, end: number, notify = false) {
@@ -418,7 +568,11 @@ export class Explorer {
 
   async reloadAll({ render = true, notify = false } = {}) {
     await execNotifyBlock(async () => {
-      await Promise.all(this.sources.map((source) => source.reload(null, { render: false, notify: true })));
+      await Promise.all(
+        this.sources.map((source) =>
+          source.reload(source.rootNode, { render: false, notify: true }),
+        ),
+      );
 
       if (render) {
         await this.renderAll({ notify: true, storeCursor: false });
@@ -441,13 +595,6 @@ export class Explorer {
     }, notify);
   }
 
-  async quit() {
-    const win = await this.win;
-    if (win) {
-      await win.close(true);
-    }
-  }
-
   /**
    * select windows from current tabpage
    */
@@ -456,15 +603,15 @@ export class Explorer {
     noChoice: () => void | Promise<void> = () => {},
   ) {
     const winnr = await this.nvim.call('coc_explorer#select_wins', [
-      this.name,
+      this.explorerManager.bufferName,
       config.get<boolean>('openAction.select.filterFloatWindows')!,
     ]);
     if (winnr > 0) {
       await Promise.resolve(selected(winnr));
-    } else if (winnr === -1) {
+    } else if (winnr === 0) {
       await Promise.resolve(noChoice());
     }
   }
 }
 
-import { FileSource, FileItem } from './source/sources/file/file-source';
+import { FileNode, FileSource } from './source/sources/file/file-source';

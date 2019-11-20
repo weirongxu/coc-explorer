@@ -1,64 +1,34 @@
-function! coc_explorer#create(bufnr, position, width, toggle, name)
-  let status = coc_explorer#init_buffer(a:bufnr, a:position, a:width, a:toggle, a:name)
-
-  if status ==# 'quit'
-    return [-1, v:true]
-  elseif status ==# 'create'
-    let inited = exists('b:coc_explorer_inited')
-    if ! inited
-      let b:coc_explorer_inited = v:true
-    endif
-
-    call coc_explorer#init_buf()
-
-    return [bufnr('%'), inited]
-  else
-    return [bufnr('%'), v:true]
-  endif
-endfunction
-
-" returns is 'quit' or 'resume' or 'create'
-function! coc_explorer#init_buffer(bufnr, position, width, toggle, name)
-  let name = '['.a:name.']'
+function! coc_explorer#create(name, explorer_id, position, width)
+  let name = a:name.'-'.a:explorer_id
   if a:position ==# 'tab'
     execute 'silent keepalt tabnew '.name
     call coc_explorer#init_win(a:position, a:width)
-    return 'create'
+  elseif a:position ==# 'left'
+    wincmd t
+    execute 'silent keepalt leftabove vsplit '.name
+    call coc_explorer#init_win(a:position, a:width)
+  elseif a:position ==# 'right'
+    wincmd b
+    execute 'silent keepalt rightbelow vsplit '.name
+    call coc_explorer#init_win(a:position, a:width)
   else
-    if a:bufnr != v:null
-      " explorer in visible window
-      let winnr = bufwinnr(a:bufnr)
-      if winnr > 0
-        if a:toggle
-          execute winnr.'wincmd q'
-          return 'quit'
-        else
-          execute winnr.'wincmd w'
-          return 'resume'
-        endif
-      endif
-    endif
-    if a:position ==# 'left'
-      wincmd t
-      if a:bufnr == v:null
-        execute 'silent keepalt leftabove vsplit '.name
-      else
-        execute 'silent keepalt leftabove vertical sb '.a:bufnr
-      endif
-      call coc_explorer#init_win(a:position, a:width)
-      return 'create'
-    elseif a:position ==# 'right'
-      wincmd b
-      if a:bufnr == v:null
-        execute 'silent keepalt rightbelow vsplit '.name
-      else
-        execute 'silent keepalt rightbelow vertical sb '.a:bufnr
-      endif
-      call coc_explorer#init_win(a:position, a:width)
-      return 'create'
-    else
-      throw 'No support position '.a:position
-    endif
+    throw 'No support position '.a:position
+  endif
+  call coc_explorer#init_buf()
+  return bufnr('%')
+endfunction
+
+function! coc_explorer#resume(bufnr, position, width)
+  if a:position ==# 'left'
+    wincmd t
+    execute 'silent keepalt leftabove vertical sb '.a:bufnr
+    call coc_explorer#init_win(a:position, a:width)
+  elseif a:position ==# 'right'
+    wincmd b
+    execute 'silent keepalt rightbelow vertical sb '.a:bufnr
+    call coc_explorer#init_win(a:position, a:width)
+  else
+    throw 'No support position '.a:position
   endif
 endfunction
 
@@ -69,7 +39,8 @@ function! coc_explorer#init_win(position, width)
   endif
 
   silent setlocal colorcolumn=
-        \ conceallevel=0 concealcursor=nc nocursorcolumn
+        \ conceallevel=3 concealcursor=nvic
+        \ nocursorcolumn
         \ nofoldenable foldcolumn=0
         \ nolist
         \ nonumber norelativenumber
@@ -85,8 +56,7 @@ function! coc_explorer#init_buf()
         \ nomodifiable
         \ nomodified
         \ signcolumn=no
-        \ conceallevel=3
-        \ concealcursor=nvic
+        \ conceallevel=3 concealcursor=nvic
         \ nobuflisted
 endfunction
 
@@ -112,16 +82,15 @@ endfunction
 "   -1  - User cancelled
 "   0   - No window selected
 "   > 0 - Selected winnr
-function! coc_explorer#select_wins(explrer_bufname, filterFloatWindows)
+function! coc_explorer#select_wins(buffer_name, filterFloatWindows)
   let store = {}
   let char_idx_mapto_winnr = {}
   let char_idx = 0
-  let explorer_name = '['.a:explrer_bufname.']'
   for winnr in range(1, winnr('$'))
     if a:filterFloatWindows && coc_explorer#is_float_window(winnr)
       continue
     endif
-    if bufname(winbufnr(winnr)) == explorer_name
+    if stridx(bufname(winbufnr(winnr)), a:buffer_name) == 0
       continue
     endif
     let store[winnr] = getwinvar(winnr, '&statusline')
@@ -131,6 +100,7 @@ function! coc_explorer#select_wins(explrer_bufname, filterFloatWindows)
     call setwinvar(winnr, '&statusline', statusline)
     let char_idx += 1
   endfor
+
   if len(char_idx_mapto_winnr) == 0
     call coc_explorer#select_wins_restore(store)
     return 0
@@ -141,7 +111,7 @@ function! coc_explorer#select_wins(explrer_bufname, filterFloatWindows)
     redraw!
     let select_winnr = -1
     while 1
-      echo 'Please use the letter on statusline to select window, or use <ESC> to cancel'
+      echo 'Please press the letter on statusline to select window, or press <ESC> to cancel'
       let nr = getchar()
       if nr == 27 " ESC
         break
@@ -207,18 +177,32 @@ function! coc_explorer#clear_mappings(mappings)
   endif
 endfunction
 
-function! coc_explorer#register_syntax_highlights(syntax_highlights)
-  let s:coc_explorer_syntax_highlights = a:syntax_highlights
-  autocmd Syntax coc-explorer call coc_explorer#execute_syntax_highlights(s:coc_explorer_syntax_highlights)
+function! coc_explorer#register_syntax_highlights(syntax_highlight_cmds)
+  let s:coc_explorer_syntax_highlight_cmds = a:syntax_highlight_cmds
+  autocmd Syntax coc-explorer call coc_explorer#execute_syntax_highlights(s:coc_explorer_syntax_highlight_cmds)
 endfunction
 
-function! coc_explorer#execute_syntax_highlights(syntax_highlights)
-  for sh in a:syntax_highlights
-    execute printf('syntax region %s matchgroup=%sGroup start=/\V<%s|/ end=/\V|%s>/ concealends contained', sh['group'], sh['group'], sh['markerID'],  sh['markerID'])
-    execute printf('syntax match %sMatch /\V<%s|\.\*|%s>/ contains=%s', sh['group'], sh['markerID'], sh['markerID'], sh['group'])
-    execute sh['command']
+function! coc_explorer#execute_syntax_highlights(syntax_highlight_cmds)
+  for cmd in a:syntax_highlight_cmds
+    execute cmd
   endfor
 endfunction
+
+
+let s:tab_id_max = 0
+
+function! coc_explorer#tab_id()
+  if ! exists('t:coc_explorer_tab_id')
+    let s:tab_id_max = s:tab_id_max + 1
+    let t:coc_explorer_tab_id = s:tab_id_max
+  endif
+  return t:coc_explorer_tab_id
+endfunction
+
+function! coc_explorer#tab_id_max()
+  return s:tab_id_max
+endfunction
+
 
 function! coc_explorer#truncate(name, link_target, fullwidth, omit)
   let name_text_width = strdisplaywidth(a:name)

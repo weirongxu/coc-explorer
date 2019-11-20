@@ -1,4 +1,5 @@
 import { config } from './util';
+import { workspace } from 'coc.nvim';
 
 export interface ArgsSource {
   name: string;
@@ -42,7 +43,9 @@ export function parseSources(sources: string): ArgsSource[] {
   });
 }
 
-export async function parseArgs(...args: string[]): Promise<Args> {
+export async function parseArgs(args: string[]): Promise<Args> {
+  const { nvim } = workspace;
+
   const parsedArgs: Args = {
     sources: config.get<ArgsSource[]>('sources')!,
     toggle: config.get<boolean>('toggle')!,
@@ -96,6 +99,10 @@ export async function parseArgs(...args: string[]): Promise<Args> {
     } else {
       parsedArgs.rootPath = arg;
     }
+  }
+
+  if (!parsedArgs.revealPath) {
+    parsedArgs.revealPath = (await nvim.call('expand', '%:p')) as string;
   }
 
   return parsedArgs;

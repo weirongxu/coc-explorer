@@ -1,52 +1,110 @@
 import { workspace } from 'coc.nvim';
 import { execNotifyBlock } from '../util';
+import { Explorer } from '../explorer';
+import { ExplorerSource } from './source';
 
-export type HighlightCommand = {
+export type Hightlight = {
   group: string;
-  command: string;
+  commands: string[];
   markerID: number;
+};
+
+export type HighlightConcealable = {
+  markerID: number;
+  hide: (source: ExplorerSource<any>) => Promise<void>;
+  show: (source: ExplorerSource<any>) => Promise<void>;
 };
 
 class HighlightManager {
   static maxMarkerID = 0;
 
   nvim = workspace.nvim;
-  highlightCommands: HighlightCommand[] = [];
+  highlightCommands: string[] = [];
 
   createMarkerID() {
     HighlightManager.maxMarkerID += 1;
     return HighlightManager.maxMarkerID;
   }
 
-  hlLinkGroupCommand(groupName: string, targetGroup: string): HighlightCommand {
-    const group = `CocExplorer${groupName}`;
+  concealable(groupName: string): HighlightConcealable {
+    const group = `CocExplorerConcealable${groupName}`;
+    const markerID = this.createMarkerID();
+    const { nvim } = this;
+    let isInited = false;
+    let isShown = false;
+    const hide = async (source: ExplorerSource<any>) => {
+      if (!isShown && isInited) {
+        return;
+      }
+      const winnr = await source.explorer.winnr;
+      if (winnr) {
+        const storeWinnr = await nvim.call('winnr');
+        await execNotifyBlock(() => {
+          nvim.command(`${winnr}wincmd w`, true);
+          if (isInited) {
+            nvim.command(`silent syntax clear ${group}`, true);
+          }
+          nvim.command(`syntax match ${group} conceal /\\V<${markerID}|\\.\\*|${markerID}>/`, true);
+          nvim.command(`${storeWinnr}wincmd w`, true);
+        });
+        isShown = false;
+        isInited = true;
+      }
+    };
+    const show = async (source: ExplorerSource<any>) => {
+      if (isShown && isInited) {
+        return;
+      }
+      const winnr = await source.explorer.winnr;
+      if (winnr) {
+        const storeWinnr = await nvim.call('winnr');
+        await execNotifyBlock(() => {
+          nvim.command(`${winnr}wincmd w`, true);
+          if (isInited) {
+            nvim.command(`silent syntax clear ${group}`, true);
+          }
+          nvim.command(`syntax match ${group} conceal /\\V<${markerID}|\\||${markerID}>/`, true);
+          nvim.command(`${storeWinnr}wincmd w`, true);
+        });
+        isShown = true;
+        isInited = true;
+      }
+    };
     return {
-      group,
-      command: `highlight default link ${group} ${targetGroup}`,
-      markerID: this.createMarkerID(),
+      markerID,
+      hide,
+      show,
     };
   }
 
-  hlGroupCommand(groupName: string, hlArgs: string): HighlightCommand {
+  linkGroup(groupName: string, targetGroup: string): Hightlight {
     const group = `CocExplorer${groupName}`;
+    const markerID = this.createMarkerID();
+    const commands = [
+      `syntax region ${group} concealends matchgroup=${group}Marker start=/\\V<${markerID}|/ end=/\\V|${markerID}>/`,
+      `highlight default link ${group} ${targetGroup}`,
+    ];
+    this.highlightCommands.push(...commands);
     return {
       group,
-      command: `highlight default ${group} ${hlArgs}`,
-      markerID: this.createMarkerID(),
+      commands,
+      markerID,
     };
   }
 
-  register(highlights: HighlightCommand[]): void;
-  register(highlights: Record<string, HighlightCommand>): void;
-  register(highlights: HighlightCommand): void;
-  register(highlights: HighlightCommand | HighlightCommand[] | Record<string, HighlightCommand>) {
-    if (Array.isArray(highlights)) {
-      this.highlightCommands.push(...highlights);
-    } else if ('group' in highlights && typeof highlights.group === 'string') {
-      this.highlightCommands.push(highlights as HighlightCommand);
-    } else {
-      this.register(Object.values(highlights));
-    }
+  group(groupName: string, hlArgs: string): Hightlight {
+    const group = `CocExplorer${groupName}`;
+    const markerID = this.createMarkerID();
+    const commands = [
+      `syntax region ${group} concealends matchgroup=${group}Marker start=/\\V<${markerID}|/ end=/\\V|${markerID}>/`,
+      `highlight default ${group} ${hlArgs}`,
+    ];
+    this.highlightCommands.push(...commands);
+    return {
+      group,
+      commands,
+      markerID,
+    };
   }
 
   async registerHighlightSyntax(notify = false) {

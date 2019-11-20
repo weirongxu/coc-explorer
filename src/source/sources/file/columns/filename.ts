@@ -1,103 +1,89 @@
 import { hlGroupManager } from '../../../highlight-manager';
-import { fileColumnManager } from '../column-manager';
+import { fileColumnRegistrar } from '../file-column-registrar';
 import { indentChars, topLevel } from './indent';
-import { FileItem, expandStore } from '../file-source';
+import { FileNode, FileSource } from '../file-source';
 import { workspace } from 'coc.nvim';
-import { fsReadlink, min, max } from '../../../../util';
+import { fsReadlink } from '../../../../util';
 
 export const highlights = {
-  directory: hlGroupManager.hlLinkGroupCommand('FileDirectory', 'Directory'),
-  linkTarget: hlGroupManager.hlLinkGroupCommand('FileLinkTarget', 'Comment'),
+  directory: hlGroupManager.linkGroup('FileDirectory', 'Directory'),
+  linkTarget: hlGroupManager.linkGroup('FileLinkTarget', 'Comment'),
 };
-hlGroupManager.register(highlights);
 
 const nvim = workspace.nvim;
 
-const minWidth = fileColumnManager.getColumnConfig<number>('filename.minWidth')!;
-const maxWidth = fileColumnManager.getColumnConfig<number>('filename.maxWidth')!;
+const width = fileColumnRegistrar.getColumnConfig<number>('filename.width')!;
 
-function indentWidth(item: FileItem) {
-  if (fileColumnManager.columns.includes('indent') || fileColumnManager.columns.includes('indentLine')) {
-    return indentChars.length * (item.level - (topLevel ? 0 : 1));
+const attrSymbol = Symbol('filename-attr');
+type FilenameAttr = {
+  indentWidth: number;
+  truncatedName?: string;
+  truncatedLinkTarget?: string;
+};
+
+function getFilenameAttr(source: FileSource, node: FileNode) {
+  if (!Reflect.has(node, attrSymbol)) {
+    Reflect.set(node, attrSymbol, {
+      indentWidth: indentWidth(source, node),
+    } as FilenameAttr);
+  }
+  return Reflect.get(node, attrSymbol) as FilenameAttr;
+}
+
+function indentWidth(source: FileSource, node: FileNode) {
+  if (source.columnManager.columnNames.includes('indent') || source.columnManager.columnNames.includes('indentLine')) {
+    return indentChars.length * (node.level - (topLevel ? 0 : 1));
   } else {
     return 0;
   }
 }
 
-export function flattenChildren(items: FileItem[]) {
-  const stack = [...items];
-  const res = [];
-  while (stack.length) {
-    const item = stack.shift()!;
-    res.push(item);
-    if (item.children && Array.isArray(item.children) && expandStore.isExpanded(item.fullpath)) {
-      stack.unshift(...item.children);
-    }
-  }
-  return res;
-}
-
-const truncateCache: Map<[number, string, string], [string, string]> = new Map();
-async function loadTruncateItems(fullTreeWidth: number, flatItems: FileItem[]) {
+const truncateCache: Map<string, [string, string]> = new Map();
+async function loadTruncateNodes(
+  source: FileSource,
+  fullTreeWidth: number,
+  flatNodes: FileNode[],
+) {
   await Promise.all(
-    flatItems.map(async (item) => {
-      let name = item.name;
-      if (item.directory) {
+    flatNodes.map(async (node) => {
+      let name = node.name;
+      if (node.directory) {
         name += '/';
       }
-      const linkTarget = item.symbolicLink
-        ? await fsReadlink(item.fullpath)
+      const linkTarget = node.symbolicLink
+        ? await fsReadlink(node.fullpath)
             .then((link) => {
               return ' → ' + link;
             })
             .catch(() => '')
         : '';
-      const key = [item.level, name, linkTarget] as [number, string, string];
+      const key = [node.level, name, linkTarget].join('-');
       if (!truncateCache.has(key)) {
-        const filenameWidth = fullTreeWidth - item.data.filename.indentWidth;
-        truncateCache.set(key, await nvim.call('coc_explorer#truncate', [name, linkTarget, filenameWidth, '..']));
-      }
-      const cache = truncateCache.get(key)!;
-      item.data.filename.truncatedName = cache[0];
-      item.data.filename.truncatedLinkTarget = cache[1];
-    }),
-  );
-}
-
-const usedWidthCache: Map<[string, number], string> = new Map();
-async function loadUsedWidth(flatItems: FileItem[]) {
-  await Promise.all(
-    flatItems.map(async (item) => {
-      const key = [item.uid, item.level] as [string, number];
-      if (!usedWidthCache.has(key)) {
-        usedWidthCache.set(
+        const remainWidth = fullTreeWidth - getFilenameAttr(source, node).indentWidth;
+        truncateCache.set(
           key,
-          ((await nvim.call('strdisplaywidth', [item.name])) as number) + item.data.filename.indentWidth,
+          await nvim.call('coc_explorer#truncate', [name, linkTarget, remainWidth, '..']),
         );
       }
-      item.data.filename.usedWidth = usedWidthCache.get(key);
+      const cache = truncateCache.get(key)!;
+      getFilenameAttr(source, node).truncatedName = cache[0];
+      getFilenameAttr(source, node).truncatedLinkTarget = cache[1];
     }),
   );
 }
 
-fileColumnManager.registerColumn('filename', (fileSource) => ({
-  async beforeDraw() {
-    const flatItems = flattenChildren(fileSource.items).filter((item) => !item.hidden || fileSource.showHiddenFiles);
-    flatItems.forEach((item) => {
-      item.data.filename = {};
-      item.data.filename.indentWidth = indentWidth(item);
-    });
-    await loadUsedWidth(flatItems);
-    const fullTreeWidth = min([maxWidth, max([minWidth, max(flatItems.map((item) => item.data.filename.usedWidth))])]);
-    await loadTruncateItems(fullTreeWidth, flatItems);
+fileColumnRegistrar.registerColumn('filename', (source) => ({
+  async beforeDraw(nodes) {
+    await loadTruncateNodes(source, width, nodes);
   },
-  draw(row, item) {
-    if (item.directory) {
-      row.add(item.data.filename.truncatedName, highlights.directory);
-      row.add(item.data.filename.truncatedLinkTarget, highlights.linkTarget);
+  draw(row, node) {
+    const attr = getFilenameAttr(source, node);
+    if (node.directory) {
+      row.add(attr.truncatedName!, highlights.directory);
+      row.add(attr.truncatedLinkTarget!, highlights.linkTarget);
     } else {
-      row.add(item.data.filename.truncatedName);
-      row.add(item.data.filename.truncatedLinkTarget, highlights.linkTarget);
+      row.add(attr.truncatedName!);
+      row.add(attr.truncatedLinkTarget!, highlights.linkTarget);
     }
     row.add(' ');
   },

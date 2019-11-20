@@ -1,9 +1,9 @@
 import pathLib from 'path';
 import { onError } from './logger';
-import { fileColumnManager } from './source/sources/file/column-manager';
+import { fileColumnRegistrar } from './source/sources/file/file-column-registrar';
 import { config, execCli } from './util';
 
-const showIgnored = fileColumnManager.getColumnConfig<boolean>('git.showIgnored')!;
+const showIgnored = fileColumnRegistrar.getColumnConfig<boolean>('git.showIgnored')!;
 
 export enum GitFormat {
   mixed = '*',
@@ -144,7 +144,13 @@ class GitCommand {
       const [x_, y, leftpath, rightpath] = this.parseStatusLine(root, line);
       const x = [GitFormat.untracked, GitFormat.ignored].includes(x_) ? GitFormat.unmodified : x_;
 
-      const changedList = [GitFormat.modified, GitFormat.added, GitFormat.deleted, GitFormat.renamed, GitFormat.copied];
+      const changedList = [
+        GitFormat.modified,
+        GitFormat.added,
+        GitFormat.deleted,
+        GitFormat.renamed,
+        GitFormat.copied,
+      ];
       const added = x === GitFormat.added || y === GitFormat.added;
       const modified = x === GitFormat.modified || y === GitFormat.modified;
       const deleted = x === GitFormat.deleted || y === GitFormat.deleted;
@@ -200,7 +206,13 @@ class GitManager {
   cmd = new GitCommand();
 
   private rootCache: Record<string, string> = {};
+  /**
+   * statusCache[rootPath][filepath] = GitStatus
+   **/
   private statusCache: Record<string, Record<string, GitStatus>> = {};
+  /**
+   * mixedStatusCache[rootPath][filepath] = GitStatus
+   **/
   private mixedStatusCache: Record<string, Record<string, GitMixedStatus>> = {};
 
   async getGitRoot(folderPath: string): Promise<string | undefined> {
@@ -229,8 +241,8 @@ class GitManager {
     return this.rootCache[folderPath];
   }
 
-  async reload(folderPath: string) {
-    const root = await this.getGitRoot(folderPath);
+  async reload(path: string) {
+    const root = await this.getGitRoot(path);
     if (root) {
       this.statusCache[root] = await this.cmd.status(root);
       this.mixedStatusCache[root] = {};
@@ -269,6 +281,19 @@ class GitManager {
           }
         }
       });
+    }
+  }
+
+  getRootStatuses(rootPath: string) {
+    return this.mixedStatusCache[rootPath] as Record<string, GitMixedStatus> | undefined;
+  }
+
+  async getStatuses(path: string) {
+    const root = await this.getGitRoot(path);
+    if (root) {
+      return this.getRootStatuses(root) || {};
+    } else {
+      return {};
     }
   }
 

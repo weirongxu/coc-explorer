@@ -50,6 +50,9 @@ const Actions = {
   search: 0,
   searchRecursive: 0,
 
+  nodePrev: 0,
+  nodeNext: 0,
+
   gotoSource: 1,
   sourcePrev: 0,
   sourceNext: 0,
@@ -72,13 +75,16 @@ type OriginalMappings = Record<string, false | string | string[]>;
 export const defaultMappings: Record<keyof typeof MappingMode, OriginalMappings> = {
   none: {},
   default: {
+    k: 'nodePrev',
+    j: 'nodeNext',
+
     '*': 'toggleSelection',
     '<tab>': 'actionMenu',
 
     h: 'shrink',
     l: 'expand',
-    J: ['toggleSelection', 'normal:j'],
-    K: ['toggleSelection', 'normal:k'],
+    J: ['toggleSelection', 'nodeNext'],
+    K: ['toggleSelection', 'nodePrev'],
     gl: 'expandRecursive',
     gh: 'shrinkRecursive',
     o: 'expandOrShrink',
@@ -132,6 +138,8 @@ export type Action = {
   arg: string;
 };
 
+export type ActionMode = 'n' | 'v';
+
 type Mappings = Record<string, Action[]>;
 
 export const mappings: Mappings = {};
@@ -139,7 +147,7 @@ export const mappings: Mappings = {};
 /**
  * @example
  * parseAction('normal:j')
- * // { name: 'normal', arg: 'j' }
+ * // return { name: 'normal', arg: 'j' }
  */
 function parseAction(originalAction: string): Action {
   const [name, arg] = originalAction.split(/:(.+)/, 2) as [ActionSyms, string];
@@ -154,7 +162,9 @@ Object.entries({
   ...config.get<OriginalMappings>('keyMappings', {}),
 }).forEach(([key, actions]) => {
   if (actions) {
-    mappings[key] = Array.isArray(actions) ? actions.map((action) => parseAction(action)) : [parseAction(actions)];
+    mappings[key] = Array.isArray(actions)
+      ? actions.map((action) => parseAction(action))
+      : [parseAction(actions)];
   }
 });
 

@@ -5,18 +5,10 @@ export function initBufferActions(buffer: BufferSource) {
   const { nvim } = buffer;
 
   buffer.addAction(
-    'toggleHidden',
-    async () => {
-      buffer.showHiddenBuffers = !buffer.showHiddenBuffers;
-    },
-    'toggle visibility of unlisted buffers',
-    { reload: true },
-  );
-  buffer.addAction(
     'shrink',
     async () => {
       buffer.expanded = false;
-      await buffer.reload(null);
+      await buffer.reload(buffer.rootNode);
       await buffer.gotoRoot();
     },
     'shrink root node',
@@ -25,23 +17,23 @@ export function initBufferActions(buffer: BufferSource) {
     'expand',
     async () => {
       buffer.expanded = true;
-      await buffer.reload(null);
+      await buffer.reload(buffer.rootNode);
     },
     'expand root node',
   );
 
-  buffer.addItemsAction(
+  buffer.addNodesAction(
     'expand',
-    async (items) => {
-      await buffer.doAction('open', items);
+    async (nodes) => {
+      await buffer.doAction('open', nodes);
     },
     'open buffer',
   );
-  buffer.addItemAction(
+  buffer.addNodeAction(
     'open',
-    async (item) => {
+    async (node) => {
       if (openStrategy === 'vsplit') {
-        await buffer.doAction('openInVsplit', item);
+        await buffer.doAction('openInVsplit', node);
         await buffer.quitOnOpen();
       } else if (openStrategy === 'select') {
         await buffer.explorer.selectWindowsUI(
@@ -49,11 +41,11 @@ export function initBufferActions(buffer: BufferSource) {
             await avoidOnBufEnter(async () => {
               await buffer.nvim.command(`${winnr}wincmd w`);
             });
-            await nvim.command(`buffer ${item.bufnr}`);
+            await nvim.command(`buffer ${node.bufnr}`);
             await buffer.quitOnOpen();
           },
           async () => {
-            await buffer.doAction('openInVsplit', item);
+            await buffer.doAction('openInVsplit', node);
             await buffer.quitOnOpen();
           },
         );
@@ -63,9 +55,9 @@ export function initBufferActions(buffer: BufferSource) {
           await avoidOnBufEnter(async () => {
             await nvim.command(`${prevWinnr}wincmd w`);
           });
-          await nvim.command(`buffer ${item.bufnr}`);
+          await nvim.command(`buffer ${node.bufnr}`);
         } else {
-          await buffer.doAction('openInVsplit', item);
+          await buffer.doAction('openInVsplit', node);
         }
         await buffer.quitOnOpen();
       }
@@ -73,11 +65,11 @@ export function initBufferActions(buffer: BufferSource) {
     'open buffer',
     { multi: false },
   );
-  buffer.addItemAction(
+  buffer.addNodeAction(
     'drop',
-    async (item) => {
-      if (!item.hidden) {
-        const info = (await nvim.call('getbufinfo', item.bufnr)) as any[];
+    async (node) => {
+      if (!node.hidden) {
+        const info = (await nvim.call('getbufinfo', node.bufnr)) as any[];
         if (info.length && info[0].windows.length) {
           const winid = info[0].windows[0];
           await nvim.call('win_gotoid', winid);
@@ -85,38 +77,40 @@ export function initBufferActions(buffer: BufferSource) {
           return;
         }
       }
-      await nvim.command(`buffer ${item.bufnr}`);
+      await nvim.command(`buffer ${node.bufnr}`);
       await buffer.quitOnOpen();
     },
     'open buffer via drop command',
     { multi: false },
   );
-  buffer.addItemAction(
+  buffer.addNodeAction(
     'openInTab',
-    async (item) => {
+    async (node) => {
       await buffer.quitOnOpen();
-      const escaped = await nvim.call('fnameescape', item.bufname);
+      const escaped = await nvim.call('fnameescape', node.bufname);
       await nvim.command(`tabe ${escaped}`);
     },
     'open buffer via tab',
   );
-  buffer.addItemAction(
+  buffer.addNodeAction(
     'openInSplit',
-    async (item) => {
-      await nvim.command(`sbuffer ${item.bufnr}`);
+    async (node) => {
+      await nvim.command(`sbuffer ${node.bufnr}`);
       await buffer.quitOnOpen();
     },
     'open buffer via split command',
   );
-  buffer.addItemAction(
+  buffer.addNodeAction(
     'openInVsplit',
-    async (item) => {
+    async (node) => {
       await execNotifyBlock(async () => {
-        nvim.command(`vertical sbuffer ${item.bufnr}`, true);
+        nvim.command(`vertical sbuffer ${node.bufnr}`, true);
         if (buffer.explorer.args.position === 'left') {
           nvim.command('wincmd L', true);
         } else if (buffer.explorer.args.position === 'right') {
           nvim.command('wincmd H', true);
+        } else if (buffer.explorer.args.position === 'tab') {
+          nvim.command('wincmd L', true);
         }
         await buffer.quitOnOpen();
       });
@@ -124,18 +118,18 @@ export function initBufferActions(buffer: BufferSource) {
     'open buffer via vsplit command',
   );
 
-  buffer.addItemAction(
+  buffer.addNodeAction(
     'delete',
-    async (item) => {
-      await nvim.command(`bdelete ${item.bufnr}`);
+    async (node) => {
+      await nvim.command(`bdelete ${node.bufnr}`);
     },
     'delete buffer',
     { reload: true },
   );
-  buffer.addItemAction(
+  buffer.addNodeAction(
     'deleteForever',
-    async (item) => {
-      await nvim.command(`bwipeout ${item.bufnr}`);
+    async (node) => {
+      await nvim.command(`bwipeout ${node.bufnr}`);
     },
     'bwipeout buffer',
     {

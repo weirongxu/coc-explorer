@@ -3,10 +3,11 @@ import { Range } from 'vscode-languageserver-protocol';
 import { explorerActionList } from '../lists/actions';
 import { Explorer } from '../explorer';
 import { onError } from '../logger';
-import { Action, ActionSyms, mappings, reverseMappings } from '../mappings';
-import { config, execNotifyBlock, findLast, enableWrapscan } from '../util';
+import { Action, ActionSyms, mappings, reverseMappings, ActionMode } from '../mappings';
+import { config, execNotifyBlock } from '../util';
 import { SourceRowBuilder, SourceViewBuilder } from './view-builder';
 import { hlGroupManager } from './highlight-manager';
+import { ColumnManager } from './column-manager';
 
 export type ActionOptions = {
   multi: boolean;
@@ -18,13 +19,13 @@ export type ActionOptions = {
 export const enableNerdfont = config.get<string>('icon.enableNerdfont')!;
 
 export const sourceIcons = {
-  expanded: config.get<string>('icon.expanded') || (enableNerdfont ? '' : '-'),
-  shrinked: config.get<string>('icon.shrinked') || (enableNerdfont ? '' : '+'),
+  expanded: config.get<string>('icon.expanded') || (enableNerdfont ? '' : '-'),
+  shrinked: config.get<string>('icon.shrinked') || (enableNerdfont ? '' : '+'),
   selected: config.get<string>('icon.selected')!,
   unselected: config.get<string>('icon.unselected')!,
 };
 
-const hl = hlGroupManager.hlLinkGroupCommand.bind(hlGroupManager);
+const hl = hlGroupManager.linkGroup.bind(hlGroupManager);
 const helpHightlights = {
   line: hl('HelpLine', 'Operator'),
   mappingKey: hl('HelpMappingKey', 'PreProc'),
@@ -32,29 +33,46 @@ const helpHightlights = {
   arg: hl('HelpArg', 'Identifier'),
   description: hl('HelpDescription', 'Comment'),
 };
-hlGroupManager.register(helpHightlights);
 
-export interface BaseItem<Item extends BaseItem<any>> {
+export interface BaseTreeNode<TreeNode extends BaseTreeNode<TreeNode>> {
+  isRoot?: boolean;
   uid: string;
-  parent?: Item;
+  level: number;
+  drawnLine: string;
+  expandable?: boolean;
+  parent?: BaseTreeNode<TreeNode>;
+  children?: TreeNode[];
 }
 
-export abstract class ExplorerSource<Item extends BaseItem<Item>> {
-  abstract name: string;
+export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>> {
   startLine: number = 0;
   endLine: number = 0;
-  items: Item[] = [];
-  lines: [string, null | Item][] = [];
-  selectedItems: Set<Item> = new Set();
+  abstract rootNode: TreeNode;
+  flattenedNodes: TreeNode[] = [];
+  showHidden: boolean = false;
+  selectedNodes: Set<TreeNode> = new Set();
   relativeHlRanges: Record<string, Range[]> = {};
-  abstract hlSrcId: number;
+  viewBuilder = new SourceViewBuilder();
+  expandStore = {
+    record: new Map<string, boolean>(),
+    expand(node: TreeNode) {
+      this.record.set(node.uid, true);
+    },
+    shrink(node: TreeNode) {
+      this.record.set(node.uid, false);
+    },
+    isExpanded(node: TreeNode) {
+      return this.record.get(node.uid) || false;
+    },
+  };
+  columnManager = new ColumnManager<TreeNode>(this);
 
   actions: Record<
     string,
     {
       description: string;
       options: Partial<ActionOptions>;
-      callback: (items: Item[], arg: string) => void | Promise<void>;
+      callback: (nodes: TreeNode[], arg: string, mode: ActionMode) => void | Promise<void>;
     }
   > = {};
   rootActions: Record<
@@ -62,262 +80,90 @@ export abstract class ExplorerSource<Item extends BaseItem<Item>> {
     {
       description: string;
       options: Partial<ActionOptions>;
-      callback: (arg: string) => void | Promise<void>;
+      callback: (arg: string, mode: ActionMode) => void | Promise<void>;
     }
   > = {};
   hlIds: number[] = []; // hightlight match ids for vim8.0
   nvim = workspace.nvim;
 
-  private _explorer?: Explorer;
-  private _expanded?: boolean;
-  private bindedExplorer = false;
+  private requestedRenderNodes: Set<TreeNode> = new Set();
 
-  constructor() {
+  constructor(public sourceName: string, public explorer: Explorer, expanded: boolean) {
     this.addAction(
-      'normal',
-      async (_item, arg) => {
-        await this.nvim.command('normal ' + arg);
-      },
-      'execute vim normal mode commands',
-      { multi: false },
-    );
-    this.addAction(
-      'quit',
+      'toggleHidden',
       async () => {
-        await this.explorer.quit();
+        this.showHidden = !this.showHidden;
       },
-      'quit explorer',
-      { multi: false },
+      'toggle visibility of hidden node',
+      { reload: true, multi: false },
     );
     this.addAction(
       'refresh',
-      async (items) => {
-        const item = items ? items[0] : null;
-        await this.reload(item);
+      async () => {
+        await this.reload(this.rootNode);
       },
       'refresh',
       { multi: false },
     );
     this.addAction(
       'help',
-      async (items) => {
-        await this.renderHelp(items === null);
+      async (nodes) => {
+        await this.renderHelp(nodes === null);
       },
       'show help',
       { multi: false },
     );
     this.addAction(
       'actionMenu',
-      async (items) => {
-        await this.actionMenu(items);
+      async (nodes) => {
+        await this.listActionMenu(nodes);
       },
       'show actions in coc-list',
     );
-    this.addItemAction(
+    this.addNodeAction(
       'select',
-      async (item) => {
-        this.selectedItems.add(item);
-        await this.render();
+      async (node) => {
+        this.selectedNodes.add(node);
+        this.requestRenderNodes([node]);
       },
-      'toggle item selection',
+      'toggle node selection',
       { multi: false, select: true },
     );
-    this.addItemAction(
+    this.addNodeAction(
       'unselect',
-      async (item) => {
-        this.selectedItems.delete(item);
-        await this.render();
+      async (node) => {
+        this.selectedNodes.delete(node);
+        this.requestRenderNodes([node]);
       },
-      'toggle item selection',
+      'toggle node selection',
       { multi: false, select: true },
     );
-    this.addItemAction(
+    this.addNodeAction(
       'toggleSelection',
-      async (item) => {
-        if (this.selectedItems.has(item)) {
-          await this.doAction('unselect', item);
+      async (node) => {
+        if (this.selectedNodes.has(node)) {
+          await this.doAction('unselect', node);
         } else {
-          await this.doAction('select', item);
+          await this.doAction('select', node);
         }
-        await this.render();
       },
-      'toggle item selection',
+      'toggle node selection',
       { multi: false, select: true },
     );
 
-    this.addAction(
-      'gotoSource',
-      async (_items, name) => {
-        const source = this.explorer.sources.find((s) => s.name === name);
-        if (source) {
-          await source.gotoLineIndex(0);
-        }
-      },
-      'go to source',
-    );
-
-    this.addAction(
-      'sourceNext',
-      async () => {
-        const sourceIndex = this.explorer.sources.findIndex((s) => s === this);
-        const nextSource = this.explorer.sources[sourceIndex + 1];
-        if (nextSource) {
-          await nextSource.gotoLineIndex(0);
-        } else if (await enableWrapscan()) {
-          await this.explorer.sources[0].gotoLineIndex(0);
-        }
-      },
-      'go to next source',
-    );
-    this.addAction(
-      'sourcePrev',
-      async () => {
-        const sourceIndex = this.explorer.sources.findIndex((s) => s === this);
-        const prevSource = this.explorer.sources[sourceIndex - 1];
-        if (prevSource) {
-          await prevSource.gotoLineIndex(0);
-        } else if (await enableWrapscan()) {
-          await this.explorer.sources[this.explorer.sources.length - 1].gotoLineIndex(0);
-        }
-      },
-      'go to previous source',
-    );
-
-    this.addAction(
-      'diagnosticPrev',
-      async (items) => {
-        const item = items ? items[0] : null;
-        if (this instanceof FileSource) {
-          const lineIndex = this.lines.findIndex(([, it]) => it === item);
-          const prevIndex = findLast(this.diagnosisLineIndexes, (idx) => idx < lineIndex);
-          if (prevIndex !== undefined) {
-            await this.gotoLineIndex(prevIndex);
-          }
-        }
-        const sourceIndex = this.explorer.sources.findIndex((s) => s === this);
-        const fileSource = findLast(
-          this.explorer.sources.slice(0, sourceIndex),
-          (source) => source instanceof FileSource && source.diagnosisLineIndexes.length > 0,
-        ) as undefined | FileSource;
-        if (fileSource) {
-          const prevIndex = fileSource.diagnosisLineIndexes[fileSource.diagnosisLineIndexes.length - 1];
-          if (prevIndex !== undefined) {
-            await fileSource.gotoLineIndex(prevIndex);
-          }
-        }
-      },
-      'go to previous diagnostic',
-    );
-
-    this.addAction(
-      'diagnosticNext',
-      async (items) => {
-        const item = items ? items[0] : null;
-        if (this instanceof FileSource) {
-          const lineIndex = this.lines.findIndex(([, it]) => it === item);
-          const nextIndex = this.diagnosisLineIndexes.find((idx) => idx > lineIndex);
-          if (nextIndex !== undefined) {
-            await this.gotoLineIndex(nextIndex);
-            return;
-          }
-        }
-        const sourceIndex = this.explorer.sources.findIndex((s) => s === this);
-        const fileSource = this.explorer.sources
-          .slice(sourceIndex + 1)
-          .find((source) => source instanceof FileSource && source.diagnosisLineIndexes.length > 0) as
-          | undefined
-          | FileSource;
-        if (fileSource) {
-          const nextIndex = fileSource.diagnosisLineIndexes[0];
-          if (nextIndex !== undefined) {
-            await fileSource.gotoLineIndex(nextIndex);
-          }
-        }
-      },
-      'go to next diagnostic',
-    );
-
-    this.addAction(
-      'gitPrev',
-      async (items) => {
-        const item = items ? items[0] : null;
-        if (this instanceof FileSource) {
-          const lineIndex = this.lines.findIndex(([, it]) => it === item);
-          const prevIndex = findLast(this.gitChangedLineIndexes, (idx) => idx < lineIndex);
-          if (prevIndex !== undefined) {
-            await this.gotoLineIndex(prevIndex);
-            return;
-          }
-        }
-        const sourceIndex = this.explorer.sources.findIndex((s) => s === this);
-        const fileSource = findLast(
-          this.explorer.sources.slice(0, sourceIndex),
-          (source) => source instanceof FileSource && source.gitChangedLineIndexes.length > 0,
-        ) as undefined | FileSource;
-        if (fileSource) {
-          const prevIndex = fileSource.gitChangedLineIndexes[fileSource.gitChangedLineIndexes.length - 1];
-          if (prevIndex !== undefined) {
-            await fileSource.gotoLineIndex(prevIndex);
-          }
-        }
-      },
-      'go to previous git changed',
-    );
-
-    this.addAction(
-      'gitNext',
-      async (items) => {
-        const item = items ? items[0] : null;
-        if (this instanceof FileSource) {
-          const lineIndex = this.lines.findIndex(([, it]) => it === item);
-          const nextIndex = this.gitChangedLineIndexes.find((idx) => idx > lineIndex);
-          if (nextIndex !== undefined) {
-            await this.gotoLineIndex(nextIndex);
-            return;
-          }
-        }
-        const sourceIndex = this.explorer.sources.findIndex((s) => s === this);
-        const fileSource = this.explorer.sources
-          .slice(sourceIndex + 1)
-          .find((source) => source instanceof FileSource && source.gitChangedLineIndexes.length > 0) as
-          | undefined
-          | FileSource;
-        if (fileSource) {
-          const nextIndex = fileSource.gitChangedLineIndexes[0];
-          if (nextIndex !== undefined) {
-            await fileSource.gotoLineIndex(nextIndex);
-          }
-        }
-      },
-      'go to next git changed',
-    );
-  }
-
-  bindExplorer(explorer: Explorer, expanded: boolean) {
-    if (this.bindedExplorer) {
-      return;
-    }
-    this.bindedExplorer = true;
-
-    this._explorer = explorer;
-    this._expanded = expanded;
-
-    // init
-    Promise.resolve(this.init()).catch(onError);
-  }
-
-  get explorer() {
-    if (this._explorer !== undefined) {
-      return this._explorer;
-    }
-    throw new Error(`source(${this.name}) unbound to explorer`);
+    setImmediate(() => {
+      Promise.resolve(this.init()).catch(onError);
+      this.expanded = expanded;
+    });
   }
 
   /**
    * @returns winnr
    */
   async prevWinnr() {
-    const winnr = (await this.nvim.call('bufwinnr', [this.explorer.previousBufnr])) as number;
+    const winnr = (await this.nvim.call('bufwinnr', [
+      this.explorer.explorerManager.previousBufnr,
+    ])) as number;
     if ((await this.explorer.winnr) !== winnr && winnr > 0) {
       return winnr;
     } else {
@@ -326,26 +172,44 @@ export abstract class ExplorerSource<Item extends BaseItem<Item>> {
   }
 
   get expanded() {
-    if (this._expanded !== undefined) {
-      return this._expanded;
-    }
-    throw new Error(`source(${this.name}) unbound to explorer`);
+    return this.expandStore.isExpanded(this.rootNode);
   }
 
   set expanded(expanded: boolean) {
-    this._expanded = expanded;
+    if (expanded) {
+      this.expandStore.expand(this.rootNode);
+    } else {
+      this.expandStore.shrink(this.rootNode);
+    }
+  }
+
+  get height() {
+    return this.flattenedNodes.length;
   }
 
   init() {}
 
+  addGlobalAction(
+    name: ActionSyms,
+    callback: (
+      nodes: BaseTreeNode<any>[] | null,
+      arg: string,
+      mode: ActionMode,
+    ) => void | Promise<void>,
+    description: string,
+    options: Partial<ActionOptions> = {},
+  ) {
+    this.explorer.addGlobalAction(name, callback, description, options);
+  }
+
   addAction(
     name: ActionSyms,
-    callback: (items: Item[] | null, arg: string) => void | Promise<void>,
+    callback: (nodes: TreeNode[] | null, arg: string, mode: ActionMode) => void | Promise<void>,
     description: string,
     options: Partial<ActionOptions> = {},
   ) {
     this.rootActions[name] = {
-      callback: (arg: string) => callback(null, arg),
+      callback: (arg, mode) => callback(null, arg, mode),
       description,
       options,
     };
@@ -358,16 +222,16 @@ export abstract class ExplorerSource<Item extends BaseItem<Item>> {
 
   addRootAction(
     name: ActionSyms,
-    callback: (arg: string) => void | Promise<void>,
+    callback: (arg: string, mode: ActionMode) => void | Promise<void>,
     description: string,
     options: Partial<ActionOptions> = {},
   ) {
     this.rootActions[name] = { callback, options, description };
   }
 
-  addItemsAction(
+  addNodesAction(
     name: ActionSyms,
-    callback: (item: Item[], arg: string) => void | Promise<void>,
+    callback: (node: TreeNode[], arg: string, mode: ActionMode) => void | Promise<void>,
     description: string,
     options: Partial<ActionOptions> = {},
   ) {
@@ -378,16 +242,16 @@ export abstract class ExplorerSource<Item extends BaseItem<Item>> {
     };
   }
 
-  addItemAction(
+  addNodeAction(
     name: ActionSyms,
-    callback: (item: Item, arg: string) => void | Promise<void>,
+    callback: (node: TreeNode, arg: string, mode: ActionMode) => void | Promise<void>,
     description: string,
     options: Partial<ActionOptions> = {},
   ) {
     this.actions[name] = {
-      callback: async (items: Item[], arg) => {
-        for (const item of items) {
-          await callback(item, arg);
+      callback: async (nodes: TreeNode[], arg, mode) => {
+        for (const node of nodes) {
+          await callback(node, arg, mode);
         }
       },
       description,
@@ -395,53 +259,64 @@ export abstract class ExplorerSource<Item extends BaseItem<Item>> {
     };
   }
 
-  async doRootAction(name: ActionSyms, arg: string = '') {
-    const action = this.rootActions[name];
+  async doRootAction(name: ActionSyms, arg: string = '', mode: ActionMode = 'n') {
+    const action = this.rootActions[name] || this.explorer.globalActions[name];
     if (!action) {
       return;
     }
 
     const { render = false, reload = false } = action.options;
 
-    await action.callback(arg);
+    await action.callback(arg, mode);
 
-    if (render) {
-      await this.render();
-    }
     if (reload) {
-      await this.reload(null);
+      await this.reload(this.rootNode);
+    } else if (render) {
+      await this.render();
     }
   }
 
-  async doAction(name: ActionSyms, items: Item | Item[], arg: string = '') {
-    const action = this.actions[name];
+  async doAction(
+    name: ActionSyms,
+    nodes: TreeNode | TreeNode[],
+    arg: string = '',
+    mode: ActionMode = 'n',
+  ) {
+    const action = this.actions[name] || this.explorer.globalActions[name];
     if (!action) {
       return;
     }
 
     const { multi = true, render = false, reload = false, select = false } = action.options;
 
-    const finalItems = Array.isArray(items) ? items : [items];
+    const finalNodes = Array.isArray(nodes) ? nodes : [nodes];
     if (select) {
-      await action.callback(finalItems, arg);
+      await action.callback(finalNodes, arg, mode);
     } else if (multi) {
-      if (this.selectedItems.size > 0) {
-        const items = Array.from(this.selectedItems);
-        this.selectedItems.clear();
-        await action.callback(items, arg);
+      if (this.selectedNodes.size > 0) {
+        const nodes = Array.from(this.selectedNodes);
+        this.selectedNodes.clear();
+        await action.callback(nodes, arg, mode);
       } else {
-        await action.callback(finalItems, arg);
+        await action.callback(finalNodes, arg, mode);
       }
     } else {
-      await action.callback([finalItems[0]], arg);
+      await action.callback([finalNodes[0]], arg, mode);
     }
 
-    if (render) {
+    if (reload) {
+      await this.reload(this.rootNode);
+    } else if (render) {
       await this.render();
     }
-    if (reload) {
-      await this.reload(null);
-    }
+  }
+
+  addIndexes(name: string, relativeIndex: number) {
+    this.explorer.addIndexes(name, relativeIndex + this.startLine);
+  }
+
+  removeIndexes(name: string, relativeIndex: number) {
+    this.explorer.removeIndexes(name, relativeIndex + this.startLine);
   }
 
   async copy(content: string) {
@@ -449,15 +324,19 @@ export abstract class ExplorerSource<Item extends BaseItem<Item>> {
     await this.nvim.call('setreg', ['"', content]);
   }
 
-  async actionMenu(items: Item[] | null) {
-    const actions = items === null ? this.rootActions : this.actions;
+  async listActionMenu(nodes: TreeNode[] | null) {
+    const actions = {
+      ...this.explorer.globalActions,
+      ...(nodes === null ? this.rootActions : this.actions),
+    };
     explorerActionList.setExplorerActions(
       Object.entries(actions)
+        .sort(([aName], [bName]) => aName.localeCompare(bName))
         .map(([name, { callback, description }]) => ({
           name,
-          items,
+          nodes,
           mappings,
-          root: items === null,
+          root: nodes === null,
           key: reverseMappings[name],
           description,
           callback,
@@ -470,32 +349,42 @@ export abstract class ExplorerSource<Item extends BaseItem<Item>> {
   }
 
   isSelectedAny() {
-    return this.selectedItems.size !== 0;
+    return this.selectedNodes.size !== 0;
   }
 
-  isSelectedItem(item: Item) {
-    return this.selectedItems.has(item);
+  isSelectedNode(node: TreeNode) {
+    return this.selectedNodes.has(node);
   }
 
-  getItemByIndex(lineIndex: number) {
-    const line = this.lines[lineIndex];
-    return line ? line[1] : null;
+  getNodeByLine(lineIndex: number): TreeNode {
+    return this.flattenedNodes[lineIndex];
+  }
+
+  getLineByNode(node: TreeNode): number {
+    if (node) {
+      return this.flattenedNodes.findIndex((it) => it.uid === node.uid);
+    } else {
+      return 0;
+    }
+  }
+
+  async currentLineIndex() {
+    const cursor = await this.explorer.currentCursor();
+    if (cursor) {
+      return cursor.lineIndex - this.startLine;
+    } else {
+      return null;
+    }
   }
 
   async gotoLineIndex(lineIndex: number, col?: number, notify = false) {
-    await execNotifyBlock(async () => {
-      const finalCol = col === undefined ? await this.explorer.currentCol() : col;
-      const win = await this.explorer.win;
-      if (win) {
-        if (lineIndex >= this.lines.length) {
-          lineIndex = this.lines.length - 1;
-        }
-        win.setCursor([this.startLine + lineIndex + 1, finalCol - 1], true);
-        if (workspace.env.isVim) {
-          this.nvim.command('redraw', true);
-        }
-      }
-    }, notify);
+    if (lineIndex < 0) {
+      lineIndex = 0;
+    }
+    if (lineIndex > this.height) {
+      lineIndex = this.height - 1;
+    }
+    await this.explorer.gotoLineIndex(this.startLine + lineIndex, col, notify);
   }
 
   async gotoRoot({ col, notify = false }: { col?: number; notify?: boolean } = {}) {
@@ -503,17 +392,19 @@ export abstract class ExplorerSource<Item extends BaseItem<Item>> {
     await this.gotoLineIndex(0, finalCol, notify);
   }
 
-  async gotoItem(
-    item: Item | null,
-    { lineIndex: fallbackLineIndex, col, notify = false }: { lineIndex?: number; col?: number; notify?: boolean } = {},
+  /**
+   * if node is null, move to root, otherwise move to node
+   */
+  async gotoNode(
+    node: TreeNode,
+    {
+      lineIndex: fallbackLineIndex,
+      col,
+      notify = false,
+    }: { lineIndex?: number; col?: number; notify?: boolean } = {},
   ) {
-    if (item === null) {
-      await this.gotoRoot({ col, notify });
-      return;
-    }
-
     const finalCol = col === undefined ? await this.explorer.currentCol() : col;
-    const lineIndex = this.lines.findIndex(([, it]) => it !== null && it.uid === item.uid);
+    const lineIndex = this.flattenedNodes.findIndex((it) => it.uid === node.uid);
     if (lineIndex !== -1) {
       await this.gotoLineIndex(lineIndex, finalCol, notify);
     } else if (fallbackLineIndex !== undefined) {
@@ -523,25 +414,239 @@ export abstract class ExplorerSource<Item extends BaseItem<Item>> {
     }
   }
 
-  abstract loadItems(sourceItem: null | Item): Promise<Item[]>;
-  abstract draw(builder: SourceViewBuilder<Item>): void | Promise<void>;
-  async loaded(_sourceItem: null | Item): Promise<void> {}
+  abstract loadChildren(sourceNode: TreeNode): Promise<TreeNode[]>;
+
+  async loaded(sourceNode: TreeNode): Promise<void> {
+    await this.columnManager.reload(sourceNode);
+  }
+
+  /**
+   * @returns return true to redraw all rows
+   */
+  async beforeDraw(nodes: TreeNode[]) {
+    return this.columnManager.beforeDraw(nodes);
+  }
+
+  abstract drawNode(
+    node: TreeNode,
+    nodeIndex: number,
+    prevNode: TreeNode,
+    nextNode: TreeNode,
+  ): void | Promise<void>;
+
+  flattenByNode(node: TreeNode) {
+    return [node, ...(node.children ? this.flattenByNodes(node.children) : [])];
+  }
+
+  flattenByNodes(nodes: TreeNode[]) {
+    const stack = [...nodes];
+    const res = [];
+    while (stack.length) {
+      const node = stack.shift()!;
+      res.push(node);
+      if (node.children && Array.isArray(node.children) && this.expandStore.isExpanded(node)) {
+        for (let i = node.children.length - 1; i >= 0; i--) {
+          stack.unshift(node.children[i]);
+        }
+      }
+    }
+    return res;
+  }
+
+  async drawNodes(nodes: TreeNode[]) {
+    for (let i = 0, len = nodes.length; i < len; i++) {
+      const node = nodes[i];
+      const nodeIndex = this.flattenedNodes.findIndex((it) => it.uid === node.uid);
+      if (nodeIndex > -1) {
+        const prevNode = i === 0 ? this.flattenedNodes[nodeIndex - 1] : nodes[i - 1];
+        const nextNode = i === len - 1 ? this.flattenedNodes[nodeIndex + 1] : nodes[i + 1];
+        await this.drawNode(node, nodeIndex, prevNode, nextNode);
+      }
+    }
+  }
+
+  currentSourceIndex() {
+    return this.explorer.sources.indexOf(this);
+  }
 
   opened(_notify = false): void | Promise<void> {}
 
   async reload(
-    sourceItem: null | Item,
+    sourceNode: TreeNode,
     { render = true, notify = false }: { buffer?: Buffer; render?: boolean; notify?: boolean } = {},
   ) {
-    this.selectedItems = new Set();
-    this.items = await this.loadItems(sourceItem);
-    await this.loaded(sourceItem);
+    this.selectedNodes = new Set();
+    this.rootNode.children = this.expanded ? await this.loadChildren(sourceNode) : [];
+    await this.loaded(sourceNode);
     if (render) {
       await this.render({ notify });
     }
   }
 
-  async render({ notify = false, storeCursor = true }: { notify?: boolean; storeCursor?: boolean } = {}) {
+  private offsetAfterLine(offset: number, afterLine: number) {
+    this.explorer.indexesManager.offsetLines(offset, this.startLine + afterLine + 1);
+    this.endLine += offset;
+    this.explorer.sources.slice(this.currentSourceIndex() + 1).forEach((source) => {
+      source.startLine += offset;
+      source.offsetAfterLine(offset, source.startLine);
+    });
+  }
+
+  setLines(lines: string[], startIndex: number, endIndex: number, notify = false) {
+    return this.explorer.setLines(
+      lines,
+      this.startLine + startIndex,
+      this.startLine + endIndex,
+      notify,
+    );
+  }
+
+  private async expandNodeRender(node: TreeNode, notify = false) {
+    await execNotifyBlock(async () => {
+      const nodeIndex = this.flattenedNodes.findIndex((it) => it.uid === node.uid);
+      if (nodeIndex === -1) {
+        return;
+      }
+      const parentLevel = node.level;
+      let endIndex = this.flattenedNodes.length;
+      for (let i = nodeIndex + 1, len = this.flattenedNodes.length; i < len; i++) {
+        if (this.flattenedNodes[i].level <= parentLevel) {
+          endIndex = i;
+          break;
+        }
+      }
+      if (this.expandStore.isExpanded(node) && node.children) {
+        const flattenedNodes = this.flattenByNode(node);
+        this.flattenedNodes = this.flattenedNodes
+          .slice(0, nodeIndex)
+          .concat(flattenedNodes)
+          .concat(this.flattenedNodes.slice(endIndex));
+        if (await this.beforeDraw(flattenedNodes)) {
+          return this.render();
+        }
+        this.offsetAfterLine(flattenedNodes.length - 1, nodeIndex + 1);
+        await this.drawNodes(flattenedNodes);
+        await this.setLines(
+          flattenedNodes.map((node) => node.drawnLine),
+          nodeIndex,
+          endIndex,
+          true,
+        );
+      }
+    }, notify);
+  }
+
+  private async expandNodeRecursive(node: TreeNode, recursive: boolean) {
+    if (node.expandable) {
+      this.expandStore.expand(node);
+      node.children = await this.loadChildren(node);
+      if (
+        recursive ||
+        (node.children.length === 1 &&
+          node.children[0].expandable &&
+          config.get<boolean>('autoExpandSingleNode')!)
+      ) {
+        await Promise.all(
+          node.children.map(async (child) => {
+            await this.expandNodeRecursive(child, recursive);
+          }),
+        );
+      }
+    }
+  }
+
+  async expandNode(node: TreeNode, { recursive = false, notify = false } = {}) {
+    await execNotifyBlock(async () => {
+      await this.expandNodeRecursive(node, recursive);
+      await this.expandNodeRender(node, true);
+      await this.gotoNode(node, { notify: true });
+    }, notify);
+  }
+
+  private async shrinkNodeRender(node: TreeNode, notify = false) {
+    await execNotifyBlock(async () => {
+      const nodeIndex = this.flattenedNodes.findIndex((it) => it.uid === node.uid);
+      if (nodeIndex === -1) {
+        return;
+      }
+      const parentLevel = node.level;
+      let endIndex = this.flattenedNodes.length;
+      for (let i = nodeIndex + 1, len = this.flattenedNodes.length; i < len; i++) {
+        if (this.flattenedNodes[i].level <= parentLevel) {
+          endIndex = i;
+          break;
+        }
+      }
+      this.flattenedNodes.splice(nodeIndex + 1, endIndex - (nodeIndex + 1));
+      this.explorer.indexesManager.removeLines(
+        this.startLine + nodeIndex + 1,
+        this.startLine + endIndex,
+      );
+      if (await this.beforeDraw([node])) {
+        return this.render();
+      }
+      this.offsetAfterLine(-(endIndex - (nodeIndex + 1)), endIndex);
+      await this.drawNodes([node]);
+      await this.setLines([node.drawnLine], nodeIndex, endIndex, true);
+    }, notify);
+  }
+
+  private async shrinkNodeRecursive(node: TreeNode, recursive: boolean) {
+    if (node.expandable) {
+      this.expandStore.shrink(node);
+      if (recursive || config.get<boolean>('autoShrinkChildren')!) {
+        if (node.children) {
+          for (const child of node.children) {
+            await this.shrinkNodeRecursive(child, recursive);
+          }
+        }
+      }
+    }
+  }
+
+  async shrinkNode(node: TreeNode, { recursive = false, notify = false } = {}) {
+    await execNotifyBlock(async () => {
+      await this.shrinkNodeRecursive(node, recursive);
+      await this.shrinkNodeRender(node, true);
+      await this.gotoNode(node, { notify: true });
+    }, notify);
+  }
+
+  requestRenderNodes(nodes: TreeNode[]) {
+    nodes.forEach((node) => {
+      this.requestedRenderNodes.add(node);
+    });
+  }
+
+  async emitRequestRenderNodes(notify = false) {
+    if (this.requestedRenderNodes.size > 0) {
+      await this.renderNodes(Array.from(this.requestedRenderNodes), notify);
+      this.requestedRenderNodes.clear();
+    }
+  }
+
+  async renderNodes(nodes: TreeNode[], notify = false) {
+    if (await this.beforeDraw(nodes)) {
+      return this.render();
+    }
+    await execNotifyBlock(async () => {
+      await Promise.all(
+        nodes.map(async (node) => {
+          const nodeIndex = this.flattenedNodes.findIndex((it) => it.uid === node.uid);
+          if (nodeIndex === -1) {
+            return;
+          }
+          await this.drawNodes([node]);
+          await this.setLines([node.drawnLine], nodeIndex, nodeIndex + 1, true);
+        }),
+      );
+    }, notify);
+  }
+
+  async render({
+    notify = false,
+    storeCursor = true,
+  }: { notify?: boolean; storeCursor?: boolean } = {}) {
     if (this.explorer.isHelpUI) {
       return;
     }
@@ -554,10 +659,29 @@ export abstract class ExplorerSource<Item extends BaseItem<Item>> {
     }
 
     await execNotifyBlock(async () => {
-      const builder = new SourceViewBuilder<Item>();
-      await this.draw(builder);
-      this.lines = builder.lines;
-      await this.partRender(true);
+      const oldHeight = this.flattenedNodes.length;
+      this.flattenedNodes = this.flattenByNode(this.rootNode);
+      const newHeight = this.flattenedNodes.length;
+
+      if (newHeight < oldHeight) {
+        this.explorer.indexesManager.removeLines(
+          this.startLine + newHeight + 1,
+          this.startLine + oldHeight + 1,
+        );
+      }
+      this.offsetAfterLine(newHeight - oldHeight, this.endLine);
+      await this.beforeDraw(this.flattenedNodes);
+      await this.drawNodes(this.flattenedNodes);
+
+      const sourceIndex = this.currentSourceIndex();
+      const isLastSource = this.explorer.sources.length - 1 == sourceIndex;
+
+      await this.explorer.setLines(
+        this.flattenedNodes.map((node) => node.drawnLine),
+        this.startLine,
+        isLastSource ? -1 : this.startLine + oldHeight,
+        true,
+      );
 
       if (restore) {
         await restore(true);
@@ -569,41 +693,32 @@ export abstract class ExplorerSource<Item extends BaseItem<Item>> {
     }, notify);
   }
 
-  private async partRender(notify = false) {
-    await execNotifyBlock(async () => {
-      const sourceIndex = this.explorer.sources.indexOf(this);
-      const isLastSource = this.explorer.sources.length - 1 == sourceIndex;
-
-      await this.explorer.setLines(
-        this.lines.map(([content]) => content),
-        this.startLine,
-        isLastSource ? -1 : this.endLine,
-        true,
-      );
-
-      let lineNumber = this.startLine;
-      this.explorer.sources.slice(sourceIndex).forEach((source) => {
-        source.startLine = lineNumber;
-        lineNumber += source.lines.length;
-        source.endLine = lineNumber;
-      });
-    }, notify);
-  }
-
   async renderHelp(isRoot: boolean) {
     this.explorer.isHelpUI = true;
-    const builder = new SourceViewBuilder<null>();
+    const builder = new SourceViewBuilder();
     const width = await this.nvim.call('winwidth', '%');
     const storeCursor = await this.explorer.storeCursor();
+    const lines: string[] = [];
 
-    builder.newItem(null, (row) => {
-      row.add(`Help for [${this.name}${isRoot ? ' root' : ''}], (use q or <esc> return to explorer)`);
-    });
-    builder.newItem(null, (row) => {
-      row.add('—'.repeat(width), helpHightlights.line);
-    });
+    lines.push(
+      builder.drawLine((row) => {
+        row.add(
+          `Help for [${this.sourceName}${
+            isRoot ? ' root' : ''
+          }], (use q or <esc> return to explorer)`,
+        );
+      }),
+    );
+    lines.push(
+      builder.drawLine((row) => {
+        row.add('—'.repeat(width), helpHightlights.line);
+      }),
+    );
 
-    const registeredActions = isRoot ? this.rootActions : this.actions;
+    const registeredActions = {
+      ...this.explorer.globalActions,
+      ...(isRoot ? this.rootActions : this.actions),
+    };
     const drawAction = (row: SourceRowBuilder, action: Action) => {
       row.add(action.name, helpHightlights.action);
       if (action.arg) {
@@ -616,26 +731,30 @@ export abstract class ExplorerSource<Item extends BaseItem<Item>> {
       if (!actions.every((action) => action.name in registeredActions)) {
         return;
       }
-      builder.newItem(null, (row) => {
-        row.add(' ');
-        row.add(key, helpHightlights.mappingKey);
-        row.add(' - ');
-        drawAction(row, actions[0]);
-      });
+      lines.push(
+        builder.drawLine((row) => {
+          row.add(' ');
+          row.add(key, helpHightlights.mappingKey);
+          row.add(' - ');
+          drawAction(row, actions[0]);
+        }),
+      );
       actions.slice(1).forEach((action) => {
-        builder.newItem(null, (row) => {
-          row.add(' '.repeat(key.length + 4));
+        lines.push(
+          builder.drawLine((row) => {
+            row.add(' '.repeat(key.length + 4));
 
-          drawAction(row, action);
-        });
+            drawAction(row, action);
+          }),
+        );
       });
     });
 
     await execNotifyBlock(async () => {
-      await this.explorer.setLines(builder.lines.map(([content]) => content), 0, -1, true);
+      await this.explorer.setLines(lines, 0, -1, true);
     });
 
-    await this.explorer.clearMappings();
+    await this.explorer.explorerManager.clearMappings();
 
     const disposables: Disposable[] = [];
     await new Promise((resolve) => {
@@ -660,7 +779,7 @@ export abstract class ExplorerSource<Item extends BaseItem<Item>> {
   }
 
   async quitHelp() {
-    await this.explorer.executeMappings();
+    await this.explorer.explorerManager.executeMappings();
     this.explorer.isHelpUI = false;
   }
 
@@ -670,5 +789,3 @@ export abstract class ExplorerSource<Item extends BaseItem<Item>> {
     }
   }
 }
-
-import { FileSource } from './sources/file/file-source';

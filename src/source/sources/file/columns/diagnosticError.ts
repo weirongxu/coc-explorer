@@ -1,49 +1,73 @@
-import { fileColumnManager } from '../column-manager';
+import { fileColumnRegistrar } from '../file-column-registrar';
 import { hlGroupManager } from '../../../highlight-manager';
 import { diagnosticManager } from '../../../../diagnostic-manager';
-import { expandStore } from '../file-source';
-import { config, max } from '../../../../util';
+import { config, debounce } from '../../../../util';
+import { events } from 'coc.nvim';
 
 const diagnosticCountMax = config.get<number>('file.diagnosticCountMax')!;
-let errorMixedCountStr: Record<string, string> = {};
-let errorMaxWidth = 0;
+const errorMaxWidth = diagnosticCountMax.toString().length;
 
 const highlights = {
-  error: hlGroupManager.hlLinkGroupCommand('FileDiagnosticError', 'CocErrorSign'),
+  error: hlGroupManager.linkGroup('FileDiagnosticError', 'CocErrorSign'),
 };
-hlGroupManager.register(highlights);
 
-fileColumnManager.registerColumn('diagnosticError', (fileSource) => ({
-  load() {
-    diagnosticManager.errorReload(fileSource.root);
+fileColumnRegistrar.registerColumn('diagnosticError', (source) => ({
+  concealable: hlGroupManager.concealable('FileDiagnosticError'),
+  init() {
+    let prevErrorMixedCount: Record<string, string> = {};
+
+    events.on(
+      ['InsertLeave', 'TextChanged'],
+      debounce(1000, async () => {
+        diagnosticManager.errorReload(source.root);
+
+        if (diagnosticManager.errorNeedRender) {
+          diagnosticManager.errorNeedRender = false;
+          const errorMixedCount = diagnosticManager.errorMixedCount;
+          const updatePaths: Set<string> = new Set();
+          for (const [fullpath, count] of Object.entries(errorMixedCount)) {
+            if (fullpath in prevErrorMixedCount) {
+              if (prevErrorMixedCount[fullpath] === count) {
+                continue;
+              }
+              delete prevErrorMixedCount[fullpath];
+            } else {
+              updatePaths.add(fullpath);
+            }
+          }
+          for (const [fullpath] of Object.keys(prevErrorMixedCount)) {
+            updatePaths.add(fullpath);
+          }
+          await source.renderPaths(updatePaths);
+          prevErrorMixedCount = errorMixedCount;
+        }
+      }),
+    );
+  },
+  reload() {
+    diagnosticManager.errorReload(source.root);
   },
   beforeDraw() {
-    fileSource.diagnosisLineIndexes = [];
-
-    errorMixedCountStr = {};
-    Object.entries(diagnosticManager.errorMixedCount).forEach(([fullpath, count]) => {
-      if (count > diagnosticCountMax) {
-        errorMixedCountStr[fullpath] = '●';
-      } else {
-        errorMixedCountStr[fullpath] = count.toString();
-      }
-    });
-    errorMaxWidth = max(Object.values(errorMixedCountStr).map((d) => d.length));
-  },
-  draw(row, item) {
-    if (Object.keys(diagnosticManager.errorMixedCount).length > 0) {
-      if (item.fullpath in diagnosticManager.errorMixedCount) {
-        if (item.directory && expandStore.isExpanded(item.fullpath)) {
-          row.add(' '.padStart(errorMaxWidth), highlights.error);
-        } else {
-          const count = errorMixedCountStr[item.fullpath];
-          row.add(count.padStart(errorMaxWidth), highlights.error);
-          fileSource.diagnosisLineIndexes.push(row.line);
-        }
-      } else {
-        row.add(' '.repeat(errorMaxWidth));
-      }
-      row.add(' ');
+    if (Object.keys(diagnosticManager.errorMixedCount).length) {
+      this.concealable?.show(source);
+    } else {
+      this.concealable?.hide(source);
     }
+  },
+  draw(row, node, nodeIndex) {
+    if (node.fullpath in diagnosticManager.errorMixedCount) {
+      if (node.directory && source.expandStore.isExpanded(node)) {
+        row.add(' '.padStart(errorMaxWidth));
+        source.removeIndexes('diagnosticError', nodeIndex);
+      } else {
+        const count = diagnosticManager.errorMixedCount[node.fullpath];
+        row.add(count.padStart(errorMaxWidth), highlights.error);
+        source.addIndexes('diagnosticError', nodeIndex);
+      }
+    } else {
+      row.add(' '.repeat(errorMaxWidth));
+      source.removeIndexes('diagnosticError', nodeIndex);
+    }
+    row.add(' ');
   },
 }));
