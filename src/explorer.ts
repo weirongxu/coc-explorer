@@ -5,7 +5,14 @@ import { IndexesManager } from './indexes-manager';
 import './source/load';
 import { BaseTreeNode, ExplorerSource, ActionOptions } from './source/source';
 import { sourceManager } from './source/source-manager';
-import { execNotifyBlock, autoReveal, config, enableDebug, enableWrapscan } from './util';
+import {
+  execNotifyBlock,
+  autoReveal,
+  config,
+  enableDebug,
+  enableWrapscan,
+  prettyPrint,
+} from './util';
 import { ExplorerManager } from './explorer-manager';
 
 export class Explorer {
@@ -238,7 +245,7 @@ export class Explorer {
       }
 
       if (firstFileSource) {
-        if (this.args.revealPath && autoReveal) {
+        if (autoReveal && this.args.revealPath) {
           node = await firstFileSource.revealNodeByPath(this.args.revealPath);
         }
       }
@@ -247,7 +254,7 @@ export class Explorer {
       await this.renderAll({ notify: true });
 
       if (firstFileSource) {
-        if (this.args.revealPath && autoReveal) {
+        if (autoReveal) {
           if (node !== null) {
             await firstFileSource.gotoNode(node, { col: 1, notify: true });
           } else {
