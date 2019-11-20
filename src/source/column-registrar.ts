@@ -15,7 +15,7 @@ export interface Column<TreeNode extends BaseTreeNode<TreeNode>> {
   reload?(sourceNode: TreeNode): void | Promise<void>;
 
   /**
-   * @returns isRedraw
+   * @returns return true to redraw all rows
    */
   beforeDraw?(nodes: TreeNode[]): boolean | void | Promise<boolean | void>;
 

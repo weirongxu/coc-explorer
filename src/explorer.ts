@@ -124,7 +124,6 @@ export class Explorer {
       'go to next diagnostic',
     );
 
-
     this.addGlobalAction(
       'gitPrev',
       async () => {
@@ -238,17 +237,13 @@ export class Explorer {
         firstFileSource.root = this.rootPath;
       }
 
-      await this.reloadAll({ render: false });
-
       if (firstFileSource) {
         if (this.args.revealPath && autoReveal) {
-          node = await firstFileSource.revealNodeByPath(
-            this.args.revealPath,
-            firstFileSource.rootNode.children,
-          );
+          node = await firstFileSource.revealNodeByPath(this.args.revealPath);
         }
       }
 
+      await this.reloadAll({ render: false, notify: true });
       await this.renderAll({ notify: true });
 
       if (firstFileSource) {

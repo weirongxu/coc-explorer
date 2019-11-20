@@ -30,7 +30,11 @@ class HighlightManager {
     const markerID = this.createMarkerID();
     const { nvim } = this;
     let isInited = false;
+    let isShown = false;
     const hide = async (explorer: Explorer) => {
+      if (!isShown && isInited) {
+        return;
+      }
       const winnr = await explorer.winnr;
       if (winnr) {
         const storeWinnr = await nvim.call('winnr');
@@ -42,10 +46,14 @@ class HighlightManager {
           nvim.command(`syntax match ${group} conceal /\\V<${markerID}|\\.\\*|${markerID}>/`, true);
           nvim.command(`${storeWinnr}wincmd w`, true);
         });
+        isShown = false;
         isInited = true;
       }
     };
     const show = async (explorer: Explorer) => {
+      if (isShown && isInited) {
+        return;
+      }
       const winnr = await explorer.winnr;
       if (winnr) {
         const storeWinnr = await nvim.call('winnr');
@@ -57,6 +65,7 @@ class HighlightManager {
           nvim.command(`syntax match ${group} conceal /\\V<${markerID}|\\||${markerID}>/`, true);
           nvim.command(`${storeWinnr}wincmd w`, true);
         });
+        isShown = true;
         isInited = true;
       }
     };

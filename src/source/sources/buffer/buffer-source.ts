@@ -41,11 +41,10 @@ const highlights = {
 };
 
 export class BufferSource extends ExplorerSource<BufferNode> {
-  rootNode = {
+  rootNode: BufferNode = {
     uid: this.sourceName + '//',
     level: 0,
     drawnLine: '',
-    children: [] as BufferNode[],
     bufnr: 0,
     bufnrStr: '0',
     bufname: '',

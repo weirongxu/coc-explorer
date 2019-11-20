@@ -79,7 +79,7 @@ export function initFileActions(file: FileSource) {
       if (node.directory) {
         file.root = node.fullpath;
         file.expanded = true;
-        await file.reload(node);
+        await file.reload(file.rootNode);
       }
     },
     'change directory to current node',
@@ -387,7 +387,7 @@ export function initFileActions(file: FileSource) {
       await fsMkdir(pathLib.dirname(targetPath), { recursive: true });
       await fsTouch(targetPath);
       await file.reload(file.rootNode);
-      const addedNode = await file.revealNodeByPath(targetPath, file.rootNode.children);
+      const addedNode = await file.revealNodeByPath(targetPath);
       if (addedNode) {
         await file.gotoNode(addedNode);
       }
@@ -411,7 +411,7 @@ export function initFileActions(file: FileSource) {
       await guardTargetPath(targetPath);
       await fsMkdir(targetPath, { recursive: true });
       await file.reload(file.rootNode);
-      const addedNode = await file.revealNodeByPath(targetPath, file.rootNode.children);
+      const addedNode = await file.revealNodeByPath(targetPath);
       if (addedNode) {
         await file.gotoNode(addedNode);
       }

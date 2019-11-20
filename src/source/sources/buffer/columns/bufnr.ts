@@ -11,7 +11,9 @@ let maxBufnrWidth = 0;
 
 bufferColumnRegistrar.registerColumn('bufnr', (source) => ({
   beforeDraw() {
-    maxBufnrWidth = max(source.rootNode.children.map((node) => node.bufnrStr.length));
+    if (source.rootNode.children) {
+      maxBufnrWidth = max(source.rootNode.children.map((node) => node.bufnrStr.length));
+    }
   },
   draw(row, node) {
     row.add(node.bufnrStr.padStart(maxBufnrWidth), highlights.bufnr);

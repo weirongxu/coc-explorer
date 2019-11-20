@@ -58,16 +58,14 @@ export class FileSource extends ExplorerSource<FileNode> {
   showHidden: boolean = config.get<boolean>('file.showHiddenFiles')!;
   copiedNodes: Set<FileNode> = new Set();
   cutNodes: Set<FileNode> = new Set();
-  rootNode = {
+  rootNode: FileNode = {
     uid: this.sourceName + '//',
     level: 0,
     drawnLine: '',
-    isRoot: true,
     name: 'root',
     fullpath: homedir(),
     expandable: true,
     directory: true,
-    children: [] as FileNode[],
     readonly: true,
     executable: false,
     readable: true,
@@ -86,7 +84,7 @@ export class FileSource extends ExplorerSource<FileNode> {
 
   set root(root: string) {
     this.rootNode.fullpath = root;
-    // this.rootNode.uid = root;
+    this.rootNode.children = undefined;
   }
 
   async init() {
@@ -101,7 +99,7 @@ export class FileSource extends ExplorerSource<FileNode> {
             if (bufnr !== this.explorer.bufnr) {
               const bufinfo = await nvim.call('getbufinfo', [bufnr]);
               if (bufinfo[0] && bufinfo[0].name) {
-                const node = await this.revealNodeByPath(bufinfo[0].name, this.rootNode.children);
+                const node = await this.revealNodeByPath(bufinfo[0].name);
                 if (node !== null) {
                   await execNotifyBlock(async () => {
                     await this.render({ storeCursor: false, notify: true });
@@ -139,7 +137,7 @@ export class FileSource extends ExplorerSource<FileNode> {
     filesList.rootPath = path;
     filesList.recursive = recursive;
     filesList.revealCallback = async (loc) => {
-      const node = await this.revealNodeByPath(Uri.parse(loc.uri).fsPath, this.rootNode.children);
+      const node = await this.revealNodeByPath(Uri.parse(loc.uri).fsPath);
       if (node !== null) {
         await execNotifyBlock(async () => {
           await this.render({ storeCursor: false, notify: true });
@@ -152,18 +150,21 @@ export class FileSource extends ExplorerSource<FileNode> {
     disposable.dispose();
   }
 
-  async revealNodeByPath(path: string, nodes: FileNode[]): Promise<FileNode | null> {
+  async revealNodeByPath(path: string, node: FileNode = this.rootNode): Promise<FileNode | null> {
     path = normalizePath(path);
-    for (const node of nodes) {
-      if (node.directory && path.startsWith(node.fullpath + pathLib.sep)) {
-        this.expandStore.expand(node);
-        if (!node.children) {
-          node.children = await this.listFiles(node.fullpath, node);
-        }
-        return await this.revealNodeByPath(path, node.children);
-      } else if (path === node.fullpath) {
-        return node;
+    if (node.directory && path.startsWith(node.fullpath + pathLib.sep)) {
+      this.expandStore.expand(node);
+      if (!node.children) {
+        node.children = await this.listFiles(node.fullpath, node);
       }
+      for (const child of node.children) {
+        const result = await this.revealNodeByPath(path, child);
+        if (result) {
+          return result;
+        }
+      }
+    } else if (path === node.fullpath) {
+      return node;
     }
     return null;
   }

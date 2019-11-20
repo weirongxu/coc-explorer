@@ -1,7 +1,6 @@
 import { Column, ColumnRegistrar } from './column-registrar';
 import { BaseTreeNode, ExplorerSource } from './source';
 import { SourceRowBuilder } from './view-builder';
-import { prettyPrint } from '../util';
 
 export class ColumnManager<TreeNode extends BaseTreeNode<TreeNode>> {
   columnNames: string[] = [];
