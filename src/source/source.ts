@@ -454,12 +454,6 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>> {
   }
 
   async drawNodes(nodes: TreeNode[]) {
-    // const isRedrawAll = await this.beforeDraw(nodes);
-    // if (isRedrawAll) {
-    //   await this.render();
-    //   return;
-    // }
-    //
     for (let i = 0, len = nodes.length; i < len; i++) {
       const node = nodes[i];
       const nodeIndex = this.flattenedNodes.findIndex((it) => it.uid === node.uid);
