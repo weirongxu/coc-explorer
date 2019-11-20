@@ -6,11 +6,11 @@ const highlights = {
   readonly: hlGroupManager.linkGroup('BufferReadonly', 'Operator'),
 };
 
-bufferColumnRegistrar.registerColumn('readonly', {
+bufferColumnRegistrar.registerColumn('readonly', () => ({
   draw(row, node) {
     if (node.readonly) {
       row.add(node.readonly ? (enableNerdfont ? '' : 'RO') : '', highlights.readonly);
       row.add(' ');
     }
   },
-});
+}));

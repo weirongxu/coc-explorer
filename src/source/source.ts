@@ -454,12 +454,12 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>> {
   }
 
   async drawNodes(nodes: TreeNode[]) {
-    const isRedrawAll = await this.beforeDraw(nodes);
-    if (isRedrawAll) {
-      await this.render();
-      return;
-    }
-
+    // const isRedrawAll = await this.beforeDraw(nodes);
+    // if (isRedrawAll) {
+    //   await this.render();
+    //   return;
+    // }
+    //
     for (let i = 0, len = nodes.length; i < len; i++) {
       const node = nodes[i];
       const nodeIndex = this.flattenedNodes.findIndex((it) => it.uid === node.uid);
@@ -527,6 +527,9 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>> {
           .slice(0, nodeIndex)
           .concat(flattenedNodes)
           .concat(this.flattenedNodes.slice(endIndex));
+        if (await this.beforeDraw(flattenedNodes)) {
+          return this.render();
+        }
         this.offsetAfterLine(flattenedNodes.length - 1, nodeIndex + 1);
         await this.drawNodes(flattenedNodes);
         await this.setLines(
@@ -585,6 +588,9 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>> {
         this.startLine + nodeIndex + 1,
         this.startLine + endIndex,
       );
+      if (await this.beforeDraw([node])) {
+        return this.render();
+      }
       this.offsetAfterLine(-(endIndex - (nodeIndex + 1)), endIndex);
       await this.drawNodes([node]);
       await this.setLines([node.drawnLine], nodeIndex, endIndex, true);
@@ -626,6 +632,9 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>> {
   }
 
   async renderNodes(nodes: TreeNode[], notify = false) {
+    if (await this.beforeDraw(nodes)) {
+      return this.render();
+    }
     await execNotifyBlock(async () => {
       await Promise.all(
         nodes.map(async (node) => {
@@ -667,6 +676,7 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>> {
         );
       }
       this.offsetAfterLine(newHeight - oldHeight, this.endLine);
+      await this.beforeDraw(this.flattenedNodes);
       await this.drawNodes(this.flattenedNodes);
 
       const sourceIndex = this.currentSourceIndex();

@@ -5,7 +5,7 @@ const highlights = {
   nameVisible: hlGroupManager.linkGroup('BufferNameVisible', 'String'),
 };
 
-bufferColumnRegistrar.registerColumn('name', {
+bufferColumnRegistrar.registerColumn('name', () => ({
   draw(row, node) {
     if (node.visible) {
       row.add(node.basename, highlights.nameVisible);
@@ -14,4 +14,4 @@ bufferColumnRegistrar.registerColumn('name', {
     }
     row.add(' ');
   },
-});
+}));

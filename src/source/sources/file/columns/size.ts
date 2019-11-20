@@ -6,7 +6,7 @@ const highlights = {
   size: hlGroupManager.linkGroup('FileSize', 'Constant'),
 };
 
-fileColumnRegistrar.registerColumn('size', {
+fileColumnRegistrar.registerColumn('size', () => ({
   draw(row, node) {
     if (node.lstat) {
       row.add(prettyBytes(node.lstat.size).padStart(10), highlights.size);
@@ -15,4 +15,4 @@ fileColumnRegistrar.registerColumn('size', {
     }
     row.add(' ');
   },
-});
+}));

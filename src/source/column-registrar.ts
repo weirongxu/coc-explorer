@@ -27,14 +27,20 @@ export class ColumnRegistrar<
   S extends ExplorerSource<TreeNode>,
   C extends Column<TreeNode>
 > {
-  registeredColumnDraws: Record<string, (fileSource: S) => C> = {};
+  registeredColumns: Record<
+    string,
+    {
+      getFileColumn: (fileSource: S, data: any) => C;
+      getInitialData: () => any;
+    }
+  > = {};
 
   async getColumns(source: S, columnStrings: string[]) {
     const columns: C[] = [];
     for (const column of columnStrings) {
-      const getColumn = this.registeredColumnDraws[column];
+      const getColumn = this.registeredColumns[column];
       if (getColumn) {
-        const column = getColumn(source);
+        const column = getColumn.getFileColumn(source, getColumn.getInitialData());
         if (column.inited) {
           columns.push(column);
         } else {
@@ -49,14 +55,17 @@ export class ColumnRegistrar<
     return columns;
   }
 
-  registerColumn(name: string, getFileColumn: C | ((fileSource: S) => C)) {
-    if (typeof getFileColumn === 'function') {
-      this.registeredColumnDraws[name] = getFileColumn;
-    } else {
-      this.registeredColumnDraws[name] = () => getFileColumn;
-    }
+  registerColumn<T>(
+    name: string,
+    getFileColumn: (fileSource: S, data: T) => C,
+    getInitialData: () => T = () => null as any,
+  ) {
+    this.registeredColumns[name] = {
+      getFileColumn,
+      getInitialData,
+    };
     return Disposable.create(() => {
-      delete this.registeredColumnDraws[name];
+      delete this.registeredColumns[name];
     });
   }
 }

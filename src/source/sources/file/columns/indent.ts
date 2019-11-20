@@ -45,7 +45,7 @@ function printIndentLine(node: FileNode) {
   return row;
 }
 
-fileColumnRegistrar.registerColumn('indent', {
+fileColumnRegistrar.registerColumn('indent', () => ({
   draw(row, node) {
     if (indentLine) {
       row.add(printIndentLine(node), highlights.line);
@@ -53,4 +53,4 @@ fileColumnRegistrar.registerColumn('indent', {
       row.add(indentChars.repeat(node.level - (topLevel ? 0 : 1)));
     }
   },
-});
+}));

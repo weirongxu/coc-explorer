@@ -5,11 +5,11 @@ const highlights = {
   fullpath: hlGroupManager.linkGroup('BufferFullpath', 'Comment'),
 };
 
-bufferColumnRegistrar.registerColumn('fullpath', {
+bufferColumnRegistrar.registerColumn('fullpath', () => ({
   draw(row, node) {
     if (node.basename !== node.bufname) {
       row.add(node.fullpath, highlights.fullpath);
       row.add(' ');
     }
   },
-});
+}));

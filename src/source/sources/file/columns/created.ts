@@ -6,7 +6,7 @@ const highlights = {
   time: hlGroupManager.linkGroup('TimeCreated', 'Identifier'),
 };
 
-fileColumnRegistrar.registerColumn('created', {
+fileColumnRegistrar.registerColumn('created', () => ({
   draw(row, node) {
     if (node.lstat) {
       row.add(dayjs(node.lstat.ctime).format('YY/MM/DD HH:mm:ss'), highlights.time);
@@ -15,4 +15,4 @@ fileColumnRegistrar.registerColumn('created', {
     }
     row.add(' ');
   },
-});
+}));

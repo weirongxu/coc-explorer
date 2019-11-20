@@ -7,16 +7,18 @@ const highlights = {
 };
 
 
-let maxBufnrWidth = 0;
-
-bufferColumnRegistrar.registerColumn('bufnr', (source) => ({
-  beforeDraw() {
-    if (source.rootNode.children) {
-      maxBufnrWidth = max(source.rootNode.children.map((node) => node.bufnrStr.length));
+bufferColumnRegistrar.registerColumn('bufnr', (_source, data) => ({
+  beforeDraw(nodes) {
+    const maxBufnrWidth = max(nodes.map((node) => node.bufnrStr.length));
+    if (data.maxBufnrWidth !== maxBufnrWidth) {
+      data.maxBufnrWidth = maxBufnrWidth;
+      return true;
     }
   },
   draw(row, node) {
-    row.add(node.bufnrStr.padStart(maxBufnrWidth), highlights.bufnr);
+    row.add(node.bufnrStr.padStart(data.maxBufnrWidth), highlights.bufnr);
     row.add(' ');
   },
+}), () => ({
+  maxBufnrWidth: 0,
 }));
