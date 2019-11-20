@@ -49,9 +49,9 @@ fileColumnRegistrar.registerColumn('diagnosticError', (source) => ({
   },
   beforeDraw() {
     if (Object.keys(diagnosticManager.errorMixedCount).length) {
-      this.concealable?.show(source.explorer);
+      this.concealable?.show(source);
     } else {
-      this.concealable?.hide(source.explorer);
+      this.concealable?.hide(source);
     }
   },
   draw(row, node, nodeIndex) {

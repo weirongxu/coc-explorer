@@ -6,9 +6,9 @@ bufferColumnRegistrar.registerColumn('selection', (source) => ({
   concealable: hlGroupManager.concealable('BufferSelection'),
   async beforeDraw() {
     if (source.isSelectedAny()) {
-      await this.concealable?.show(source.explorer);
+      await this.concealable?.show(source);
     } else {
-      await this.concealable?.hide(source.explorer);
+      await this.concealable?.hide(source);
     }
   },
   draw(row, node) {

@@ -1,6 +1,7 @@
 import { workspace } from 'coc.nvim';
 import { execNotifyBlock } from '../util';
 import { Explorer } from '../explorer';
+import { ExplorerSource } from './source';
 
 export type Hightlight = {
   group: string;
@@ -10,8 +11,8 @@ export type Hightlight = {
 
 export type HighlightConcealable = {
   markerID: number;
-  hide: (explorer: Explorer) => Promise<void>;
-  show: (explorer: Explorer) => Promise<void>;
+  hide: (source: ExplorerSource<any>) => Promise<void>;
+  show: (source: ExplorerSource<any>) => Promise<void>;
 };
 
 class HighlightManager {
@@ -31,11 +32,11 @@ class HighlightManager {
     const { nvim } = this;
     let isInited = false;
     let isShown = false;
-    const hide = async (explorer: Explorer) => {
+    const hide = async (source: ExplorerSource<any>) => {
       if (!isShown && isInited) {
         return;
       }
-      const winnr = await explorer.winnr;
+      const winnr = await source.explorer.winnr;
       if (winnr) {
         const storeWinnr = await nvim.call('winnr');
         await execNotifyBlock(() => {
@@ -50,11 +51,11 @@ class HighlightManager {
         isInited = true;
       }
     };
-    const show = async (explorer: Explorer) => {
+    const show = async (source: ExplorerSource<any>) => {
       if (isShown && isInited) {
         return;
       }
-      const winnr = await explorer.winnr;
+      const winnr = await source.explorer.winnr;
       if (winnr) {
         const storeWinnr = await nvim.call('winnr');
         await execNotifyBlock(() => {
