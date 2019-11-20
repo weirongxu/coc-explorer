@@ -39,7 +39,8 @@ function! coc_explorer#init_win(position, width)
   endif
 
   silent setlocal colorcolumn=
-        \ conceallevel=3 concealcursor=nc nocursorcolumn
+        \ conceallevel=3 concealcursor=nvic
+        \ nocursorcolumn
         \ nofoldenable foldcolumn=0
         \ nolist
         \ nonumber norelativenumber
@@ -55,8 +56,7 @@ function! coc_explorer#init_buf()
         \ nomodifiable
         \ nomodified
         \ signcolumn=no
-        \ conceallevel=3
-        \ concealcursor=nvic
+        \ conceallevel=3 concealcursor=nvic
         \ nobuflisted
 endfunction
 
