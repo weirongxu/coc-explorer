@@ -33,9 +33,9 @@ fileColumnRegistrar.registerColumn('clip', (source) => ({
   concealable: hlGroupManager.concealable('FileClip'),
   async beforeDraw() {
     if (source.copiedNodes.size === 0 && source.cutNodes.size === 0) {
-      await this.concealable?.hide();
+      await this.concealable?.hide(source.explorer);
     } else {
-      await this.concealable?.show();
+      await this.concealable?.show(source.explorer);
     }
   },
   draw(row, node) {

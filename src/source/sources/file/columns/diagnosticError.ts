@@ -1,10 +1,10 @@
 import { fileColumnRegistrar } from '../file-column-registrar';
 import { hlGroupManager } from '../../../highlight-manager';
 import { diagnosticManager } from '../../../../diagnostic-manager';
-import { config } from '../../../../util';
+import { config, debounce } from '../../../../util';
+import { events } from 'coc.nvim';
 
 const diagnosticCountMax = config.get<number>('file.diagnosticCountMax')!;
-let errorMixedCountStr: Record<string, string> = {};
 const errorMaxWidth = diagnosticCountMax.toString().length;
 
 const highlights = {
@@ -13,24 +13,45 @@ const highlights = {
 
 fileColumnRegistrar.registerColumn('diagnosticError', (source) => ({
   concealable: hlGroupManager.concealable('FileDiagnosticError'),
+  init() {
+    let prevErrorMixedCount: Record<string, string> = {};
+
+    events.on(
+      ['InsertLeave', 'TextChanged'],
+      debounce(1000, async () => {
+        diagnosticManager.errorReload(source.root);
+
+        if (diagnosticManager.errorNeedRender) {
+          diagnosticManager.errorNeedRender = false;
+          const errorMixedCount = diagnosticManager.errorMixedCount;
+          const updatePaths: Set<string> = new Set();
+          for (const [fullpath, count] of Object.entries(errorMixedCount)) {
+            if (fullpath in prevErrorMixedCount) {
+              if (prevErrorMixedCount[fullpath] === count) {
+                continue;
+              }
+              delete prevErrorMixedCount[fullpath];
+            } else {
+              updatePaths.add(fullpath);
+            }
+          }
+          for (const [fullpath] of Object.keys(prevErrorMixedCount)) {
+            updatePaths.add(fullpath);
+          }
+          await source.renderPaths(updatePaths);
+          prevErrorMixedCount = errorMixedCount;
+        }
+      }),
+    );
+  },
   reload() {
     diagnosticManager.errorReload(source.root);
   },
   beforeDraw() {
-    source.diagnosisLineIndexes = [];
-
-    errorMixedCountStr = {};
-    Object.entries(diagnosticManager.errorMixedCount).forEach(([fullpath, count]) => {
-      if (count > diagnosticCountMax) {
-        errorMixedCountStr[fullpath] = '●';
-      } else {
-        errorMixedCountStr[fullpath] = count.toString();
-      }
-    });
     if (Object.keys(diagnosticManager.errorMixedCount).length) {
-      this.concealable?.show();
+      this.concealable?.show(source.explorer);
     } else {
-      this.concealable?.hide();
+      this.concealable?.hide(source.explorer);
     }
   },
   draw(row, node, nodeIndex) {
@@ -39,7 +60,7 @@ fileColumnRegistrar.registerColumn('diagnosticError', (source) => ({
         row.add(' '.padStart(errorMaxWidth));
         source.removeIndexes('diagnosticError', nodeIndex);
       } else {
-        const count = errorMixedCountStr[node.fullpath];
+        const count = diagnosticManager.errorMixedCount[node.fullpath];
         row.add(count.padStart(errorMaxWidth), highlights.error);
         source.addIndexes('diagnosticError', nodeIndex);
       }

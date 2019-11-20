@@ -47,24 +47,19 @@ fileColumnRegistrar.registerColumn('git', (source) => ({
           const statuses = await gitManager.getStatuses(path);
 
           const updatePaths: Set<string> = new Set();
-          for (const [path, status] of Object.entries(statuses)) {
-            if (path in prevStatuses) {
-              if (statusEqual(prevStatuses[path], status)) {
+          for (const [fullpath, status] of Object.entries(statuses)) {
+            if (fullpath in prevStatuses) {
+              if (statusEqual(prevStatuses[fullpath], status)) {
                 continue;
               }
-              delete prevStatuses[path];
+              delete prevStatuses[fullpath];
             }
-            updatePaths.add(path);
+            updatePaths.add(fullpath);
           }
-          for (const path of Object.keys(prevStatuses)) {
-            updatePaths.add(path);
+          for (const fullpath of Object.keys(prevStatuses)) {
+            updatePaths.add(fullpath);
           }
-          const updateNodes = Array.from(updatePaths)
-            .map((path) => {
-              return source.flattenedNodes.find((node) => node.fullpath === path);
-            })
-            .filter((node): node is FileNode => !!node);
-          await source.renderNodes(updateNodes);
+          await source.renderPaths(updatePaths);
           prevStatuses = statuses;
         }
       }),

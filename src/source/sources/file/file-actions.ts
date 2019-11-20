@@ -13,7 +13,6 @@ import {
   fsTouch,
   isWindows,
   listDrive,
-  prettyPrint,
 } from '../../../util';
 import { workspace, listManager } from 'coc.nvim';
 import open from 'open';

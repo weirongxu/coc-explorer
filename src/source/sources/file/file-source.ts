@@ -1,7 +1,6 @@
-import { events, workspace, listManager, Uri } from 'coc.nvim';
+import { workspace, listManager, Uri } from 'coc.nvim';
 import fs from 'fs';
 import pathLib from 'path';
-import { diagnosticManager } from '../../../diagnostic-manager';
 import { onError } from '../../../logger';
 import {
   activeMode,
@@ -13,7 +12,6 @@ import {
   fsReaddir,
   fsLstat,
   fsStat,
-  debounce,
   normalizePath,
 } from '../../../util';
 import { hlGroupManager } from '../../highlight-manager';
@@ -60,8 +58,6 @@ export class FileSource extends ExplorerSource<FileNode> {
   showHidden: boolean = config.get<boolean>('file.showHiddenFiles')!;
   copiedNodes: Set<FileNode> = new Set();
   cutNodes: Set<FileNode> = new Set();
-  diagnosisLineIndexes: number[] = [];
-  gitChangedLineIndexes: number[] = [];
   rootNode = {
     uid: this.sourceName + '//',
     level: 0,
@@ -116,30 +112,6 @@ export class FileSource extends ExplorerSource<FileNode> {
             }
           });
         }
-
-        events.on(
-          ['InsertLeave', 'TextChanged'],
-          debounce(1000, async () => {
-            let needRender = false;
-            if (this.columnManager.columnNames.includes('diagnosticError')) {
-              diagnosticManager.errorReload(this.root);
-              if (diagnosticManager.errorNeedRender) {
-                needRender = true;
-                diagnosticManager.errorNeedRender = false;
-              }
-            }
-            if (this.columnManager.columnNames.includes('diagnosticWarning')) {
-              diagnosticManager.warningReload(this.root);
-              if (diagnosticManager.warningNeedRender) {
-                needRender = true;
-                diagnosticManager.warningNeedRender = false;
-              }
-            }
-            if (needRender) {
-              await this.render();
-            }
-          }),
-        );
       } else {
         onBufEnter(200, async (bufnr) => {
           if (bufnr === this.explorer.bufnr) {
@@ -270,6 +242,15 @@ export class FileSource extends ExplorerSource<FileNode> {
     this.copiedNodes.clear();
     this.cutNodes.clear();
     await super.loaded(sourceNode);
+  }
+
+  async renderPaths(paths: Set<string> | string[]) {
+    const nodes = Array.from(paths)
+      .map((path) => {
+        return this.flattenedNodes.find((node) => node.fullpath === path);
+      })
+      .filter((node): node is FileNode => !!node);
+    return await this.renderNodes(nodes);
   }
 
   drawNode(node: FileNode, nodeIndex: number, prevNode: FileNode, nextNode: FileNode) {

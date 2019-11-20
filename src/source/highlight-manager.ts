@@ -1,5 +1,6 @@
 import { workspace } from 'coc.nvim';
 import { execNotifyBlock } from '../util';
+import { Explorer } from '../explorer';
 
 export type Hightlight = {
   group: string;
@@ -9,8 +10,8 @@ export type Hightlight = {
 
 export type HighlightConcealable = {
   markerID: number;
-  hide: () => Promise<void>;
-  show: () => Promise<void>;
+  hide: (explorer: Explorer) => Promise<void>;
+  show: (explorer: Explorer) => Promise<void>;
 };
 
 class HighlightManager {
@@ -27,27 +28,37 @@ class HighlightManager {
   concealable(groupName: string): HighlightConcealable {
     const group = `CocExplorerConcealable${groupName}`;
     const markerID = this.createMarkerID();
+    const { nvim } = this;
     let isInited = false;
-    const hide = async () => {
-      await execNotifyBlock(() => {
-        if (isInited) {
-          this.nvim.command(`silent syntax clear ${group}`, true);
-        }
-        this.nvim.command(
-          `syntax match ${group} conceal /\\V<${markerID}|\\.\\*|${markerID}>/`,
-          true,
-        );
-      }).catch();
-      isInited = true;
+    const hide = async (explorer: Explorer) => {
+      const winnr = await explorer.winnr;
+      if (winnr) {
+        const storeWinnr = await nvim.call('winnr');
+        await execNotifyBlock(() => {
+          nvim.command(`${winnr}wincmd w`, true);
+          if (isInited) {
+            nvim.command(`silent syntax clear ${group}`, true);
+          }
+          nvim.command(`syntax match ${group} conceal /\\V<${markerID}|\\.\\*|${markerID}>/`, true);
+          nvim.command(`${storeWinnr}wincmd w`, true);
+        });
+        isInited = true;
+      }
     };
-    const show = async () => {
-      await execNotifyBlock(() => {
-        if (isInited) {
-          this.nvim.command(`silent syntax clear ${group}`, true);
-        }
-        this.nvim.command(`syntax match ${group} conceal /\\V<${markerID}|\\||${markerID}>/`, true);
-      }).catch();
-      isInited = true;
+    const show = async (explorer: Explorer) => {
+      const winnr = await explorer.winnr;
+      if (winnr) {
+        const storeWinnr = await nvim.call('winnr');
+        await execNotifyBlock(() => {
+          nvim.command(`${winnr}wincmd w`, true);
+          if (isInited) {
+            nvim.command(`silent syntax clear ${group}`, true);
+          }
+          nvim.command(`syntax match ${group} conceal /\\V<${markerID}|\\||${markerID}>/`, true);
+          nvim.command(`${storeWinnr}wincmd w`, true);
+        });
+        isInited = true;
+      }
     };
     return {
       markerID,

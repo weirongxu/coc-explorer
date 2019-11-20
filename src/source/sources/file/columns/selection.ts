@@ -6,9 +6,9 @@ fileColumnRegistrar.registerColumn('selection', (source) => ({
   concealable: hlGroupManager.concealable('FileSelection'),
   async beforeDraw() {
     if (source.isSelectedAny()) {
-      await this.concealable?.show();
+      await this.concealable?.show(source.explorer);
     } else {
-      await this.concealable?.hide();
+      await this.concealable?.hide(source.explorer);
     }
   },
   draw(row, node) {
