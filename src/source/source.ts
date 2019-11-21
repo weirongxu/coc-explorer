@@ -606,7 +606,7 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>> {
   private async collapseNodeRecursive(node: TreeNode, recursive: boolean) {
     if (node.expandable) {
       this.expandStore.collapse(node);
-      if (recursive || config.get<boolean>('autoShrinkChildren')!) {
+      if (recursive || config.get<boolean>('autoCollapseChildren')!) {
         if (node.children) {
           for (const child of node.children) {
             await this.collapseNodeRecursive(child, recursive);

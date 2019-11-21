@@ -195,7 +195,7 @@ Explorer file columns, supported columns:
     "K": ["toggleSelection", "normal:k"],
     "gl": "expandRecursive",
     "gh": "collapseRecursive",
-    "o": "expandOrShrink",
+    "o": "expandOrCollapse",
     "<cr>": "open",
     "e": "open",
     "E": "openInVsplit",
