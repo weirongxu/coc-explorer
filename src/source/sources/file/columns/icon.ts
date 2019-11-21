@@ -86,7 +86,7 @@ fileColumnRegistrar.registerColumn('icon', (source) => ({
         );
       } else {
         row.add(
-          source.expandStore.isExpanded(node) ? sourceIcons.expanded : sourceIcons.shrinked,
+          source.expandStore.isExpanded(node) ? sourceIcons.expanded : sourceIcons.collapsed,
           filenameHighlights.directory,
         );
       }

@@ -13,6 +13,7 @@ import {
   fsTouch,
   isWindows,
   listDrive,
+  config,
 } from '../../../util';
 import { workspace, listManager } from 'coc.nvim';
 import open from 'open';
@@ -55,22 +56,22 @@ export function initFileActions(file: FileSource) {
     'expand root node recursively',
   );
   file.addRootAction(
-    'shrink',
+    'collapse',
     async () => {
       file.expanded = false;
       await file.reload(file.rootNode);
       await file.gotoRoot();
     },
-    'shrink root node',
+    'collapse root node',
   );
   file.addRootAction(
-    'shrinkRecursive',
+    'collapseRecursive',
     async () => {
       file.expanded = false;
-      await file.shrinkNode(file.rootNode);
+      await file.collapseNode(file.rootNode);
       await file.gotoRoot();
     },
-    'shrink root node recursively',
+    'collapse root node recursively',
   );
 
   file.addNodeAction(
@@ -195,49 +196,49 @@ export function initFileActions(file: FileSource) {
     'expand directory recursively',
   );
   file.addNodeAction(
-    'shrink',
+    'collapse',
     async (node) => {
       if (node.directory && file.expandStore.isExpanded(node)) {
-        await file.shrinkNode(node);
+        await file.collapseNode(node);
       } else if (node.parent) {
         await execNotifyBlock(async () => {
-          await file.shrinkNode(node.parent!, { notify: true });
+          await file.collapseNode(node.parent!, { notify: true });
           await file.gotoNode(node.parent!, { notify: true });
         });
       } else {
-        await file.doRootAction('shrink');
+        await file.doRootAction('collapse');
       }
     },
-    'shrink directory',
+    'collapse directory',
   );
   file.addNodeAction(
-    'shrinkRecursive',
+    'collapseRecursive',
     async (node) => {
       if (node.directory && file.expandStore.isExpanded(node)) {
-        await file.shrinkNode(node, { recursive: true });
+        await file.collapseNode(node, { recursive: true });
       } else if (node.parent) {
         await execNotifyBlock(async () => {
-          await file.shrinkNode(node.parent!, { notify: true, recursive: true });
+          await file.collapseNode(node.parent!, { notify: true, recursive: true });
           await file.gotoNode(node.parent!, { notify: true });
         });
       } else {
-        await file.doRootAction('shrinkRecursive');
+        await file.doRootAction('collapseRecursive');
       }
     },
-    'shrink directory recursively',
+    'collapse directory recursively',
   );
   file.addNodeAction(
-    'expandOrShrink',
+    'expandOrCollapse',
     async (node) => {
       if (node.directory) {
         if (file.expandStore.isExpanded(node)) {
-          await file.doAction('shrink', node);
+          await file.doAction('collapse', node);
         } else {
           await file.doAction('expand', node);
         }
       }
     },
-    'expand or shrink directory',
+    'expand or collapse directory',
   );
 
   file.addAction(

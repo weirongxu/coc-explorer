@@ -20,7 +20,7 @@ export const enableNerdfont = config.get<string>('icon.enableNerdfont')!;
 
 export const sourceIcons = {
   expanded: config.get<string>('icon.expanded') || (enableNerdfont ? '' : '-'),
-  shrinked: config.get<string>('icon.shrinked') || (enableNerdfont ? '' : '+'),
+  collapsed: config.get<string>('icon.collapsed') || (enableNerdfont ? '' : '+'),
   selected: config.get<string>('icon.selected')!,
   unselected: config.get<string>('icon.unselected')!,
 };
@@ -58,7 +58,7 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>> {
     expand(node: TreeNode) {
       this.record.set(node.uid, true);
     },
-    shrink(node: TreeNode) {
+    collapse(node: TreeNode) {
       this.record.set(node.uid, false);
     },
     isExpanded(node: TreeNode) {
@@ -179,7 +179,7 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>> {
     if (expanded) {
       this.expandStore.expand(this.rootNode);
     } else {
-      this.expandStore.shrink(this.rootNode);
+      this.expandStore.collapse(this.rootNode);
     }
   }
 
@@ -582,7 +582,7 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>> {
     }, notify);
   }
 
-  private async shrinkNodeRender(node: TreeNode, notify = false) {
+  private async collapseNodeRender(node: TreeNode, notify = false) {
     await execNotifyBlock(async () => {
       const range = this.nodeAndChildrenRange(node);
       if (!range) {
@@ -603,23 +603,23 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>> {
     }, notify);
   }
 
-  private async shrinkNodeRecursive(node: TreeNode, recursive: boolean) {
+  private async collapseNodeRecursive(node: TreeNode, recursive: boolean) {
     if (node.expandable) {
-      this.expandStore.shrink(node);
+      this.expandStore.collapse(node);
       if (recursive || config.get<boolean>('autoShrinkChildren')!) {
         if (node.children) {
           for (const child of node.children) {
-            await this.shrinkNodeRecursive(child, recursive);
+            await this.collapseNodeRecursive(child, recursive);
           }
         }
       }
     }
   }
 
-  async shrinkNode(node: TreeNode, { recursive = false, notify = false } = {}) {
+  async collapseNode(node: TreeNode, { recursive = false, notify = false } = {}) {
     await execNotifyBlock(async () => {
-      await this.shrinkNodeRecursive(node, recursive);
-      await this.shrinkNodeRender(node, true);
+      await this.collapseNodeRecursive(node, recursive);
+      await this.collapseNodeRender(node, true);
       await this.gotoNode(node, { notify: true });
     }, notify);
   }

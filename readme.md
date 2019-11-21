@@ -139,7 +139,7 @@ Explorer file columns, supported columns:
 - `explorer.width`: Explorer window width for open in left or right side, type: `number`, default: `40`
 - `explorer.toggle`: Close the explorer if it exists, type: `boolean`, default: `true`
 - `explorer.autoExpandSingleNode`: Automatically expand next node when it's a single node, type: `boolean`, default: `true`
-- `explorer.autoShrinkChildren`: Automatically shrink children, type: `boolean`, default: `true`
+- `explorer.autoShrinkChildren`: Automatically collapse children, type: `boolean`, default: `true`
 - `explorer.activeMode`: Render explorer when after open or save buffer, type: `boolean`, default: `true`
 - `explorer.quitOnOpen`: quit explorer when open action, type: `boolean`, default: `false`
 - `explorer.openAction.strategy`: Strategy for open action, type: `select | vsplit | previousBuffer`, default: `select`
@@ -147,7 +147,7 @@ Explorer file columns, supported columns:
 - `explorer.sources`: Explorer sources, type: `array`, default: `[{"name":"buffer","expand":false},{"name":"file","expand":true}]`
 - `explorer.icon.enableNerdfont`: Enalbe nerdfont, type: `boolean`, default: `false`
 - `explorer.icon.expanded`: Icon for expanded node, type: `string`
-- `explorer.icon.shrinked`: Icon for shrinked node, type: `string`
+- `explorer.icon.collapsed`: Icon for collapsed node, type: `string`
 - `explorer.icon.selected`: Selection selected chars for File source, type: `string`, default: `✓`
 - `explorer.icon.unselected`: Selection unselected chars for File source, type: `string`, default: ` `
 - `explorer.buffer.showHiddenBuffers`: Default show hidden buffers, type: `boolean`, default: `false`
@@ -188,12 +188,12 @@ Explorer file columns, supported columns:
     "*": "toggleSelection",
     "<tab>": "actionMenu",
 
-    "h": "shrink",
+    "h": "collapse",
     "l": "expand",
     "J": ["toggleSelection", "normal:j"],
     "K": ["toggleSelection", "normal:k"],
     "gl": "expandRecursive",
-    "gh": "shrinkRecursive",
+    "gh": "collapseRecursive",
     "o": "expandOrShrink",
     "<cr>": "open",
     "e": "open",

@@ -5,13 +5,13 @@ export function initBufferActions(buffer: BufferSource) {
   const { nvim } = buffer;
 
   buffer.addAction(
-    'shrink',
+    'collapse',
     async () => {
       buffer.expanded = false;
       await buffer.reload(buffer.rootNode);
       await buffer.gotoRoot();
     },
-    'shrink root node',
+    'collapse root node',
   );
   buffer.addRootAction(
     'expand',

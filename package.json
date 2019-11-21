@@ -89,8 +89,8 @@
           "type": "boolean",
           "default": true
         },
-        "explorer.autoShrinkChildren": {
-          "description": "Automatically shrink children",
+        "explorer.autoCollapseChildren": {
+          "description": "Automatically collapse children",
           "type": "boolean",
           "default": true
         },
@@ -163,8 +163,8 @@
           "description": "Icon for expanded node",
           "type": "string"
         },
-        "explorer.icon.shrinked": {
-          "description": "Icon for shrinked node",
+        "explorer.icon.collapsed": {
+          "description": "Icon for collapsed node",
           "type": "string"
         },
         "explorer.icon.selected": {

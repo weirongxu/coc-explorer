@@ -127,7 +127,7 @@ export class BufferSource extends ExplorerSource<BufferNode> {
   drawNode(node: BufferNode, nodeIndex: number) {
     if (!node.parent) {
       node.drawnLine = this.viewBuilder.drawLine((row) => {
-        row.add(this.expanded ? sourceIcons.expanded : sourceIcons.shrinked, highlights.expandIcon);
+        row.add(this.expanded ? sourceIcons.expanded : sourceIcons.collapsed, highlights.expandIcon);
         row.add(' ');
         row.add(`[BUFFER${this.showHidden ? ' I' : ''}]`, highlights.title);
       });
