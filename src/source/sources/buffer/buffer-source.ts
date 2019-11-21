@@ -42,7 +42,7 @@ const highlights = {
 
 export class BufferSource extends ExplorerSource<BufferNode> {
   rootNode: BufferNode = {
-    uid: this.sourceName + '//',
+    uid: this.sourceName + '://',
     level: 0,
     drawnLine: '',
     bufnr: 0,
@@ -100,7 +100,7 @@ export class BufferSource extends ExplorerSource<BufferNode> {
       const flags = matches[2];
       const bufname = matches[3];
       res.push({
-        uid: this.sourceName + '//' + bufnr,
+        uid: this.sourceName + '://' + bufnr,
         level: 1,
         drawnLine: '',
         parent: this.rootNode,

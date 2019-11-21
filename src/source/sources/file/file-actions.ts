@@ -382,12 +382,14 @@ export function initFileActions(file: FileSource) {
       if (!filename) {
         return;
       }
-      const targetPath = pathLib.join(file.getPutTargetDir(nodes ? nodes[0] : null), filename);
+      const putTargetNode = file.getPutTargetNode(nodes ? nodes[0] : null);
+      const targetPath = pathLib.join(putTargetNode.fullpath, filename);
       await guardTargetPath(targetPath);
       await fsMkdir(pathLib.dirname(targetPath), { recursive: true });
       await fsTouch(targetPath);
-      await file.reload(file.rootNode);
-      const addedNode = await file.revealNodeByPath(targetPath);
+      await file.reload(putTargetNode, { render: false });
+      const addedNode = await file.revealNodeByPath(targetPath, putTargetNode);
+      await file.render({ node: putTargetNode });
       if (addedNode) {
         await file.gotoNode(addedNode);
       }
@@ -407,11 +409,13 @@ export function initFileActions(file: FileSource) {
       if (!directoryPath) {
         return;
       }
-      const targetPath = pathLib.join(file.getPutTargetDir(nodes ? nodes[0] : null), directoryPath);
+      const putTargetNode = file.getPutTargetNode(nodes ? nodes[0] : null);
+      const targetPath = pathLib.join(putTargetNode.fullpath, directoryPath);
       await guardTargetPath(targetPath);
       await fsMkdir(targetPath, { recursive: true });
-      await file.reload(file.rootNode);
-      const addedNode = await file.revealNodeByPath(targetPath);
+      await file.reload(putTargetNode, { render: false });
+      const addedNode = await file.revealNodeByPath(targetPath, putTargetNode);
+      await file.render({ node: putTargetNode });
       if (addedNode) {
         await file.gotoNode(addedNode);
       }

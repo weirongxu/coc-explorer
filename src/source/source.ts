@@ -1,4 +1,4 @@
-import { Buffer, Disposable, listManager, workspace } from 'coc.nvim';
+import { Disposable, listManager, workspace } from 'coc.nvim';
 import { Range } from 'vscode-languageserver-protocol';
 import { explorerActionList } from '../lists/actions';
 import { Explorer } from '../explorer';
@@ -471,15 +471,12 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>> {
 
   opened(_notify = false): void | Promise<void> {}
 
-  async reload(
-    sourceNode: TreeNode,
-    { render = true, notify = false }: { buffer?: Buffer; render?: boolean; notify?: boolean } = {},
-  ) {
+  async reload(node: TreeNode, { render = true, notify = false } = {}) {
     this.selectedNodes = new Set();
-    this.rootNode.children = this.expanded ? await this.loadChildren(sourceNode) : [];
-    await this.loaded(sourceNode);
+    node.children = this.expandStore.isExpanded(node) ? await this.loadChildren(node) : [];
+    await this.loaded(node);
     if (render) {
-      await this.render({ notify });
+      await this.render({ node, notify });
     }
   }
 
@@ -501,35 +498,44 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>> {
     );
   }
 
+  private nodeAndChildrenRange(node: TreeNode): { startIndex: number; endIndex: number } | null {
+    const startIndex = this.flattenedNodes.findIndex((it) => it.uid === node.uid);
+    if (startIndex === -1) {
+      return null;
+    }
+    const parentLevel = node.level;
+    let endIndex = this.flattenedNodes.length - 1;
+    for (let i = startIndex + 1, len = this.flattenedNodes.length; i < len; i++) {
+      if (this.flattenedNodes[i].level <= parentLevel) {
+        endIndex = i - 1;
+        break;
+      }
+    }
+    return { startIndex, endIndex };
+  }
+
   private async expandNodeRender(node: TreeNode, notify = false) {
     await execNotifyBlock(async () => {
-      const nodeIndex = this.flattenedNodes.findIndex((it) => it.uid === node.uid);
-      if (nodeIndex === -1) {
+      const range = this.nodeAndChildrenRange(node);
+      if (!range) {
         return;
       }
-      const parentLevel = node.level;
-      let endIndex = this.flattenedNodes.length;
-      for (let i = nodeIndex + 1, len = this.flattenedNodes.length; i < len; i++) {
-        if (this.flattenedNodes[i].level <= parentLevel) {
-          endIndex = i;
-          break;
-        }
-      }
+      const { startIndex: nodeIndex, endIndex } = range;
       if (this.expandStore.isExpanded(node) && node.children) {
         const flattenedNodes = this.flattenByNode(node);
         this.flattenedNodes = this.flattenedNodes
           .slice(0, nodeIndex)
           .concat(flattenedNodes)
-          .concat(this.flattenedNodes.slice(endIndex));
+          .concat(this.flattenedNodes.slice(endIndex + 1));
         if (await this.beforeDraw(flattenedNodes)) {
           return this.render();
         }
-        this.offsetAfterLine(flattenedNodes.length - 1, nodeIndex + 1);
+        this.offsetAfterLine(flattenedNodes.length - 1, nodeIndex);
         await this.drawNodes(flattenedNodes);
         await this.setLines(
           flattenedNodes.map((node) => node.drawnLine),
           nodeIndex,
-          endIndex,
+          endIndex + 1,
           true,
         );
       }
@@ -565,19 +571,12 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>> {
 
   private async shrinkNodeRender(node: TreeNode, notify = false) {
     await execNotifyBlock(async () => {
-      const nodeIndex = this.flattenedNodes.findIndex((it) => it.uid === node.uid);
-      if (nodeIndex === -1) {
+      const range = this.nodeAndChildrenRange(node);
+      if (!range) {
         return;
       }
-      const parentLevel = node.level;
-      let endIndex = this.flattenedNodes.length;
-      for (let i = nodeIndex + 1, len = this.flattenedNodes.length; i < len; i++) {
-        if (this.flattenedNodes[i].level <= parentLevel) {
-          endIndex = i;
-          break;
-        }
-      }
-      this.flattenedNodes.splice(nodeIndex + 1, endIndex - (nodeIndex + 1));
+      const { startIndex: nodeIndex, endIndex } = range;
+      this.flattenedNodes.splice(nodeIndex + 1, endIndex - nodeIndex);
       this.explorer.indexesManager.removeLines(
         this.startLine + nodeIndex + 1,
         this.startLine + endIndex,
@@ -585,9 +584,9 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>> {
       if (await this.beforeDraw([node])) {
         return this.render();
       }
-      this.offsetAfterLine(-(endIndex - (nodeIndex + 1)), endIndex);
+      this.offsetAfterLine(-(endIndex - nodeIndex), endIndex);
       await this.drawNodes([node]);
-      await this.setLines([node.drawnLine], nodeIndex, endIndex, true);
+      await this.setLines([node.drawnLine], nodeIndex, endIndex + 1, true);
     }, notify);
   }
 
@@ -643,10 +642,7 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>> {
     }, notify);
   }
 
-  async render({
-    notify = false,
-    storeCursor = true,
-  }: { notify?: boolean; storeCursor?: boolean } = {}) {
+  async render({ node = this.rootNode, notify = false, storeCursor = true } = {}) {
     if (this.explorer.isHelpUI) {
       return;
     }
@@ -659,9 +655,21 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>> {
     }
 
     await execNotifyBlock(async () => {
-      const oldHeight = this.flattenedNodes.length;
-      this.flattenedNodes = this.flattenByNode(this.rootNode);
-      const newHeight = this.flattenedNodes.length;
+      const range = this.nodeAndChildrenRange(node);
+      if (!range && node !== this.rootNode) {
+        return;
+      }
+
+      const { startIndex: nodeIndex, endIndex } = range
+        ? range
+        : { startIndex: 0, endIndex: this.flattenedNodes.length - 1 };
+      const oldHeight = endIndex - nodeIndex + 1;
+      const flattenedNodes = this.flattenByNode(node);
+      const newHeight = flattenedNodes.length;
+      this.flattenedNodes = this.flattenedNodes
+        .slice(0, nodeIndex)
+        .concat(flattenedNodes)
+        .concat(this.flattenedNodes.slice(endIndex + 1));
 
       if (newHeight < oldHeight) {
         this.explorer.indexesManager.removeLines(

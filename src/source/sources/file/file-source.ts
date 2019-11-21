@@ -59,7 +59,7 @@ export class FileSource extends ExplorerSource<FileNode> {
   copiedNodes: Set<FileNode> = new Set();
   cutNodes: Set<FileNode> = new Set();
   rootNode: FileNode = {
-    uid: this.sourceName + '//',
+    uid: this.sourceName + '://',
     level: 0,
     drawnLine: '',
     name: 'root',
@@ -122,14 +122,20 @@ export class FileSource extends ExplorerSource<FileNode> {
     initFileActions(this);
   }
 
+  getPutTargetNode(node: FileNode | null) {
+    if (node === null) {
+      return this.rootNode;
+    } else if (node.expandable && this.expandStore.isExpanded(node)) {
+      return node;
+    } else if (node.parent) {
+      return node.parent;
+    } else {
+      return this.rootNode;
+    }
+  }
+
   getPutTargetDir(node: FileNode | null) {
-    return node === null
-      ? this.root
-      : node.directory && this.expandStore.isExpanded(node)
-      ? node.fullpath
-      : node.parent
-      ? node.parent.fullpath
-      : this.root;
+    return this.getPutTargetNode(node).fullpath;
   }
 
   async searchByCocList(path: string, recursive: boolean) {
@@ -155,7 +161,7 @@ export class FileSource extends ExplorerSource<FileNode> {
     if (node.directory && path.startsWith(node.fullpath + pathLib.sep)) {
       this.expandStore.expand(node);
       if (!node.children) {
-        node.children = await this.listFiles(node.fullpath, node);
+        node.children = await this.loadChildren(node);
       }
       for (const child of node.children) {
         const result = await this.revealNodeByPath(path, child);
@@ -181,59 +187,55 @@ export class FileSource extends ExplorerSource<FileNode> {
     });
   }
 
-  async listFiles(path: string, parent: FileNode | null | undefined) {
-    const filepaths = await fsReaddir(path);
-    const files = await Promise.all(
-      filepaths.map(async (filepath) => {
-        try {
-          const hidden = filepath.startsWith('.');
-          if (!this.showHidden && hidden) {
+  async loadChildren(parent: FileNode): Promise<FileNode[]> {
+    if (this.expandStore.isExpanded(parent)) {
+      const filepaths = await fsReaddir(parent.fullpath);
+      const files = await Promise.all(
+        filepaths.map(async (filepath) => {
+          try {
+            const hidden = filepath.startsWith('.');
+            if (!this.showHidden && hidden) {
+              return null;
+            }
+            const fullpath = pathLib.join(parent.fullpath, filepath);
+            const stat = await fsStat(fullpath).catch(() => {});
+            const lstat = await fsLstat(fullpath).catch(() => {});
+            const executable = await fsAccess(fullpath, fs.constants.X_OK);
+            const writable = await fsAccess(fullpath, fs.constants.W_OK);
+            const readable = await fsAccess(fullpath, fs.constants.R_OK);
+            const directory = stat ? stat.isDirectory() : false;
+            const child: FileNode = {
+              uid: this.sourceName + '://' + fullpath,
+              level: parent ? parent.level + 1 : 1,
+              drawnLine: '',
+              parent: parent || undefined,
+              expandable: directory,
+              name: filepath,
+              fullpath,
+              directory: directory,
+              readonly: !writable && readable,
+              executable,
+              readable,
+              writable,
+              hidden,
+              symbolicLink: lstat ? lstat.isSymbolicLink() : false,
+              isFirstInLevel: false,
+              isLastInLevel: false,
+              lstat: lstat || null,
+              data: {},
+            };
+            if (this.expandStore.isExpanded(child)) {
+              child.children = await this.loadChildren(child);
+            }
+            return child;
+          } catch (error) {
+            onError(error);
             return null;
           }
-          const fullpath = pathLib.join(path, filepath);
-          const stat = await fsStat(fullpath).catch(() => {});
-          const lstat = await fsLstat(fullpath).catch(() => {});
-          const executable = await fsAccess(fullpath, fs.constants.X_OK);
-          const writable = await fsAccess(fullpath, fs.constants.W_OK);
-          const readable = await fsAccess(fullpath, fs.constants.R_OK);
-          const directory = stat ? stat.isDirectory() : false;
-          const node: FileNode = {
-            uid: this.sourceName + '//' + fullpath,
-            level: parent ? parent.level + 1 : 1,
-            drawnLine: '',
-            parent: parent || undefined,
-            expandable: directory,
-            name: filepath,
-            fullpath,
-            directory: directory,
-            readonly: !writable && readable,
-            executable,
-            readable,
-            writable,
-            hidden,
-            symbolicLink: lstat ? lstat.isSymbolicLink() : false,
-            isFirstInLevel: false,
-            isLastInLevel: false,
-            lstat: lstat || null,
-            data: {},
-          };
-          if (this.expandStore.isExpanded(node)) {
-            node.children = await this.listFiles(node.fullpath, node);
-          }
-          return node;
-        } catch (error) {
-          onError(error);
-          return null;
-        }
-      }),
-    );
+        }),
+      );
 
-    return this.sortFiles(files.filter((r): r is FileNode => r !== null));
-  }
-
-  async loadChildren(node: FileNode): Promise<FileNode[]> {
-    if (this.expandStore.isExpanded(node)) {
-      return this.listFiles(node.fullpath, node);
+      return this.sortFiles(files.filter((r): r is FileNode => r !== null));
     } else {
       return [];
     }
