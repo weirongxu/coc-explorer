@@ -139,11 +139,12 @@ Explorer file columns, supported columns:
 - `explorer.width`: Explorer window width for open in left or right side, type: `number`, default: `40`
 - `explorer.toggle`: Close the explorer if it exists, type: `boolean`, default: `true`
 - `explorer.autoExpandSingleNode`: Automatically expand next node when it's a single node, type: `boolean`, default: `true`
-- `explorer.autoShrinkChildren`: Automatically collapse children, type: `boolean`, default: `true`
+- `explorer.autoCollapseChildren`: Automatically collapse children, type: `boolean`, default: `true`
 - `explorer.activeMode`: Render explorer when after open or save buffer, type: `boolean`, default: `true`
 - `explorer.quitOnOpen`: quit explorer when open action, type: `boolean`, default: `false`
 - `explorer.openAction.strategy`: Strategy for open action, type: `select | vsplit | previousBuffer`, default: `select`
 - `explorer.openAction.select.filterFloatWindows`: Filter floating windows in select strategy, type: `boolean`, default: `true`
+- `explorer.openAction.changeDirectory`: Change directory if node is a directory, type: `boolean`, default: `true`
 - `explorer.sources`: Explorer sources, type: `array`, default: `[{"name":"buffer","expand":false},{"name":"file","expand":true}]`
 - `explorer.icon.enableNerdfont`: Enalbe nerdfont, type: `boolean`, default: `false`
 - `explorer.icon.expanded`: Icon for expanded node, type: `string`

@@ -90,7 +90,11 @@ export function initFileActions(file: FileSource) {
     'open',
     async (node) => {
       if (node.directory) {
-        await file.doAction('cd', node);
+        if (config.get<boolean>('openAction.changeDirectory')!) {
+          await file.doAction('cd', node);
+        } else {
+          await file.doAction('expandOrCollapse', node);
+        }
       } else {
         if (openStrategy === 'vsplit') {
           await file.doAction('openInVsplit', node);
