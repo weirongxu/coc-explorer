@@ -260,19 +260,32 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>> {
   }
 
   async doRootAction(name: ActionSyms, arg: string = '', mode: ActionMode = 'n') {
-    const action = this.rootActions[name] || this.explorer.globalActions[name];
-    if (!action) {
+    const action = this.rootActions[name];
+    if (action) {
+      const { render = false, reload = false } = action.options;
+
+      await action.callback(arg, mode);
+
+      if (reload) {
+        await this.reload(this.rootNode);
+      } else if (render) {
+        await this.render();
+      }
       return;
     }
 
-    const { render = false, reload = false } = action.options;
+    const globalAction = this.explorer.globalActions[name];
+    if (globalAction) {
+      const { render = false, reload = false } = globalAction.options;
 
-    await action.callback(arg, mode);
+      await globalAction.callback([this.rootNode], arg, mode);
 
-    if (reload) {
-      await this.reload(this.rootNode);
-    } else if (render) {
-      await this.render();
+      if (reload) {
+        await this.reload(this.rootNode);
+      } else if (render) {
+        await this.render();
+      }
+      return;
     }
   }
 

@@ -11,7 +11,6 @@ import {
   config,
   enableDebug,
   enableWrapscan,
-  prettyPrint,
 } from './util';
 import { ExplorerManager } from './explorer-manager';
 
