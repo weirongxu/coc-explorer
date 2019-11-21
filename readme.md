@@ -138,6 +138,8 @@ Explorer file columns, supported columns:
 - `explorer.position`: Explorer position, type: `left | right | tab`, default: `left`
 - `explorer.width`: Explorer window width for open in left or right side, type: `number`, default: `40`
 - `explorer.toggle`: Close the explorer if it exists, type: `boolean`, default: `true`
+- `explorer.autoExpandSingleNode`: Automatically expand next node when it's a single node, type: `boolean`, default: `true`
+- `explorer.autoShrinkChildren`: Automatically shrink children, type: `boolean`, default: `true`
 - `explorer.activeMode`: Render explorer when after open or save buffer, type: `boolean`, default: `true`
 - `explorer.quitOnOpen`: quit explorer when open action, type: `boolean`, default: `false`
 - `explorer.openAction.strategy`: Strategy for open action, type: `select | vsplit | previousBuffer`, default: `select`
@@ -153,7 +155,6 @@ Explorer file columns, supported columns:
 - `explorer.file.autoReveal`: Explorer will automatically expand to the current buffer, type: `boolean`, default: `true`
 - `explorer.file.diagnosticCountMax`: Maximum count of diagnostic column, type: `number`, default: `99`
 - `explorer.file.showHiddenFiles`: Default show hidden files, type: `boolean`, default: `false`
-- `explorer.file.autoExpandSingleDirectory`: Automatically expand a single directory, type: `boolean`, default: `true`
 - `explorer.file.columns`: Default columns for file source, type: `array`, default: `["git","selection","clip","diagnosticError","indent","icon","filename","size","modified","readonly"]`
 - `explorer.file.column.git.showIgnored`: Show ignored files in git column, type: `boolean`, default: `false`
 - `explorer.file.column.git.icon.mixed`: Icon for git mixed status, type: `string`, default: `*`
@@ -171,9 +172,9 @@ Explorer file columns, supported columns:
 - `explorer.file.column.indent.chars`: Indent chars for file source, type: `string`, default: `  `
 - `explorer.file.column.indent.topLevel`: Whether to indent it in top level, type: `boolean`, default: `false`
 - `explorer.file.column.indent.indentLine`: Whether to display the alignment line, type: `boolean`
-- `explorer.file.column.filename.minWidth`: Filename min with, type: `integer`, default: `40`
-- `explorer.file.column.filename.maxWidth`: Filename max width, type: `integer`, default: `80`
+- `explorer.file.column.filename.width`: Filename with, type: `integer`, default: `80`
 - `explorer.git.command`: Git command, type: `string`, default: `git`
+- `explorer.debug`: Enable debug, type: `boolean`, default: `false`
 
 ## Custom mappings example
 
@@ -181,6 +182,9 @@ Explorer file columns, supported columns:
 // coc-settings.json
 {
   "explorer.keyMappings": {
+    "k": "nodePrev",
+    "j": "nodeNext",
+
     "*": "toggleSelection",
     "<tab>": "actionMenu",
 
