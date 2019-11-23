@@ -12,18 +12,18 @@ import { config } from '../../../../util';
 type NerdFontIcon = {
   code: string;
   color: string;
-}
+};
 
 type NerdFontIcons = {
   [key: string]: NerdFontIcon;
-}
+};
 
 type NerdFont = {
   icons: NerdFontIcons;
   extensions: Record<string, string>;
   filenames: Record<string, string>;
   patternMatches: Record<string, string>;
-}
+};
 
 const nerdfont = nerdfontJson as NerdFont;
 export const nerdfontHighlights: Record<string, Hightlight> = {};
@@ -45,7 +45,7 @@ const concat = (to: Record<string, string> | NerdFontIcons,
 
     to[key] = value;
   });
-}
+};
 
 concat(nerdfontJson.icons, nerdfont.icons);
 
