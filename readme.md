@@ -147,6 +147,7 @@ Explorer file columns, supported columns:
 - `explorer.openAction.changeDirectory`: Change directory if node is a directory, type: `boolean`, default: `true`
 - `explorer.sources`: Explorer sources, type: `array`, default: `[{"name":"buffer","expand":false},{"name":"file","expand":true}]`
 - `explorer.icon.enableNerdfont`: Enalbe nerdfont, type: `boolean`, default: `false`
+- `explorer.icon.customIcons`: Custom icons and highlights: type: `object`, default: `{"icons":{},"extensions":{},"filenames":{},"patternMatches":{}}`
 - `explorer.icon.expanded`: Icon for expanded node, type: `string`
 - `explorer.icon.collapsed`: Icon for collapsed node, type: `string`
 - `explorer.icon.selected`: Selection selected chars for File source, type: `string`, default: `✓`
