@@ -70,8 +70,9 @@ Explorer extension for [coc.nvim](https://github.com/neoclide/coc.nvim)
 :CocCommand explorer
     \ --toggle
     \ --sources=buffer+,file+
-    \ --file-columns=git,selection,clip,indent,filename,size /root/path
+    \ --file-columns=git,selection,clip,diagnosticError,indent,icon,filename,size,modified,readonly /root/path
 ```
+
 
 ### Options
 
