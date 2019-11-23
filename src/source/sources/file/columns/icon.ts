@@ -9,30 +9,30 @@ import { highlights as filenameHighlights } from './filename';
 import { hlGroupManager, Hightlight } from '../../../highlight-manager';
 import { config } from '../../../../util';
 
-type INerdFontIcon = {
+type NerdFontIcon = {
   code: string;
   color: string;
 }
 
-type INerdFontIcons = {
-  [key: string]: INerdFontIcon;
+type NerdFontIcons = {
+  [key: string]: NerdFontIcon;
 }
 
-type INerdFont = {
-  icons: INerdFontIcons;
+type NerdFont = {
+  icons: NerdFontIcons;
   extensions: Record<string, string>;
   filenames: Record<string, string>;
   patternMatches: Record<string, string>;
 }
 
-const nerdfont = nerdfontJson as INerdFont;
+const nerdfont = nerdfontJson as NerdFont;
 export const nerdfontHighlights: Record<string, Hightlight> = {};
 
 /*
  * Concatenate a Custom font entry with the Nerd font entry
  */
-const concat = (from: Record<string, string> | INerdFontIcons, 
-                to: Record<string, string> | INerdFontIcons) => {
+const concat = (to: Record<string, string> | NerdFontIcons, 
+                from: Record<string, string> | NerdFontIcons) => {
   if (!from) {
     return;
   }
@@ -47,12 +47,14 @@ const concat = (from: Record<string, string> | INerdFontIcons,
   });
 }
 
-const customFont = config.get<INerdFont>('icon.customIcons');
+concat(nerdfontJson.icons, nerdfont.icons);
+
+const customFont = config.get<NerdFont>('icon.customIcons');
 if (customFont) {
-  concat(customFont.icons, nerdfont.icons);
-  concat(customFont.extensions, nerdfont.extensions);
-  concat(customFont.filenames, nerdfont.filenames);
-  concat(customFont.patternMatches, nerdfont.patternMatches);
+  concat(nerdfont.icons, customFont.icons);
+  concat(nerdfont.extensions, customFont.extensions);
+  concat(nerdfont.filenames, customFont.filenames);
+  concat(nerdfont.patternMatches, customFont.patternMatches);
 }
 
 Object.entries(nerdfont.icons).forEach(([name, icon]) => {
