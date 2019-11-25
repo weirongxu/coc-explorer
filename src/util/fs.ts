@@ -68,19 +68,24 @@ export async function fsMergeDirectory(
   }
 }
 
-export async function overwritePrompt(
-  sourcePaths: string[],
-  targetDir: string,
-  action: (source: string, target: string) => Promise<void>,
+export async function overwritePrompt<S extends string | null>(
+  paths: { source: S; target: string }[],
+  action: (source: S, target: string) => Promise<void>,
 ) {
-  for (let i = 0, len = sourcePaths.length; i < len; i++) {
-    const sourcePath = sourcePaths[i];
-    const targetPath = pathLib.join(targetDir, pathLib.basename(sourcePath));
+  const finalAction = async (source: string | null, target: string) => {
+    await fsMkdir(pathLib.dirname(target), { recursive: true });
+    await action(source as S, target);
+  };
+  for (let i = 0, len = paths.length; i < len; i++) {
+    const sourcePath = paths[i].source;
+    const targetPath = paths[i].target;
+
     if (!(await fsExists(targetPath))) {
-      await action(sourcePath, targetPath);
+      await finalAction(sourcePath, targetPath);
       continue;
     }
-    const sourceLstat = await fsLstat(sourcePath);
+
+    const sourceLstat = typeof sourcePath === 'string' ? await fsLstat(sourcePath) : null;
     const targetLstat = await fsLstat(targetPath);
 
     async function rename() {
@@ -89,11 +94,11 @@ export async function overwritePrompt(
         i -= 1;
         return;
       }
-      return action(sourcePath, newTargetPath);
+      return finalAction(sourcePath, newTargetPath);
     }
     async function replace() {
       await fsTrash(targetPath);
-      return action(sourcePath, targetPath);
+      return finalAction(sourcePath, targetPath);
     }
     function quit() {
       i = len;
@@ -113,17 +118,17 @@ export async function overwritePrompt(
       }
     }
 
-    if (sourceLstat.isDirectory()) {
+    if (sourcePath && sourceLstat?.isDirectory()) {
       if (targetLstat.isDirectory()) {
         await prompt_({
-          merge: () => fsMergeDirectory(sourcePath, targetPath, action),
+          merge: () => fsMergeDirectory(sourcePath!, targetPath, finalAction),
           'one by one': async () => {
-            const files = await fsReaddir(sourcePath);
-            await overwritePrompt(
-              files.map((file) => pathLib.join(sourcePath, file)),
-              targetPath,
-              action,
-            );
+            const files = await fsReaddir(sourcePath!);
+            const paths = files.map((source) => ({
+              source: source as S,
+              target: pathLib.join(targetPath, pathLib.basename(source)),
+            }));
+            await overwritePrompt(paths, action);
           },
         });
       } else {

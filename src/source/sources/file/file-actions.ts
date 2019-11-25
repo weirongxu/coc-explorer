@@ -298,8 +298,10 @@ export function initFileActions(file: FileSource) {
       if (file.copiedNodes.size > 0) {
         const nodes = Array.from(file.copiedNodes);
         await overwritePrompt(
-          nodes.map((node) => node.fullpath),
-          targetDir,
+          nodes.map((node) => ({
+            source: node.fullpath,
+            target: pathLib.join(targetDir, pathLib.basename(node.fullpath)),
+          })),
           fsCopyFileRecursive,
         );
         file.requestRenderNodes(nodes);
@@ -308,8 +310,10 @@ export function initFileActions(file: FileSource) {
       } else if (file.cutNodes.size > 0) {
         const nodes = Array.from(file.cutNodes);
         await overwritePrompt(
-          nodes.map((node) => node.fullpath),
-          targetDir,
+          nodes.map((node) => ({
+            source: node.fullpath,
+            target: pathLib.join(targetDir, pathLib.basename(node.fullpath)),
+          })),
           fsRename,
         );
         file.cutNodes.clear();
@@ -357,9 +361,17 @@ export function initFileActions(file: FileSource) {
       }
       const putTargetNode = file.getPutTargetNode(nodes ? nodes[0] : null);
       const targetPath = pathLib.join(putTargetNode.fullpath, filename);
-      await guardTargetPath(targetPath);
-      await fsMkdir(pathLib.dirname(targetPath), { recursive: true });
-      await fsTouch(targetPath);
+      await overwritePrompt(
+        [
+          {
+            source: null,
+            target: targetPath,
+          },
+        ],
+        async (_source, target) => {
+          await fsTouch(target);
+        },
+      );
       await file.reload(putTargetNode, { render: false });
       const addedNode = await file.revealNodeByPath(targetPath, putTargetNode);
       await file.render({ node: putTargetNode });
@@ -373,19 +385,28 @@ export function initFileActions(file: FileSource) {
   file.addAction(
     'addDirectory',
     async (nodes) => {
-      let directoryPath = (await nvim.call('input', [
+      let directoryName = (await nvim.call('input', [
         'Input a new directory name: ',
         '',
         'file',
       ])) as string;
-      directoryPath = directoryPath.trim();
-      if (!directoryPath) {
+      directoryName = directoryName.trim();
+      if (!directoryName) {
         return;
       }
       const putTargetNode = file.getPutTargetNode(nodes ? nodes[0] : null);
-      const targetPath = pathLib.join(putTargetNode.fullpath, directoryPath);
-      await guardTargetPath(targetPath);
-      await fsMkdir(targetPath, { recursive: true });
+      const targetPath = pathLib.join(putTargetNode.fullpath, directoryName);
+      await overwritePrompt(
+        [
+          {
+            source: null,
+            target: targetPath,
+          },
+        ],
+        async (_source, target) => {
+          await fsMkdir(target, { recursive: true });
+        },
+      );
       await file.reload(putTargetNode, { render: false });
       const addedNode = await file.revealNodeByPath(targetPath, putTargetNode);
       await file.render({ node: putTargetNode });
@@ -407,9 +428,15 @@ export function initFileActions(file: FileSource) {
       if (targetPath.length == 0) {
         return;
       }
-      await guardTargetPath(targetPath);
-      await fsMkdir(pathLib.dirname(targetPath), { recursive: true });
-      await fsRename(node.fullpath, targetPath);
+      await overwritePrompt(
+        [
+          {
+            source: node.fullpath,
+            target: targetPath,
+          },
+        ],
+        fsRename,
+      );
       await file.reload(file.rootNode);
     },
     'rename a file or directory',
