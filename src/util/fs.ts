@@ -6,6 +6,7 @@ import trash from 'trash';
 import pathLib from 'path';
 import { execCli } from './cli';
 import { isWindows } from './platform';
+import { input, prompt } from '.';
 
 export const fsOpen = promisify(fs.open);
 export const fsClose = promisify(fs.close);
@@ -27,20 +28,118 @@ export const fsRename = promisify(fs.rename);
 export const fsTrash = (paths: string | string[]) => trash(paths, { glob: false });
 export const fsRimraf = promisify(rimraf);
 
-export const copyFileOrDirectory = async (sourcePath: string, targetPath: string) => {
-  const stat = await fsStat(sourcePath);
-  if (stat.isDirectory()) {
-    await fsMkdir(targetPath);
-    const files = await fsReaddir(sourcePath);
-    for (const filename of files) {
-      await copyFileOrDirectory(pathLib.join(sourcePath, filename), pathLib.join(targetPath, filename));
+export async function fsCopyFileRecursive(sourcePath: string, targetPath: string) {
+  const lstat = await fsLstat(sourcePath);
+  if (lstat.isDirectory()) {
+    await fsMkdir(targetPath, { recursive: true });
+    const filenames = await fsReaddir(sourcePath);
+    for (const filename of filenames) {
+      await fsCopyFileRecursive(
+        pathLib.join(sourcePath, filename),
+        pathLib.join(targetPath, filename),
+      );
     }
   } else {
     await fsCopyFile(sourcePath, targetPath);
   }
-};
+}
 
-export const normalizePath = (path: string): string => {
+export async function fsMergeDirectory(
+  sourceDir: string,
+  targetDir: string,
+  action: (source: string, target: string) => Promise<void>,
+) {
+  const filenames = await fsReaddir(sourceDir);
+  for (const filename of filenames) {
+    const sourcePath = pathLib.join(sourceDir, filename);
+    const targetPath = pathLib.join(targetDir, filename);
+    if (await fsExists(targetPath)) {
+      const sourceLstat = await fsLstat(sourcePath);
+      const targetLstat = await fsLstat(targetPath);
+      if (sourceLstat.isDirectory() && targetLstat.isDirectory()) {
+        await fsMergeDirectory(sourcePath, targetPath, action);
+      } else {
+        await fsTrash(targetPath);
+        await action(sourcePath, targetPath);
+      }
+    } else {
+      await action(sourcePath, targetPath);
+    }
+  }
+}
+
+export async function overwritePrompt(
+  sourcePaths: string[],
+  targetDir: string,
+  action: (source: string, target: string) => Promise<void>,
+) {
+  for (let i = 0, len = sourcePaths.length; i < len; i++) {
+    const sourcePath = sourcePaths[i];
+    const targetPath = pathLib.join(targetDir, pathLib.basename(sourcePath));
+    if (!(await fsExists(targetPath))) {
+      await action(sourcePath, targetPath);
+      continue;
+    }
+    const sourceLstat = await fsLstat(sourcePath);
+    const targetLstat = await fsLstat(targetPath);
+
+    async function rename() {
+      const newTargetPath = await input(`Rename: ${targetPath} -> `, targetPath, 'file');
+      if (!newTargetPath) {
+        i -= 1;
+        return;
+      }
+      return action(sourcePath, newTargetPath);
+    }
+    async function replace() {
+      await fsTrash(targetPath);
+      return action(sourcePath, targetPath);
+    }
+    function quit() {
+      i = len;
+      return;
+    }
+    async function prompt_(choices: Record<string, null | (() => void | Promise<void>)> = {}) {
+      choices = {
+        skip: null,
+        rename,
+        'force replace': replace,
+        ...choices,
+        quit,
+      };
+      const answer = await prompt(`${targetPath} already exists.`, Object.keys(choices));
+      if (answer && answer in choices) {
+        return choices[answer]?.();
+      }
+    }
+
+    if (sourceLstat.isDirectory()) {
+      if (targetLstat.isDirectory()) {
+        await prompt_({
+          merge: () => fsMergeDirectory(sourcePath, targetPath, action),
+          'one by one': async () => {
+            const files = await fsReaddir(sourcePath);
+            await overwritePrompt(
+              files.map((file) => pathLib.join(sourcePath, file)),
+              targetPath,
+              action,
+            );
+          },
+        });
+      } else {
+        await prompt_();
+      }
+    } else {
+      if (targetLstat.isDirectory()) {
+        await prompt_();
+      } else {
+        await prompt_();
+      }
+    }
+  }
+}
+
+export function normalizePath(path: string): string {
   let _path = pathLib.normalize(path);
   if (_path[0] === '~') {
     _path = pathLib.join(os.homedir(), _path.slice(1));
@@ -50,9 +149,9 @@ export const normalizePath = (path: string): string => {
     _path = driveChar.toUpperCase() + _path.slice(1);
   }
   return _path;
-};
+}
 
-export const listDrive = async (): Promise<string[]> => {
+export async function listDrive(): Promise<string[]> {
   if (isWindows) {
     const content = await execCli('wmic', ['logicaldisk', 'get', 'name']);
     const list = content
@@ -63,4 +162,4 @@ export const listDrive = async (): Promise<string[]> => {
   } else {
     throw new Error('not support listDrive in ' + process.platform);
   }
-};
+}

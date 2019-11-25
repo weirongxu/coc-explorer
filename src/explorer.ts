@@ -312,30 +312,6 @@ export class Explorer {
     this.explorerManager.rootPathRecords.add(this._rootPath);
   }
 
-  async prompt(msg: string): Promise<'yes' | 'no' | null>;
-  async prompt<T extends string>(msg: string, choices: T[], defaultChoice?: T): Promise<T | null>;
-  async prompt(msg: string, choices?: string[], defaultChoice?: string): Promise<string | null> {
-    if (!choices) {
-      choices = ['yes', 'no'];
-      defaultChoice = 'no';
-    }
-    const defaultNumber = defaultChoice ? choices.indexOf(defaultChoice) : -1;
-    const result = (await this.nvim.call('confirm', [
-      msg,
-      choices
-        .map((c) => {
-          return '&' + c[0].toUpperCase() + c.slice(1);
-        })
-        .join('\n'),
-      defaultNumber + 1,
-    ])) as number;
-    if (result === 0) {
-      return null;
-    } else {
-      return choices[result - 1] || null;
-    }
-  }
-
   addGlobalAction(
     name: ActionSyms,
     callback: (

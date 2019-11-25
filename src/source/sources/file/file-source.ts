@@ -259,7 +259,10 @@ export class FileSource extends ExplorerSource<FileNode> {
   drawNode(node: FileNode, nodeIndex: number, prevNode: FileNode, nextNode: FileNode) {
     if (!node.parent) {
       node.drawnLine = this.viewBuilder.drawLine((row) => {
-        row.add(this.expanded ? sourceIcons.expanded : sourceIcons.collapsed, highlights.expandIcon);
+        row.add(
+          this.expanded ? sourceIcons.expanded : sourceIcons.collapsed,
+          highlights.expandIcon,
+        );
         row.add(' ');
         row.add(`[FILE${this.showHidden ? ' I' : ''}]:`, highlights.title);
         row.add(' ');
