@@ -11,6 +11,7 @@ import {
   config,
   enableDebug,
   enableWrapscan,
+  prettyPrint,
 } from './util';
 import { ExplorerManager } from './explorer-manager';
 
@@ -270,7 +271,7 @@ export class Explorer {
       if (args.toggle) {
         await win.close(true);
       } else {
-        await this.nvim.eval(`${win.number}wincmd w`);
+        await this.nvim.command(`${await win.number}wincmd w`);
       }
     } else {
       await this.nvim.call('coc_explorer#resume', [this.bufnr, args.position, args.width]);
