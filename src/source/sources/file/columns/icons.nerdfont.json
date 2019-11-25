@@ -188,6 +188,10 @@
       "code": "",
       "color": "FB9D3B"
     },
+    "csharp": {
+      "code": "",
+      "color": "#519aba"
+    },
     "fsharp": {
       "code": "",
       "color": "#519aba"
@@ -415,13 +419,14 @@
     "go": "go",
     "dart": "dart",
     "xul": "firefox",
-    "sln": "vs",
-    "suo": "vs",
     "pl": "perl",
     "pm": "perl",
     "t": "perl",
     "rss": "rss",
-    "f#": "fsharp",
+    "sln": "vs",
+    "suo": "vs",
+    "csproj": "vs",
+    "cs": "csharp",
     "fsscript": "fsharp",
     "fsx": "fsharp",
     "fs": "fsharp",
