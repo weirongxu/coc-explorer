@@ -722,7 +722,7 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>> {
     const lines: string[] = [];
 
     lines.push(
-      builder.drawLine((row) => {
+      await builder.drawLine((row) => {
         row.add(
           `Help for [${this.sourceName}${
             isRoot ? ' root' : ''
@@ -731,7 +731,7 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>> {
       }),
     );
     lines.push(
-      builder.drawLine((row) => {
+      await builder.drawLine((row) => {
         row.add('—'.repeat(width), helpHightlights.line);
       }),
     );
@@ -748,28 +748,27 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>> {
       row.add(' ');
       row.add(registeredActions[action.name].description, helpHightlights.description);
     };
-    Object.entries(mappings).forEach(([key, actions]) => {
+    for (const [key, actions] of Object.entries(mappings)) {
       if (!actions.every((action) => action.name in registeredActions)) {
-        return;
+        continue;
       }
       lines.push(
-        builder.drawLine((row) => {
+        await builder.drawLine((row) => {
           row.add(' ');
           row.add(key, helpHightlights.mappingKey);
           row.add(' - ');
           drawAction(row, actions[0]);
         }),
       );
-      actions.slice(1).forEach((action) => {
+      for (const action of actions.slice(1)) {
         lines.push(
-          builder.drawLine((row) => {
+          await builder.drawLine((row) => {
             row.add(' '.repeat(key.length + 4));
-
             drawAction(row, action);
           }),
         );
-      });
-    });
+      }
+    }
 
     await execNotifyBlock(async () => {
       await this.explorer.setLines(lines, 0, -1, true);

@@ -22,9 +22,9 @@ export class SourceRowBuilder {
 }
 
 export class SourceViewBuilder {
-  drawLine(draw: (row: SourceRowBuilder) => void): string {
+  async drawLine(draw: (row: SourceRowBuilder) => void | Promise<void>): Promise<string> {
     const row = new SourceRowBuilder(this);
-    draw(row);
+    await draw(row);
     return row.content;
   }
 }

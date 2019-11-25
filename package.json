@@ -164,6 +164,11 @@
           "type": "boolean",
           "default": false
         },
+        "explorer.icon.enableVimDevions": {
+          "description": "Enable use vim-devicons instead of built-in icon configuration",
+          "type": "boolean",
+          "default": false
+        },
         "explorer.icon.expanded": {
           "description": "Icon for expanded node",
           "type": "string"
