@@ -1,10 +1,6 @@
 import { Disposable, workspace } from 'coc.nvim';
-import { ExplorerSource } from './source';
+import { ExplorerSourceClass } from './source';
 import { Explorer } from '../explorer';
-
-type ExplorerSourceClass = {
-  new (name: string, explorer: Explorer, expanded: boolean): ExplorerSource<any>;
-};
 
 class SourceManager {
   registeredSources: Record<string, ExplorerSourceClass> = {};
@@ -20,7 +16,9 @@ class SourceManager {
 
   createSource(name: string, explorer: Explorer, expanded: boolean) {
     if (this.registeredSources[name]) {
-      return new this.registeredSources[name](name, explorer, expanded);
+      const source = new this.registeredSources[name](name, explorer);
+      source.boot(expanded);
+      return source;
     } else {
       // tslint:disable-next-line: ban
       workspace.showMessage(`explorer source(${name}) not found`, 'error');

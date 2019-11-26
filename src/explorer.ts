@@ -11,7 +11,6 @@ import {
   config,
   enableDebug,
   enableWrapscan,
-  prettyPrint,
 } from './util';
 import { ExplorerManager } from './explorer-manager';
 
@@ -32,7 +31,6 @@ export class Explorer {
   private _buffer?: Buffer;
   private _args?: Args;
   private _sources?: ExplorerSource<any>[];
-  private _rootPath?: string;
   private lastArgSources?: string;
 
   constructor(
@@ -162,13 +160,6 @@ export class Explorer {
     return this._sources;
   }
 
-  get rootPath(): string {
-    if (!this._rootPath) {
-      throw Error('Explorer rootPath not initialized yet');
-    }
-    return this._rootPath;
-  }
-
   get buffer(): Buffer {
     if (!this._buffer) {
       this._buffer = this.nvim.createBuffer(this.bufnr);
@@ -241,7 +232,7 @@ export class Explorer {
       let node: FileNode | null = null;
 
       if (firstFileSource) {
-        firstFileSource.root = this.rootPath;
+        firstFileSource.root = this.args.rootPath;
       }
 
       if (firstFileSource) {
@@ -285,20 +276,6 @@ export class Explorer {
     }
   }
 
-  private async getRootPath() {
-    let useGetcwd = false;
-    const buftype = await this.nvim.getVar('&buftype');
-    if (buftype === 'nofile') {
-      useGetcwd = true;
-    } else {
-      const bufname = await this.nvim.call('bufname', ['%']);
-      if (!bufname) {
-        useGetcwd = true;
-      }
-    }
-    return useGetcwd ? ((await this.nvim.call('getcwd', [])) as string) : workspace.rootPath;
-  }
-
   private async initArgs(args: Args) {
     this._args = args;
     if (!this.lastArgSources || this.lastArgSources !== args.sources.toString()) {
@@ -309,8 +286,7 @@ export class Explorer {
         .filter((source): source is ExplorerSource<any> => source !== null);
     }
 
-    this._rootPath = this.args.rootPath || (await this.getRootPath());
-    this.explorerManager.rootPathRecords.add(this._rootPath);
+    this.explorerManager.rootPathRecords.add(this.args.rootPath);
   }
 
   addGlobalAction(

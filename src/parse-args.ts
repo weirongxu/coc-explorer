@@ -1,5 +1,7 @@
-import { config } from './util';
+import { config, normalizePath } from './util';
 import { workspace } from 'coc.nvim';
+
+const { nvim } = workspace;
 
 export interface ArgsSource {
   name: string;
@@ -15,14 +17,14 @@ export interface Args {
   position: ArgPosition;
   bufferColumns: string[];
   fileColumns: string[];
-  revealPath: string | null;
-  rootPath: string | null;
+  revealPath: string;
+  rootPath: string;
 }
 
 const boolTrueArgs = ['toggle', 'tab-isolate'];
 const boolFalseArgs = boolTrueArgs.map((a) => 'no-' + a);
 
-export function parseSources(sources: string): ArgsSource[] {
+function parseSources(sources: string): ArgsSource[] {
   const sourceArray = sources.split(',');
   return sourceArray.map((source) => {
     let expand = false;
@@ -43,6 +45,20 @@ export function parseSources(sources: string): ArgsSource[] {
   });
 }
 
+async function getRootPath() {
+  let useGetcwd = false;
+  const buftype = await nvim.getVar('&buftype');
+  if (buftype === 'nofile') {
+    useGetcwd = true;
+  } else {
+    const bufname = await nvim.call('bufname', ['%']);
+    if (!bufname) {
+      useGetcwd = true;
+    }
+  }
+  return useGetcwd ? ((await nvim.call('getcwd', [])) as string) : workspace.rootPath;
+}
+
 export async function parseArgs(args: string[]): Promise<Args> {
   const { nvim } = workspace;
 
@@ -51,10 +67,10 @@ export async function parseArgs(args: string[]): Promise<Args> {
     toggle: config.get<boolean>('toggle')!,
     width: config.get<number>('width')!,
     position: config.get<ArgPosition>('position')!,
-    rootPath: null,
     bufferColumns: config.get<string[]>('buffer.columns')!,
     fileColumns: config.get<string[]>('file.columns')!,
-    revealPath: null,
+    rootPath: '',
+    revealPath: '',
   };
 
   while (args.length > 0) {
@@ -104,6 +120,12 @@ export async function parseArgs(args: string[]): Promise<Args> {
   if (!parsedArgs.revealPath) {
     parsedArgs.revealPath = (await nvim.call('expand', '%:p')) as string;
   }
+  if (!parsedArgs.rootPath) {
+    parsedArgs.rootPath = await getRootPath();
+  }
+
+  parsedArgs.revealPath = normalizePath(parsedArgs.revealPath);
+  parsedArgs.rootPath = normalizePath(parsedArgs.rootPath);
 
   return parsedArgs;
 }

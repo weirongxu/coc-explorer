@@ -44,6 +44,10 @@ export interface BaseTreeNode<TreeNode extends BaseTreeNode<TreeNode>> {
   children?: TreeNode[];
 }
 
+export type ExplorerSourceClass = {
+  new (name: string, explorer: Explorer): ExplorerSource<any>;
+};
+
 export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>> {
   startLine: number = 0;
   endLine: number = 0;
@@ -88,7 +92,7 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>> {
 
   private requestedRenderNodes: Set<TreeNode> = new Set();
 
-  constructor(public sourceName: string, public explorer: Explorer, expanded: boolean) {
+  constructor(public sourceName: string, public explorer: Explorer) {
     this.addAction(
       'toggleHidden',
       async () => {
@@ -150,11 +154,6 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>> {
       'toggle node selection',
       { multi: false, select: true },
     );
-
-    setImmediate(() => {
-      Promise.resolve(this.init()).catch(onError);
-      this.expanded = expanded;
-    });
   }
 
   /**
@@ -185,6 +184,11 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>> {
 
   get height() {
     return this.flattenedNodes.length;
+  }
+
+  boot(expanded: boolean) {
+    Promise.resolve(this.init()).catch(onError);
+    this.expanded = expanded;
   }
 
   init() {}
