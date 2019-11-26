@@ -335,6 +335,10 @@
     "archive": {
       "code": "",
       "color": "#cc3e44"
+    },
+    "lock": {
+      "code": "",
+      "color": "#999999"
     }
   },
   "extensions": {
@@ -353,6 +357,7 @@
     "mdx": "markdown",
     "markdown": "markdown",
     "rmd": "markdown",
+    "lock": "lock",
     "json": "json",
     "js": "javascript",
     "es6": "javascript",
