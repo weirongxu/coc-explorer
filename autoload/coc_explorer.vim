@@ -39,6 +39,7 @@ function! coc_explorer#init_win(position, width)
   endif
 
   silent setlocal colorcolumn=
+        \ noswapfile
         \ conceallevel=3 concealcursor=nvic
         \ nocursorcolumn
         \ nofoldenable foldcolumn=0
@@ -50,7 +51,8 @@ endfunction
 
 function! coc_explorer#init_buf()
   silent setlocal buftype=nofile bufhidden=hide
-        \ noswapfile nomodeline
+        \ noswapfile
+        \ nomodeline
         \ filetype=coc-explorer
         \ cursorline
         \ nomodifiable
