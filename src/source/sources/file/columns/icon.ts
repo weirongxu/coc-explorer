@@ -14,7 +14,7 @@ import { getSymbol } from '../../../../util/symbol';
 
 const enableVimDevions = config.get<boolean>('icon.enableVimDevions')!;
 
-export const nerdfont = nerdfontJson as {
+interface INerdFont {
   icons: Record<
     string,
     {
@@ -25,7 +25,16 @@ export const nerdfont = nerdfontJson as {
   extensions: Record<string, string>;
   filenames: Record<string, string>;
   patternMatches: Record<string, string>;
-};
+}
+
+export const nerdfont = nerdfontJson as INerdFont;
+const customFont = config.get<INerdFont>('icon.customIcons');
+if (customFont) {
+  Object.assign(nerdfont.icons, customFont.icons);
+  Object.assign(nerdfont.extensions, customFont.extensions);
+  Object.assign(nerdfont.filenames, customFont.filenames);
+  Object.assign(nerdfont.patternMatches, customFont.patternMatches);
+}
 
 export const nerdfontHighlights: Record<string, Hightlight> = {};
 Object.entries(nerdfont.icons).forEach(([name, icon]) => {

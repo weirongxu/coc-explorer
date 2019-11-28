@@ -160,9 +160,58 @@
           }
         },
         "explorer.icon.enableNerdfont": {
-          "description": "Enalbe nerdfont",
+          "description": "Enable nerdfont",
           "type": "boolean",
           "default": false
+        },
+        "explorer.icon.customIcons": {
+          "description": "Custom icons and color highlights",
+          "type": "object",
+          "default": {
+            "icons": {
+
+            },
+            "extensions": {
+
+            },
+            "filenames": {
+
+            },
+            "patternMatches": {
+
+            }
+          },
+          "properties": {
+            "icons": {
+              "type": "object",
+              "description": "Icons for extension groups",
+              "items": {
+                "description": "Icon for an extension group",
+                "properties": {
+                  "code": {
+                    "type": "string",
+                    "description": "Group icon"
+                  },
+                  "color": {
+                    "type": "string",
+                    "description": "Group icon color"
+                  }
+                }
+              }
+            },
+            "extensions": {
+              "type": "object",
+              "description": "File extension to icon group"
+            },
+            "filenames": {
+              "type": "object",
+              "description": "Filename to icon group"
+            },
+            "patternMatches": {
+              "type": "object",
+              "description": "Pattern to icon group"
+            }
+          }
         },
         "explorer.icon.enableVimDevions": {
           "description": "Enable use vim-devicons instead of built-in icon configuration",
