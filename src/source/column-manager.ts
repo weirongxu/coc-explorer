@@ -39,15 +39,15 @@ export class ColumnManager<TreeNode extends BaseTreeNode<TreeNode>> {
     }
   }
 
-  draw(row: SourceRowBuilder, node: TreeNode, nodeIndex: number) {
-    this.columns.forEach((column) => {
+  async draw(row: SourceRowBuilder, node: TreeNode, nodeIndex: number) {
+    for (const column of this.columns) {
       if (column.concealable) {
-        row.concealableColumn(column.concealable, () => {
-          column.draw(row, node, nodeIndex);
+        row.concealableColumn(column.concealable, async () => {
+          await column.draw(row, node, nodeIndex);
         });
       } else {
-        column.draw(row, node, nodeIndex);
+        await column.draw(row, node, nodeIndex);
       }
-    });
+    }
   }
 }

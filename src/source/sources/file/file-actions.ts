@@ -1,11 +1,11 @@
-import { FileSource, FileNode } from './file-source';
+import { FileSource } from './file-source';
 import pathLib from 'path';
 import {
   openStrategy,
   avoidOnBufEnter,
   execNotifyBlock,
   fsExists,
-  copyFileOrDirectory,
+  fsCopyFileRecursive,
   fsRename,
   fsTrash,
   fsRimraf,
@@ -14,6 +14,8 @@ import {
   isWindows,
   listDrive,
   config,
+  prompt,
+  overwritePrompt,
 } from '../../../util';
 import { workspace, listManager } from 'coc.nvim';
 import open from 'open';
@@ -266,24 +268,26 @@ export function initFileActions(file: FileSource) {
   file.addNodesAction(
     'copyFile',
     async (nodes) => {
+      const clearNodes = [...file.copiedNodes, ...file.cutNodes];
       file.copiedNodes.clear();
       file.cutNodes.clear();
       nodes.forEach((node) => {
         file.copiedNodes.add(node);
       });
-      file.requestRenderNodes(nodes);
+      file.requestRenderNodes(clearNodes.concat(nodes));
     },
     'copy file for paste',
   );
   file.addNodesAction(
     'cutFile',
     async (nodes) => {
+      const clearNodes = [...file.copiedNodes, ...file.cutNodes];
       file.copiedNodes.clear();
       file.cutNodes.clear();
       nodes.forEach((node) => {
         file.cutNodes.add(node);
       });
-      file.requestRenderNodes(nodes);
+      file.requestRenderNodes(clearNodes.concat(nodes));
     },
     'cut file for paste',
   );
@@ -291,56 +295,29 @@ export function initFileActions(file: FileSource) {
     'pasteFile',
     async (node) => {
       const targetDir = file.getPutTargetDir(node);
-      const checkNodesExists = async (
-        nodes: Set<FileNode>,
-        callback: (node: FileNode, targetPath: string) => Promise<void>,
-      ) => {
-        let canceled = false;
-        for (const node of Array.from(nodes)) {
-          if (canceled) {
-            break;
-          }
-          let targetPath = pathLib.join(targetDir, node.name);
-          while (true) {
-            if (await fsExists(targetPath)) {
-              const answer = await file.explorer.prompt(`${targetPath} already exists. Skip?`, [
-                'rename',
-                'skip',
-                'cancel',
-              ]);
-              if (answer === 'skip') {
-                break;
-              } else if (answer === 'cancel') {
-                canceled = true;
-                break;
-              } else if (answer === 'rename') {
-                targetPath = (await nvim.call('input', [
-                  `Rename: ${targetPath} -> `,
-                  targetPath,
-                  'file',
-                ])) as string;
-                continue;
-              }
-            } else {
-              await callback(node, targetPath);
-              await file.reload(file.rootNode);
-              break;
-            }
-          }
-        }
-      };
       if (file.copiedNodes.size > 0) {
-        await checkNodesExists(file.copiedNodes, async (node, targetPath) => {
-          await copyFileOrDirectory(node.fullpath, targetPath);
-        });
-        file.requestRenderNodes(Array.from(file.copiedNodes));
+        const nodes = Array.from(file.copiedNodes);
+        await overwritePrompt(
+          nodes.map((node) => ({
+            source: node.fullpath,
+            target: pathLib.join(targetDir, pathLib.basename(node.fullpath)),
+          })),
+          fsCopyFileRecursive,
+        );
+        file.requestRenderNodes(nodes);
         file.copiedNodes.clear();
+        await file.reload(node.parent ? node.parent : node);
       } else if (file.cutNodes.size > 0) {
-        await checkNodesExists(file.cutNodes, async (node, targetPath) => {
-          await fsRename(node.fullpath, targetPath);
-        });
-        file.requestRenderNodes(Array.from(file.cutNodes));
+        const nodes = Array.from(file.cutNodes);
+        await overwritePrompt(
+          nodes.map((node) => ({
+            source: node.fullpath,
+            target: pathLib.join(targetDir, pathLib.basename(node.fullpath)),
+          })),
+          fsRename,
+        );
         file.cutNodes.clear();
+        await file.reload(file.rootNode);
       } else {
         // tslint:disable-next-line: ban
         workspace.showMessage('Copied files or cut files is empty', 'error');
@@ -353,9 +330,7 @@ export function initFileActions(file: FileSource) {
     'delete',
     async (nodes) => {
       const list = nodes.map((node) => node.fullpath).join('\n');
-      if (
-        (await file.explorer.prompt('Move these files or directories to trash?\n' + list)) === 'yes'
-      ) {
+      if ((await prompt('Move these files or directories to trash?\n' + list)) === 'yes') {
         await fsTrash(nodes.map((node) => node.fullpath));
       }
     },
@@ -366,10 +341,7 @@ export function initFileActions(file: FileSource) {
     'deleteForever',
     async (nodes) => {
       const list = nodes.map((node) => node.fullpath).join('\n');
-      if (
-        (await file.explorer.prompt('Forever delete these files or directories?\n' + list)) ===
-        'yes'
-      ) {
+      if ((await prompt('Forever delete these files or directories?\n' + list)) === 'yes') {
         for (const node of nodes) {
           await fsRimraf(node.fullpath);
         }
@@ -389,9 +361,17 @@ export function initFileActions(file: FileSource) {
       }
       const putTargetNode = file.getPutTargetNode(nodes ? nodes[0] : null);
       const targetPath = pathLib.join(putTargetNode.fullpath, filename);
-      await guardTargetPath(targetPath);
-      await fsMkdir(pathLib.dirname(targetPath), { recursive: true });
-      await fsTouch(targetPath);
+      await overwritePrompt(
+        [
+          {
+            source: null,
+            target: targetPath,
+          },
+        ],
+        async (_source, target) => {
+          await fsTouch(target);
+        },
+      );
       await file.reload(putTargetNode, { render: false });
       const addedNode = await file.revealNodeByPath(targetPath, putTargetNode);
       await file.render({ node: putTargetNode });
@@ -405,19 +385,28 @@ export function initFileActions(file: FileSource) {
   file.addAction(
     'addDirectory',
     async (nodes) => {
-      let directoryPath = (await nvim.call('input', [
+      let directoryName = (await nvim.call('input', [
         'Input a new directory name: ',
         '',
         'file',
       ])) as string;
-      directoryPath = directoryPath.trim();
-      if (!directoryPath) {
+      directoryName = directoryName.trim();
+      if (!directoryName) {
         return;
       }
       const putTargetNode = file.getPutTargetNode(nodes ? nodes[0] : null);
-      const targetPath = pathLib.join(putTargetNode.fullpath, directoryPath);
-      await guardTargetPath(targetPath);
-      await fsMkdir(targetPath, { recursive: true });
+      const targetPath = pathLib.join(putTargetNode.fullpath, directoryName);
+      await overwritePrompt(
+        [
+          {
+            source: null,
+            target: targetPath,
+          },
+        ],
+        async (_source, target) => {
+          await fsMkdir(target, { recursive: true });
+        },
+      );
       await file.reload(putTargetNode, { render: false });
       const addedNode = await file.revealNodeByPath(targetPath, putTargetNode);
       await file.render({ node: putTargetNode });
@@ -439,9 +428,15 @@ export function initFileActions(file: FileSource) {
       if (targetPath.length == 0) {
         return;
       }
-      await guardTargetPath(targetPath);
-      await fsMkdir(pathLib.dirname(targetPath), { recursive: true });
-      await fsRename(node.fullpath, targetPath);
+      await overwritePrompt(
+        [
+          {
+            source: node.fullpath,
+            target: targetPath,
+          },
+        ],
+        fsRename,
+      );
       await file.reload(file.rootNode);
     },
     'rename a file or directory',

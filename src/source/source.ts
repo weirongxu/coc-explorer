@@ -23,6 +23,7 @@ export const sourceIcons = {
   collapsed: config.get<string>('icon.collapsed') || (enableNerdfont ? '' : '+'),
   selected: config.get<string>('icon.selected')!,
   unselected: config.get<string>('icon.unselected')!,
+  hidden: config.get<string>('icon.hidden')!,
 };
 
 const hl = hlGroupManager.linkGroup.bind(hlGroupManager);
@@ -43,6 +44,10 @@ export interface BaseTreeNode<TreeNode extends BaseTreeNode<TreeNode>> {
   parent?: BaseTreeNode<TreeNode>;
   children?: TreeNode[];
 }
+
+export type ExplorerSourceClass = {
+  new (name: string, explorer: Explorer): ExplorerSource<any>;
+};
 
 export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>> {
   startLine: number = 0;
@@ -88,7 +93,7 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>> {
 
   private requestedRenderNodes: Set<TreeNode> = new Set();
 
-  constructor(public sourceName: string, public explorer: Explorer, expanded: boolean) {
+  constructor(public sourceName: string, public explorer: Explorer) {
     this.addAction(
       'toggleHidden',
       async () => {
@@ -150,11 +155,6 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>> {
       'toggle node selection',
       { multi: false, select: true },
     );
-
-    setImmediate(() => {
-      Promise.resolve(this.init()).catch(onError);
-      this.expanded = expanded;
-    });
   }
 
   /**
@@ -185,6 +185,11 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>> {
 
   get height() {
     return this.flattenedNodes.length;
+  }
+
+  boot(expanded: boolean) {
+    Promise.resolve(this.init()).catch(onError);
+    this.expanded = expanded;
   }
 
   init() {}
@@ -722,7 +727,7 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>> {
     const lines: string[] = [];
 
     lines.push(
-      builder.drawLine((row) => {
+      await builder.drawLine((row) => {
         row.add(
           `Help for [${this.sourceName}${
             isRoot ? ' root' : ''
@@ -731,7 +736,7 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>> {
       }),
     );
     lines.push(
-      builder.drawLine((row) => {
+      await builder.drawLine((row) => {
         row.add('—'.repeat(width), helpHightlights.line);
       }),
     );
@@ -748,28 +753,27 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>> {
       row.add(' ');
       row.add(registeredActions[action.name].description, helpHightlights.description);
     };
-    Object.entries(mappings).forEach(([key, actions]) => {
+    for (const [key, actions] of Object.entries(mappings)) {
       if (!actions.every((action) => action.name in registeredActions)) {
-        return;
+        continue;
       }
       lines.push(
-        builder.drawLine((row) => {
+        await builder.drawLine((row) => {
           row.add(' ');
           row.add(key, helpHightlights.mappingKey);
           row.add(' - ');
           drawAction(row, actions[0]);
         }),
       );
-      actions.slice(1).forEach((action) => {
+      for (const action of actions.slice(1)) {
         lines.push(
-          builder.drawLine((row) => {
+          await builder.drawLine((row) => {
             row.add(' '.repeat(key.length + 4));
-
             drawAction(row, action);
           }),
         );
-      });
-    });
+      }
+    }
 
     await execNotifyBlock(async () => {
       await this.explorer.setLines(lines, 0, -1, true);

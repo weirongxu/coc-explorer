@@ -42,7 +42,6 @@ export type FileNode = {
   lstat: fs.Stats | null;
   isFirstInLevel: boolean;
   isLastInLevel: boolean;
-  data: Record<string, any>;
 };
 
 const hl = hlGroupManager.linkGroup.bind(hlGroupManager);
@@ -75,7 +74,6 @@ export class FileSource extends ExplorerSource<FileNode> {
     lstat: null,
     isFirstInLevel: true,
     isLastInLevel: true,
-    data: {},
   };
 
   get root() {
@@ -139,7 +137,7 @@ export class FileSource extends ExplorerSource<FileNode> {
   }
 
   async searchByCocList(path: string, recursive: boolean) {
-    filesList.ignore = !this.showHidden;
+    filesList.showHidden = this.showHidden;
     filesList.rootPath = path;
     filesList.recursive = recursive;
     filesList.revealCallback = async (loc) => {
@@ -222,7 +220,6 @@ export class FileSource extends ExplorerSource<FileNode> {
               isFirstInLevel: false,
               isLastInLevel: false,
               lstat: lstat || null,
-              data: {},
             };
             if (this.expandStore.isExpanded(child)) {
               child.children = await this.loadChildren(child);
@@ -256,12 +253,15 @@ export class FileSource extends ExplorerSource<FileNode> {
     return await this.renderNodes(nodes);
   }
 
-  drawNode(node: FileNode, nodeIndex: number, prevNode: FileNode, nextNode: FileNode) {
+  async drawNode(node: FileNode, nodeIndex: number, prevNode: FileNode, nextNode: FileNode) {
     if (!node.parent) {
-      node.drawnLine = this.viewBuilder.drawLine((row) => {
-        row.add(this.expanded ? sourceIcons.expanded : sourceIcons.collapsed, highlights.expandIcon);
+      node.drawnLine = await this.viewBuilder.drawLine(async (row) => {
+        row.add(
+          this.expanded ? sourceIcons.expanded : sourceIcons.collapsed,
+          highlights.expandIcon,
+        );
         row.add(' ');
-        row.add(`[FILE${this.showHidden ? ' I' : ''}]:`, highlights.title);
+        row.add(`[FILE${this.showHidden ? ' ' + sourceIcons.hidden : ''}]:`, highlights.title);
         row.add(' ');
         row.add(pathLib.basename(this.root), highlights.name);
         row.add(' ');
@@ -273,8 +273,8 @@ export class FileSource extends ExplorerSource<FileNode> {
       node.isFirstInLevel = prevNodeLevel < node.level;
       node.isLastInLevel = nextNodeLevel < node.level;
 
-      node.drawnLine = this.viewBuilder.drawLine((row) => {
-        this.columnManager.draw(row, node, nodeIndex);
+      node.drawnLine = await this.viewBuilder.drawLine(async (row) => {
+        await this.columnManager.draw(row, node, nodeIndex);
       });
     }
   }

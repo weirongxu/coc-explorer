@@ -8,68 +8,51 @@ import nerdfontJson from './icons.nerdfont.json';
 import { highlights as filenameHighlights } from './filename';
 import { hlGroupManager, Hightlight } from '../../../highlight-manager';
 import { config } from '../../../../util';
+import { workspace } from 'coc.nvim';
+import { FileNode } from '../file-source';
+import { getSymbol } from '../../../../util/symbol';
 
-type NerdFontIcon = {
-  code: string;
-  color: string;
-};
+const enableVimDevions = config.get<boolean>('icon.enableVimDevions')!;
 
-type NerdFontIcons = {
-  [key: string]: NerdFontIcon;
-};
-
-type NerdFont = {
-  icons: NerdFontIcons;
+interface INerdFont {
+  icons: Record<
+    string,
+    {
+      code: string;
+      color: string;
+    }
+  >;
   extensions: Record<string, string>;
   filenames: Record<string, string>;
   patternMatches: Record<string, string>;
-};
-
-const nerdfont = nerdfontJson as NerdFont;
-export const nerdfontHighlights: Record<string, Hightlight> = {};
-
-/*
- * Concatenate a Custom font entry with the Nerd font entry
- */
-const concat = (to: Record<string, string> | NerdFontIcons, 
-                from: Record<string, string> | NerdFontIcons) => {
-  if (!from) {
-    return;
-  }
-
-  Object.keys(from).forEach(key => {
-    const value = from[key];
-    if (!value) {
-      return;
-    }
-
-    to[key] = value;
-  });
-};
-
-concat(nerdfontJson.icons, nerdfont.icons);
-
-const customFont = config.get<NerdFont>('icon.customIcons');
-if (customFont) {
-  concat(nerdfont.icons, customFont.icons);
-  concat(nerdfont.extensions, customFont.extensions);
-  concat(nerdfont.filenames, customFont.filenames);
-  concat(nerdfont.patternMatches, customFont.patternMatches);
 }
 
+export const nerdfont = nerdfontJson as INerdFont;
+const customFont = config.get<INerdFont>('icon.customIcons');
+if (customFont) {
+  Object.assign(nerdfont.icons, customFont.icons);
+  Object.assign(nerdfont.extensions, customFont.extensions);
+  Object.assign(nerdfont.filenames, customFont.filenames);
+  Object.assign(nerdfont.patternMatches, customFont.patternMatches);
+}
+
+export const nerdfontHighlights: Record<string, Hightlight> = {};
 Object.entries(nerdfont.icons).forEach(([name, icon]) => {
-  nerdfontHighlights[name] = hlGroupManager.group(`FileIconNerdfont_${name}`, `guifg=${icon.color}`);
+  nerdfontHighlights[name] = hlGroupManager.group(
+    `FileIconNerdfont_${name}`,
+    `guifg=${icon.color}`,
+  );
 });
 
-const getBasename = (filename: string): string => {
+function getBasename(filename: string): string {
   if (filename.replace(/^\./, '').includes('.')) {
     return getBasename(pathLib.basename(filename, pathLib.extname(filename)));
   } else {
     return filename;
   }
-};
+}
 
-const getIcon = (filename: string): undefined | { name: string; code: string; color: string } => {
+function getIcon(filename: string): undefined | { name: string; code: string; color: string } {
   const extname = pathLib.extname(filename).slice(1);
   const basename = getBasename(filename);
 
@@ -107,16 +90,36 @@ const getIcon = (filename: string): undefined | { name: string; code: string; co
       ...nerdfont.icons[name],
     };
   }
-};
+}
+
+const attrSymbol = Symbol('icon-column');
+
+function getAttr(node: FileNode) {
+  return getSymbol(node, attrSymbol, () => ({
+    devicons: '',
+  }));
+}
 
 fileColumnRegistrar.registerColumn('icon', (source) => ({
-  draw(row, node) {
+  async beforeDraw(nodes) {
+    if (enableVimDevions) {
+      await Promise.all(
+        nodes.map(async (node) => {
+          getAttr(node).devicons = await workspace.nvim.call('WebDevIconsGetFileTypeSymbol', [
+            node.name,
+            false,
+          ]);
+        }),
+      );
+    }
+  },
+  async draw(row, node) {
     if (node.directory) {
       if (enableNerdfont) {
         row.add(
           source.expandStore.isExpanded(node)
-            ? nerdfontJson.icons.folderOpened.code
-            : nerdfontJson.icons.folderClosed.code,
+            ? nerdfont.icons.folderOpened.code
+            : nerdfont.icons.folderClosed.code,
           filenameHighlights.directory,
         );
       } else {
@@ -129,6 +132,9 @@ fileColumnRegistrar.registerColumn('icon', (source) => ({
     } else {
       if (enableNerdfont) {
         const icon = getIcon(node.name.toLowerCase());
+        if (icon && enableVimDevions) {
+          icon.code = getAttr(node).devicons;
+        }
         if (icon) {
           row.add(icon.code, nerdfontHighlights[icon.name]);
         } else if (node.hidden) {

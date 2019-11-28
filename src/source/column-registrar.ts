@@ -19,7 +19,7 @@ export interface Column<TreeNode extends BaseTreeNode<TreeNode>> {
    */
   beforeDraw?(nodes: TreeNode[]): boolean | void | Promise<boolean | void>;
 
-  draw(row: SourceRowBuilder, node: TreeNode, nodeIndex: number): void;
+  draw(row: SourceRowBuilder, node: TreeNode, nodeIndex: number): void | Promise<void>;
 }
 
 export class ColumnRegistrar<

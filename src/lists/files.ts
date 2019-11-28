@@ -61,8 +61,9 @@ export default class FilesList extends BasicList {
   readonly defaultAction = 'reveal';
   revealCallback?: (location: Location) => void | Promise<void>;
   rootPath?: string;
-  recursive?: boolean;
-  ignore?: boolean;
+  recursive: boolean = false;
+  showIgnore: boolean = true;
+  showHidden: boolean = false;
 
   constructor(nvim: Neovim) {
     super(nvim);
@@ -79,8 +80,11 @@ export default class FilesList extends BasicList {
     const args: string[] = [];
     if (await executable('fd')) {
       args.push('--color', 'never');
-      if (!this.ignore) {
+      if (this.showIgnore) {
         args.push('--no-ignore');
+      }
+      if (this.showHidden) {
+        args.push('--hidden');
       }
       if (!this.recursive) {
         args.push('--max-depth', '1');

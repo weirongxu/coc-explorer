@@ -63,7 +63,10 @@ export class BufferSource extends ExplorerSource<BufferNode> {
   };
 
   async init() {
-    await this.columnManager.registerColumns(this.explorer.args.bufferColumns, bufferColumnRegistrar);
+    await this.columnManager.registerColumns(
+      this.explorer.args.bufferColumns,
+      bufferColumnRegistrar,
+    );
 
     if (activeMode) {
       if (!workspace.env.isVim) {
@@ -124,17 +127,20 @@ export class BufferSource extends ExplorerSource<BufferNode> {
     }, []);
   }
 
-  drawNode(node: BufferNode, nodeIndex: number) {
+  async drawNode(node: BufferNode, nodeIndex: number) {
     if (!node.parent) {
-      node.drawnLine = this.viewBuilder.drawLine((row) => {
-        row.add(this.expanded ? sourceIcons.expanded : sourceIcons.collapsed, highlights.expandIcon);
+      node.drawnLine = await this.viewBuilder.drawLine(async (row) => {
+        row.add(
+          this.expanded ? sourceIcons.expanded : sourceIcons.collapsed,
+          highlights.expandIcon,
+        );
         row.add(' ');
-        row.add(`[BUFFER${this.showHidden ? ' I' : ''}]`, highlights.title);
+        row.add(`[BUFFER${this.showHidden ? ' ' + sourceIcons.hidden : ''}]`, highlights.title);
       });
     } else {
-      node.drawnLine = this.viewBuilder.drawLine((row) => {
+      node.drawnLine = await this.viewBuilder.drawLine(async (row) => {
         row.add('  ');
-        this.columnManager.draw(row, node, nodeIndex);
+        await this.columnManager.draw(row, node, nodeIndex);
       });
     }
   }
