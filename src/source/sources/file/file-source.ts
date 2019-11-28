@@ -137,7 +137,7 @@ export class FileSource extends ExplorerSource<FileNode> {
   }
 
   async searchByCocList(path: string, recursive: boolean) {
-    filesList.ignore = !this.showHidden;
+    filesList.showHidden = this.showHidden;
     filesList.rootPath = path;
     filesList.recursive = recursive;
     filesList.revealCallback = async (loc) => {

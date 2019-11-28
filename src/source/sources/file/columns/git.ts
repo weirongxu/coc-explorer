@@ -5,7 +5,6 @@ import { GitFormat, gitManager, GitMixedStatus } from '../../../../git-manager';
 import pathLib from 'path';
 import { events } from 'coc.nvim';
 import { debounce } from '../../../../util';
-import { FileNode } from '../file-source';
 
 const highlights = {
   stage: hlGroupManager.linkGroup('FileGitStage', 'Comment'),
