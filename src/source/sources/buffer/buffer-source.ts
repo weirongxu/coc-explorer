@@ -135,7 +135,7 @@ export class BufferSource extends ExplorerSource<BufferNode> {
           highlights.expandIcon,
         );
         row.add(' ');
-        row.add(`[BUFFER${this.showHidden ? ' I' : ''}]`, highlights.title);
+        row.add(`[BUFFER${this.showHidden ? ' ' + sourceIcons.hidden : ''}]`, highlights.title);
       });
     } else {
       node.drawnLine = await this.viewBuilder.drawLine(async (row) => {

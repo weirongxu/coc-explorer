@@ -171,11 +171,13 @@
         },
         "explorer.icon.expanded": {
           "description": "Icon for expanded node",
-          "type": "string"
+          "type": "string",
+          "default_doc": "-"
         },
         "explorer.icon.collapsed": {
           "description": "Icon for collapsed node",
-          "type": "string"
+          "type": "string",
+          "default_doc": "+"
         },
         "explorer.icon.selected": {
           "description": "Selection selected chars for File source",
@@ -186,6 +188,11 @@
           "description": "Selection unselected chars for File source",
           "type": "string",
           "default": " "
+        },
+        "explorer.icon.hidden": {
+          "description": "Icon for hidden status",
+          "type": "string",
+          "default": "I"
         },
         "explorer.buffer.showHiddenBuffers": {
           "description": "Default show hidden buffers",

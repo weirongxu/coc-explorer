@@ -23,6 +23,7 @@ export const sourceIcons = {
   collapsed: config.get<string>('icon.collapsed') || (enableNerdfont ? '' : '+'),
   selected: config.get<string>('icon.selected')!,
   unselected: config.get<string>('icon.unselected')!,
+  hidden: config.get<string>('icon.hidden')!,
 };
 
 const hl = hlGroupManager.linkGroup.bind(hlGroupManager);

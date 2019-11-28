@@ -14,7 +14,7 @@ import { getSymbol } from '../../../../util/symbol';
 
 const enableVimDevions = config.get<boolean>('icon.enableVimDevions')!;
 
-const nerdfont = nerdfontJson as {
+export const nerdfont = nerdfontJson as {
   icons: Record<
     string,
     {

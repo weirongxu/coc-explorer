@@ -261,7 +261,7 @@ export class FileSource extends ExplorerSource<FileNode> {
           highlights.expandIcon,
         );
         row.add(' ');
-        row.add(`[FILE${this.showHidden ? ' I' : ''}]:`, highlights.title);
+        row.add(`[FILE${this.showHidden ? ' ' + sourceIcons.hidden : ''}]:`, highlights.title);
         row.add(' ');
         row.add(pathLib.basename(this.root), highlights.name);
         row.add(' ');
