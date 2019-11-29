@@ -118,11 +118,6 @@
           "type": "boolean",
           "default": true
         },
-        "explorer.openAction.select.filterNoModifiable": {
-          "description": "Filter nomodifiable buffers in select strategy",
-          "type": "boolean",
-          "default": true
-        },
         "explorer.openAction.changeDirectory": {
           "description": "Change directory if node is a directory",
           "type": "boolean",

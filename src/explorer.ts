@@ -5,7 +5,13 @@ import { IndexesManager } from './indexes-manager';
 import './source/load';
 import { BaseTreeNode, ExplorerSource, ActionOptions } from './source/source';
 import { sourceManager } from './source/source-manager';
-import { execNotifyBlock, autoReveal, config, enableDebug, enableWrapscan } from './util';
+import {
+  execNotifyBlock,
+  autoReveal,
+  config,
+  enableDebug,
+  enableWrapscan,
+} from './util';
 import { ExplorerManager } from './explorer-manager';
 
 export class Explorer {
@@ -551,7 +557,6 @@ export class Explorer {
     const winnr = await this.nvim.call('coc_explorer#select_wins', [
       this.explorerManager.bufferName,
       config.get<boolean>('openAction.select.filterFloatWindows')!,
-      config.get<boolean>('openAction.select.filterNoModifiable')!,
     ]);
     if (winnr > 0) {
       await Promise.resolve(selected(winnr));

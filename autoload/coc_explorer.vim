@@ -71,9 +71,6 @@ function! coc_explorer#is_float_window(winnr)
   endif
 endfunction
 
-function! coc_explorer#is_modifiable(winnr)
-  return getbufvar(bufwinnr(a:winnr), '&modifiable')
-endfunction
 
 let s:select_wins_chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
 
@@ -87,15 +84,12 @@ endfunction
 "   -1  - User cancelled
 "   0   - No window selected
 "   > 0 - Selected winnr
-function! coc_explorer#select_wins(buffer_name, filterFloatWindows, filterNoModifiable)
+function! coc_explorer#select_wins(buffer_name, filterFloatWindows)
   let store = {}
   let char_idx_mapto_winnr = {}
   let char_idx = 0
   for winnr in range(1, winnr('$'))
     if a:filterFloatWindows && coc_explorer#is_float_window(winnr)
-      continue
-    endif
-    if a:filterNoModifiable && !coc_explorer#is_modifiable(winnr)
       continue
     endif
     if stridx(bufname(winbufnr(winnr)), a:buffer_name) == 0
