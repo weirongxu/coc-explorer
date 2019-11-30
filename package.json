@@ -1,6 +1,6 @@
 {
   "name": "coc-explorer",
-  "version": "0.2.1",
+  "version": "0.2.2",
   "description": "explorer for coc.nvim",
   "main": "lib/index.js",
   "types": "lib/index.d.ts",
@@ -168,18 +168,10 @@
           "description": "Custom icons and color highlights",
           "type": "object",
           "default": {
-            "icons": {
-
-            },
-            "extensions": {
-
-            },
-            "filenames": {
-
-            },
-            "patternMatches": {
-
-            }
+            "icons": {},
+            "extensions": {},
+            "filenames": {},
+            "patternMatches": {}
           },
           "properties": {
             "icons": {
