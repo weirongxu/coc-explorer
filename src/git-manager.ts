@@ -64,19 +64,22 @@ class GitCommand {
     return GitFormat.unmodified;
   }
 
-  private parsePath(str: string, startIndex: number): [number, string] {
-    let index = startIndex;
+  private parsePath(str: string, hasArrow: boolean): string[] {
+    let index = 0;
     let path = '';
     let inPath = false;
     let inQuote = false;
     let inEscape = false;
+    const paths: string[] = [];
     while (index < str.length) {
       const ch = str[index];
       if (!inPath && !inQuote) {
+        // start parse a path
         if (ch === '"') {
           inQuote = true;
           index += 1;
         }
+        path = '';
         inPath = true;
         continue;
       } else {
@@ -86,7 +89,9 @@ class GitCommand {
             inEscape = false;
           } else {
             if (ch === '"') {
-              return [index + 1, path];
+              paths.push(path);
+              inQuote = false;
+              inPath = false;
             } else if (ch === '\\') {
               inEscape = true;
             } else {
@@ -95,7 +100,15 @@ class GitCommand {
           }
         } else {
           if (ch === ' ') {
-            return [index, path];
+            if (hasArrow && str.slice(index, index + 4) === ' -> ') {
+              if (path.length) {
+                paths.push(path);
+              }
+              index += 3;
+              inPath = false;
+            } else {
+              path += ch;
+            }
           } else {
             path += ch;
           }
@@ -103,26 +116,21 @@ class GitCommand {
       }
       index += 1;
     }
-    return [index, path];
+    if (inPath) {
+      paths.push(path);
+      inPath = false;
+    }
+    return paths;
   }
 
   private parseStatusLine(gitRoot: string, line: string) {
     const xFormat = this.parseStatusFormat(line[0]);
     const yFormat = this.parseStatusFormat(line[1]);
-    const originPath = line.slice(3);
-    const paths: string[] = [];
-    let index = 0;
-    const remain = this.parsePath(originPath, index);
-    index = remain[0];
-    paths.push(remain[1]);
-    if (index != originPath.length) {
-      const arrow = ' -> ';
-      if (originPath.slice(index, index + arrow.length) === ' -> ') {
-        index += arrow.length;
-        const remain = this.parsePath(originPath, index);
-        paths.push(remain[1]);
-      }
-    }
+    const rawPath = line.slice(3);
+    const hasArrow =
+      [GitFormat.renamed, GitFormat.copied].includes(xFormat) ||
+      [GitFormat.renamed, GitFormat.copied].includes(yFormat);
+    const paths = this.parsePath(rawPath, hasArrow);
     return [xFormat, yFormat, ...paths.map((p) => pathLib.join(gitRoot, p))] as [
       GitFormat,
       GitFormat,

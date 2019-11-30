@@ -2,28 +2,44 @@ import { gitManager, GitFormat } from './git-manager';
 
 ([
   {
-    args: ['path/to/file', 0],
-    returns: [12, 'path/to/file'],
+    args: ['path/to/file', false],
+    returns: ['path/to/file'],
   },
   {
-    args: ['"path/to/file"', 0],
-    returns: [14, 'path/to/file'],
+    args: ['"path/to/file"', false],
+    returns: ['path/to/file'],
   },
   {
-    args: ['pre "path/to/file"', 4],
-    returns: [18, 'path/to/file'],
+    args: ['"path test/to/file"', false],
+    returns: ['path test/to/file'],
   },
   {
-    args: ['"path test/to/file"', 0],
-    returns: [19, 'path test/to/file'],
+    args: ['"path\\"/to/file"', false],
+    returns: ['path"/to/file'],
   },
   {
-    args: ['"path\\"/to/file"', 0],
-    returns: [16, 'path"/to/file'],
+    args: ['path/to/file with space', false],
+    returns: ['path/to/file with space'],
+  },
+  {
+    args: ['path/to/file with space', false],
+    returns: ['path/to/file with space'],
+  },
+  {
+    args: ['file.ts -> "file name.ts"', true],
+    returns: ['file.ts', 'file name.ts'],
+  },
+  {
+    args: ['"file name.ts" -> file.ts', true],
+    returns: ['file name.ts', 'file.ts'],
+  },
+  {
+    args: ['"file name.ts" -> "file name2.ts"', true],
+    returns: ['file name.ts', 'file name2.ts'],
   },
 ] as {
-  args: [string, number];
-  returns: [number, string];
+  args: [string, boolean];
+  returns: string[];
 }[]).forEach((it, index) => {
   test('gitManager parsePath ' + index, () => {
     // @ts-ignore
@@ -38,12 +54,16 @@ import { gitManager, GitFormat } from './git-manager';
     returns: [GitFormat.modified, GitFormat.modified, '/root/path/to/file'],
   },
   {
-    args: ['MM "path/to/file" -> "path/to/file"'],
-    returns: [GitFormat.modified, GitFormat.modified, '/root/path/to/file', '/root/path/to/file'],
+    args: ['MM path/to/file with space'],
+    returns: [GitFormat.modified, GitFormat.modified, '/root/path/to/file with space'],
   },
   {
-    args: ['MM "path to/file" -> "path to/file"'],
-    returns: [GitFormat.modified, GitFormat.modified, '/root/path to/file', '/root/path to/file'],
+    args: ['R  "path/to/file" -> "path/to/file"'],
+    returns: [GitFormat.renamed, GitFormat.unmodified, '/root/path/to/file', '/root/path/to/file'],
+  },
+  {
+    args: ['C  "path to/file" -> "path to/file"'],
+    returns: [GitFormat.copied, GitFormat.unmodified, '/root/path to/file', '/root/path to/file'],
   },
 ] as {
   args: [string];
@@ -51,7 +71,7 @@ import { gitManager, GitFormat } from './git-manager';
 }[]).forEach((it, index) => {
   test('gitManager parseStatusLine ' + index, () => {
     // @ts-ignore
-    const returns = gitManager.cmd.parseStatusLine(...['/root', ...it.args]);
+    const returns = gitManager.cmd.parseStatusLine('/root', ...it.args);
     expect(returns).toEqual(it.returns);
   });
 });
