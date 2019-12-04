@@ -105,6 +105,19 @@ export class ExplorerManager {
     await this.nvim.call('coc_explorer#clear_mappings', [this.mappings]);
   }
 
+  async createExplorer(args: Args) {
+    this.maxExplorerID += 1;
+    const bufnr = (await this.nvim.call('coc_explorer#create', [
+      this.bufferName,
+      this.maxExplorerID,
+      args.position,
+      args.width,
+    ])) as number;
+    const explorer = new Explorer(this.maxExplorerID, this, this.context, bufnr);
+    await explorer.buffer.setVar('b:coc_explorer_inited', true);
+    return explorer;
+  }
+
   async getExplorer(args: Args) {
     const tabid =
       args.position === 'tab' ? (await this.currentTabIdMax()) + 1 : await this.currentTabId();
@@ -124,16 +137,22 @@ export class ExplorerManager {
       explorers = this.tabContainer[tabid].tab;
     }
     if (!explorers.length) {
-      this.maxExplorerID += 1;
-      const bufnr = (await this.nvim.call('coc_explorer#create', [
-        this.bufferName,
-        this.maxExplorerID,
-        args.position,
-        args.width,
-      ])) as number;
-      explorers.push(new Explorer(this.maxExplorerID, this, this.context, bufnr));
+      explorers.push(await this.createExplorer(args));
     }
-    return explorers[0];
+
+    let explorer = explorers[0];
+    if (!(await this.nvim.call('bufexists', [explorer.bufnr]))) {
+      explorer = await this.createExplorer(args);
+      explorers[0] = explorer;
+    } else {
+      const inited = await explorer.buffer.getVar('b:coc_explorer_inited');
+      if (!inited) {
+        await this.nvim.command(`bwipeout ${explorer.bufnr}`);
+        explorer = await this.createExplorer(args);
+        explorers[0] = explorer;
+      }
+    }
+    return explorer;
   }
 
   async open(argStrs: string[]) {
