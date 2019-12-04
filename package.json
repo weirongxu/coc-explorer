@@ -393,6 +393,11 @@
           "type": "integer",
           "default": 80
         },
+        "explorer.file.column.filename.paddingEnd": {
+          "description": "Enable filename padding end",
+          "type": "boolean",
+          "default": true
+        },
         "explorer.git.command": {
           "description": "Git command",
           "type": "string",

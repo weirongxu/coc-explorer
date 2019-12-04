@@ -14,6 +14,7 @@ export const highlights = {
 const nvim = workspace.nvim;
 
 const width = fileColumnRegistrar.getColumnConfig<number>('filename.width')!;
+const enablePaddingEnd = fileColumnRegistrar.getColumnConfig<boolean>('filename.paddingEnd')!;
 
 const attrSymbol = Symbol('filename-column');
 function getAttr(source: FileSource, node: FileNode) {
@@ -57,7 +58,7 @@ async function loadTruncateNodes(source: FileSource, fullTreeWidth: number, flat
         const remainWidth = fullTreeWidth - getAttr(source, node).indentWidth;
         truncateCache.set(
           key,
-          await nvim.call('coc_explorer#truncate', [name, linkTarget, remainWidth, '..']),
+          await nvim.call('coc_explorer#truncate', [name, linkTarget, remainWidth, enablePaddingEnd, '..']),
         );
       }
       const cache = truncateCache.get(key)!;

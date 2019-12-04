@@ -206,11 +206,11 @@ function! coc_explorer#tab_id_max()
 endfunction
 
 
-function! coc_explorer#truncate(name, link_target, fullwidth, omit)
+function! coc_explorer#truncate(name, link_target, fullwidth, padding_end, omit)
   let name_text_width = strdisplaywidth(a:name)
   let link_text_width = strdisplaywidth(a:link_target)
   if name_text_width < a:fullwidth - 3
-    return [a:name, s:truncate(a:link_target, a:fullwidth - name_text_width, a:omit)]
+    return [a:name, s:truncate(a:link_target, a:fullwidth - name_text_width, a:padding_end, a:omit)]
   else
     let text_width = name_text_width + link_text_width
     if link_text_width == 0
@@ -220,9 +220,9 @@ function! coc_explorer#truncate(name, link_target, fullwidth, omit)
       let name_fullwidth = float2nr(ceil(a:fullwidth * 0.7 - 3))
       let link_fullwidth = a:fullwidth - name_fullwidth
     endif
-    let name = s:truncate(a:name, name_fullwidth, a:omit)
+    let name = s:truncate(a:name, name_fullwidth, a:padding_end, a:omit)
     if link_fullwidth > 0
-      let link = s:truncate(a:link_target, link_fullwidth, a:omit)
+      let link = s:truncate(a:link_target, link_fullwidth, a:padding_end, a:omit)
     else
       let link = ''
     endif
@@ -230,7 +230,7 @@ function! coc_explorer#truncate(name, link_target, fullwidth, omit)
   endif
 endfunction
 
-function! s:truncate(str, fullwidth, omit)
+function! s:truncate(str, fullwidth, padding_end, omit)
   " Modified from https://github.com/Shougo/defx.nvim/blob/f81aa358afae22c89ce254db3f589212637bc1ba/autoload/defx/util.vim#L258
   let width = strdisplaywidth(a:str)
   if width <= a:fullwidth
@@ -242,7 +242,11 @@ function! s:truncate(str, fullwidth, omit)
     let ret = s:strwidthpart(a:str, left_width) . a:omit
          \ . s:strwidthpart_reverse(a:str, right_width)
   endif
-  return s:pad_end(ret, a:fullwidth)
+  if a:padding_end
+    return s:pad_end(ret, a:fullwidth)
+  else
+    return ret
+  endif
 endfunction
 
 function! s:pad_end(str, width)

@@ -148,8 +148,8 @@ Explorer file columns, supported columns:
 - `explorer.openAction.changeDirectory`: Change directory if node is a directory, type: `boolean`, default: `true`
 - `explorer.sources`: Explorer sources, type: `array`, default: `[{"name":"buffer","expand":false},{"name":"file","expand":true}]`
 - `explorer.icon.enableNerdfont`: Enable nerdfont, type: `boolean`, default: `false`
+- `explorer.icon.customIcons`: Custom icons and color highlights, type: `object`, default: `{"icons":{},"extensions":{},"filenames":{},"patternMatches":{}}`
 - `explorer.icon.enableVimDevions`: Enable use vim-devicons instead of built-in icon configuration, type: `boolean`, default: `false`
-- `explorer.icon.customIcons`: Custom icons and highlights: type: `object`, default: `{"icons":{},"extensions":{},"filenames":{},"patternMatches":{}}`
 - `explorer.icon.expanded`: Icon for expanded node, type: `string`, default: `-`
 - `explorer.icon.collapsed`: Icon for collapsed node, type: `string`, default: `+`
 - `explorer.icon.selected`: Selection selected chars for File source, type: `string`, default: `✓`
@@ -178,6 +178,7 @@ Explorer file columns, supported columns:
 - `explorer.file.column.indent.topLevel`: Whether to indent it in top level, type: `boolean`, default: `false`
 - `explorer.file.column.indent.indentLine`: Whether to display the alignment line, type: `boolean`
 - `explorer.file.column.filename.width`: Filename with, type: `integer`, default: `80`
+- `explorer.file.column.filename.paddingEnd`: Enable filename padding end, type: `boolean`, default: `true`
 - `explorer.git.command`: Git command, type: `string`, default: `git`
 - `explorer.debug`: Enable debug, type: `boolean`, default: `false`
 
