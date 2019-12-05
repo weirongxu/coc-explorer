@@ -114,7 +114,7 @@ export class ExplorerManager {
       args.width,
     ])) as number;
     const explorer = new Explorer(this.maxExplorerID, this, this.context, bufnr);
-    await explorer.buffer.setVar('b:coc_explorer_inited', true);
+    await explorer.buffer.setVar('coc_explorer_inited', true);
     return explorer;
   }
 
@@ -145,7 +145,7 @@ export class ExplorerManager {
       explorer = await this.createExplorer(args);
       explorers[0] = explorer;
     } else {
-      const inited = await explorer.buffer.getVar('b:coc_explorer_inited');
+      const inited = await explorer.buffer.getVar('coc_explorer_inited');
       if (!inited) {
         await this.nvim.command(`bwipeout ${explorer.bufnr}`);
         explorer = await this.createExplorer(args);
