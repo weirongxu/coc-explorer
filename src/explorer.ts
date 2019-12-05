@@ -260,7 +260,7 @@ export class Explorer {
     const win = await this.win;
     if (win) {
       if (args.toggle) {
-        await win.close(true);
+        await this.quit();
       } else {
         await this.nvim.command(`${await win.number}wincmd w`);
       }
@@ -272,7 +272,9 @@ export class Explorer {
   async quit() {
     const win = await this.win;
     if (win) {
-      await win.close(true);
+      await this.nvim.command(`${await win.number}wincmd q`);
+      // not work in nvim 3.8
+      // await win.close(true);
     }
   }
 
