@@ -1,7 +1,15 @@
 import { workspace } from 'coc.nvim';
 import { execNotifyBlock } from '../util';
-import { Explorer } from '../explorer';
 import { ExplorerSource } from './source';
+
+export const HlEscapeCode = {
+  left: (s: string | number) => HlEscapeCode.leftBegin + s + HlEscapeCode.leftEnd,
+  leftBegin: '\x01',
+  leftEnd: '\x02',
+  right: (s: string | number) => HlEscapeCode.rightBegin + s + HlEscapeCode.rightEnd,
+  rightBegin: '\x03',
+  rightEnd: '\x04',
+};
 
 export type Hightlight = {
   group: string;
@@ -44,7 +52,12 @@ class HighlightManager {
           if (isInited) {
             nvim.command(`silent syntax clear ${group}`, true);
           }
-          nvim.command(`syntax match ${group} conceal /\\V<${markerID}|\\.\\*|${markerID}>/`, true);
+          nvim.command(
+            `syntax match ${group} conceal /\\V${HlEscapeCode.left(
+              markerID,
+            )}\\.\\*${HlEscapeCode.right(markerID)}/`,
+            true,
+          );
           nvim.command(`${storeWinnr}wincmd w`, true);
         });
         isShown = false;
@@ -63,7 +76,12 @@ class HighlightManager {
           if (isInited) {
             nvim.command(`silent syntax clear ${group}`, true);
           }
-          nvim.command(`syntax match ${group} conceal /\\V<${markerID}|\\||${markerID}>/`, true);
+          nvim.command(
+            `syntax match ${group} conceal /\\V${HlEscapeCode.left(
+              markerID,
+            )}\\|${HlEscapeCode.right(markerID)}/`,
+            true,
+          );
           nvim.command(`${storeWinnr}wincmd w`, true);
         });
         isShown = true;
@@ -81,7 +99,9 @@ class HighlightManager {
     const group = `CocExplorer${groupName}`;
     const markerID = this.createMarkerID();
     const commands = [
-      `syntax region ${group} concealends matchgroup=${group}Marker start=/\\V<${markerID}|/ end=/\\V|${markerID}>/`,
+      `syntax region ${group} concealends matchgroup=${group}Marker start=/\\V${HlEscapeCode.left(
+        markerID,
+      )}/ end=/\\V${HlEscapeCode.right(markerID)}/`,
       `highlight default link ${group} ${targetGroup}`,
     ];
     this.highlightCommands.push(...commands);
@@ -96,7 +116,9 @@ class HighlightManager {
     const group = `CocExplorer${groupName}`;
     const markerID = this.createMarkerID();
     const commands = [
-      `syntax region ${group} concealends matchgroup=${group}Marker start=/\\V<${markerID}|/ end=/\\V|${markerID}>/`,
+      `syntax region ${group} concealends matchgroup=${group}Marker start=/\\V${HlEscapeCode.left(
+        markerID,
+      )}/ end=/\\V${HlEscapeCode.right(markerID)}/`,
       `highlight default ${group} ${hlArgs}`,
     ];
     this.highlightCommands.push(...commands);

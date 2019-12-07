@@ -1,4 +1,4 @@
-import { Hightlight, HighlightConcealable } from './highlight-manager';
+import { Hightlight, HighlightConcealable, HlEscapeCode } from './highlight-manager';
 
 export class SourceRowBuilder {
   content = '';
@@ -7,15 +7,15 @@ export class SourceRowBuilder {
 
   concealableColumn(hlConcealableCmd: HighlightConcealable, block: () => void) {
     const markerID = hlConcealableCmd.markerID;
-    this.content += `<${markerID}|`;
+    this.content += HlEscapeCode.left(markerID);
     block();
-    this.content += `|${markerID}>`;
+    this.content += HlEscapeCode.right(markerID);
   }
 
   add(content: string, hlCmd?: Hightlight) {
     if (hlCmd && content) {
       const markerID = hlCmd.markerID;
-      content = `<${markerID}|${content}|${markerID}>`;
+      content = `${HlEscapeCode.left(markerID)}${content}${HlEscapeCode.right(markerID)}`;
     }
     this.content += content;
   }
