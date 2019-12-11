@@ -251,5 +251,5 @@ Explorer file columns, supported columns:
 
 - VSCode Explorer
 - [Shougo/vimfiler.vim](https://github.com/Shougo/vimfiler.vim)
-- [Shougo/defx.vim](https://github.com/Shougo/defx.vim)
+- [Shougo/defx.vim](https://github.com/Shougo/defx.nvim)
 - [lambdalisue/fila.vim](https://github.com/lambdalisue/fila.vim)
