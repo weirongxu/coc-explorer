@@ -7,11 +7,12 @@ import pathLib from 'path';
 import { execCli } from './cli';
 import { isWindows } from './platform';
 import { input, prompt } from '.';
+import makeDir from 'make-dir';
 
 export const fsOpen = promisify(fs.open);
 export const fsClose = promisify(fs.close);
 export const fsTouch = async (path: string) => await fsClose(await fsOpen(path, 'w'));
-export const fsMkdir = promisify(fs.mkdir);
+export const fsMkdirp = makeDir;
 export const fsReaddir = promisify(fs.readdir);
 export const fsReadlink = promisify(fs.readlink);
 export const fsAccess = (path: string, mode?: number) =>
@@ -31,7 +32,7 @@ export const fsRimraf = promisify(rimraf);
 export async function fsCopyFileRecursive(sourcePath: string, targetPath: string) {
   const lstat = await fsLstat(sourcePath);
   if (lstat.isDirectory()) {
-    await fsMkdir(targetPath, { recursive: true });
+    await fsMkdirp(targetPath);
     const filenames = await fsReaddir(sourcePath);
     for (const filename of filenames) {
       await fsCopyFileRecursive(
@@ -73,7 +74,7 @@ export async function overwritePrompt<S extends string | null>(
   action: (source: S, target: string) => Promise<void>,
 ) {
   const finalAction = async (source: string | null, target: string) => {
-    await fsMkdir(pathLib.dirname(target), { recursive: true });
+    await fsMkdirp(pathLib.dirname(target));
     await action(source as S, target);
   };
   for (let i = 0, len = paths.length; i < len; i++) {

@@ -4,12 +4,11 @@ import {
   openStrategy,
   avoidOnBufEnter,
   execNotifyBlock,
-  fsExists,
   fsCopyFileRecursive,
   fsRename,
   fsTrash,
   fsRimraf,
-  fsMkdir,
+  fsMkdirp,
   fsTouch,
   isWindows,
   listDrive,
@@ -21,12 +20,6 @@ import { workspace, listManager } from 'coc.nvim';
 import open from 'open';
 import { driveList } from '../../../lists/drives';
 import { gitManager } from '../../../git-manager';
-
-const guardTargetPath = async (path: string) => {
-  if (await fsExists(path)) {
-    throw new Error(`Target file or directory ${path} already exists`);
-  }
-};
 
 export function initFileActions(file: FileSource) {
   const { nvim } = file;
@@ -404,7 +397,7 @@ export function initFileActions(file: FileSource) {
           },
         ],
         async (_source, target) => {
-          await fsMkdir(target, { recursive: true });
+          await fsMkdirp(target);
         },
       );
       await file.reload(putTargetNode, { render: false });
