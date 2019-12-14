@@ -7,6 +7,7 @@ export * from './async';
 export * from './config';
 export * from './events';
 export * from './fs';
+export * from './path';
 export * from './neovim-notify';
 export * from './throttle-debounce';
 export * from './vim';

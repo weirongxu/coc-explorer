@@ -159,6 +159,7 @@ Explorer file columns, supported columns:
 - `explorer.buffer.columns`: Default columns for buffer source, type: `array`, default: `["selection","bufnr","name","modified","readonly","fullpath"]`
 - `explorer.file.autoReveal`: Explorer will automatically expand to the current buffer, type: `boolean`, default: `true`
 - `explorer.file.diagnosticCountMax`: Maximum count of diagnostic column, type: `number`, default: `99`
+- `explorer.file.hiddenRules`: Custom hidden rules for file, type: `boolean`, default: `{"extensions":["o","a","obj","pyc"],"filenames":[],"patternMatches":["^\\."]}`
 - `explorer.file.showHiddenFiles`: Default show hidden files, type: `boolean`, default: `false`
 - `explorer.file.columns`: Default columns for file source, type: `array`, default: `["git","selection","clip","diagnosticError","indent","icon","filename","size","modified","readonly"]`
 - `explorer.file.column.git.showIgnored`: Show ignored files in git column, type: `boolean`, default: `false`

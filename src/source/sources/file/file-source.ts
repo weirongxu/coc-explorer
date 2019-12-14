@@ -13,6 +13,7 @@ import {
   fsLstat,
   fsStat,
   normalizePath,
+  getExtensions,
 } from '../../../util';
 import { hlGroupManager } from '../../highlight-manager';
 import { ExplorerSource, sourceIcons } from '../../source';
@@ -22,6 +23,22 @@ import './load';
 import { filesList } from '../../../lists/files';
 import { initFileActions } from './file-actions';
 import { homedir } from 'os';
+
+const hiddenRules = config.get<{
+  extensions: string[];
+  filenames: string[];
+  patternMatches: string[];
+}>('file.hiddenRules')!;
+function isHidden(filename: string) {
+  const { basename, extensions } = getExtensions(filename);
+  const extname = extensions[extensions.length - 1];
+
+  return (
+    hiddenRules.filenames.includes(basename) ||
+    hiddenRules.extensions.includes(extname) ||
+    hiddenRules.patternMatches.some((pattern) => new RegExp(pattern).test(filename))
+  );
+}
 
 export type FileNode = {
   uid: string;
@@ -187,15 +204,15 @@ export class FileSource extends ExplorerSource<FileNode> {
 
   async loadChildren(parent: FileNode): Promise<FileNode[]> {
     if (this.expandStore.isExpanded(parent)) {
-      const filepaths = await fsReaddir(parent.fullpath);
+      const filenames = await fsReaddir(parent.fullpath);
       const files = await Promise.all(
-        filepaths.map(async (filepath) => {
+        filenames.map(async (filename) => {
           try {
-            const hidden = filepath.startsWith('.');
+            const hidden = isHidden(filename);
             if (!this.showHidden && hidden) {
               return null;
             }
-            const fullpath = pathLib.join(parent.fullpath, filepath);
+            const fullpath = pathLib.join(parent.fullpath, filename);
             const stat = await fsStat(fullpath).catch(() => {});
             const lstat = await fsLstat(fullpath).catch(() => {});
             const executable = await fsAccess(fullpath, fs.constants.X_OK);
@@ -208,7 +225,7 @@ export class FileSource extends ExplorerSource<FileNode> {
               drawnLine: '',
               parent: parent || undefined,
               expandable: directory,
-              name: filepath,
+              name: filename,
               fullpath,
               directory: directory,
               readonly: !writable && readable,

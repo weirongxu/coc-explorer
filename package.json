@@ -178,7 +178,12 @@
               "type": "object",
               "description": "Icons for extension groups",
               "items": {
+                "type": "object",
                 "description": "Icon for an extension group",
+                "required": [
+                  "code",
+                  "color"
+                ],
                 "properties": {
                   "code": {
                     "type": "string",
@@ -272,6 +277,40 @@
           "description": "Maximum count of diagnostic column",
           "type": "number",
           "default": 99
+        },
+        "explorer.file.hiddenRules": {
+          "description": "Custom hidden rules for file",
+          "type": "boolean",
+          "default": {
+            "extensions": [
+              "o",
+              "a",
+              "obj",
+              "pyc"
+            ],
+            "filenames": [],
+            "patternMatches": [
+              "^\\."
+            ]
+          },
+          "properties": {
+            "extensions": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "filenames": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "patternMatches": {
+              "type": "array",
+              "description": "Pattern to icon group"
+            }
+          }
         },
         "explorer.file.showHiddenFiles": {
           "description": "Default show hidden files",
