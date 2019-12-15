@@ -17,12 +17,12 @@ test('getExtensions', () => {
   });
 
   expect(getExtensions('temp.js.ts.erb')).toEqual({
-    extensions: ['erb', 'ts', 'js'],
+    extensions: ['js', 'ts', 'erb'],
     basename: 'temp',
   });
 
   expect(getExtensions('.temp.js.ts.erb')).toEqual({
-    extensions: ['erb', 'ts', 'js'],
+    extensions: ['js', 'ts', 'erb'],
     basename: '.temp',
   });
 });

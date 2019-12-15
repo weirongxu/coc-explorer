@@ -12,7 +12,7 @@ export function getExtensions(filename: string) {
   ): { basename: string; extensions: string[] } {
     if (filename.includes('.', 1)) {
       const extension = pathLib.extname(filename);
-      extensions.push(extension.slice(1));
+      extensions.unshift(extension.slice(1));
       return getExtensionsR(pathLib.basename(filename, extension), extensions);
     } else {
       return { basename: filename, extensions: extensions };
