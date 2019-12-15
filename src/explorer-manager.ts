@@ -28,9 +28,28 @@ export class ExplorerManager {
   private mappings: Record<string, Record<string, string>> = {};
   private registeredMapping: boolean = false;
   private onRegisteredMapping = new Emitter<void>();
+  private initedState = {
+    initedCount: 0,
+    list: ['onRegisteredMapping', 'emitterDidAutoload'] as const,
+  };
+  private onInited = new Emitter<void>();
 
   constructor(public context: ExtensionContext) {
     const { subscriptions } = context;
+
+    this.initedState.list.forEach((method) => {
+      this[method].event(() => {
+        this.initedState.initedCount += 1;
+        if (this.initedState.initedCount >= this.initedState.list.length) {
+          this.onInited.fire();
+        }
+      });
+    });
+
+    this.emitterDidAutoload.event(() => {
+      this.registerMappings().catch(onError);
+      hlGroupManager.registerHighlightSyntax().catch(onError);
+    });
 
     subscriptions.push(
       events.on('BufWinLeave', (bufnr) => {
@@ -39,11 +58,6 @@ export class ExplorerManager {
         }
       }),
     );
-
-    this.emitterDidAutoload.event(() => {
-      this.registerMappings().catch(onError);
-      hlGroupManager.registerHighlightSyntax().catch(onError);
-    });
   }
 
   async currentTabId() {
@@ -158,7 +172,7 @@ export class ExplorerManager {
   async open(argStrs: string[]) {
     if (!this.registeredMapping) {
       await new Promise((resolve) => {
-        this.onRegisteredMapping.event(resolve);
+        this.onInited.event(resolve);
       });
     }
 

@@ -12,6 +12,12 @@ export const activate = async (context: ExtensionContext) => {
 
   const explorerManager = new ExplorerManager(context);
 
+  subscriptions.push(
+    commands.registerCommand('explorer', (...args) => {
+      explorerManager.open(args).catch(onError);
+    }),
+  );
+
   nvim
     .getOption('runtimepath')
     .then(async (rtp) => {
@@ -24,10 +30,4 @@ export const activate = async (context: ExtensionContext) => {
       explorerManager.emitterDidAutoload.fire();
     })
     .catch(onError);
-
-  subscriptions.push(
-    commands.registerCommand('explorer', (...args) => {
-      explorerManager.open(args).catch(onError);
-    }),
-  );
 };
