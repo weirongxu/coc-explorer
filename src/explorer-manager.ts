@@ -161,7 +161,7 @@ export class ExplorerManager {
     } else {
       const inited = await explorer.buffer.getVar('coc_explorer_inited');
       if (!inited) {
-        await this.nvim.command(`bwipeout ${explorer.bufnr}`);
+        await this.nvim.command(`bwipeout! ${explorer.bufnr}`);
         explorer = await this.createExplorer(args);
         explorers[0] = explorer;
       }
