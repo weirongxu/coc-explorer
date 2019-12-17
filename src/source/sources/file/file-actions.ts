@@ -346,10 +346,19 @@ export function initFileActions(file: FileSource) {
 
   file.addAction(
     'addFile',
-    async (nodes) => {
-      let filename = (await nvim.call('input', ['Input a new filename: ', '', 'file'])) as string;
+    async (nodes, arg) => {
+      let filename =
+        arg ?? ((await nvim.call('input', ['Input a new filename: ', '', 'file'])) as string);
       filename = filename.trim();
       if (!filename) {
+        return;
+      }
+      if (filename.endsWith('/') || filename.endsWith('\\')) {
+        if (nodes) {
+          await file.doAction('addDirectory', nodes, filename);
+        } else {
+          await file.doRootAction('addDirectory', filename);
+        }
         return;
       }
       const putTargetNode = file.getPutTargetNode(nodes ? nodes[0] : null);
@@ -377,13 +386,10 @@ export function initFileActions(file: FileSource) {
   );
   file.addAction(
     'addDirectory',
-    async (nodes) => {
-      let directoryName = (await nvim.call('input', [
-        'Input a new directory name: ',
-        '',
-        'file',
-      ])) as string;
-      directoryName = directoryName.trim();
+    async (nodes, arg) => {
+      let directoryName =
+        arg ?? ((await nvim.call('input', ['Input a new directory name: ', '', 'file'])) as string);
+      directoryName = directoryName.trim().replace(/(\/|\\)*$/g, '');
       if (!directoryName) {
         return;
       }

@@ -135,7 +135,7 @@ export const defaultMappings: Record<keyof typeof MappingMode, OriginalMappings>
 
 export type Action = {
   name: ActionSyms;
-  arg: string;
+  arg?: string;
 };
 
 export type ActionMode = 'n' | 'v';
@@ -150,7 +150,7 @@ export const mappings: Mappings = {};
  * // return { name: 'normal', arg: 'j' }
  */
 function parseAction(originalAction: string): Action {
-  const [name, arg] = originalAction.split(/:(.+)/, 2) as [ActionSyms, string];
+  const [name, arg] = originalAction.split(/:(.+)/, 2) as [ActionSyms, string | undefined];
   return {
     name,
     arg,

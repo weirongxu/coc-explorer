@@ -77,7 +77,7 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>> {
     {
       description: string;
       options: Partial<ActionOptions>;
-      callback: (nodes: TreeNode[], arg: string, mode: ActionMode) => void | Promise<void>;
+      callback: (nodes: TreeNode[], arg: string | undefined, mode: ActionMode) => void | Promise<void>;
     }
   > = {};
   rootActions: Record<
@@ -85,7 +85,7 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>> {
     {
       description: string;
       options: Partial<ActionOptions>;
-      callback: (arg: string, mode: ActionMode) => void | Promise<void>;
+      callback: (arg: string | undefined, mode: ActionMode) => void | Promise<void>;
     }
   > = {};
   hlIds: number[] = []; // hightlight match ids for vim8.0
@@ -198,7 +198,7 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>> {
     name: ActionSyms,
     callback: (
       nodes: BaseTreeNode<any>[] | null,
-      arg: string,
+      arg: string | undefined,
       mode: ActionMode,
     ) => void | Promise<void>,
     description: string,
@@ -209,7 +209,7 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>> {
 
   addAction(
     name: ActionSyms,
-    callback: (nodes: TreeNode[] | null, arg: string, mode: ActionMode) => void | Promise<void>,
+    callback: (nodes: TreeNode[] | null, arg: string | undefined, mode: ActionMode) => void | Promise<void>,
     description: string,
     options: Partial<ActionOptions> = {},
   ) {
@@ -227,7 +227,7 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>> {
 
   addRootAction(
     name: ActionSyms,
-    callback: (arg: string, mode: ActionMode) => void | Promise<void>,
+    callback: (arg: string | undefined, mode: ActionMode) => void | Promise<void>,
     description: string,
     options: Partial<ActionOptions> = {},
   ) {
@@ -236,7 +236,7 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>> {
 
   addNodesAction(
     name: ActionSyms,
-    callback: (node: TreeNode[], arg: string, mode: ActionMode) => void | Promise<void>,
+    callback: (node: TreeNode[], arg: string | undefined, mode: ActionMode) => void | Promise<void>,
     description: string,
     options: Partial<ActionOptions> = {},
   ) {
@@ -249,7 +249,7 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>> {
 
   addNodeAction(
     name: ActionSyms,
-    callback: (node: TreeNode, arg: string, mode: ActionMode) => void | Promise<void>,
+    callback: (node: TreeNode, arg: string | undefined, mode: ActionMode) => void | Promise<void>,
     description: string,
     options: Partial<ActionOptions> = {},
   ) {
@@ -297,7 +297,7 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>> {
   async doAction(
     name: ActionSyms,
     nodes: TreeNode | TreeNode[],
-    arg: string = '',
+    arg?: string,
     mode: ActionMode = 'n',
   ) {
     const action = this.actions[name] || this.explorer.globalActions[name];
