@@ -1,5 +1,6 @@
 import { Logger } from 'log4js';
 import { workspace } from 'coc.nvim';
+import { outputChannel } from './util';
 
 type LoggerType = 'info' | 'warn' | 'error';
 
@@ -16,6 +17,11 @@ const loggerLog = (type: LoggerType, data: string | Error) => {
       workspace.showMessage(data.toString(), mtype);
     }
     logger[type](data);
+    if (typeof data === 'string') {
+      outputChannel.appendLine(data);
+    } else {
+      outputChannel.appendLine(data.stack ?? data.toString());
+    }
   }
 };
 
