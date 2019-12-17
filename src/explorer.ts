@@ -13,6 +13,7 @@ import {
   enableWrapscan,
 } from './util';
 import { ExplorerManager } from './explorer-manager';
+import { hlGroupManager } from './source/highlight-manager';
 
 export class Explorer {
   nvim = workspace.nvim;
@@ -212,6 +213,8 @@ export class Explorer {
     if (this.inited) {
       await this.resume(args);
     }
+
+    await hlGroupManager.executeHighlightSyntax(this);
 
     this.inited = true;
 

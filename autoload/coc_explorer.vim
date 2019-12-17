@@ -154,7 +154,7 @@ endfunction
 function! coc_explorer#register_mappings(mappings)
   let s:coc_explorer_mappings = a:mappings
   augroup coc_explorer_mappings
-    au!
+    autocmd!
     autocmd FileType coc-explorer call coc_explorer#execute_mappings(s:coc_explorer_mappings)
   augroup END
 endfunction
@@ -179,15 +179,12 @@ function! coc_explorer#clear_mappings(mappings)
   endif
 endfunction
 
-function! coc_explorer#register_syntax_highlights(syntax_highlight_cmds)
-  let s:coc_explorer_syntax_highlight_cmds = a:syntax_highlight_cmds
-  autocmd Syntax coc-explorer call coc_explorer#execute_syntax_highlights(s:coc_explorer_syntax_highlight_cmds)
-endfunction
-
 function! coc_explorer#execute_syntax_highlights(syntax_highlight_cmds)
-  for cmd in a:syntax_highlight_cmds
-    execute cmd
-  endfor
+  if &filetype == 'coc-explorer'
+    for cmd in a:syntax_highlight_cmds
+      execute cmd
+    endfor
+  endif
 endfunction
 
 

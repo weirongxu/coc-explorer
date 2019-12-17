@@ -2,7 +2,6 @@ import { workspace, ExtensionContext, Emitter, events } from 'coc.nvim';
 import { Explorer } from './explorer';
 import { Args, parseArgs } from './parse-args';
 import { onError } from './logger';
-import { hlGroupManager } from './source/highlight-manager';
 import { mappings, ActionMode } from './mappings';
 
 export class ExplorerManager {
@@ -48,7 +47,6 @@ export class ExplorerManager {
 
     this.emitterDidAutoload.event(() => {
       this.registerMappings().catch(onError);
-      hlGroupManager.registerHighlightSyntax().catch(onError);
     });
 
     subscriptions.push(
