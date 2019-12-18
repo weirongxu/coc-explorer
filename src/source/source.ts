@@ -77,7 +77,11 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>> {
     {
       description: string;
       options: Partial<ActionOptions>;
-      callback: (nodes: TreeNode[], arg: string | undefined, mode: ActionMode) => void | Promise<void>;
+      callback: (
+        nodes: TreeNode[],
+        arg: string | undefined,
+        mode: ActionMode,
+      ) => void | Promise<void>;
     }
   > = {};
   rootActions: Record<
@@ -209,7 +213,11 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>> {
 
   addAction(
     name: ActionSyms,
-    callback: (nodes: TreeNode[] | null, arg: string | undefined, mode: ActionMode) => void | Promise<void>,
+    callback: (
+      nodes: TreeNode[] | null,
+      arg: string | undefined,
+      mode: ActionMode,
+    ) => void | Promise<void>,
     description: string,
     options: Partial<ActionOptions> = {},
   ) {

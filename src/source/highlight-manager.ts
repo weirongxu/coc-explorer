@@ -1,5 +1,5 @@
 import { workspace } from 'coc.nvim';
-import { execNotifyBlock } from '../util';
+import { execNotifyBlock, skipOnBufEnter } from '../util';
 
 export const HlEscapeCode = {
   left: (s: string | number) => HlEscapeCode.leftBegin + s + HlEscapeCode.leftEnd,
@@ -27,7 +27,7 @@ class HighlightManager {
 
   nvim = workspace.nvim;
   highlights: Hightlight[] = [];
-  highlightConcealableList: HighlightConcealable[] = [];
+  concealableHighlights: HighlightConcealable[] = [];
 
   createMarkerID() {
     HighlightManager.maxMarkerID += 1;
@@ -38,55 +38,61 @@ class HighlightManager {
     const group = `CocExplorerConcealable${groupName}`;
     const markerID = this.createMarkerID();
     const { nvim } = this;
-    const existsSyntax = async () => {
-      const result = (await nvim.eval(`execute(':syntax list ${group}')`).catch(() => false)) as
-        | string
-        | boolean;
-      return result !== false;
-    };
+    const hideCommand = `syntax match ${group} conceal /\\V${HlEscapeCode.left(
+      markerID,
+    )}\\.\\*${HlEscapeCode.right(markerID)}/`;
+    const showCommand = `syntax match ${group} conceal /\\V${HlEscapeCode.left(
+      markerID,
+    )}\\|${HlEscapeCode.right(markerID)}/`;
     const getWinnr = async (explorerOrSource: Explorer | ExplorerSource<any>) => {
       return explorerOrSource instanceof Explorer
         ? explorerOrSource.winnr
         : explorerOrSource.explorer.winnr;
     };
-    const hide = async (explorerOrSource: Explorer | ExplorerSource<any>, notify = false) => {
+    const hide = async (explorerOrSource: Explorer | ExplorerSource<any>) => {
       const winnr = await getWinnr(explorerOrSource);
       if (winnr) {
         const storeWinnr = await nvim.call('winnr');
-        await execNotifyBlock(async () => {
-          nvim.command(`${winnr}wincmd w`, true);
-          const existsSyntax_ = await existsSyntax();
-          if (existsSyntax_) {
-            nvim.command(`silent syntax clear ${group}`, true);
-          }
-          nvim.command(
-            `syntax match ${group} conceal /\\V${HlEscapeCode.left(
-              markerID,
-            )}\\.\\*${HlEscapeCode.right(markerID)}/`,
-            true,
+        const { mode } = await nvim.mode;
+        const jumpWin = storeWinnr !== winnr && mode === 'n';
+        if (jumpWin) {
+          skipOnBufEnter(
+            (await nvim.eval(`[winbufnr(${winnr}), winbufnr(${storeWinnr})]`)) as [number, number],
           );
-          nvim.command(`${storeWinnr}wincmd w`, true);
-        }, notify);
+        }
+        await execNotifyBlock(() => {
+          if (jumpWin) {
+            nvim.command(`${winnr}wincmd w`, true);
+          }
+          nvim.command(`silent! syntax clear ${group}`, true);
+          nvim.command(hideCommand, true);
+          if (jumpWin) {
+            nvim.command(`${storeWinnr}wincmd w`, true);
+          }
+        });
       }
     };
-    const show = async (explorerOrSource: Explorer | ExplorerSource<any>, notify = false) => {
+    const show = async (explorerOrSource: Explorer | ExplorerSource<any>) => {
       const winnr = await getWinnr(explorerOrSource);
       if (winnr) {
         const storeWinnr = await nvim.call('winnr');
-        await execNotifyBlock(async () => {
-          nvim.command(`${winnr}wincmd w`, true);
-          const existsSyntax_ = await existsSyntax();
-          if (existsSyntax_) {
-            nvim.command(`silent syntax clear ${group}`, true);
-          }
-          nvim.command(
-            `syntax match ${group} conceal /\\V${HlEscapeCode.left(
-              markerID,
-            )}\\|${HlEscapeCode.right(markerID)}/`,
-            true,
+        const { mode } = await nvim.mode;
+        const jumpWin = storeWinnr !== winnr && mode === 'n';
+        if (jumpWin) {
+          skipOnBufEnter(
+            (await nvim.eval(`[winbufnr(${winnr}), winbufnr(${storeWinnr})]`)) as [number, number],
           );
-          nvim.command(`${storeWinnr}wincmd w`, true);
-        }, notify);
+        }
+        await execNotifyBlock(() => {
+          if (jumpWin) {
+            nvim.command(`${winnr}wincmd w`, true);
+          }
+          nvim.command(`silent! syntax clear ${group}`, true);
+          nvim.command(showCommand, true);
+          if (jumpWin) {
+            nvim.command(`${storeWinnr}wincmd w`, true);
+          }
+        });
       }
     };
 
@@ -95,7 +101,7 @@ class HighlightManager {
       hide,
       show,
     };
-    this.highlightConcealableList.push(concealable);
+    this.concealableHighlights.push(concealable);
     return concealable;
   }
 
@@ -135,7 +141,7 @@ class HighlightManager {
     return highlight;
   }
 
-  async executeHighlightSyntax(explorer: Explorer, notify = false) {
+  async executeHighlightSyntax(notify = false) {
     await execNotifyBlock(async () => {
       const commands: string[] = [];
       for (const highlight of this.highlights) {
@@ -143,9 +149,6 @@ class HighlightManager {
         commands.push(...highlight.commands);
       }
       this.nvim.call('coc_explorer#execute_syntax_highlights', [commands], true);
-      await Promise.all(
-        this.highlightConcealableList.map((concealable) => concealable.hide(explorer, true)),
-      );
     }, notify);
   }
 }

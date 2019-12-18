@@ -117,6 +117,7 @@ export class FileSource extends ExplorerSource<FileNode> {
                 const node = await this.revealNodeByPath(bufinfo[0].name);
                 if (node !== null) {
                   await execNotifyBlock(async () => {
+                    // TODO parital render
                     await this.render({ storeCursor: false, notify: true });
                     await this.gotoNode(node, { notify: true });
                   });

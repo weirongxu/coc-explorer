@@ -5,13 +5,7 @@ import { IndexesManager } from './indexes-manager';
 import './source/load';
 import { BaseTreeNode, ExplorerSource, ActionOptions } from './source/source';
 import { sourceManager } from './source/source-manager';
-import {
-  execNotifyBlock,
-  autoReveal,
-  config,
-  enableDebug,
-  enableWrapscan,
-} from './util';
+import { execNotifyBlock, autoReveal, config, enableDebug, enableWrapscan } from './util';
 import { ExplorerManager } from './explorer-manager';
 import { hlGroupManager } from './source/highlight-manager';
 
@@ -214,7 +208,7 @@ export class Explorer {
       await this.resume(args);
     }
 
-    await hlGroupManager.executeHighlightSyntax(this);
+    await hlGroupManager.executeHighlightSyntax();
 
     this.inited = true;
 
