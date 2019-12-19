@@ -1,3 +1,5 @@
+let s:explorer_root = expand('<sfile>:p:h:h')
+
 function! coc_explorer#create(name, explorer_id, position, width)
   let name = a:name.'-'.a:explorer_id
   if a:position ==# 'tab'

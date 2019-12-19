@@ -114,14 +114,16 @@ export class FileSource extends ExplorerSource<FileNode> {
             if (bufnr !== this.explorer.bufnr) {
               const bufinfo = await nvim.call('getbufinfo', [bufnr]);
               if (bufinfo[0] && bufinfo[0].name) {
-                const node = await this.revealNodeByPath(bufinfo[0].name);
-                if (node !== null) {
-                  await execNotifyBlock(async () => {
-                    // TODO parital render
-                    await this.render({ storeCursor: false, notify: true });
-                    await this.gotoNode(node, { notify: true });
+                await execNotifyBlock(async () => {
+                  const node = await this.revealNodeByPath(bufinfo[0].name, {
+                    render: true,
+                    notify: true,
                   });
-                }
+                  if (node) {
+                    debugger;
+                    await this.gotoNode(node, { notify: true });
+                  }
+                });
               }
             }
           });
@@ -159,32 +161,48 @@ export class FileSource extends ExplorerSource<FileNode> {
     filesList.rootPath = path;
     filesList.recursive = recursive;
     filesList.revealCallback = async (loc) => {
-      const node = await this.revealNodeByPath(Uri.parse(loc.uri).fsPath);
-      if (node !== null) {
-        await execNotifyBlock(async () => {
-          await this.render({ storeCursor: false, notify: true });
-          await this.gotoNode(node, { notify: true });
+      await execNotifyBlock(async () => {
+        const node = await this.revealNodeByPath(Uri.parse(loc.uri).fsPath, {
+          render: true,
+          notify: true,
         });
-      }
+        if (node) {
+          await this.gotoNode(node, { notify: true });
+        }
+      });
     };
     const disposable = listManager.registerList(filesList);
     await listManager.start([filesList.name]);
     disposable.dispose();
   }
 
-  async revealNodeByPath(path: string, node: FileNode = this.rootNode): Promise<FileNode | null> {
+  async revealNodeByPath(
+    path: string,
+    { node = this.rootNode, render = false, notify = false } = {},
+  ): Promise<FileNode | null> {
     path = normalizePath(path);
     if (node.directory && path.startsWith(node.fullpath + pathLib.sep)) {
-      this.expandStore.expand(node);
+      let result: FileNode | null = null;
+      const isExpanded = this.expandStore.isExpanded(node);
+      const requestRender = !isExpanded;
       if (!node.children) {
         node.children = await this.loadChildren(node);
       }
       for (const child of node.children) {
-        const result = await this.revealNodeByPath(path, child);
+        result = await this.revealNodeByPath(path, {
+          node: child,
+          render: requestRender ? false : render,
+          notify,
+        });
         if (result) {
-          return result;
+          this.expandStore.expand(node);
+          break;
         }
       }
+      if (result && render && requestRender) {
+        await this.render({ node: node.parent, notify, storeCursor: false });
+      }
+      return result;
     } else if (path === node.fullpath) {
       return node;
     }
@@ -204,56 +222,52 @@ export class FileSource extends ExplorerSource<FileNode> {
   }
 
   async loadChildren(parent: FileNode): Promise<FileNode[]> {
-    if (this.expandStore.isExpanded(parent)) {
-      const filenames = await fsReaddir(parent.fullpath);
-      const files = await Promise.all(
-        filenames.map(async (filename) => {
-          try {
-            const hidden = isHidden(filename);
-            if (!this.showHidden && hidden) {
-              return null;
-            }
-            const fullpath = pathLib.join(parent.fullpath, filename);
-            const stat = await fsStat(fullpath).catch(() => {});
-            const lstat = await fsLstat(fullpath).catch(() => {});
-            const executable = await fsAccess(fullpath, fs.constants.X_OK);
-            const writable = await fsAccess(fullpath, fs.constants.W_OK);
-            const readable = await fsAccess(fullpath, fs.constants.R_OK);
-            const directory = stat ? stat.isDirectory() : false;
-            const child: FileNode = {
-              uid: this.sourceName + '://' + fullpath,
-              level: parent ? parent.level + 1 : 1,
-              drawnLine: '',
-              parent: parent || undefined,
-              expandable: directory,
-              name: filename,
-              fullpath,
-              directory: directory,
-              readonly: !writable && readable,
-              executable,
-              readable,
-              writable,
-              hidden,
-              symbolicLink: lstat ? lstat.isSymbolicLink() : false,
-              isFirstInLevel: false,
-              isLastInLevel: false,
-              lstat: lstat || null,
-            };
-            if (this.expandStore.isExpanded(child)) {
-              child.children = await this.loadChildren(child);
-            }
-            return child;
-          } catch (error) {
-            onError(error);
+    const filenames = await fsReaddir(parent.fullpath);
+    const files = await Promise.all(
+      filenames.map(async (filename) => {
+        try {
+          const hidden = isHidden(filename);
+          if (!this.showHidden && hidden) {
             return null;
           }
-        }),
-      );
+          const fullpath = pathLib.join(parent.fullpath, filename);
+          const stat = await fsStat(fullpath).catch(() => {});
+          const lstat = await fsLstat(fullpath).catch(() => {});
+          const executable = await fsAccess(fullpath, fs.constants.X_OK);
+          const writable = await fsAccess(fullpath, fs.constants.W_OK);
+          const readable = await fsAccess(fullpath, fs.constants.R_OK);
+          const directory = stat ? stat.isDirectory() : false;
+          const child: FileNode = {
+            uid: this.sourceName + '://' + fullpath,
+            level: parent ? parent.level + 1 : 1,
+            drawnLine: '',
+            parent: parent || undefined,
+            expandable: directory,
+            name: filename,
+            fullpath,
+            directory: directory,
+            readonly: !writable && readable,
+            executable,
+            readable,
+            writable,
+            hidden,
+            symbolicLink: lstat ? lstat.isSymbolicLink() : false,
+            isFirstInLevel: false,
+            isLastInLevel: false,
+            lstat: lstat || null,
+          };
+          if (this.expandStore.isExpanded(child)) {
+            child.children = await this.loadChildren(child);
+          }
+          return child;
+        } catch (error) {
+          onError(error);
+          return null;
+        }
+      }),
+    );
 
-      return this.sortFiles(files.filter((r): r is FileNode => r !== null));
-    } else {
-      return [];
-    }
+    return this.sortFiles(files.filter((r): r is FileNode => r !== null));
   }
 
   async loaded(sourceNode: FileNode) {
@@ -271,7 +285,12 @@ export class FileSource extends ExplorerSource<FileNode> {
     return await this.renderNodes(nodes);
   }
 
-  async drawNode(node: FileNode, nodeIndex: number, prevNode: FileNode, nextNode: FileNode) {
+  async drawNode(
+    node: FileNode,
+    nodeIndex: number,
+    prevNode: FileNode | undefined,
+    nextNode: FileNode | undefined,
+  ) {
     if (!node.parent) {
       node.drawnLine = await this.viewBuilder.drawLine(async (row) => {
         row.add(
@@ -286,8 +305,8 @@ export class FileSource extends ExplorerSource<FileNode> {
         row.add(this.root, highlights.fullpath);
       });
     } else {
-      const prevNodeLevel = prevNode ? prevNode.level : 0;
-      const nextNodeLevel = nextNode ? nextNode.level : 0;
+      const prevNodeLevel = prevNode?.level ?? -1;
+      const nextNodeLevel = nextNode?.level ?? -1;
       node.isFirstInLevel = prevNodeLevel < node.level;
       node.isLastInLevel = nextNodeLevel < node.level;
 

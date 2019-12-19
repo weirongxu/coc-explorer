@@ -456,8 +456,8 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>> {
   abstract drawNode(
     node: TreeNode,
     nodeIndex: number,
-    prevNode: TreeNode,
-    nextNode: TreeNode,
+    prevSiblingNode: TreeNode | undefined,
+    nextSiblingNode: TreeNode | undefined,
   ): void | Promise<void>;
 
   flattenByNode(node: TreeNode) {
@@ -484,8 +484,8 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>> {
       const node = nodes[i];
       const nodeIndex = this.flattenedNodes.findIndex((it) => it.uid === node.uid);
       if (nodeIndex > -1) {
-        const prevNode = i === 0 ? this.flattenedNodes[nodeIndex - 1] : nodes[i - 1];
-        const nextNode = i === len - 1 ? this.flattenedNodes[nodeIndex + 1] : nodes[i + 1];
+        const prevNode = this.flattenedNodes[nodeIndex - 1];
+        const nextNode = this.flattenedNodes[nodeIndex + 1];
         await this.drawNode(node, nodeIndex, prevNode, nextNode);
       }
     }

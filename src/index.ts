@@ -1,7 +1,7 @@
 import { ExtensionContext, commands, workspace } from 'coc.nvim';
 import { registerLogger, onError } from './logger';
 import { hlGroupManager } from './source/highlight-manager';
-import {ExplorerManager} from './explorer-manager';
+import { ExplorerManager } from './explorer-manager';
 
 export const activate = async (context: ExtensionContext) => {
   const { subscriptions, logger } = context;

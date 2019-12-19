@@ -16,7 +16,6 @@ export function onBufEnter(delay: number, callback: (bufnr: number) => void | Pr
     const skipIndex = skipBufnrQueue.indexOf(bufnr);
     if (skipIndex !== -1) {
       skipBufnrQueue.splice(skipIndex, 1);
-      debugger;
       return;
     }
     if (enableDebug) {

@@ -375,8 +375,10 @@ export function initFileActions(file: FileSource) {
         },
       );
       await file.reload(putTargetNode, { render: false });
-      const addedNode = await file.revealNodeByPath(targetPath, putTargetNode);
-      await file.render({ node: putTargetNode });
+      const addedNode = await file.revealNodeByPath(targetPath, {
+        node: putTargetNode,
+        render: true,
+      });
       if (addedNode) {
         await file.gotoNode(addedNode);
       }
@@ -407,8 +409,10 @@ export function initFileActions(file: FileSource) {
         },
       );
       await file.reload(putTargetNode, { render: false });
-      const addedNode = await file.revealNodeByPath(targetPath, putTargetNode);
-      await file.render({ node: putTargetNode });
+      const addedNode = await file.revealNodeByPath(targetPath, {
+        node: putTargetNode,
+        render: true,
+      });
       if (addedNode) {
         await file.gotoNode(addedNode);
       }
