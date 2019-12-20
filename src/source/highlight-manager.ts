@@ -18,8 +18,8 @@ export type Hightlight = {
 
 export type HighlightConcealable = {
   markerID: number;
-  hide: (source: Explorer | ExplorerSource<any>, notify?: boolean) => Promise<void>;
-  show: (source: Explorer | ExplorerSource<any>, notify?: boolean) => Promise<void>;
+  requestHide: () => void;
+  requestShow: () => void;
 };
 
 class HighlightManager {
@@ -28,6 +28,8 @@ class HighlightManager {
   nvim = workspace.nvim;
   highlights: Hightlight[] = [];
   concealableHighlights: HighlightConcealable[] = [];
+
+  private requestedConcealableToggle: Map<string, (notify: boolean) => Promise<void>> = new Map();
 
   createMarkerID() {
     HighlightManager.maxMarkerID += 1;
@@ -44,65 +46,56 @@ class HighlightManager {
     const showCommand = `syntax match ${group} conceal /\\V${HlEscapeCode.left(
       markerID,
     )}\\|${HlEscapeCode.right(markerID)}/`;
-    const getWinnr = async (explorerOrSource: Explorer | ExplorerSource<any>) => {
-      return explorerOrSource instanceof Explorer
-        ? explorerOrSource.winnr
-        : explorerOrSource.explorer.winnr;
+    const hide = async (notify = false) => {
+      await execNotifyBlock(() => {
+        nvim.command(`silent! syntax clear ${group}`, true);
+        nvim.command(hideCommand, true);
+      }, notify);
     };
-    const hide = async (explorerOrSource: Explorer | ExplorerSource<any>) => {
-      const winnr = await getWinnr(explorerOrSource);
-      if (winnr) {
-        const storeWinnr = await nvim.call('winnr');
-        const { mode } = await nvim.mode;
-        const jumpWin = storeWinnr !== winnr && mode === 'n';
-        if (jumpWin) {
-          skipOnBufEnter(
-            (await nvim.eval(`[winbufnr(${winnr}), winbufnr(${storeWinnr})]`)) as [number, number],
-          );
-        }
-        await execNotifyBlock(() => {
-          if (jumpWin) {
-            nvim.command(`${winnr}wincmd w`, true);
-          }
-          nvim.command(`silent! syntax clear ${group}`, true);
-          nvim.command(hideCommand, true);
-          if (jumpWin) {
-            nvim.command(`${storeWinnr}wincmd w`, true);
-          }
-        });
-      }
-    };
-    const show = async (explorerOrSource: Explorer | ExplorerSource<any>) => {
-      const winnr = await getWinnr(explorerOrSource);
-      if (winnr) {
-        const storeWinnr = await nvim.call('winnr');
-        const { mode } = await nvim.mode;
-        const jumpWin = storeWinnr !== winnr && mode === 'n';
-        if (jumpWin) {
-          skipOnBufEnter(
-            (await nvim.eval(`[winbufnr(${winnr}), winbufnr(${storeWinnr})]`)) as [number, number],
-          );
-        }
-        await execNotifyBlock(() => {
-          if (jumpWin) {
-            nvim.command(`${winnr}wincmd w`, true);
-          }
-          nvim.command(`silent! syntax clear ${group}`, true);
-          nvim.command(showCommand, true);
-          if (jumpWin) {
-            nvim.command(`${storeWinnr}wincmd w`, true);
-          }
-        });
-      }
+    const show = async (notify = false) => {
+      await execNotifyBlock(() => {
+        nvim.command(`silent! syntax clear ${group}`, true);
+        nvim.command(showCommand, true);
+      }, notify);
     };
 
-    const concealable = {
+    const concealable: HighlightConcealable = {
       markerID,
-      hide,
-      show,
+      requestHide: () => this.requestedConcealableToggle.set(group, hide),
+      requestShow: () => this.requestedConcealableToggle.set(group, show),
     };
     this.concealableHighlights.push(concealable);
     return concealable;
+  }
+
+  async emitRequestConcealableToggle(explorer: Explorer, notify = false) {
+    if (this.requestedConcealableToggle.size > 0) {
+      const { nvim } = this;
+      const { mode } = await nvim.mode;
+      const winnr = await explorer.winnr;
+      if (winnr && mode === 'n') {
+        await execNotifyBlock(async () => {
+          const storeWinnr = await nvim.call('winnr');
+          const jumpWin = storeWinnr !== winnr;
+          if (jumpWin) {
+            skipOnBufEnter(
+              (await nvim.eval(`[winbufnr(${winnr}), winbufnr(${storeWinnr})]`)) as [
+                number,
+                number,
+              ],
+            );
+            nvim.command(`${winnr}wincmd w`, true);
+          }
+          for (const toggle of this.requestedConcealableToggle.values()) {
+            await toggle(true);
+          }
+          if (jumpWin) {
+            nvim.command(`${storeWinnr}wincmd w`, true);
+          }
+          this.requestedConcealableToggle.clear();
+        }, notify);
+      }
+    }
   }
 
   linkGroup(groupName: string, targetGroup: string): Hightlight {
@@ -155,5 +148,4 @@ class HighlightManager {
 
 export const hlGroupManager = new HighlightManager();
 
-import { ExplorerSource } from './source';
 import { Explorer } from '../explorer';

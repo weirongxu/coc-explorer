@@ -120,7 +120,6 @@ export class FileSource extends ExplorerSource<FileNode> {
                     notify: true,
                   });
                   if (node) {
-                    debugger;
                     await this.gotoNode(node, { notify: true });
                   }
                 });

@@ -208,7 +208,19 @@ export class Explorer {
       await this.resume(args);
     }
 
-    await hlGroupManager.executeHighlightSyntax();
+    const winnr = await this.winnr;
+    const curWinnr = await this.nvim.call('winnr');
+    if (winnr) {
+      await execNotifyBlock(async () => {
+        if (winnr !== curWinnr) {
+          this.nvim.command(`${winnr}wincmd w`, true);
+        }
+        await hlGroupManager.executeHighlightSyntax(true);
+        if (winnr !== curWinnr) {
+          this.nvim.command(`${curWinnr}wincmd w`, true);
+        }
+      });
+    }
 
     this.inited = true;
 

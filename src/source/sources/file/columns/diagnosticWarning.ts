@@ -11,8 +11,10 @@ const highlights = {
   warning: hlGroupManager.linkGroup('FileDiagnosticWarning', 'CocWarningSign'),
 };
 
+const concealable = hlGroupManager.concealable('FileDiagnosticWarning');
+
 fileColumnRegistrar.registerColumn('diagnosticWarning', (source) => ({
-  concealable: hlGroupManager.concealable('FileDiagnosticWarning'),
+  concealable,
   init() {
     let prevWarningMixedCount: Record<string, string> = {};
 
@@ -49,9 +51,9 @@ fileColumnRegistrar.registerColumn('diagnosticWarning', (source) => ({
   },
   beforeDraw() {
     if (Object.keys(diagnosticManager.warningMixedCount).length) {
-      this.concealable?.show(source);
+      this.concealable?.requestShow();
     } else {
-      this.concealable?.hide(source);
+      this.concealable?.requestHide();
     }
   },
   draw(row, node, nodeIndex) {

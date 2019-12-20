@@ -2,13 +2,15 @@ import { bufferColumnRegistrar } from '../buffer-column-registrar';
 import { sourceIcons } from '../../../source';
 import { hlGroupManager } from '../../../highlight-manager';
 
+const concealable = hlGroupManager.concealable('BufferSelection');
+
 bufferColumnRegistrar.registerColumn('selection', (source) => ({
-  concealable: hlGroupManager.concealable('BufferSelection'),
+  concealable,
   async beforeDraw() {
     if (source.isSelectedAny()) {
-      await this.concealable?.show(source);
+      this.concealable?.requestShow();
     } else {
-      await this.concealable?.hide(source);
+      this.concealable?.requestHide();
     }
   },
   draw(row, node) {

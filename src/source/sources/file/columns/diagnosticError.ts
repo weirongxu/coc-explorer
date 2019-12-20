@@ -11,8 +11,10 @@ const highlights = {
   error: hlGroupManager.linkGroup('FileDiagnosticError', 'CocErrorSign'),
 };
 
+const concealable = hlGroupManager.concealable('FileDiagnosticError');
+
 fileColumnRegistrar.registerColumn('diagnosticError', (source) => ({
-  concealable: hlGroupManager.concealable('FileDiagnosticError'),
+  concealable,
   init() {
     let prevErrorMixedCount: Record<string, string> = {};
 
@@ -49,9 +51,9 @@ fileColumnRegistrar.registerColumn('diagnosticError', (source) => ({
   },
   beforeDraw() {
     if (Object.keys(diagnosticManager.errorMixedCount).length) {
-      this.concealable?.show(source);
+      this.concealable?.requestShow();
     } else {
-      this.concealable?.hide(source);
+      this.concealable?.requestHide();
     }
   },
   draw(row, node, nodeIndex) {

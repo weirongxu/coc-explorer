@@ -29,13 +29,15 @@ const highlights = {
   clip: hlGroupManager.linkGroup('FileClip', 'Statement'),
 };
 
+const concealable = hlGroupManager.concealable('FileClip');
+
 fileColumnRegistrar.registerColumn('clip', (source) => ({
-  concealable: hlGroupManager.concealable('FileClip'),
+  concealable,
   async beforeDraw() {
     if (source.copiedNodes.size === 0 && source.cutNodes.size === 0) {
-      await this.concealable?.hide(source);
+      this.concealable?.requestHide();
     } else {
-      await this.concealable?.show(source);
+      this.concealable?.requestShow();
     }
   },
   draw(row, node) {

@@ -450,7 +450,9 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>> {
    * @returns return true to redraw all rows
    */
   async beforeDraw(nodes: TreeNode[]) {
-    return this.columnManager.beforeDraw(nodes);
+    const renderAll = this.columnManager.beforeDraw(nodes);
+    await hlGroupManager.emitRequestConcealableToggle(this.explorer);
+    return renderAll;
   }
 
   abstract drawNode(
