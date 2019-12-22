@@ -1,5 +1,5 @@
-import { Buffer, ExtensionContext, Window, workspace } from 'coc.nvim';
-import { Action, ActionMode, ActionSyms } from './mappings';
+import { Buffer, ExtensionContext, Window, workspace, Disposable } from 'coc.nvim';
+import { Action, ActionMode, ActionSyms, mappings } from './mappings';
 import { Args } from './parse-args';
 import { IndexesManager } from './indexes-manager';
 import './source/load';
@@ -8,6 +8,15 @@ import { sourceManager } from './source/source-manager';
 import { execNotifyBlock, autoReveal, config, enableDebug, enableWrapscan } from './util';
 import { ExplorerManager } from './explorer-manager';
 import { hlGroupManager } from './source/highlight-manager';
+
+const hl = hlGroupManager.linkGroup.bind(hlGroupManager);
+const helpHightlights = {
+  line: hl('HelpLine', 'Operator'),
+  mappingKey: hl('HelpMappingKey', 'PreProc'),
+  action: hl('HelpAction', 'Identifier'),
+  arg: hl('HelpArg', 'Identifier'),
+  description: hl('HelpDescription', 'Comment'),
+};
 
 export class Explorer {
   nvim = workspace.nvim;
@@ -221,7 +230,25 @@ export class Explorer {
 
   async open(args: Args) {
     if (this.inited) {
-      await this.resume(args);
+      const win = await this.win;
+      if (win) {
+        if (this.isHelpUI) {
+          await this.quitHelp();
+        }
+        if (args.toggle) {
+          await this.quit();
+          return;
+        } else {
+          // focus on explorer window
+          await this.nvim.command(`${await win.number}wincmd w`);
+        }
+      } else {
+        // resume the explorer window
+        await this.nvim.call('coc_explorer#resume', [this.bufnr, args.position, args.width]);
+        if (this.isHelpUI) {
+          await this.quitHelp();
+        }
+      }
     }
 
     await this.executeHighlightSyntax();
@@ -229,10 +256,6 @@ export class Explorer {
     this.inited = true;
 
     await this.initArgs(args);
-
-    if (this.isHelpUI) {
-      await this.sources[0].quitHelp();
-    }
 
     await execNotifyBlock(async () => {
       for (const source of this.sources) {
@@ -269,24 +292,11 @@ export class Explorer {
     });
   }
 
-  async resume(args: Args) {
-    const win = await this.win;
-    if (win) {
-      if (args.toggle) {
-        await this.quit();
-      } else {
-        await this.nvim.command(`${await win.number}wincmd w`);
-      }
-    } else {
-      await this.nvim.call('coc_explorer#resume', [this.bufnr, args.position, args.width]);
-    }
-  }
-
   async quit() {
     const win = await this.win;
     if (win) {
       await this.nvim.command(`${await win.number}wincmd q`);
-      // not work in nvim 3.8
+      // win.close() not work in nvim 3.8
       // await win.close(true);
     }
   }
@@ -579,6 +589,96 @@ export class Explorer {
       await Promise.resolve(noChoice());
     }
   }
+
+  async openHelp(source: ExplorerSource<any>, isRoot: boolean) {
+    this.isHelpUI = true;
+    const builder = new SourceViewBuilder();
+    const width = await this.nvim.call('winwidth', '%');
+    const storeCursor = await this.storeCursor();
+    const lines: string[] = [];
+
+    lines.push(
+      await builder.drawLine((row) => {
+        row.add(
+          `Help for [${source.sourceName}${
+            isRoot ? ' root' : ''
+          }], (use q or <esc> return to explorer)`,
+        );
+      }),
+    );
+    lines.push(
+      await builder.drawLine((row) => {
+        row.add('—'.repeat(width), helpHightlights.line);
+      }),
+    );
+
+    const registeredActions = {
+      ...this.globalActions,
+      ...(isRoot ? source.rootActions : source.actions),
+    };
+    const drawAction = (row: SourceRowBuilder, action: Action) => {
+      row.add(action.name, helpHightlights.action);
+      if (action.arg) {
+        row.add(`(${action.arg})`, helpHightlights.arg);
+      }
+      row.add(' ');
+      row.add(registeredActions[action.name].description, helpHightlights.description);
+    };
+    for (const [key, actions] of Object.entries(mappings)) {
+      if (!actions.every((action) => action.name in registeredActions)) {
+        continue;
+      }
+      lines.push(
+        await builder.drawLine((row) => {
+          row.add(' ');
+          row.add(key, helpHightlights.mappingKey);
+          row.add(' - ');
+          drawAction(row, actions[0]);
+        }),
+      );
+      for (const action of actions.slice(1)) {
+        lines.push(
+          await builder.drawLine((row) => {
+            row.add(' '.repeat(key.length + 4));
+            drawAction(row, action);
+          }),
+        );
+      }
+    }
+
+    await execNotifyBlock(async () => {
+      await this.setLines(lines, 0, -1, true);
+    });
+
+    await this.explorerManager.clearMappings();
+
+    const disposables: Disposable[] = [];
+    await new Promise((resolve) => {
+      ['<esc>', 'q'].forEach((key) => {
+        disposables.push(
+          workspace.registerLocalKeymap(
+            'n',
+            key,
+            () => {
+              resolve();
+            },
+            true,
+          ),
+        );
+      });
+    });
+    disposables.forEach((d) => d.dispose());
+
+    await this.quitHelp();
+    await this.renderAll({ storeCursor: false });
+    await storeCursor();
+  }
+
+  async quitHelp() {
+    await this.explorerManager.executeMappings();
+    this.isHelpUI = false;
+  }
 }
 
 import { FileNode, FileSource } from './source/sources/file/file-source';
+import { SourceViewBuilder, SourceRowBuilder } from './source/view-builder';

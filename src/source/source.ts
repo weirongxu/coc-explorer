@@ -1,11 +1,11 @@
-import { Disposable, listManager, workspace } from 'coc.nvim';
+import { listManager, workspace } from 'coc.nvim';
 import { Range } from 'vscode-languageserver-protocol';
 import { explorerActionList } from '../lists/actions';
 import { Explorer } from '../explorer';
 import { onError } from '../logger';
-import { Action, ActionSyms, mappings, reverseMappings, ActionMode } from '../mappings';
+import { ActionSyms, mappings, reverseMappings, ActionMode } from '../mappings';
 import { config, execNotifyBlock } from '../util';
-import { SourceRowBuilder, SourceViewBuilder } from './view-builder';
+import { SourceViewBuilder } from './view-builder';
 import { hlGroupManager } from './highlight-manager';
 import { ColumnManager } from './column-manager';
 
@@ -24,15 +24,6 @@ export const sourceIcons = {
   selected: config.get<string>('icon.selected')!,
   unselected: config.get<string>('icon.unselected')!,
   hidden: config.get<string>('icon.hidden')!,
-};
-
-const hl = hlGroupManager.linkGroup.bind(hlGroupManager);
-const helpHightlights = {
-  line: hl('HelpLine', 'Operator'),
-  mappingKey: hl('HelpMappingKey', 'PreProc'),
-  action: hl('HelpAction', 'Identifier'),
-  arg: hl('HelpArg', 'Identifier'),
-  description: hl('HelpDescription', 'Comment'),
 };
 
 export interface BaseTreeNode<TreeNode extends BaseTreeNode<TreeNode>> {
@@ -118,7 +109,7 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>> {
     this.addAction(
       'help',
       async (nodes) => {
-        await this.renderHelp(nodes === null);
+        await this.explorer.openHelp(this, nodes === null);
       },
       'show help',
       { multi: false },
@@ -728,95 +719,6 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>> {
         nvim.command('redraw', true);
       }
     }, notify);
-  }
-
-  async renderHelp(isRoot: boolean) {
-    this.explorer.isHelpUI = true;
-    const builder = new SourceViewBuilder();
-    const width = await this.nvim.call('winwidth', '%');
-    const storeCursor = await this.explorer.storeCursor();
-    const lines: string[] = [];
-
-    lines.push(
-      await builder.drawLine((row) => {
-        row.add(
-          `Help for [${this.sourceName}${
-            isRoot ? ' root' : ''
-          }], (use q or <esc> return to explorer)`,
-        );
-      }),
-    );
-    lines.push(
-      await builder.drawLine((row) => {
-        row.add('—'.repeat(width), helpHightlights.line);
-      }),
-    );
-
-    const registeredActions = {
-      ...this.explorer.globalActions,
-      ...(isRoot ? this.rootActions : this.actions),
-    };
-    const drawAction = (row: SourceRowBuilder, action: Action) => {
-      row.add(action.name, helpHightlights.action);
-      if (action.arg) {
-        row.add(`(${action.arg})`, helpHightlights.arg);
-      }
-      row.add(' ');
-      row.add(registeredActions[action.name].description, helpHightlights.description);
-    };
-    for (const [key, actions] of Object.entries(mappings)) {
-      if (!actions.every((action) => action.name in registeredActions)) {
-        continue;
-      }
-      lines.push(
-        await builder.drawLine((row) => {
-          row.add(' ');
-          row.add(key, helpHightlights.mappingKey);
-          row.add(' - ');
-          drawAction(row, actions[0]);
-        }),
-      );
-      for (const action of actions.slice(1)) {
-        lines.push(
-          await builder.drawLine((row) => {
-            row.add(' '.repeat(key.length + 4));
-            drawAction(row, action);
-          }),
-        );
-      }
-    }
-
-    await execNotifyBlock(async () => {
-      await this.explorer.setLines(lines, 0, -1, true);
-    });
-
-    await this.explorer.explorerManager.clearMappings();
-
-    const disposables: Disposable[] = [];
-    await new Promise((resolve) => {
-      ['<esc>', 'q'].forEach((key) => {
-        disposables.push(
-          workspace.registerLocalKeymap(
-            'n',
-            key,
-            () => {
-              resolve();
-            },
-            true,
-          ),
-        );
-      });
-    });
-    disposables.forEach((d) => d.dispose());
-
-    await this.quitHelp();
-    await this.explorer.renderAll({ storeCursor: false });
-    await storeCursor();
-  }
-
-  async quitHelp() {
-    await this.explorer.explorerManager.executeMappings();
-    this.explorer.isHelpUI = false;
   }
 
   async quitOnOpen() {
