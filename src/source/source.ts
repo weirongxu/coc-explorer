@@ -110,6 +110,7 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>> {
       'refresh',
       async () => {
         await this.reload(this.rootNode);
+        await this.explorer.executeHighlightSyntax();
       },
       'refresh',
       { multi: false },

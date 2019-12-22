@@ -203,11 +203,7 @@ export class Explorer {
     });
   }
 
-  async open(args: Args) {
-    if (this.inited) {
-      await this.resume(args);
-    }
-
+  async executeHighlightSyntax() {
     const winnr = await this.winnr;
     const curWinnr = await this.nvim.call('winnr');
     if (winnr) {
@@ -221,6 +217,14 @@ export class Explorer {
         }
       });
     }
+  }
+
+  async open(args: Args) {
+    if (this.inited) {
+      await this.resume(args);
+    }
+
+    await this.executeHighlightSyntax();
 
     this.inited = true;
 
