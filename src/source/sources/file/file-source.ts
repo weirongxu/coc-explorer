@@ -199,7 +199,7 @@ export class FileSource extends ExplorerSource<FileNode> {
         }
       }
       if (result && render && requestRender) {
-        await this.render({ node: node.parent, notify, storeCursor: false });
+        await this.render({ node, notify, storeCursor: false });
       }
       return result;
     } else if (path === node.fullpath) {

@@ -374,7 +374,7 @@ export function initFileActions(file: FileSource) {
           await fsTouch(target);
         },
       );
-      await file.reload(putTargetNode, { render: false });
+      await file.reload(putTargetNode);
       const addedNode = await file.revealNodeByPath(targetPath, {
         node: putTargetNode,
         render: true,
@@ -408,7 +408,7 @@ export function initFileActions(file: FileSource) {
           await fsMkdirp(target);
         },
       );
-      await file.reload(putTargetNode, { render: false });
+      await file.reload(putTargetNode);
       const addedNode = await file.revealNodeByPath(targetPath, {
         node: putTargetNode,
         render: true,
