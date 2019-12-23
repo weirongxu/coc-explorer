@@ -540,24 +540,25 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>> {
       if (!range) {
         return;
       }
-      const { startIndex: nodeIndex, endIndex } = range;
+      const { startIndex, endIndex } = range;
       if (this.expandStore.isExpanded(node) && node.children) {
         const flattenedNodes = this.flattenByNode(node);
         this.flattenedNodes = this.flattenedNodes
-          .slice(0, nodeIndex)
+          .slice(0, startIndex)
           .concat(flattenedNodes)
           .concat(this.flattenedNodes.slice(endIndex + 1));
         if (await this.beforeDraw(flattenedNodes)) {
           return this.render();
         }
-        this.offsetAfterLine(flattenedNodes.length - 1, nodeIndex);
+        this.offsetAfterLine(flattenedNodes.length - 1, startIndex);
         await this.drawNodes(flattenedNodes);
         await this.setLines(
           flattenedNodes.map((node) => node.drawnLine),
-          nodeIndex,
+          startIndex,
           endIndex + 1,
           true,
         );
+        await this.gotoLineIndex(startIndex, 1);
       }
     }, notify);
   }
@@ -595,18 +596,19 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>> {
       if (!range) {
         return;
       }
-      const { startIndex: nodeIndex, endIndex } = range;
-      this.flattenedNodes.splice(nodeIndex + 1, endIndex - nodeIndex);
+      const { startIndex, endIndex } = range;
+      this.flattenedNodes.splice(startIndex + 1, endIndex - startIndex);
       this.explorer.indexesManager.removeLines(
-        this.startLine + nodeIndex + 1,
+        this.startLine + startIndex + 1,
         this.startLine + endIndex,
       );
       if (await this.beforeDraw([node])) {
         return this.render();
       }
-      this.offsetAfterLine(-(endIndex - nodeIndex), endIndex);
+      this.offsetAfterLine(-(endIndex - startIndex), endIndex);
       await this.drawNodes([node]);
-      await this.setLines([node.drawnLine], nodeIndex, endIndex + 1, true);
+      await this.setLines([node.drawnLine], startIndex, endIndex + 1, true);
+      await this.gotoLineIndex(startIndex, 1);
     }, notify);
   }
 
