@@ -36,6 +36,11 @@ export interface BaseTreeNode<TreeNode extends BaseTreeNode<TreeNode>> {
   children?: TreeNode[];
 }
 
+export interface DrawNodeOption<TreeNode extends BaseTreeNode<TreeNode>> {
+  prevSiblingNode?: TreeNode;
+  nextSiblingNode?: TreeNode;
+}
+
 export type ExplorerSourceClass = {
   new (name: string, explorer: Explorer): ExplorerSource<any>;
 };
@@ -450,8 +455,7 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>> {
   abstract drawNode(
     node: TreeNode,
     nodeIndex: number,
-    prevSiblingNode: TreeNode | undefined,
-    nextSiblingNode: TreeNode | undefined,
+    options: DrawNodeOption<TreeNode>,
   ): void | Promise<void>;
 
   flattenByNode(node: TreeNode) {
@@ -478,9 +482,16 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>> {
       const node = nodes[i];
       const nodeIndex = this.flattenedNodes.findIndex((it) => it.uid === node.uid);
       if (nodeIndex > -1) {
-        const prevNode = this.flattenedNodes[nodeIndex - 1];
-        const nextNode = this.flattenedNodes[nodeIndex + 1];
-        await this.drawNode(node, nodeIndex, prevNode, nextNode);
+        let prevSiblingNode = undefined;
+        let nextSiblingNode = undefined;
+        if (node.parent?.children) {
+          const siblingIndex = node.parent.children.indexOf(node);
+          if (siblingIndex !== -1) {
+            prevSiblingNode = node.parent.children[siblingIndex - 1];
+            nextSiblingNode = node.parent.children[siblingIndex + 1];
+          }
+        }
+        await this.drawNode(node, nodeIndex, { prevSiblingNode, nextSiblingNode });
       }
     }
   }

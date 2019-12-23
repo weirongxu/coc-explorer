@@ -16,7 +16,7 @@ import {
   getExtensions,
 } from '../../../util';
 import { hlGroupManager } from '../../highlight-manager';
-import { ExplorerSource, sourceIcons } from '../../source';
+import { ExplorerSource, sourceIcons, DrawNodeOption } from '../../source';
 import { sourceManager } from '../../source-manager';
 import { fileColumnRegistrar } from './file-column-registrar';
 import './load';
@@ -284,12 +284,7 @@ export class FileSource extends ExplorerSource<FileNode> {
     return await this.renderNodes(nodes);
   }
 
-  async drawNode(
-    node: FileNode,
-    nodeIndex: number,
-    prevNode: FileNode | undefined,
-    nextNode: FileNode | undefined,
-  ) {
+  async drawNode(node: FileNode, nodeIndex: number, options: DrawNodeOption<FileNode>) {
     if (!node.parent) {
       node.drawnLine = await this.viewBuilder.drawLine(async (row) => {
         row.add(
@@ -304,10 +299,8 @@ export class FileSource extends ExplorerSource<FileNode> {
         row.add(this.root, highlights.fullpath);
       });
     } else {
-      const prevNodeLevel = prevNode?.level ?? -1;
-      const nextNodeLevel = nextNode?.level ?? -1;
-      node.isFirstInLevel = prevNodeLevel < node.level;
-      node.isLastInLevel = nextNodeLevel < node.level;
+      node.isFirstInLevel = options.prevSiblingNode === undefined;
+      node.isLastInLevel = options.nextSiblingNode === undefined;
 
       node.drawnLine = await this.viewBuilder.drawLine(async (row) => {
         await this.columnManager.draw(row, node, nodeIndex);
