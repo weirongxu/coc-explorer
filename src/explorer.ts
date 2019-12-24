@@ -331,9 +331,11 @@ export class Explorer {
     };
   }
 
-  async doActions(actions: Action[], mode: ActionMode = 'n') {
-    for (const action of actions) {
-      await this.doAction(action, mode);
+  async doActions(actions: Action[], mode: ActionMode = 'n', count: number) {
+    for (var i = 0; i < count; i++) {
+      for (const action of actions) {
+        await this.doAction(action, mode);
+      }
     }
     await execNotifyBlock(async () => {
       await Promise.all(
