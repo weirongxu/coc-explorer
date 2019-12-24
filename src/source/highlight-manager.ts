@@ -1,5 +1,5 @@
 import { workspace } from 'coc.nvim';
-import { execNotifyBlock, skipOnBufEnter } from '../util';
+import { execNotifyBlock, skipOnBufEnter, enableDebug } from '../util';
 
 export const HlEscapeCode = {
   left: (s: string | number) => HlEscapeCode.leftBegin + s + HlEscapeCode.leftEnd,
@@ -27,9 +27,16 @@ class HighlightManager {
 
   nvim = workspace.nvim;
   highlights: Hightlight[] = [];
+  concealableHighlightsVisible: Map<string, boolean> = new Map();
   concealableHighlights: HighlightConcealable[] = [];
 
-  private requestedConcealableToggle: Map<string, (notify: boolean) => Promise<void>> = new Map();
+  private requestedConcealableQueue: Map<
+    string,
+    {
+      handler: (notify: boolean) => Promise<void>;
+      action: 'show' | 'hide';
+    }
+  > = new Map();
 
   createMarkerID() {
     HighlightManager.maxMarkerID += 1;
@@ -61,40 +68,67 @@ class HighlightManager {
 
     const concealable: HighlightConcealable = {
       markerID,
-      requestHide: () => this.requestedConcealableToggle.set(group, hide),
-      requestShow: () => this.requestedConcealableToggle.set(group, show),
+      requestShow: () =>
+        this.requestedConcealableQueue.set(group, { action: 'show', handler: show }),
+      requestHide: () =>
+        this.requestedConcealableQueue.set(group, { action: 'hide', handler: hide }),
     };
     this.concealableHighlights.push(concealable);
     return concealable;
   }
 
-  async emitRequestConcealableToggle(explorer: Explorer, notify = false) {
-    if (this.requestedConcealableToggle.size > 0) {
-      const { nvim } = this;
-      const { mode } = await nvim.mode;
-      const winnr = await explorer.winnr;
-      if (winnr && mode === 'n') {
-        await execNotifyBlock(async () => {
-          const storeWinnr = await nvim.call('winnr');
-          const jumpWin = storeWinnr !== winnr;
-          if (jumpWin) {
-            skipOnBufEnter(
-              (await nvim.eval(`[winbufnr(${winnr}), winbufnr(${storeWinnr})]`)) as [
-                number,
-                number,
-              ],
-            );
-            nvim.command(`${winnr}wincmd w`, true);
-          }
-          for (const toggle of this.requestedConcealableToggle.values()) {
-            await toggle(true);
-          }
-          if (jumpWin) {
-            nvim.command(`${storeWinnr}wincmd w`, true);
-          }
-          this.requestedConcealableToggle.clear();
-        }, notify);
+  async emitRequestedConcealableRender(explorer: Explorer, { notify = false, force = false } = {}) {
+    if (this.requestedConcealableQueue.size <= 0) {
+      return;
+    }
+
+    const { nvim } = this;
+    const { mode } = await nvim.mode;
+    const winnr = await explorer.winnr;
+
+    const storeWinnr = await nvim.call('winnr');
+    const jumpWin = storeWinnr !== winnr;
+
+    const requestedRenderList = Array.from(this.requestedConcealableQueue).filter(
+      ([group, value]) => {
+        if (force || !this.concealableHighlightsVisible.has(group)) {
+          return true;
+        }
+        const visible = this.concealableHighlightsVisible.get(group)!;
+        return (value.action === 'show' && !visible) || (value.action === 'hide' && visible);
+      },
+    );
+    this.requestedConcealableQueue.clear();
+
+    if (!requestedRenderList.length) {
+      return;
+    }
+
+    if (winnr && mode === 'n') {
+      if (enableDebug) {
+        // tslint:disable-next-line: ban
+        workspace.showMessage(
+          `Concealable Render ${requestedRenderList.length} (${Array.from(
+            requestedRenderList.map(([group]) => group),
+          ).join(',')})`,
+          'more',
+        );
       }
+      await execNotifyBlock(async () => {
+        if (jumpWin) {
+          skipOnBufEnter(
+            (await nvim.eval(`[winbufnr(${winnr}), winbufnr(${storeWinnr})]`)) as [number, number],
+          );
+          nvim.command(`${winnr}wincmd w`, true);
+        }
+        for (const [group, value] of requestedRenderList) {
+          this.concealableHighlightsVisible.set(group, value.action === 'show');
+          await value.handler(true);
+        }
+        if (jumpWin) {
+          nvim.command(`${storeWinnr}wincmd w`, true);
+        }
+      }, notify);
     }
   }
 

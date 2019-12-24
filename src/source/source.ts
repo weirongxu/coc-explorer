@@ -105,7 +105,7 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>> {
     this.addAction(
       'refresh',
       async () => {
-        await this.reload(this.rootNode);
+        await this.reload(this.rootNode, { force: true });
         await this.explorer.executeHighlightSyntax();
       },
       'refresh',
@@ -446,9 +446,9 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>> {
   /**
    * @returns return true to redraw all rows
    */
-  async beforeDraw(nodes: TreeNode[]) {
+  async beforeDraw(nodes: TreeNode[], { force = false } = {}) {
     const renderAll = this.columnManager.beforeDraw(nodes);
-    await hlGroupManager.emitRequestConcealableToggle(this.explorer);
+    await hlGroupManager.emitRequestedConcealableRender(this.explorer, { force });
     return renderAll;
   }
 
@@ -502,12 +502,12 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>> {
 
   opened(_notify = false): void | Promise<void> {}
 
-  async reload(node: TreeNode, { render = true, notify = false } = {}) {
+  async reload(node: TreeNode, { render = true, notify = false, force = false } = {}) {
     this.selectedNodes = new Set();
     node.children = this.expandStore.isExpanded(node) ? await this.loadChildren(node) : [];
     await this.loaded(node);
     if (render) {
-      await this.render({ node, notify });
+      await this.render({ node, notify, force });
     }
   }
 
@@ -675,7 +675,7 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>> {
     }, notify);
   }
 
-  async render({ node = this.rootNode, notify = false, storeCursor = true } = {}) {
+  async render({ node = this.rootNode, notify = false, storeCursor = true, force = false } = {}) {
     if (this.explorer.isHelpUI) {
       return;
     }
@@ -711,7 +711,7 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>> {
         );
       }
       this.offsetAfterLine(newHeight - oldHeight, this.endLine);
-      await this.beforeDraw(this.flattenedNodes);
+      await this.beforeDraw(this.flattenedNodes, { force });
       await this.drawNodes(this.flattenedNodes);
 
       const sourceIndex = this.currentSourceIndex();

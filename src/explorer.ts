@@ -563,7 +563,7 @@ export class Explorer {
 
       // await this.clearContent();
       for (const source of this.sources) {
-        await source.render({ notify: true, storeCursor: false });
+        await source.render({ notify: true, storeCursor: false, force: true });
       }
 
       if (store) {
