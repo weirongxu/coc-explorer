@@ -95,8 +95,9 @@ export class ExplorerManager {
             [mode],
             plugKey,
             async () => {
+              const count = (await this.nvim.eval('v:count')) as number;
               const explorer = await this.currentExplorer();
-              explorer?.doActions(actions, mode).catch(onError);
+              explorer?.doActions(actions, mode, count || 1).catch(onError);
             },
             { sync: true },
           ),
