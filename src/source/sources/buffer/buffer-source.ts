@@ -70,18 +70,22 @@ export class BufferSource extends ExplorerSource<BufferNode> {
 
     if (activeMode) {
       if (!workspace.env.isVim) {
-        events.on(
-          ['BufCreate', 'BufHidden', 'BufUnload', 'BufWritePost', 'InsertLeave'],
-          debounce(500, async () => {
-            await this.reload(this.rootNode);
-          }),
+        this.subscriptions.push(
+          events.on(
+            ['BufCreate', 'BufHidden', 'BufUnload', 'BufWritePost', 'InsertLeave'],
+            debounce(500, async () => {
+              await this.reload(this.rootNode);
+            }),
+          ),
         );
       } else {
-        onBufEnter(500, async (bufnr) => {
-          if (bufnr === this.explorer.bufnr) {
-            await this.reload(this.rootNode, { render: false });
-          }
-        });
+        this.subscriptions.push(
+          onBufEnter(500, async (bufnr) => {
+            if (bufnr === this.explorer.bufnr) {
+              await this.reload(this.rootNode, { render: false });
+            }
+          }),
+        );
       }
     }
 

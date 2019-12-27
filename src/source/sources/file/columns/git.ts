@@ -36,43 +36,45 @@ fileColumnRegistrar.registerColumn(
         return a.x === b.x && a.y === b.y;
       };
 
-      events.on(
-        'BufWritePost',
-        debounce(1000, async (bufnr) => {
-          const bufinfo = await source.nvim.call('getbufinfo', [bufnr]);
-          if (bufinfo[0] && bufinfo[0].name) {
-            const name: string = bufinfo[0].name;
-            const filename = pathLib.basename(name);
-            const path = pathLib.dirname(name);
-            await gitManager.reload(path);
-            const statuses = await gitManager.getStatuses(path);
+      source.subscriptions.push(
+        events.on(
+          'BufWritePost',
+          debounce(1000, async (bufnr) => {
+            const bufinfo = await source.nvim.call('getbufinfo', [bufnr]);
+            if (bufinfo[0] && bufinfo[0].name) {
+              const name: string = bufinfo[0].name;
+              const filename = pathLib.basename(name);
+              const path = pathLib.dirname(name);
+              await gitManager.reload(path);
+              const statuses = await gitManager.getStatuses(path);
 
-            const updatePaths: Set<string> = new Set();
-            if (filename === '.gitignore') {
-              for (const fullpath of Object.keys(statuses)) {
-                updatePaths.add(fullpath);
-              }
-              for (const fullpath of Object.keys(data.prevStatuses)) {
-                updatePaths.add(fullpath);
-              }
-            } else {
-              for (const [fullpath, status] of Object.entries(statuses)) {
-                if (fullpath in data.prevStatuses) {
-                  if (statusEqual(data.prevStatuses[fullpath], status)) {
-                    continue;
-                  }
-                  delete data.prevStatuses[fullpath];
+              const updatePaths: Set<string> = new Set();
+              if (filename === '.gitignore') {
+                for (const fullpath of Object.keys(statuses)) {
+                  updatePaths.add(fullpath);
                 }
-                updatePaths.add(fullpath);
+                for (const fullpath of Object.keys(data.prevStatuses)) {
+                  updatePaths.add(fullpath);
+                }
+              } else {
+                for (const [fullpath, status] of Object.entries(statuses)) {
+                  if (fullpath in data.prevStatuses) {
+                    if (statusEqual(data.prevStatuses[fullpath], status)) {
+                      continue;
+                    }
+                    delete data.prevStatuses[fullpath];
+                  }
+                  updatePaths.add(fullpath);
+                }
+                for (const fullpath of Object.keys(data.prevStatuses)) {
+                  updatePaths.add(fullpath);
+                }
               }
-              for (const fullpath of Object.keys(data.prevStatuses)) {
-                updatePaths.add(fullpath);
-              }
+              await source.renderPaths(updatePaths);
+              data.prevStatuses = statuses;
             }
-            await source.renderPaths(updatePaths);
-            data.prevStatuses = statuses;
-          }
-        }),
+          }),
+        ),
       );
     },
     async validate() {

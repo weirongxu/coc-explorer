@@ -18,29 +18,31 @@ fileColumnRegistrar.registerColumn(
   (source, data) => ({
     concealable,
     init() {
-      events.on(
-        'BufWritePost',
-        debounce(1000, async () => {
-          diagnosticManager.warningReload(source.root);
+      source.subscriptions.push(
+        events.on(
+          'BufWritePost',
+          debounce(1000, async () => {
+            diagnosticManager.warningReload(source.root);
 
-          const warningMixedCount = diagnosticManager.warningMixedCount;
-          const updatePaths: Set<string> = new Set();
-          for (const [fullpath, count] of Object.entries(warningMixedCount)) {
-            if (fullpath in data.prevDiagnosticWarning) {
-              if (data.prevDiagnosticWarning[fullpath] === count) {
-                continue;
+            const warningMixedCount = diagnosticManager.warningMixedCount;
+            const updatePaths: Set<string> = new Set();
+            for (const [fullpath, count] of Object.entries(warningMixedCount)) {
+              if (fullpath in data.prevDiagnosticWarning) {
+                if (data.prevDiagnosticWarning[fullpath] === count) {
+                  continue;
+                }
+                delete data.prevDiagnosticWarning[fullpath];
+              } else {
+                updatePaths.add(fullpath);
               }
-              delete data.prevDiagnosticWarning[fullpath];
-            } else {
+            }
+            for (const [fullpath] of Object.keys(data.prevDiagnosticWarning)) {
               updatePaths.add(fullpath);
             }
-          }
-          for (const [fullpath] of Object.keys(data.prevDiagnosticWarning)) {
-            updatePaths.add(fullpath);
-          }
-          await source.renderPaths(updatePaths);
-          data.prevDiagnosticWarning = warningMixedCount;
-        }),
+            await source.renderPaths(updatePaths);
+            data.prevDiagnosticWarning = warningMixedCount;
+          }),
+        ),
       );
     },
     reload() {

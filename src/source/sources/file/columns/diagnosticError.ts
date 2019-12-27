@@ -18,29 +18,31 @@ fileColumnRegistrar.registerColumn(
   (source, data) => ({
     concealable,
     init() {
-      events.on(
-        'BufWritePost',
-        debounce(1000, async () => {
-          diagnosticManager.errorReload(source.root);
+      source.subscriptions.push(
+        events.on(
+          'BufWritePost',
+          debounce(1000, async () => {
+            diagnosticManager.errorReload(source.root);
 
-          const errorMixedCount = diagnosticManager.errorMixedCount;
-          const updatePaths: Set<string> = new Set();
-          for (const [fullpath, count] of Object.entries(errorMixedCount)) {
-            if (fullpath in data.prevDiagnosticError) {
-              if (data.prevDiagnosticError[fullpath] === count) {
-                continue;
+            const errorMixedCount = diagnosticManager.errorMixedCount;
+            const updatePaths: Set<string> = new Set();
+            for (const [fullpath, count] of Object.entries(errorMixedCount)) {
+              if (fullpath in data.prevDiagnosticError) {
+                if (data.prevDiagnosticError[fullpath] === count) {
+                  continue;
+                }
+                delete data.prevDiagnosticError[fullpath];
+              } else {
+                updatePaths.add(fullpath);
               }
-              delete data.prevDiagnosticError[fullpath];
-            } else {
+            }
+            for (const [fullpath] of Object.keys(data.prevDiagnosticError)) {
               updatePaths.add(fullpath);
             }
-          }
-          for (const [fullpath] of Object.keys(data.prevDiagnosticError)) {
-            updatePaths.add(fullpath);
-          }
-          await source.renderPaths(updatePaths);
-          data.prevDiagnosticError = errorMixedCount;
-        }),
+            await source.renderPaths(updatePaths);
+            data.prevDiagnosticError = errorMixedCount;
+          }),
+        ),
       );
     },
     reload() {

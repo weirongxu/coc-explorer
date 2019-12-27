@@ -1,4 +1,4 @@
-import { listManager, workspace } from 'coc.nvim';
+import { listManager, workspace, ExtensionContext, Disposable } from 'coc.nvim';
 import { Range } from 'vscode-languageserver-protocol';
 import { explorerActionList } from '../lists/actions';
 import { Explorer } from '../explorer';
@@ -90,10 +90,15 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>> {
   > = {};
   hlIds: number[] = []; // hightlight match ids for vim8.0
   nvim = workspace.nvim;
+  context: ExtensionContext;
 
   private requestedRenderNodes: Set<TreeNode> = new Set();
+  subscriptions: Disposable[];
 
   constructor(public sourceName: string, public explorer: Explorer) {
+    this.context = this.explorer.context;
+    this.subscriptions = this.context.subscriptions;
+
     this.addAction(
       'toggleHidden',
       async () => {
@@ -162,14 +167,17 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>> {
    * @returns winnr
    */
   async prevWinnr() {
+    const previousBufnr = this.explorer.explorerManager.previousBufnr;
+    if (!previousBufnr) {
+      return null;
+    }
     const winnr = (await this.nvim.call('bufwinnr', [
       this.explorer.explorerManager.previousBufnr,
     ])) as number;
-    if ((await this.explorer.winnr) !== winnr && winnr > 0) {
-      return winnr;
-    } else {
+    if (winnr <= 0 || winnr === (await this.explorer.winnr)) {
       return null;
     }
+    return winnr;
   }
 
   get expanded() {

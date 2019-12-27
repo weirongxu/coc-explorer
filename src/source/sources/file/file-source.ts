@@ -110,29 +110,33 @@ export class FileSource extends ExplorerSource<FileNode> {
     if (activeMode) {
       if (!workspace.env.isVim) {
         if (autoReveal) {
-          onBufEnter(200, async (bufnr) => {
-            if (bufnr !== this.explorer.bufnr) {
-              const bufinfo = await nvim.call('getbufinfo', [bufnr]);
-              if (bufinfo[0] && bufinfo[0].name) {
-                await execNotifyBlock(async () => {
-                  const node = await this.revealNodeByPath(bufinfo[0].name, {
-                    render: true,
-                    notify: true,
+          this.subscriptions.push(
+            onBufEnter(200, async (bufnr) => {
+              if (bufnr !== this.explorer.bufnr) {
+                const bufinfo = await nvim.call('getbufinfo', [bufnr]);
+                if (bufinfo[0] && bufinfo[0].name) {
+                  await execNotifyBlock(async () => {
+                    const node = await this.revealNodeByPath(bufinfo[0].name, {
+                      render: true,
+                      notify: true,
+                    });
+                    if (node) {
+                      await this.gotoNode(node, { notify: true });
+                    }
                   });
-                  if (node) {
-                    await this.gotoNode(node, { notify: true });
-                  }
-                });
+                }
               }
-            }
-          });
+            }),
+          );
         }
       } else {
-        onBufEnter(200, async (bufnr) => {
-          if (bufnr === this.explorer.bufnr) {
-            await this.reload(this.rootNode);
-          }
-        });
+        this.subscriptions.push(
+          onBufEnter(200, async (bufnr) => {
+            if (bufnr === this.explorer.bufnr) {
+              await this.reload(this.rootNode);
+            }
+          }),
+        );
       }
     }
 

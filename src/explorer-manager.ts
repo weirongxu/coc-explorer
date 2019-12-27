@@ -1,13 +1,14 @@
-import { workspace, ExtensionContext, Emitter, events } from 'coc.nvim';
+import { workspace, ExtensionContext, Emitter, Disposable } from 'coc.nvim';
 import { Explorer } from './explorer';
 import { Args, parseArgs } from './parse-args';
 import { onError } from './logger';
 import { mappings, ActionMode } from './mappings';
+import { onBufEnter, avoidOnBufEnter } from './util';
 
 export class ExplorerManager {
   bufferName = '[coc-explorer]';
+  filetype = 'coc-explorer';
   emitterDidAutoload = new Emitter<void>();
-  bufnrs: number[] = [];
   previousBufnr?: number;
   maxExplorerID = 0;
   tabContainer: Record<
@@ -20,6 +21,7 @@ export class ExplorerManager {
   > = {};
   rootPathRecords: Set<string> = new Set();
   nvim = workspace.nvim;
+  subscriptions: Disposable[];
 
   /**
    * mappings[key][mode] = '<Plug>(coc-action-mode-key)'
@@ -34,7 +36,7 @@ export class ExplorerManager {
   private onInited = new Emitter<void>();
 
   constructor(public context: ExtensionContext) {
-    const { subscriptions } = context;
+    this.subscriptions = context.subscriptions;
 
     this.initedState.list.forEach((method) => {
       this[method].event(() => {
@@ -49,11 +51,10 @@ export class ExplorerManager {
       this.registerMappings().catch(onError);
     });
 
-    subscriptions.push(
-      events.on('BufWinLeave', (bufnr) => {
-        if (!this.bufnrs.includes(bufnr)) {
-          this.previousBufnr = bufnr;
-        }
+    this.updatePreviousBufnr(workspace.bufnr).catch(onError);
+    this.subscriptions.push(
+      onBufEnter(1, (bufnr) => {
+        this.updatePreviousBufnr(bufnr).catch(onError);
       }),
     );
   }
@@ -64,6 +65,21 @@ export class ExplorerManager {
 
   async currentTabIdMax() {
     return (await this.nvim.call('coc_explorer#tab_id_max')) as number;
+  }
+
+  async updatePreviousBufnr(bufnr: number) {
+    setTimeout(async () => {
+      if (!this.bufnrs().includes(bufnr)) {
+        const filetype = await this.nvim.getVar('&filetype');
+        if (filetype !== this.filetype) {
+          this.previousBufnr = bufnr;
+        }
+      }
+    }, 10);
+  }
+
+  bufnrs(): number[] {
+    return this.explorers().map((explorer) => explorer.bufnr);
   }
 
   explorers() {
@@ -90,7 +106,7 @@ export class ExplorerManager {
           return;
         }
         const plugKey = `explorer-action-${mode}-${key.replace(/\<(.*)\>/, '[$1]')}`;
-        this.context.subscriptions.push(
+        this.subscriptions.push(
           workspace.registerKeymap(
             [mode],
             plugKey,
@@ -120,15 +136,17 @@ export class ExplorerManager {
 
   async createExplorer(args: Args) {
     this.maxExplorerID += 1;
-    const bufnr = (await this.nvim.call('coc_explorer#create', [
-      this.bufferName,
-      this.maxExplorerID,
-      args.position,
-      args.width,
-    ])) as number;
-    const explorer = new Explorer(this.maxExplorerID, this, this.context, bufnr);
-    await explorer.buffer.setVar('coc_explorer_inited', true);
-    return explorer;
+    return avoidOnBufEnter(async () => {
+      const bufnr = (await this.nvim.call('coc_explorer#create', [
+        this.bufferName,
+        this.maxExplorerID,
+        args.position,
+        args.width,
+      ])) as number;
+      const explorer = new Explorer(this.maxExplorerID, this, this.context, bufnr);
+      await explorer.buffer.setVar('coc_explorer_inited', true);
+      return explorer;
+    });
   }
 
   async getExplorer(args: Args) {

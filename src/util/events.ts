@@ -9,7 +9,7 @@ let count = 0;
 
 export function onBufEnter(delay: number, callback: (bufnr: number) => void | Promise<void>) {
   const throttleFn = throttle(delay, callback, { tail: true });
-  events.on('BufEnter', async (bufnr) => {
+  return events.on('BufEnter', async (bufnr) => {
     if (stopBufEnter) {
       return;
     }
@@ -30,12 +30,15 @@ export function skipOnBufEnter(bufnrs: number[]) {
   skipBufnrQueue.push(...bufnrs);
 }
 
-export async function avoidOnBufEnter(block: () => Promise<void>) {
-  stopBufEnter = true;
+export async function avoidOnBufEnter<R>(block: () => Promise<R>) {
+  let result: R;
   try {
-    await block();
+    stopBufEnter = true;
+    result = await block();
+    return result;
   } catch (error) {
-    onError(error);
+    throw error;
+  } finally {
+    stopBufEnter = false;
   }
-  stopBufEnter = false;
 }
