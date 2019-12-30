@@ -1,7 +1,6 @@
 import { FileSource } from './file-source';
 import pathLib from 'path';
 import {
-  openStrategy,
   avoidOnBufEnter,
   execNotifyBlock,
   fsCopyFileRecursive,
@@ -91,35 +90,12 @@ export function initFileActions(file: FileSource) {
           await file.doAction('expandOrCollapse', node);
         }
       } else {
-        if (openStrategy === 'vsplit') {
-          await file.doAction('openInVsplit', node);
-          await file.quitOnOpen();
-        } else if (openStrategy === 'select') {
-          await file.explorer.selectWindowsUI(
-            async (winnr) => {
-              await avoidOnBufEnter(async () => {
-                await file.nvim.command(`${winnr}wincmd w`);
-              });
-              await nvim.command(`edit ${node.fullpath}`);
-              await file.quitOnOpen();
-            },
-            async () => {
-              await file.doAction('openInVsplit', node);
-              await file.quitOnOpen();
-            },
-          );
-        } else if (openStrategy === 'previousBuffer') {
-          const prevWinnr = await file.prevWinnr();
-          if (prevWinnr) {
-            await avoidOnBufEnter(async () => {
-              await nvim.command(`${prevWinnr}wincmd w`);
-            });
-            await nvim.command(`edit ${node.fullpath}`);
-          } else {
-            await file.doAction('openInVsplit', node);
-          }
-          await file.quitOnOpen();
-        }
+        await file.openAction(node, async (winnr) => {
+          await avoidOnBufEnter(async () => {
+            await file.nvim.command(`${winnr}wincmd w`);
+          });
+          await nvim.command(`edit ${node.fullpath}`);
+        });
       }
     },
     'open file or directory',

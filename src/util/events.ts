@@ -1,6 +1,5 @@
 import { events, workspace } from 'coc.nvim';
 import { throttle } from './throttle-debounce';
-import { onError } from '../logger';
 import { enableDebug } from './config';
 
 let stopBufEnter = false;

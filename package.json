@@ -109,7 +109,9 @@
           "enum": [
             "select",
             "vsplit",
-            "previousBuffer"
+            "previousBuffer",
+            "previousWindow",
+            "sourceWindow"
           ],
           "default": "select"
         },

@@ -5,9 +5,18 @@ import { IndexesManager } from './indexes-manager';
 import './source/load';
 import { BaseTreeNode, ExplorerSource, ActionOptions } from './source/source';
 import { sourceManager } from './source/source-manager';
-import { execNotifyBlock, autoReveal, config, enableDebug, enableWrapscan } from './util';
+import {
+  execNotifyBlock,
+  autoReveal,
+  config,
+  enableDebug,
+  enableWrapscan,
+  avoidOnBufEnter,
+} from './util';
 import { ExplorerManager } from './explorer-manager';
 import { hlGroupManager } from './source/highlight-manager';
+import { BuffuerContextVars } from './context-variables';
+import { SourceViewBuilder, SourceRowBuilder } from './source/view-builder';
 
 const hl = hlGroupManager.linkGroup.bind(hlGroupManager);
 const helpHightlights = {
@@ -22,7 +31,8 @@ export class Explorer {
   nvim = workspace.nvim;
   isHelpUI: boolean = false;
   indexesManager = new IndexesManager(this);
-  inited = false;
+  inited = new BuffuerContextVars<boolean>('inited', this);
+  originWinid = new BuffuerContextVars<number>('originWinid', this);
   globalActions: Record<
     string,
     {
@@ -31,18 +41,35 @@ export class Explorer {
       callback: (nodes: BaseTreeNode<any>[], arg: string, mode: ActionMode) => void | Promise<void>;
     }
   > = {};
+  context: ExtensionContext;
 
   private _buffer?: Buffer;
   private _args?: Args;
   private _sources?: ExplorerSource<any>[];
   private lastArgSources?: string;
 
+  static async create(explorerManager: ExplorerManager, args: Args) {
+    explorerManager.maxExplorerID += 1;
+    const explorer = await avoidOnBufEnter(async () => {
+      const bufnr = (await workspace.nvim.call('coc_explorer#create', [
+        explorerManager.bufferName,
+        explorerManager.maxExplorerID,
+        args.position,
+        args.width,
+      ])) as number;
+      return new Explorer(explorerManager.maxExplorerID, explorerManager, bufnr);
+    });
+    await explorer.inited.set(true);
+    return explorer;
+  }
+
   constructor(
     public explorerID: number,
     public explorerManager: ExplorerManager,
-    public context: ExtensionContext,
     public bufnr: number,
   ) {
+    this.context = explorerManager.context;
+
     this.addGlobalAction(
       'nodePrev',
       async () => {
@@ -212,6 +239,18 @@ export class Explorer {
     });
   }
 
+  async originWinnr() {
+    const winid = await this.originWinid.get();
+    if (!winid) {
+      return null;
+    }
+    const winnr = (await this.nvim.call('win_id2win', [winid])) as number;
+    if (winnr <= 0 || (await this.explorerManager.winnrs()).includes(winnr)) {
+      return null;
+    }
+    return winnr;
+  }
+
   async executeHighlightSyntax() {
     const winnr = await this.winnr;
     const curWinnr = await this.nvim.call('winnr');
@@ -228,32 +267,23 @@ export class Explorer {
     }
   }
 
+  async resume(args: Args) {
+    const win = await this.win;
+    if (win) {
+      // focus on explorer window
+      await this.nvim.command(`${await win.number}wincmd w`);
+    } else {
+      // resume the explorer window
+      await this.nvim.call('coc_explorer#resume', [this.bufnr, args.position, args.width]);
+    }
+  }
+
   async open(args: Args) {
-    if (this.inited) {
-      const win = await this.win;
-      if (win) {
-        if (this.isHelpUI) {
-          await this.quitHelp();
-        }
-        if (args.toggle) {
-          await this.quit();
-          return;
-        } else {
-          // focus on explorer window
-          await this.nvim.command(`${await win.number}wincmd w`);
-        }
-      } else {
-        // resume the explorer window
-        await this.nvim.call('coc_explorer#resume', [this.bufnr, args.position, args.width]);
-        if (this.isHelpUI) {
-          await this.quitHelp();
-        }
-      }
+    if (this.isHelpUI) {
+      await this.quitHelp();
     }
 
     await this.executeHighlightSyntax();
-
-    this.inited = true;
 
     await this.initArgs(args);
 
@@ -683,4 +713,3 @@ export class Explorer {
 }
 
 import { FileNode, FileSource } from './source/sources/file/file-source';
-import { SourceViewBuilder, SourceRowBuilder } from './source/view-builder';

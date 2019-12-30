@@ -4,7 +4,7 @@ import { explorerActionList } from '../lists/actions';
 import { Explorer } from '../explorer';
 import { onError } from '../logger';
 import { ActionSyms, mappings, reverseMappings, ActionMode } from '../mappings';
-import { config, execNotifyBlock } from '../util';
+import { config, execNotifyBlock, openStrategy } from '../util';
 import { SourceViewBuilder } from './view-builder';
 import { hlGroupManager } from './highlight-manager';
 import { ColumnManager } from './column-manager';
@@ -161,23 +161,6 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>> {
       'toggle node selection',
       { multi: false, select: true },
     );
-  }
-
-  /**
-   * @returns winnr
-   */
-  async prevWinnr() {
-    const previousBufnr = this.explorer.explorerManager.previousBufnr;
-    if (!previousBufnr) {
-      return null;
-    }
-    const winnr = (await this.nvim.call('bufwinnr', [
-      this.explorer.explorerManager.previousBufnr,
-    ])) as number;
-    if (winnr <= 0 || winnr === (await this.explorer.winnr)) {
-      return null;
-    }
-    return winnr;
   }
 
   get expanded() {
@@ -339,6 +322,48 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>> {
       await this.reload(this.rootNode);
     } else if (render) {
       await this.render();
+    }
+  }
+
+  async openAction(node: TreeNode, openByWinnr: (winnr: number) => Promise<void>) {
+    if (openStrategy === 'vsplit') {
+      await this.doAction('openInVsplit', node);
+      await this.quitOnOpen();
+    } else if (openStrategy === 'select') {
+      await this.explorer.selectWindowsUI(
+        async (winnr) => {
+          await openByWinnr(winnr);
+          await this.quitOnOpen();
+        },
+        async () => {
+          await this.doAction('openInVsplit', node);
+          await this.quitOnOpen();
+        },
+      );
+    } else if (openStrategy === 'previousBuffer') {
+      const prevWinnr = await this.explorer.explorerManager.prevWinnrByPrevBufnr();
+      if (prevWinnr) {
+        await openByWinnr(prevWinnr);
+      } else {
+        await this.doAction('openInVsplit', node);
+      }
+      await this.quitOnOpen();
+    } else if (openStrategy === 'previousWindow') {
+      const prevWinnr = await this.explorer.explorerManager.prevWinnrByPrevWindowID();
+      if (prevWinnr) {
+        await openByWinnr(prevWinnr);
+      } else {
+        await this.doAction('openInVsplit', node);
+      }
+      await this.quitOnOpen();
+    } else if (openStrategy === 'originWindow') {
+      const prevWinnr = await this.explorer.originWinnr();
+      if (prevWinnr) {
+        await openByWinnr(prevWinnr);
+      } else {
+        await this.doAction('openInVsplit', node);
+      }
+      await this.quitOnOpen();
     }
   }
 

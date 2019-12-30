@@ -1,15 +1,17 @@
 import { workspace, ExtensionContext, Emitter, Disposable } from 'coc.nvim';
 import { Explorer } from './explorer';
-import { Args, parseArgs } from './parse-args';
+import { parseArgs } from './parse-args';
 import { onError } from './logger';
 import { mappings, ActionMode } from './mappings';
-import { onBufEnter, avoidOnBufEnter } from './util';
+import { onBufEnter } from './util';
+import { GlobalContextVars } from './context-variables';
 
 export class ExplorerManager {
   bufferName = '[coc-explorer]';
   filetype = 'coc-explorer';
   emitterDidAutoload = new Emitter<void>();
-  previousBufnr?: number;
+  previousBufnr = new GlobalContextVars<number>('previousBufnr');
+  previousWindowID = new GlobalContextVars<number>('previousWindowID');
   maxExplorerID = 0;
   tabContainer: Record<
     number,
@@ -68,18 +70,55 @@ export class ExplorerManager {
   }
 
   async updatePreviousBufnr(bufnr: number) {
-    setTimeout(async () => {
-      if (!this.bufnrs().includes(bufnr)) {
-        const filetype = await this.nvim.getVar('&filetype');
-        if (filetype !== this.filetype) {
-          this.previousBufnr = bufnr;
-        }
+    if (!this.bufnrs().includes(bufnr)) {
+      const filetype = await this.nvim.getVar('&filetype');
+      if (filetype !== this.filetype) {
+        await this.previousBufnr.set(bufnr);
+        const winid = await this.nvim.call('bufwinid', [bufnr]);
+        await this.previousWindowID.set(winid === -1 ? null : winid);
       }
-    }, 10);
+    }
+  }
+
+  async prevWinnrByPrevBufnr() {
+    const previousBufnr = await this.previousBufnr.get();
+    if (!previousBufnr) {
+      return null;
+    }
+    const winnr = (await this.nvim.call('bufwinnr', [previousBufnr])) as number;
+    if (winnr <= 0 || (await this.winnrs()).includes(winnr)) {
+      return null;
+    }
+    return winnr;
+  }
+
+  async prevWinnrByPrevWindowID() {
+    const previousWindowID = await this.previousWindowID.get();
+    if (!previousWindowID) {
+      return null;
+    }
+    const winnr = (await this.nvim.call('win_id2win', [previousWindowID])) as number;
+    if (winnr <= 0 || (await this.winnrs()).includes(winnr)) {
+      return null;
+    }
+    return winnr;
   }
 
   bufnrs(): number[] {
     return this.explorers().map((explorer) => explorer.bufnr);
+  }
+
+  async winnrs() {
+    const tabid = await this.currentTabId();
+    const explorers: Explorer[] = [];
+    const container = this.tabContainer[tabid];
+    if (container) {
+      explorers.push(...container.left);
+      explorers.push(...container.right);
+      explorers.push(...container.tab);
+    }
+    const winnrs = await Promise.all(explorers.map((explorer) => explorer.winnr));
+    return winnrs.filter((winnr) => winnr !== null);
   }
 
   explorers() {
@@ -134,22 +173,15 @@ export class ExplorerManager {
     await this.nvim.call('coc_explorer#clear_mappings', [this.mappings]);
   }
 
-  async createExplorer(args: Args) {
-    this.maxExplorerID += 1;
-    return avoidOnBufEnter(async () => {
-      const bufnr = (await this.nvim.call('coc_explorer#create', [
-        this.bufferName,
-        this.maxExplorerID,
-        args.position,
-        args.width,
-      ])) as number;
-      const explorer = new Explorer(this.maxExplorerID, this, this.context, bufnr);
-      await explorer.buffer.setVar('coc_explorer_inited', true);
-      return explorer;
-    });
-  }
+  async open(argStrs: string[]) {
+    if (!this.registeredMapping) {
+      await new Promise((resolve) => {
+        this.onInited.event(resolve);
+      });
+    }
 
-  async getExplorer(args: Args) {
+    const args = await parseArgs(argStrs);
+
     const tabid =
       args.position === 'tab' ? (await this.currentTabIdMax()) + 1 : await this.currentTabId();
     if (!(tabid in this.tabContainer)) {
@@ -167,36 +199,30 @@ export class ExplorerManager {
     } else if (args.position === 'tab') {
       explorers = this.tabContainer[tabid].tab;
     }
-    if (!explorers.length) {
-      explorers.push(await this.createExplorer(args));
-    }
+
+    const originWinid = (await this.nvim.eval('bufwinid(bufnr("%"))')) as number;
 
     let explorer = explorers[0];
-    if (!(await this.nvim.call('bufexists', [explorer.bufnr]))) {
-      explorer = await this.createExplorer(args);
+
+    if (!explorer) {
+      explorer = await Explorer.create(this, args);
+      explorers.push(explorer);
+    } else if (!(await this.nvim.call('bufexists', [explorer.bufnr]))) {
+      explorer = await Explorer.create(this, args);
+      explorers[0] = explorer;
+    } else if (!(await explorer.inited.get())) {
+      await this.nvim.command(`bwipeout! ${explorer.bufnr}`);
+      explorer = await Explorer.create(this, args);
       explorers[0] = explorer;
     } else {
-      const inited = await explorer.buffer.getVar('coc_explorer_inited');
-      if (!inited) {
-        await this.nvim.command(`bwipeout! ${explorer.bufnr}`);
-        explorer = await this.createExplorer(args);
-        explorers[0] = explorer;
+      const win = await explorer.win;
+      if (win && args.toggle) {
+        await explorer.quit();
+        return;
       }
+      await explorer.resume(args);
     }
-    return explorer;
-  }
-
-  async open(argStrs: string[]) {
-    if (!this.registeredMapping) {
-      await new Promise((resolve) => {
-        this.onInited.event(resolve);
-      });
-    }
-
-    const args = await parseArgs(argStrs);
-
-    const explorer = await this.getExplorer(args);
-
+    await explorer.originWinid.set(originWinid);
     await explorer.open(args);
   }
 }

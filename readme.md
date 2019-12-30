@@ -38,9 +38,11 @@ Explorer extension for [coc.nvim](https://github.com/neoclide/coc.nvim)
   - [x] Basic actions
     - [x] Open file in select / vsplit / tab  
            `explorer.openAction.strategy` options:
-      - vsplit: open action with vsplit by default
-      - previousBuffer: open action use last used buffer by default
-      - select: open action use selection ui by default
+      - select: Open action use selection UI
+      - vsplit: Open action with vsplit
+      - previousBuffer: Open action use last used buffer
+      - previousWindow: Open action use last used window
+      - originWindow: Open action use the window when opening explorer
     - [x] Selection
     - [x] Cut / Copy / Paste
     - [x] Delete action use trash by default
@@ -170,7 +172,7 @@ Default: <pre><code>true</code></pre>
 Default: <pre><code>false</code></pre>
 </details>
 <details>
-<summary><code>explorer.openAction.strategy</code>: Strategy for open action. type: <code>select | vsplit | previousBuffer</code></summary>
+<summary><code>explorer.openAction.strategy</code>: Strategy for open action. type: <code>select | vsplit | previousBuffer | previousWindow | sourceWindow</code></summary>
 Default: <pre><code>"select"</code></pre>
 </details>
 <details>

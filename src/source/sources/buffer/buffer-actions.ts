@@ -1,5 +1,5 @@
 import { BufferSource } from './buffer-source';
-import { openStrategy, avoidOnBufEnter, execNotifyBlock } from '../../../util';
+import { avoidOnBufEnter, execNotifyBlock } from '../../../util';
 
 export function initBufferActions(buffer: BufferSource) {
   const { nvim } = buffer;
@@ -32,35 +32,12 @@ export function initBufferActions(buffer: BufferSource) {
   buffer.addNodeAction(
     'open',
     async (node) => {
-      if (openStrategy === 'vsplit') {
-        await buffer.doAction('openInVsplit', node);
-        await buffer.quitOnOpen();
-      } else if (openStrategy === 'select') {
-        await buffer.explorer.selectWindowsUI(
-          async (winnr) => {
-            await avoidOnBufEnter(async () => {
-              await buffer.nvim.command(`${winnr}wincmd w`);
-            });
-            await nvim.command(`buffer ${node.bufnr}`);
-            await buffer.quitOnOpen();
-          },
-          async () => {
-            await buffer.doAction('openInVsplit', node);
-            await buffer.quitOnOpen();
-          },
-        );
-      } else if (openStrategy === 'previousBuffer') {
-        const prevWinnr = await buffer.prevWinnr();
-        if (prevWinnr) {
-          await avoidOnBufEnter(async () => {
-            await nvim.command(`${prevWinnr}wincmd w`);
-          });
-          await nvim.command(`buffer ${node.bufnr}`);
-        } else {
-          await buffer.doAction('openInVsplit', node);
-        }
-        await buffer.quitOnOpen();
-      }
+      await buffer.openAction(node, async (winnr) => {
+        await avoidOnBufEnter(async () => {
+          await buffer.nvim.command(`${winnr}wincmd w`);
+        });
+        await nvim.command(`buffer ${node.bufnr}`);
+      });
     },
     'open buffer',
     { multi: false },
