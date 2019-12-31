@@ -133,7 +133,7 @@ export class BufferSource extends ExplorerSource<BufferNode> {
 
   async drawNode(node: BufferNode, nodeIndex: number) {
     if (!node.parent) {
-      node.drawnLine = await this.viewBuilder.drawLine(async (row) => {
+      node.drawnLine = await this.viewBuilder.drawRowLine(async (row) => {
         row.add(
           this.expanded ? sourceIcons.expanded : sourceIcons.collapsed,
           highlights.expandIcon,
@@ -142,7 +142,7 @@ export class BufferSource extends ExplorerSource<BufferNode> {
         row.add(`[BUFFER${this.showHidden ? ' ' + sourceIcons.hidden : ''}]`, highlights.title);
       });
     } else {
-      node.drawnLine = await this.viewBuilder.drawLine(async (row) => {
+      node.drawnLine = await this.viewBuilder.drawRowLine(async (row) => {
         row.add('  ');
         await this.columnManager.draw(row, node, nodeIndex);
       });

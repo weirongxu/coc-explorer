@@ -1,4 +1,4 @@
-import { workspace, ExtensionContext, Emitter, Disposable } from 'coc.nvim';
+import { workspace, ExtensionContext, Emitter, Disposable, events } from 'coc.nvim';
 import { Explorer } from './explorer';
 import { parseArgs } from './parse-args';
 import { onError } from './logger';

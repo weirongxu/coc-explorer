@@ -7,9 +7,13 @@ const highlights = {
 };
 
 fileColumnRegistrar.registerColumn('size', () => ({
-  draw(row, node) {
+  draw(row, node, { isMultiLine }) {
     if (node.lstat) {
-      row.add(prettyBytes(node.lstat.size).padStart(10), highlights.size);
+      if (isMultiLine) {
+        row.add(prettyBytes(node.lstat.size), highlights.size);
+      } else {
+        row.add(prettyBytes(node.lstat.size).padStart(10), highlights.size);
+      }
     } else {
       row.add(' '.repeat(10));
     }

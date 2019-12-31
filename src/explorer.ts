@@ -1,4 +1,4 @@
-import { Buffer, ExtensionContext, Window, workspace, Disposable } from 'coc.nvim';
+import { Buffer, ExtensionContext, Window, workspace, Disposable, events } from 'coc.nvim';
 import { Action, ActionMode, ActionSyms, mappings } from './mappings';
 import { Args } from './parse-args';
 import { IndexesManager } from './indexes-manager';
@@ -17,6 +17,7 @@ import { ExplorerManager } from './explorer-manager';
 import { hlGroupManager } from './source/highlight-manager';
 import { BuffuerContextVars } from './context-variables';
 import { SourceViewBuilder, SourceRowBuilder } from './source/view-builder';
+import { FloatingPreview } from './floating-preview';
 
 const hl = hlGroupManager.linkGroup.bind(hlGroupManager);
 const helpHightlights = {
@@ -42,6 +43,7 @@ export class Explorer {
     }
   > = {};
   context: ExtensionContext;
+  floatingWindow = new FloatingPreview(this);
 
   private _buffer?: Buffer;
   private _args?: Args;
@@ -69,6 +71,18 @@ export class Explorer {
     public bufnr: number,
   ) {
     this.context = explorerManager.context;
+    if (config.get<boolean>('floatingPreview')!) {
+      events.on('CursorMoved', async (bufnr) => {
+        if (bufnr === this.bufnr) {
+          await this.floatingWindow.render();
+        }
+      });
+      events.on('BufEnter', async (bufnr) => {
+        if (bufnr === this.bufnr) {
+          await this.floatingWindow.render();
+        }
+      });
+    }
 
     this.addGlobalAction(
       'nodePrev',
@@ -470,11 +484,21 @@ export class Explorer {
     }
   }
 
+  async currentSource() {
+    return this.sources[await this.currentSourceIndex()];
+  }
+
   async currentSourceIndex() {
     const lineIndex = await this.currentLineIndex();
     return this.sources.findIndex(
       (source) => lineIndex >= source.startLine && lineIndex <= source.endLine,
     );
+  }
+
+  async currentNode() {
+    const source = await this.currentSource();
+    const nodeIndex = (await this.currentLineIndex()) - source.startLine;
+    return source.flattenedNodes[nodeIndex];
   }
 
   async currentCursor() {
@@ -622,7 +646,7 @@ export class Explorer {
     }
   }
 
-  async openHelp(source: ExplorerSource<any>, isRoot: boolean) {
+  async showHelp(source: ExplorerSource<any>, isRoot: boolean) {
     this.isHelpUI = true;
     const builder = new SourceViewBuilder();
     const width = await this.nvim.call('winwidth', '%');
@@ -630,7 +654,7 @@ export class Explorer {
     const lines: string[] = [];
 
     lines.push(
-      await builder.drawLine((row) => {
+      await builder.drawRowLine((row) => {
         row.add(
           `Help for [${source.sourceName}${
             isRoot ? ' root' : ''
@@ -639,7 +663,7 @@ export class Explorer {
       }),
     );
     lines.push(
-      await builder.drawLine((row) => {
+      await builder.drawRowLine((row) => {
         row.add('—'.repeat(width), helpHightlights.line);
       }),
     );
@@ -661,7 +685,7 @@ export class Explorer {
         continue;
       }
       lines.push(
-        await builder.drawLine((row) => {
+        await builder.drawRowLine((row) => {
           row.add(' ');
           row.add(key, helpHightlights.mappingKey);
           row.add(' - ');
@@ -670,7 +694,7 @@ export class Explorer {
       );
       for (const action of actions.slice(1)) {
         lines.push(
-          await builder.drawLine((row) => {
+          await builder.drawRowLine((row) => {
             row.add(' '.repeat(key.length + 4));
             drawAction(row, action);
           }),

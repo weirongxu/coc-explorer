@@ -290,7 +290,7 @@ export class FileSource extends ExplorerSource<FileNode> {
 
   async drawNode(node: FileNode, nodeIndex: number, options: DrawNodeOption<FileNode>) {
     if (!node.parent) {
-      node.drawnLine = await this.viewBuilder.drawLine(async (row) => {
+      node.drawnLine = await this.viewBuilder.drawRowLine(async (row) => {
         row.add(
           this.expanded ? sourceIcons.expanded : sourceIcons.collapsed,
           highlights.expandIcon,
@@ -306,7 +306,7 @@ export class FileSource extends ExplorerSource<FileNode> {
       node.isFirstInLevel = options.prevSiblingNode === undefined;
       node.isLastInLevel = options.nextSiblingNode === undefined;
 
-      node.drawnLine = await this.viewBuilder.drawLine(async (row) => {
+      node.drawnLine = await this.viewBuilder.drawRowLine(async (row) => {
         await this.columnManager.draw(row, node, nodeIndex);
       });
     }

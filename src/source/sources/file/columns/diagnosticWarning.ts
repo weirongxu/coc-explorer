@@ -55,7 +55,7 @@ fileColumnRegistrar.registerColumn(
         this.concealable?.requestHide();
       }
     },
-    draw(row, node, nodeIndex) {
+    draw(row, node, { nodeIndex }) {
       if (node.fullpath in diagnosticManager.warningMixedCount) {
         if (node.directory && source.expandStore.isExpanded(node)) {
           row.add(' '.padStart(warningMaxWidth));

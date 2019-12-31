@@ -2,8 +2,11 @@ import { SourceRowBuilder } from './view-builder';
 import { ExplorerSource, BaseTreeNode } from './source';
 import { Disposable } from 'coc.nvim';
 import { HighlightConcealable } from './highlight-manager';
+import { startCase } from 'lodash';
 
 export interface Column<TreeNode extends BaseTreeNode<TreeNode>> {
+  label?: string;
+
   inited?: boolean;
 
   concealable?: HighlightConcealable;
@@ -19,7 +22,11 @@ export interface Column<TreeNode extends BaseTreeNode<TreeNode>> {
    */
   beforeDraw?(nodes: TreeNode[]): boolean | void | Promise<boolean | void>;
 
-  draw(row: SourceRowBuilder, node: TreeNode, nodeIndex: number): void | Promise<void>;
+  draw(
+    row: SourceRowBuilder,
+    node: TreeNode,
+    option: { nodeIndex: number; isMultiLine: boolean },
+  ): void | Promise<void>;
 }
 
 export class ColumnRegistrar<
@@ -30,38 +37,67 @@ export class ColumnRegistrar<
   registeredColumns: Record<
     string,
     {
-      getFileColumn: (fileSource: S, data: any) => C;
+      getColumn: (source: S, data: any) => C;
       getInitialData: () => any;
     }
   > = {};
 
-  async getColumns(source: S, columnStrings: string[]) {
+  async getColumns(source: S, columnStrings: (string | string[])[]) {
     const columns: C[] = [];
-    for (const column of columnStrings) {
-      const getColumn = this.registeredColumns[column];
-      if (getColumn) {
-        const column = getColumn.getFileColumn(source, getColumn.getInitialData());
+    const multiLineColumns: C[][] = [];
+    let multiLineColumn = false;
+    const getRegisteredColumn = async (columnString: string) => {
+      const registeredColumn = this.registeredColumns[columnString];
+      if (registeredColumn) {
+        const column = registeredColumn.getColumn(source, registeredColumn.getInitialData());
         if (column.inited) {
-          columns.push(column);
+          return column;
         } else {
           if (!column.validate || column.validate()) {
             await column.init?.();
             column.inited = true;
-            columns.push(column);
+            return column;
           }
         }
       }
+    };
+    for (const columnStrs of columnStrings) {
+      if (Array.isArray(columnStrs)) {
+        multiLineColumn = true;
+      }
+      if (!multiLineColumn) {
+        const columnStr = columnStrs as string;
+        const column = await getRegisteredColumn(columnStr);
+        if (column) {
+          columns.push({
+            label: startCase(columnStr),
+            ...column,
+          });
+        }
+      } else {
+        const multiLineRow: C[] = [];
+        for (const columnStr of columnStrs as string[]) {
+          const column = await getRegisteredColumn(columnStr);
+          if (column) {
+            multiLineRow.push({
+              label: startCase(columnStr),
+              ...column,
+            });
+          }
+        }
+        multiLineColumns.push(multiLineRow);
+      }
     }
-    return columns;
+    return [columns, multiLineColumns] as const;
   }
 
   registerColumn<T>(
     name: string,
-    getFileColumn: (fileSource: S, data: T) => C,
+    getColumn: (source: S, data: T) => C,
     getInitialData: () => T = () => null as any,
   ) {
     this.registeredColumns[name] = {
-      getFileColumn,
+      getColumn: getColumn,
       getInitialData,
     };
     return Disposable.create(() => {

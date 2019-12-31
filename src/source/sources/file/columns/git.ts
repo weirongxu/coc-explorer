@@ -95,7 +95,7 @@ fileColumnRegistrar.registerColumn(
       await gitManager.reload(folderPath);
       data.prevStatuses = await gitManager.getStatuses(folderPath);
     },
-    draw(row, node, nodeIndex) {
+    draw(row, node, { nodeIndex }) {
       const showFormat = (f: string, staged: boolean) => {
         row.add(f, staged ? highlights.stage : highlights.unstage);
       };

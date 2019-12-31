@@ -1,20 +1,27 @@
 import { Column, ColumnRegistrar } from './column-registrar';
 import { BaseTreeNode, ExplorerSource } from './source';
-import { SourceRowBuilder } from './view-builder';
+import { SourceRowBuilder, RowHighlightPosition } from './view-builder';
+import { hlGroupManager } from './highlight-manager';
+
+const labelHl = hlGroupManager.linkGroup('Label', 'Label');
 
 export class ColumnManager<TreeNode extends BaseTreeNode<TreeNode>> {
-  columnNames: string[] = [];
+  columnNames: (string | string[])[] = [];
   columns: Column<TreeNode>[] = [];
+  multiLineColumns: Column<TreeNode>[][] = [];
 
   constructor(public source: ExplorerSource<TreeNode>) {}
 
   async registerColumns(
-    columnNames: string[],
+    columnNames: (string | string[])[],
     columnRegistrar: ColumnRegistrar<TreeNode, any, any>,
   ) {
     if (this.columnNames.toString() !== columnNames.toString()) {
       this.columnNames = columnNames;
-      this.columns = await columnRegistrar.getColumns(this.source, columnNames);
+      [this.columns, this.multiLineColumns] = await columnRegistrar.getColumns(
+        this.source,
+        columnNames,
+      );
     }
   }
 
@@ -39,15 +46,55 @@ export class ColumnManager<TreeNode extends BaseTreeNode<TreeNode>> {
     }
   }
 
-  async draw(row: SourceRowBuilder, node: TreeNode, nodeIndex: number) {
-    for (const column of this.columns) {
+  async draw(
+    row: SourceRowBuilder,
+    node: TreeNode,
+    nodeIndex: number,
+    {
+      columns = this.columns,
+      isMultiLine = false,
+    }: {
+      columns?: Column<TreeNode>[];
+      isMultiLine?: boolean;
+    } = {},
+  ) {
+    for (const column of columns) {
       if (column.concealable) {
         row.concealableColumn(column.concealable, async () => {
-          await column.draw(row, node, nodeIndex);
+          await column.draw(row, node, { nodeIndex, isMultiLine });
         });
       } else {
-        await column.draw(row, node, nodeIndex);
+        await column.draw(row, node, { nodeIndex, isMultiLine });
       }
     }
+    return row;
+  }
+
+  async drawMultiLine(node: TreeNode, nodeIndex: number) {
+    const highlightPositions: RowHighlightPosition[] = [];
+    const lines: string[] = [];
+    let lineIndex = 0;
+    for (const columns of this.multiLineColumns) {
+      const row = await this.source.viewBuilder.drawRow(
+        async (row) => {
+          row.add(columns.map((column) => column.label).join(' & ') + ': ', labelHl);
+          await this.draw(row, node, nodeIndex, {
+            columns,
+            isMultiLine: true,
+          });
+        },
+        {
+          highlightMode: 'highlight',
+          relativeLineIndex: lineIndex,
+        },
+      );
+      highlightPositions.push(...row.highlightPositions);
+      lineIndex += 1;
+      lines.push(row.content);
+    }
+    return {
+      highlightPositions,
+      lines,
+    };
   }
 }

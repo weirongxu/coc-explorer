@@ -5,7 +5,7 @@ import { sourceIcons, enableNerdfont } from '../../../source';
 //   icon color from https://github.com/microsoft/vscode/blob/e75e71f41911633be838344377df26842f2b8c7c/extensions/theme-seti/icons/vs-seti-icon-theme.json
 import nerdfontJson from './icons.nerdfont.json';
 import { highlights as filenameHighlights } from './filename';
-import { hlGroupManager, Hightlight } from '../../../highlight-manager';
+import { hlGroupManager, Highlight } from '../../../highlight-manager';
 import { config, getExtensions } from '../../../../util';
 import { workspace } from 'coc.nvim';
 import { FileNode } from '../file-source';
@@ -33,7 +33,7 @@ Object.assign(nerdfont.extensions, customIcon.extensions);
 Object.assign(nerdfont.filenames, customIcon.filenames);
 Object.assign(nerdfont.patternMatches, customIcon.patternMatches);
 
-export const nerdfontHighlights: Record<string, Hightlight> = {};
+export const nerdfontHighlights: Record<string, Highlight> = {};
 Object.entries(nerdfont.icons).forEach(([name, icon]) => {
   nerdfontHighlights[name] = hlGroupManager.group(
     `FileIconNerdfont_${name}`,

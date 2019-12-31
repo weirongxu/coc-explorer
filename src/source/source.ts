@@ -119,7 +119,7 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>> {
     this.addAction(
       'help',
       async (nodes) => {
-        await this.explorer.openHelp(this, nodes === null);
+        await this.explorer.showHelp(this, nodes === null);
       },
       'show help',
       { multi: false },

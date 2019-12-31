@@ -104,6 +104,11 @@
           "type": "boolean",
           "default": false
         },
+        "explorer.floatingPreview": {
+          "description": "Preview the node attributes in floating windows",
+          "type": "boolean",
+          "default": false
+        },
         "explorer.openAction.strategy": {
           "description": "Strategy for open action",
           "enum": [
@@ -251,14 +256,16 @@
           "description": "Default columns for buffer source",
           "type": "array",
           "items": {
-            "enum": [
-              "selection",
-              "bufnr",
-              "name",
-              "modified",
-              "readonly",
-              "bufname",
-              "fullpath"
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
             ]
           },
           "default": [
@@ -267,8 +274,25 @@
             "name",
             "modified",
             "readonly",
-            "fullpath"
+            "fullpath",
+            [
+              "bufname"
+            ],
+            [
+              "fullpath"
+            ],
+            [
+              "modified"
+            ],
+            [
+              "readonly"
+            ]
           ]
+        },
+        "explorer.datetime.format": {
+          "description": "Explorer datetime format, check out https://github.com/iamkun/dayjs/blob/dev/docs/en/API-reference.md#format-formatstringwithtokens-string",
+          "type": "string",
+          "default": "YY/MM/DD HH:mm:ss"
         },
         "explorer.file.autoReveal": {
           "description": "Explorer will automatically expand to the current buffer",
@@ -323,20 +347,16 @@
           "description": "Default columns for file source",
           "type": "array",
           "items": {
-            "enum": [
-              "git",
-              "selection",
-              "clip",
-              "diagnosticWarning",
-              "diagnosticError",
-              "indent",
-              "icon",
-              "filename",
-              "size",
-              "modified",
-              "created",
-              "accessed",
-              "readonly"
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
             ]
           },
           "default": [
@@ -349,7 +369,25 @@
             "filename",
             "size",
             "modified",
-            "readonly"
+            "readonly",
+            [
+              "fullpath"
+            ],
+            [
+              "size"
+            ],
+            [
+              "accessed"
+            ],
+            [
+              "modified"
+            ],
+            [
+              "created"
+            ],
+            [
+              "readonly"
+            ]
           ]
         },
         "explorer.file.column.git.showIgnored": {
@@ -456,7 +494,7 @@
     "clean": "rimraf lib",
     "build": "webpack --mode production",
     "dev": "webpack --mode development --watch",
-    "prepublish": "yarn run clean && yarn run build",
+    "prepare": "yarn run clean && yarn run build",
     "lint": "tslint -p .",
     "gen:doc": "ts-node ./scripts/gen_doc.ts",
     "test": "yarn run lint && jest --runInBand --detectOpenHandles --forceExit"
@@ -469,6 +507,7 @@
     "@types/command-exists": "^1.2.0",
     "@types/jest": "^24.0.23",
     "@types/json-schema": "^7.0.3",
+    "@types/lodash": "^4.14.149",
     "@types/minimatch": "^3.0.3",
     "@types/node": "^12.12.18",
     "@types/rimraf": "^2.0.3",
@@ -477,6 +516,7 @@
     "command-exists": "^1.2.8",
     "dayjs": "^1.8.17",
     "jest": "^24.8.0",
+    "lodash": "^4.17.15",
     "make-dir": "^3.0.0",
     "minimatch": "^3.0.4",
     "pretty-bytes": "^5.3.0",
