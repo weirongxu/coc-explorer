@@ -32,7 +32,7 @@ export class BuffuerContextVars<T> extends ContextVars<T> {
   }
 
   async read(): Promise<object> {
-    return ((await this.explorer.buffer.getVar(variableName)) as object) ?? {};
+    return ((await this.explorer.buffer.getVar(variableName)) as object) || {};
   }
 
   async write(obj: object) {
