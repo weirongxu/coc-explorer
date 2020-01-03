@@ -71,6 +71,7 @@ export class Explorer {
     public bufnr: number,
   ) {
     this.context = explorerManager.context;
+
     if (config.get<boolean>('floatingPreview')!) {
       events.on('CursorMoved', async (bufnr) => {
         if (bufnr === this.bufnr) {
