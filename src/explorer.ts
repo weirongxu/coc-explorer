@@ -34,7 +34,7 @@ export class Explorer {
   isHelpUI: boolean = false;
   indexesManager = new IndexesManager(this);
   inited = new BuffuerContextVars<boolean>('inited', this);
-  originWinid = new BuffuerContextVars<number>('originWinid', this);
+  sourceWinid = new BuffuerContextVars<number>('sourceWinid', this);
   globalActions: Record<
     string,
     {
@@ -255,8 +255,8 @@ export class Explorer {
     });
   }
 
-  async originWinnr() {
-    const winid = await this.originWinid.get();
+  async sourceWinnr() {
+    const winid = await this.sourceWinid.get();
     if (!winid) {
       return null;
     }
