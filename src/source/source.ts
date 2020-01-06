@@ -356,8 +356,8 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>> {
         await this.doAction('openInVsplit', node);
       }
       await this.quitOnOpen();
-    } else if (openStrategy === 'originWindow') {
-      const prevWinnr = await this.explorer.originWinnr();
+    } else if (openStrategy === 'sourceWindow') {
+      const prevWinnr = await this.explorer.sourceWinnr();
       if (prevWinnr) {
         await openByWinnr(prevWinnr);
       } else {

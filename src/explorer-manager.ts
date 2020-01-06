@@ -200,7 +200,7 @@ export class ExplorerManager {
       explorers = this.tabContainer[tabid].tab;
     }
 
-    const originWinid = (await this.nvim.eval('bufwinid(bufnr("%"))')) as number;
+    const sourceWinid = (await this.nvim.eval('bufwinid(bufnr("%"))')) as number;
 
     let explorer = explorers[0];
 
@@ -222,7 +222,7 @@ export class ExplorerManager {
       }
       await explorer.resume(args);
     }
-    await explorer.originWinid.set(originWinid);
+    await explorer.sourceWinid.set(sourceWinid);
     await explorer.open(args);
   }
 }

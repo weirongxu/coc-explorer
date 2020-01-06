@@ -9,5 +9,5 @@ export const activeMode = config.get<boolean>('activeMode')!;
 export const autoReveal = config.get<boolean>('file.autoReveal')!;
 
 export const openStrategy = config.get<
-  'select' | 'vsplit' | 'previousBuffer' | 'previousWindow' | 'originWindow'
+  'select' | 'vsplit' | 'previousBuffer' | 'previousWindow' | 'sourceWindow'
 >('openAction.strategy')!;
