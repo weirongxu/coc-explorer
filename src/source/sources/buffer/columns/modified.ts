@@ -1,13 +1,9 @@
 import { bufferColumnRegistrar } from '../buffer-column-registrar';
-import { hlGroupManager } from '../../../highlight-manager';
-
-const highlights = {
-  modified: hlGroupManager.linkGroup('BufferModified', 'Operator'),
-};
+import {bufferHighlights} from '../buffer-source';
 
 bufferColumnRegistrar.registerColumn('modified', () => ({
   draw(row, node) {
-    row.add(node.modified ? '+' : node.modifiable ? '' : '-', highlights.modified);
+    row.add(node.modified ? '+' : node.modifiable ? '' : '-', bufferHighlights.modified);
     row.add(' ');
   },
 }));

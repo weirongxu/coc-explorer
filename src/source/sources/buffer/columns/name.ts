@@ -1,14 +1,10 @@
-import { hlGroupManager } from '../../../highlight-manager';
 import { bufferColumnRegistrar } from '../buffer-column-registrar';
-
-const highlights = {
-  nameVisible: hlGroupManager.linkGroup('BufferNameVisible', 'String'),
-};
+import { bufferHighlights } from '../buffer-source';
 
 bufferColumnRegistrar.registerColumn('name', () => ({
   draw(row, node) {
     if (node.visible) {
-      row.add(node.basename, highlights.nameVisible);
+      row.add(node.basename, bufferHighlights.nameVisible);
     } else {
       row.add(node.basename);
     }

@@ -5,9 +5,9 @@ import { Explorer } from '../explorer';
 import { onError } from '../logger';
 import { ActionSyms, mappings, reverseMappings, ActionMode } from '../mappings';
 import { config, execNotifyBlock, openStrategy } from '../util';
-import { SourceViewBuilder } from './view-builder';
+import { SourceViewBuilder, HighlightPosition } from './view-builder';
 import { hlGroupManager } from './highlight-manager';
-import { ColumnManager } from './column-manager';
+import { ColumnManager, DrawMultiLineResult } from './column-manager';
 
 export type ActionOptions = {
   multi: boolean;
@@ -485,6 +485,14 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>> {
     return renderAll;
   }
 
+  abstract drawRootNode(node: TreeNode): void | Promise<void>;
+
+  drawRootMultiLine(
+    _node: TreeNode,
+  ): undefined | DrawMultiLineResult | Promise<DrawMultiLineResult> {
+    return;
+  }
+
   abstract drawNode(
     node: TreeNode,
     nodeIndex: number,
@@ -513,6 +521,12 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>> {
   async drawNodes(nodes: TreeNode[]) {
     for (let i = 0, len = nodes.length; i < len; i++) {
       const node = nodes[i];
+
+      if (node.isRoot) {
+        await this.drawRootNode(node);
+        continue;
+      }
+
       const nodeIndex = this.flattenedNodes.findIndex((it) => it.uid === node.uid);
       if (nodeIndex > -1) {
         let prevSiblingNode = undefined;
@@ -530,7 +544,7 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>> {
   }
 
   currentSourceIndex() {
-    return this.explorer.sources.indexOf(this);
+    return this.explorer.sources.indexOf(this as ExplorerSource<any>);
   }
 
   opened(_notify = false): void | Promise<void> {}

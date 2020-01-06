@@ -2,6 +2,7 @@ import { Explorer } from './explorer';
 import { workspace, FloatFactory, Documentation } from 'coc.nvim';
 import { WindowConfig } from 'coc.nvim/lib/model/floatFactory';
 import { execNotifyBlock, debouncePromise } from './util';
+import { DrawMultiLineResult } from './source/column-manager';
 
 export class FloatingPreview {
   nvim = workspace.nvim;
@@ -35,18 +36,26 @@ export class FloatingPreview {
         const nodeIndex = await source.currentLineIndex();
         if (nodeIndex !== null) {
           const node = source.flattenedNodes[nodeIndex];
-          const floatingDoc = await source.columnManager.drawMultiLine(node, nodeIndex);
+          let drawMultiLineResult: DrawMultiLineResult | undefined;
+          if (node.isRoot) {
+            drawMultiLineResult = await source.drawRootMultiLine(node);
+          } else {
+            drawMultiLineResult = await source.columnManager.drawMultiLine(node, nodeIndex);
+          }
+          if (!drawMultiLineResult) {
+            return;
+          }
           await this.floatFactory.create(
             [
               {
-                content: floatingDoc.lines.join('\n'),
+                content: drawMultiLineResult.lines.join('\n'),
                 filetype: 'coc-explorer-preview',
               },
             ],
             false,
           );
           await execNotifyBlock(async () => {
-            for (const hl of floatingDoc.highlightPositions) {
+            for (const hl of drawMultiLineResult!.highlightPositions) {
               await this.floatFactory.buffer.addHighlight({
                 hlGroup: hl.group,
                 line: hl.relativeLineIndex,

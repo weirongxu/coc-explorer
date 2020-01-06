@@ -1,4 +1,4 @@
-import { Buffer, ExtensionContext, Window, workspace, Disposable, events } from 'coc.nvim';
+import { Buffer, ExtensionContext, Window, workspace, Disposable } from 'coc.nvim';
 import { Action, ActionMode, ActionSyms, mappings } from './mappings';
 import { Args } from './parse-args';
 import { IndexesManager } from './indexes-manager';
@@ -12,6 +12,7 @@ import {
   enableDebug,
   enableWrapscan,
   avoidOnBufEnter,
+  onEvents,
 } from './util';
 import { ExplorerManager } from './explorer-manager';
 import { hlGroupManager } from './source/highlight-manager';
@@ -73,12 +74,12 @@ export class Explorer {
     this.context = explorerManager.context;
 
     if (config.get<boolean>('floatingPreview')!) {
-      events.on('CursorMoved', async (bufnr) => {
+      onEvents('CursorMoved', async (bufnr) => {
         if (bufnr === this.bufnr) {
           await this.floatingWindow.render();
         }
       });
-      events.on('BufEnter', async (bufnr) => {
+      onEvents('BufEnter', async (bufnr) => {
         if (bufnr === this.bufnr) {
           await this.floatingWindow.render();
         }
@@ -199,7 +200,7 @@ export class Explorer {
     return this._args;
   }
 
-  get sources(): ExplorerSource<any>[] {
+  get sources(): ExplorerSource<BaseTreeNode<any>>[] {
     if (!this._sources) {
       throw Error('Explorer sources not initialized yet');
     }
@@ -492,7 +493,7 @@ export class Explorer {
   async currentSourceIndex() {
     const lineIndex = await this.currentLineIndex();
     return this.sources.findIndex(
-      (source) => lineIndex >= source.startLine && lineIndex <= source.endLine,
+      (source) => lineIndex >= source.startLine && lineIndex < source.endLine,
     );
   }
 

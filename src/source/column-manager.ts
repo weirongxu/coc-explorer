@@ -1,9 +1,14 @@
 import { Column, ColumnRegistrar } from './column-registrar';
 import { BaseTreeNode, ExplorerSource } from './source';
-import { SourceRowBuilder, RowHighlightPosition } from './view-builder';
+import { SourceRowBuilder, HighlightPosition } from './view-builder';
 import { hlGroupManager } from './highlight-manager';
 
-const labelHl = hlGroupManager.linkGroup('Label', 'Label');
+export interface DrawMultiLineResult {
+  highlightPositions: HighlightPosition[];
+  lines: string[];
+}
+
+export const labelHighlight = hlGroupManager.linkGroup('Label', 'Label');
 
 export class ColumnManager<TreeNode extends BaseTreeNode<TreeNode>> {
   columnNames: (string | string[])[] = [];
@@ -70,14 +75,14 @@ export class ColumnManager<TreeNode extends BaseTreeNode<TreeNode>> {
     return row;
   }
 
-  async drawMultiLine(node: TreeNode, nodeIndex: number) {
-    const highlightPositions: RowHighlightPosition[] = [];
+  async drawMultiLine(node: TreeNode, nodeIndex: number): Promise<DrawMultiLineResult> {
+    const highlightPositions: HighlightPosition[] = [];
     const lines: string[] = [];
     let lineIndex = 0;
     for (const columns of this.multiLineColumns) {
       const row = await this.source.viewBuilder.drawRow(
         async (row) => {
-          row.add(columns.map((column) => column.label).join(' & ') + ': ', labelHl);
+          row.add(columns.map((column) => column.label).join(' & ') + ': ', labelHighlight);
           await this.draw(row, node, nodeIndex, {
             columns,
             isMultiLine: true,

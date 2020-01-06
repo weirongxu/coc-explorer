@@ -1,15 +1,9 @@
 import commandExists from 'command-exists';
-import { hlGroupManager } from '../../../highlight-manager';
 import { fileColumnRegistrar } from '../file-column-registrar';
 import { GitFormat, gitManager, GitMixedStatus } from '../../../../git-manager';
 import pathLib from 'path';
-import { events } from 'coc.nvim';
-import { debounce } from '../../../../util';
-
-const highlights = {
-  stage: hlGroupManager.linkGroup('FileGitStage', 'Comment'),
-  unstage: hlGroupManager.linkGroup('FileGitUnstage', 'Operator'),
-};
+import { debounce, onEvents } from '../../../../util';
+import { fileHighlights } from '../file-source';
 
 const getIconConf = (name: string) => {
   return fileColumnRegistrar.getColumnConfig<string>('git.icon.' + name)!;
@@ -37,7 +31,7 @@ fileColumnRegistrar.registerColumn(
       };
 
       source.subscriptions.push(
-        events.on(
+        onEvents(
           'BufWritePost',
           debounce(1000, async (bufnr) => {
             const bufinfo = await source.nvim.call('getbufinfo', [bufnr]);
@@ -97,7 +91,7 @@ fileColumnRegistrar.registerColumn(
     },
     draw(row, node, { nodeIndex }) {
       const showFormat = (f: string, staged: boolean) => {
-        row.add(f, staged ? highlights.stage : highlights.unstage);
+        row.add(f, staged ? fileHighlights.gitStage : fileHighlights.gitUnstage);
       };
       const status = gitManager.getStatus(node.fullpath);
       if (status) {

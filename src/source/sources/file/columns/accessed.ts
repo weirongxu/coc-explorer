@@ -1,16 +1,12 @@
 import { fileColumnRegistrar } from '../file-column-registrar';
-import { hlGroupManager } from '../../../highlight-manager';
 import dayjs from 'dayjs';
 import { datetimeFormat } from '../../../../util';
-
-const highlights = {
-  time: hlGroupManager.linkGroup('TimeAccessed', 'Identifier'),
-};
+import { fileHighlights } from '../file-source';
 
 fileColumnRegistrar.registerColumn('accessed', () => ({
   draw(row, node) {
     if (node.lstat) {
-      row.add(dayjs(node.lstat.atime).format(datetimeFormat), highlights.time);
+      row.add(dayjs(node.lstat.atime).format(datetimeFormat), fileHighlights.timeAccessed);
     } else {
       row.add('                 ');
     }

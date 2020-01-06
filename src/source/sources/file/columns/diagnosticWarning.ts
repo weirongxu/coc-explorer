@@ -1,15 +1,11 @@
 import { fileColumnRegistrar } from '../file-column-registrar';
 import { hlGroupManager } from '../../../highlight-manager';
 import { diagnosticManager } from '../../../../diagnostic-manager';
-import { config, debounce } from '../../../../util';
-import { events } from 'coc.nvim';
+import { config, debounce, onEvents } from '../../../../util';
+import { fileHighlights } from '../file-source';
 
 const diagnosticCountMax = config.get<number>('file.diagnosticCountMax')!;
 const warningMaxWidth = diagnosticCountMax.toString().length;
-
-const highlights = {
-  warning: hlGroupManager.linkGroup('FileDiagnosticWarning', 'CocWarningSign'),
-};
 
 const concealable = hlGroupManager.concealable('FileDiagnosticWarning');
 
@@ -19,7 +15,7 @@ fileColumnRegistrar.registerColumn(
     concealable,
     init() {
       source.subscriptions.push(
-        events.on(
+        onEvents(
           'BufWritePost',
           debounce(1000, async () => {
             diagnosticManager.warningReload(source.root);
@@ -62,7 +58,7 @@ fileColumnRegistrar.registerColumn(
           source.removeIndexes('diagnosticWarning', nodeIndex);
         } else {
           const count = diagnosticManager.warningMixedCount[node.fullpath];
-          row.add(count.padStart(warningMaxWidth), highlights.warning);
+          row.add(count.padStart(warningMaxWidth), fileHighlights.diagnosticWarning);
           source.addIndexes('diagnosticWarning', nodeIndex);
         }
       } else {

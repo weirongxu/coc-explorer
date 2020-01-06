@@ -2,7 +2,7 @@ import { Highlight, HighlightConcealable, HlEscapeCode } from './highlight-manag
 import { byteLength } from '../util';
 
 export type HighlightMode = 'conceal' | 'highlight';
-export type RowHighlightPosition = {
+export type HighlightPosition = {
   group: string;
   start: number;
   size: number;
@@ -33,7 +33,7 @@ export class SourceViewBuilder {
 export class SourceRowBuilder {
   curPosition: number = 0;
   content = '';
-  highlightPositions: RowHighlightPosition[] = [];
+  highlightPositions: HighlightPosition[] = [];
 
   constructor(
     public view: SourceViewBuilder,

@@ -1,15 +1,9 @@
-import { hlGroupManager } from '../../../highlight-manager';
 import { fileColumnRegistrar } from '../file-column-registrar';
 import { indentChars, topLevel } from './indent';
-import { FileNode, FileSource } from '../file-source';
+import { FileNode, FileSource, fileHighlights } from '../file-source';
 import { workspace } from 'coc.nvim';
 import { fsReadlink } from '../../../../util';
 import { getSymbol } from '../../../../util/symbol';
-
-export const highlights = {
-  directory: hlGroupManager.linkGroup('FileDirectory', 'Directory'),
-  linkTarget: hlGroupManager.linkGroup('FileLinkTarget', 'Comment'),
-};
 
 const nvim = workspace.nvim;
 
@@ -58,7 +52,13 @@ async function loadTruncateNodes(source: FileSource, fullTreeWidth: number, flat
         const remainWidth = fullTreeWidth - getAttr(source, node).indentWidth;
         truncateCache.set(
           key,
-          await nvim.call('coc_explorer#truncate', [name, linkTarget, remainWidth, enablePaddingEnd, '..']),
+          await nvim.call('coc_explorer#truncate', [
+            name,
+            linkTarget,
+            remainWidth,
+            enablePaddingEnd,
+            '..',
+          ]),
         );
       }
       const cache = truncateCache.get(key)!;
@@ -75,11 +75,11 @@ fileColumnRegistrar.registerColumn('filename', (source) => ({
   draw(row, node) {
     const attr = getAttr(source, node);
     if (node.directory) {
-      row.add(attr.truncatedName!, highlights.directory);
-      row.add(attr.truncatedLinkTarget!, highlights.linkTarget);
+      row.add(attr.truncatedName!, fileHighlights.directory);
+      row.add(attr.truncatedLinkTarget!, fileHighlights.linkTarget);
     } else {
       row.add(attr.truncatedName!);
-      row.add(attr.truncatedLinkTarget!, highlights.linkTarget);
+      row.add(attr.truncatedLinkTarget!, fileHighlights.linkTarget);
     }
     row.add(' ');
   },

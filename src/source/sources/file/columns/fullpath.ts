@@ -1,15 +1,10 @@
-import { hlGroupManager } from '../../../highlight-manager';
 import { fileColumnRegistrar } from '../file-column-registrar';
-
-export const highlights = {
-  directory: hlGroupManager.linkGroup('FileDirectory', 'Directory'),
-  linkTarget: hlGroupManager.linkGroup('FileLinkTarget', 'Comment'),
-};
+import { fileHighlights } from '../file-source';
 
 fileColumnRegistrar.registerColumn('fullpath', () => ({
   draw(row, node) {
     if (node.directory) {
-      row.add(node.fullpath + '/', highlights.directory);
+      row.add(node.fullpath + '/', fileHighlights.directory);
     } else {
       row.add(node.fullpath);
     }
