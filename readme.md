@@ -42,7 +42,7 @@ Explorer extension for [coc.nvim](https://github.com/neoclide/coc.nvim)
       - vsplit: Open action with vsplit
       - previousBuffer: Open action use last used buffer
       - previousWindow: Open action use last used window
-      - originWindow: Open action use the window when opening explorer
+      - sourceWindow: Open action use the window when opening explorer
     - [x] Selection
     - [x] Cut / Copy / Paste
     - [x] Delete action use trash by default
