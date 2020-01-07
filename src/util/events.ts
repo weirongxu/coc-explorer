@@ -12,8 +12,8 @@ let stopBufEnter = false;
 const skipBufnrQueue: number[] = [];
 let count = 0;
 
-export function onBufEnter(delay: number, callback: (bufnr: number) => void | Promise<void>) {
-  const throttleFn = throttle(delay, callback, { tail: true });
+export function onBufEnter(callback: (bufnr: number) => void | Promise<void>, delay?: number) {
+  const fn = delay !== undefined ? throttle(delay, callback, { tail: true }) : callback;
   return onEvents('BufEnter', async (bufnr) => {
     if (stopBufEnter) {
       return;
@@ -27,7 +27,7 @@ export function onBufEnter(delay: number, callback: (bufnr: number) => void | Pr
       // tslint:disable-next-line: ban
       workspace.showMessage(`BufEnter: Bufnr(${bufnr}), Count(${count++})`, 'more');
     }
-    throttleFn(bufnr);
+    fn(bufnr);
   });
 }
 

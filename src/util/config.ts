@@ -12,4 +12,6 @@ export const openStrategy = config.get<
   'select' | 'vsplit' | 'previousBuffer' | 'previousWindow' | 'sourceWindow'
 >('openAction.strategy')!;
 
+export const previewStrategy = config.get<'multiLineColumns'>('previewAction.strategy')!;
+
 export const datetimeFormat = config.get<string>('datetime.format')!;

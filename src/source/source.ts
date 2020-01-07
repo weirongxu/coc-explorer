@@ -5,7 +5,7 @@ import { Explorer } from '../explorer';
 import { onError } from '../logger';
 import { ActionSyms, mappings, reverseMappings, ActionMode } from '../mappings';
 import { config, execNotifyBlock, openStrategy } from '../util';
-import { SourceViewBuilder, HighlightPosition } from './view-builder';
+import { SourceViewBuilder } from './view-builder';
 import { hlGroupManager } from './highlight-manager';
 import { ColumnManager, DrawMultiLineResult } from './column-manager';
 

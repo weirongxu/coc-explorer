@@ -1,5 +1,5 @@
 import { Buffer, ExtensionContext, Window, workspace, Disposable } from 'coc.nvim';
-import { Action, ActionMode, ActionSyms, mappings } from './mappings';
+import { Action, ActionMode, mappings, ActionSyms } from './mappings';
 import { Args } from './parse-args';
 import { IndexesManager } from './indexes-manager';
 import './source/load';
@@ -13,6 +13,7 @@ import {
   enableWrapscan,
   avoidOnBufEnter,
   onEvents,
+  onBufEnter,
 } from './util';
 import { ExplorerManager } from './explorer-manager';
 import { hlGroupManager } from './source/highlight-manager';
@@ -73,15 +74,17 @@ export class Explorer {
   ) {
     this.context = explorerManager.context;
 
-    if (config.get<boolean>('floatingPreview')!) {
+    if (config.get<boolean>('previewAction.onHover')!) {
       onEvents('CursorMoved', async (bufnr) => {
         if (bufnr === this.bufnr) {
-          await this.floatingWindow.render();
+          await this.floatingWindow.hoverRender();
         }
       });
-      onEvents('BufEnter', async (bufnr) => {
+      onBufEnter(async (bufnr) => {
         if (bufnr === this.bufnr) {
-          await this.floatingWindow.render();
+          await this.floatingWindow.hoverRender();
+        } else {
+          await this.floatingWindow.hoverRenderCancel();
         }
       });
     }
@@ -122,6 +125,19 @@ export class Explorer {
         await this.quit();
       },
       'quit explorer',
+      { multi: false },
+    );
+    this.addGlobalAction(
+      'preview',
+      async (nodes) => {
+        const source = await this.currentSource();
+        if (nodes && nodes[0]) {
+          const node = nodes[0];
+          const nodeIndex = source.getLineByNode(node);
+          await this.floatingWindow.renderNode(source, node, nodeIndex);
+        }
+      },
+      'preview',
       { multi: false },
     );
 
@@ -567,7 +583,7 @@ export class Explorer {
       const win = await this.win;
       if (win) {
         win.setCursor([lineIndex + 1, finalCol - 1], true);
-        if (!(await this.explorerManager.currentExplorer())) {
+        if (!this.explorerManager.currentExplorer()) {
           this.nvim.command('redraw!', true);
         }
       }

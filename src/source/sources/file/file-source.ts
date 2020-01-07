@@ -128,7 +128,7 @@ export class FileSource extends ExplorerSource<FileNode> {
       if (!workspace.env.isVim) {
         if (autoReveal) {
           this.subscriptions.push(
-            onBufEnter(200, async (bufnr) => {
+            onBufEnter(async (bufnr) => {
               if (bufnr !== this.explorer.bufnr) {
                 const bufinfo = await nvim.call('getbufinfo', [bufnr]);
                 if (bufinfo[0] && bufinfo[0].name) {
@@ -143,16 +143,16 @@ export class FileSource extends ExplorerSource<FileNode> {
                   });
                 }
               }
-            }),
+            }, 200),
           );
         }
       } else {
         this.subscriptions.push(
-          onBufEnter(200, async (bufnr) => {
+          onBufEnter(async (bufnr) => {
             if (bufnr === this.explorer.bufnr) {
               await this.reload(this.rootNode);
             }
-          }),
+          }, 200),
         );
       }
     }

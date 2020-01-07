@@ -88,11 +88,11 @@ export class BufferSource extends ExplorerSource<BufferNode> {
         );
       } else {
         this.subscriptions.push(
-          onBufEnter(500, async (bufnr) => {
+          onBufEnter(async (bufnr) => {
             if (bufnr === this.explorer.bufnr) {
               await this.reload(this.rootNode, { render: false });
             }
-          }),
+          }, 500),
         );
       }
     }

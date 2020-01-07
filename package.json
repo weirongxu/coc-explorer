@@ -104,8 +104,15 @@
           "type": "boolean",
           "default": false
         },
-        "explorer.floatingPreview": {
-          "description": "Preview the node attributes in floating windows",
+        "explorer.previewAction.strategy": {
+          "description": "Strategy for preview action",
+          "enum": [
+            "multiLineColumns"
+          ],
+          "default": "none"
+        },
+        "explorer.previewAction.onHover": {
+          "description": "Open preview when hovering over on node",
           "type": "boolean",
           "default": false
         },
