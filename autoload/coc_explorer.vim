@@ -4,15 +4,15 @@ function! coc_explorer#create(name, explorer_id, position, width)
   let name = a:name.'-'.a:explorer_id
   if a:position ==# 'tab'
     execute 'silent keepalt tabnew '.name
-    call coc_explorer#init_win(a:position, a:width)
+    call coc_explorer#resize_win(a:position, a:width)
   elseif a:position ==# 'left'
     wincmd t
     execute 'silent keepalt leftabove vsplit '.name
-    call coc_explorer#init_win(a:position, a:width)
+    call coc_explorer#resize_win(a:position, a:width)
   elseif a:position ==# 'right'
     wincmd b
     execute 'silent keepalt rightbelow vsplit '.name
-    call coc_explorer#init_win(a:position, a:width)
+    call coc_explorer#resize_win(a:position, a:width)
   else
     throw 'No support position '.a:position
   endif
@@ -24,44 +24,37 @@ function! coc_explorer#resume(bufnr, position, width)
   if a:position ==# 'left'
     wincmd t
     execute 'silent keepalt leftabove vertical sb '.a:bufnr
-    call coc_explorer#init_win(a:position, a:width)
+    call coc_explorer#resize_win(a:position, a:width)
   elseif a:position ==# 'right'
     wincmd b
     execute 'silent keepalt rightbelow vertical sb '.a:bufnr
-    call coc_explorer#init_win(a:position, a:width)
+    call coc_explorer#resize_win(a:position, a:width)
   else
     throw 'No support position '.a:position
   endif
 endfunction
 
-function! coc_explorer#init_win(position, width)
+function! coc_explorer#resize_win(position, width)
   if a:position !=# 'tab'
     silent setlocal winfixwidth
     silent execute 'vertical resize '.a:width
   endif
-
-  silent setlocal colorcolumn=
-        \ noswapfile
-        \ conceallevel=3 concealcursor=nvic
-        \ nocursorcolumn
-        \ nofoldenable foldcolumn=0
-        \ nolist
-        \ nonumber norelativenumber
-        \ nospell
-        \ nowrap
 endfunction
 
 function! coc_explorer#init_buf()
-  silent setlocal buftype=nofile bufhidden=hide
-        \ noswapfile
-        \ nomodeline
-        \ filetype=coc-explorer
-        \ cursorline
-        \ nomodifiable
-        \ nomodified
-        \ signcolumn=no
-        \ conceallevel=3 concealcursor=nvic
-        \ nobuflisted
+  silent setlocal colorcolumn=
+              \ filetype=coc-explorer
+              \ buftype=nofile bufhidden=hide nobuflisted nolist
+              \ nomodifiable nomodified
+              \ conceallevel=3 concealcursor=nvic
+              \ nomodeline
+              \ signcolumn=no
+              \ nocursorcolumn cursorline
+              \ nofoldenable foldcolumn=0
+              \ nonumber norelativenumber
+              \ nospell
+              \ nowrap
+  silent setlocal filetype=coc-explorer
 endfunction
 
 function! coc_explorer#is_float_window(winnr)
