@@ -72,7 +72,7 @@ Explorer extension for [coc.nvim](https://github.com/neoclide/coc.nvim)
 :CocCommand explorer
     \ --toggle
     \ --sources=buffer+,file+
-    \ --file-columns=git,selection,clip,diagnosticError,indent,icon,filename,size,modified,readonly /root/path
+    \ --file-columns=git:selection:clip:diagnosticError:indent:icon:filename;fullpath;size;modified;readonly /root/path
 ```
 
 ### Options
@@ -114,6 +114,8 @@ Explorer buffer columns, supported columns:
 - modified
 - bufnr
 
+Use columns with label for floating preview, same with `--file-columns`
+
 #### `--file-columns`
 
 Explorer file columns, supported columns:
@@ -130,6 +132,19 @@ Explorer file columns, supported columns:
 - created
 - modified
 - accessed
+
+Use columns with label for floating preview
+
+```
+--file-columns=selection:clip:indent:icon:filename;fullpath;size;modified;readonly
+
+selection:clip:indent:icon:filename # explorer
+fullpath;size;modified;readonly # floating preview
+```
+
+![image](https://user-images.githubusercontent.com/1709861/72122161-f616f780-3397-11ea-8dd2-e80278e6f1a0.png)
+
+The columns are designed in two parts, split by first `;`, then the first part is used to display in the explorer, and the second part is used to display in floating-preview with label.
 
 ## Configuration
 
