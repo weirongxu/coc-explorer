@@ -172,6 +172,14 @@ Default: <pre><code>true</code></pre>
 Default: <pre><code>false</code></pre>
 </details>
 <details>
+<summary><code>explorer.previewAction.strategy</code>: Strategy for preview action. type: <code>labeling</code></summary>
+Default: <pre><code>"labeling"</code></pre>
+</details>
+<details>
+<summary><code>explorer.previewAction.onHover</code>: Open preview when hovering over on node. type: <code>boolean</code></summary>
+Default: <pre><code>false</code></pre>
+</details>
+<details>
 <summary><code>explorer.openAction.strategy</code>: Strategy for open action. type: <code>select | vsplit | previousBuffer | previousWindow | sourceWindow</code></summary>
 Default: <pre><code>"select"</code></pre>
 </details>
@@ -245,8 +253,24 @@ Default: <pre><code>[
   "name",
   "modified",
   "readonly",
-  "fullpath"
+  "fullpath",
+  [
+    "bufname"
+  ],
+  [
+    "fullpath"
+  ],
+  [
+    "modified"
+  ],
+  [
+    "readonly"
+  ]
 ]</code></pre>
+</details>
+<details>
+<summary><code>explorer.datetime.format</code>: Explorer datetime format, check out https://github.com/iamkun/dayjs/blob/dev/docs/en/API-reference.md#format-formatstringwithtokens-string. type: <code>string</code></summary>
+Default: <pre><code>"YY/MM/DD HH:mm:ss"</code></pre>
 </details>
 <details>
 <summary><code>explorer.file.autoReveal</code>: Explorer will automatically expand to the current buffer. type: <code>boolean</code></summary>
@@ -287,7 +311,25 @@ Default: <pre><code>[
   "filename",
   "size",
   "modified",
-  "readonly"
+  "readonly",
+  [
+    "fullpath"
+  ],
+  [
+    "size"
+  ],
+  [
+    "accessed"
+  ],
+  [
+    "modified"
+  ],
+  [
+    "created"
+  ],
+  [
+    "readonly"
+  ]
 ]</code></pre>
 </details>
 <details>
