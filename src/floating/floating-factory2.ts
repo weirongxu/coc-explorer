@@ -336,7 +336,7 @@ export class FloatingFactory2 implements Disposable {
       }
       nvim.command('redraw', true);
     }
-    const [, err] = await nvim.resumeNotification();
+    const [, err] = (await nvim.resumeNotification()) ?? [];
     if (err) {
       // tslint:disable-next-line: ban
       workspace.showMessage(`Error on ${err[0]}: ${err[1]} - ${err[2]}`, 'error');
