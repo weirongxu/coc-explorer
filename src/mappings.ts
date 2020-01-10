@@ -7,68 +7,67 @@ enum MappingMode {
 
 export const mappingMode = config.get<MappingMode>('keyMappingMode', MappingMode.default);
 
-const Actions = {
-  select: 0,
-  unselect: 0,
-  toggleSelection: 0,
-  actionMenu: 0,
+export const actionSyms = [
+  'select',
+  'unselect',
+  'toggleSelection',
+  'actionMenu',
 
-  collapse: 0,
-  expand: 0,
-  expandRecursive: 0,
-  collapseRecursive: 0,
-  expandOrCollapse: 0,
-  cd: 0,
-  open: 0,
-  openInSplit: 0,
-  openInVsplit: 0,
-  openInTab: 0,
-  drop: 0,
-  gotoParent: 0,
+  'collapse',
+  'expand',
+  'expandRecursive',
+  'collapseRecursive',
+  'expandOrCollapse',
+  'cd',
+  'open',
+  'openInSplit',
+  'openInVsplit',
+  'openInTab',
+  'drop',
+  'gotoParent',
+  'preview',
 
-  copyFilepath: 0,
-  copyFilename: 0,
-  copyFile: 0,
-  cutFile: 0,
-  pasteFile: 0,
-  delete: 0,
-  deleteForever: 0,
+  'copyFilepath',
+  'copyFilename',
+  'copyFile',
+  'cutFile',
+  'pasteFile',
+  'delete',
+  'deleteForever',
 
-  addFile: 0,
-  addDirectory: 0,
-  rename: 0,
+  'addFile',
+  'addDirectory',
+  'rename',
 
-  toggleHidden: 0,
-  refresh: 0,
-  normal: 1,
+  'toggleHidden',
+  'refresh',
+  'normal',
 
-  help: 0,
-  quit: 0,
-  systemExecute: 0,
-  listDrive: 0,
+  'help',
+  'quit',
+  'systemExecute',
+  'listDrive',
 
-  search: 0,
-  searchRecursive: 0,
+  'search',
+  'searchRecursive',
 
-  nodePrev: 0,
-  nodeNext: 0,
+  'nodePrev',
+  'nodeNext',
 
-  gotoSource: 1,
-  sourcePrev: 0,
-  sourceNext: 0,
+  'gotoSource',
+  'sourcePrev',
+  'sourceNext',
 
-  diagnosticPrev: 0,
-  diagnosticNext: 0,
+  'diagnosticPrev',
+  'diagnosticNext',
 
-  gitPrev: 0,
-  gitNext: 0,
-  gitStage: 0,
-  gitUnstage: 0,
-};
+  'gitPrev',
+  'gitNext',
+  'gitStage',
+  'gitUnstage',
+] as const;
 
-export type ActionSyms = keyof typeof Actions;
-
-export const ActionSyms = Object.keys(Actions) as ActionSyms[];
+export type ActionSyms = typeof actionSyms[number];
 
 type OriginalMappings = Record<string, false | string | string[]>;
 
@@ -93,6 +92,7 @@ export const defaultMappings: Record<keyof typeof MappingMode, OriginalMappings>
     E: 'openInVsplit',
     t: 'openInTab',
     '<bs>': 'gotoParent',
+    gp: 'preview:labeling',
 
     y: 'copyFilepath',
     Y: 'copyFilename',

@@ -1,15 +1,12 @@
 import { fileColumnRegistrar } from '../file-column-registrar';
-import { hlGroupManager } from '../../../highlight-manager';
 import dayjs from 'dayjs';
-
-const highlights = {
-  time: hlGroupManager.linkGroup('TimeCreated', 'Identifier'),
-};
+import { datetimeFormat } from '../../../../util';
+import { fileHighlights } from '../file-source';
 
 fileColumnRegistrar.registerColumn('created', () => ({
   draw(row, node) {
     if (node.lstat) {
-      row.add(dayjs(node.lstat.ctime).format('YY/MM/DD HH:mm:ss'), highlights.time);
+      row.add(dayjs(node.lstat.ctime).format(datetimeFormat), fileHighlights.timeCreated);
     } else {
       row.add('                 ');
     }

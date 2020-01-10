@@ -1,24 +1,31 @@
 import { onError } from '../logger';
+import { clearTimeout } from 'timers';
+
+export type Cancellable<F extends Function> = F & {
+  cancel(): void;
+};
 
 export function throttle<A extends Array<any>, R>(
   delay: number,
   fn: (...args: A) => Promise<R> | R,
   options: { tail?: boolean } = {},
-): (...args: A) => void {
-  const debounceFn = throttlePromise(delay, fn, options);
-  return (...args: A) => {
-    debounceFn(...args).catch(onError);
+): Cancellable<(...args: A) => void> {
+  const throttleFn = throttlePromise(delay, fn, options);
+  const wrap = (...args: A) => {
+    throttleFn(...args).catch(onError);
   };
+  wrap.cancel = throttleFn.cancel;
+  return wrap;
 }
 
 export function throttlePromise<A extends Array<any>, R>(
   delay: number,
   fn: (...args: A) => Promise<R> | R,
   { tail = false }: { tail?: boolean } = {},
-): (...args: A) => Promise<R | undefined> {
+): Cancellable<(...args: A) => Promise<R | undefined>> {
   const debounceFn = debouncePromise(delay, fn);
   let lastTime = 0;
-  return async (...args: A) => {
+  const wrap = async (...args: A) => {
     const now = Date.now();
     if (now - lastTime < delay) {
       if (tail) {
@@ -36,25 +43,29 @@ export function throttlePromise<A extends Array<any>, R>(
       }
     }
   };
+  wrap.cancel = debounceFn.cancel;
+  return wrap;
 }
 
 export function debounce<A extends Array<any>, R>(
   delay: number,
   fn: (...args: A) => Promise<R> | R,
-): (...args: A) => void {
+): Cancellable<(...args: A) => void> {
   const debounceFn = debouncePromise(delay, fn);
-  return (...args: A) => {
+  const wrap = (...args: A) => {
     debounceFn(...args).catch(onError);
   };
+  wrap.cancel = debounceFn.cancel;
+  return wrap;
 }
 
 export function debouncePromise<A extends Array<any>, R>(
   delay: number,
   fn: (...args: A) => Promise<R> | R,
-): (...args: A) => Promise<R | undefined> {
+): Cancellable<(...args: A) => Promise<R | undefined>> {
   let timer: NodeJS.Timeout | null = null;
   let lastResolve: null | ((value: R | undefined) => void) = null;
-  return async (...args: A) => {
+  const wrap = async (...args: A) => {
     if (timer) {
       clearTimeout(timer);
       lastResolve!(undefined);
@@ -70,4 +81,10 @@ export function debouncePromise<A extends Array<any>, R>(
       }, delay);
     });
   };
+  wrap.cancel = () => {
+    if (timer) {
+      clearTimeout(timer);
+    }
+  };
+  return wrap;
 }

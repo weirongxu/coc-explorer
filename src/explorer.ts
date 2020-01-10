@@ -1,5 +1,5 @@
 import { Buffer, ExtensionContext, Window, workspace, Disposable } from 'coc.nvim';
-import { Action, ActionMode, ActionSyms, mappings } from './mappings';
+import { Action, ActionMode, mappings, ActionSyms } from './mappings';
 import { Args } from './parse-args';
 import { IndexesManager } from './indexes-manager';
 import './source/load';
@@ -12,11 +12,17 @@ import {
   enableDebug,
   enableWrapscan,
   avoidOnBufEnter,
+  onEvents,
+  onBufEnter,
+  PreviewStrategy,
+  queueAsyncFunction,
+  previewStrategy,
 } from './util';
 import { ExplorerManager } from './explorer-manager';
 import { hlGroupManager } from './source/highlight-manager';
 import { BuffuerContextVars } from './context-variables';
 import { SourceViewBuilder, SourceRowBuilder } from './source/view-builder';
+import { FloatingPreview } from './floating/floating-preview';
 
 const hl = hlGroupManager.linkGroup.bind(hlGroupManager);
 const helpHightlights = {
@@ -38,10 +44,15 @@ export class Explorer {
     {
       description: string;
       options: Partial<ActionOptions>;
-      callback: (nodes: BaseTreeNode<any>[], arg: string, mode: ActionMode) => void | Promise<void>;
+      callback: (
+        nodes: BaseTreeNode<any>[],
+        arg: string | undefined,
+        mode: ActionMode,
+      ) => void | Promise<void>;
     }
   > = {};
   context: ExtensionContext;
+  floatingWindow = new FloatingPreview(this);
 
   private _buffer?: Buffer;
   private _args?: Args;
@@ -70,6 +81,21 @@ export class Explorer {
   ) {
     this.context = explorerManager.context;
 
+    if (config.get<boolean>('previewAction.onHover')!) {
+      onEvents('CursorMoved', async (bufnr) => {
+        if (bufnr === this.bufnr) {
+          await this.floatingWindow.hoverPreview();
+        }
+      });
+      onBufEnter(async (bufnr) => {
+        if (bufnr === this.bufnr) {
+          await this.floatingWindow.hoverPreview();
+        } else {
+          this.floatingWindow.hoverPreviewCancel();
+        }
+      });
+    }
+
     this.addGlobalAction(
       'nodePrev',
       async () => {
@@ -95,7 +121,9 @@ export class Explorer {
     this.addGlobalAction(
       'normal',
       async (_node, arg) => {
-        await this.nvim.command('normal ' + arg);
+        if (arg) {
+          await this.nvim.command('normal ' + arg);
+        }
       },
       'execute vim normal mode commands',
       { multi: false },
@@ -106,6 +134,24 @@ export class Explorer {
         await this.quit();
       },
       'quit explorer',
+      { multi: false },
+    );
+    this.addGlobalAction(
+      'preview',
+      async (nodes, arg) => {
+        const source = await this.currentSource();
+        if (nodes && nodes[0] && source) {
+          const node = nodes[0];
+          const nodeIndex = source.getLineByNode(node);
+          await this.floatingWindow.previewNode(
+            (arg as PreviewStrategy) || previewStrategy,
+            source,
+            node,
+            nodeIndex,
+          );
+        }
+      },
+      'preview',
       { multi: false },
     );
 
@@ -184,7 +230,7 @@ export class Explorer {
     return this._args;
   }
 
-  get sources(): ExplorerSource<any>[] {
+  get sources(): ExplorerSource<BaseTreeNode<any>>[] {
     if (!this._sources) {
       throw Error('Explorer sources not initialized yet');
     }
@@ -348,7 +394,7 @@ export class Explorer {
     name: ActionSyms,
     callback: (
       nodes: BaseTreeNode<any>[] | null,
-      arg: string,
+      arg: string | undefined,
       mode: ActionMode,
     ) => void | Promise<void>,
     description: string,
@@ -361,19 +407,27 @@ export class Explorer {
     };
   }
 
-  async doActions(actions: Action[], mode: ActionMode = 'n', count: number) {
-    for (var i = 0; i < count; i++) {
-      for (const action of actions) {
-        await this.doAction(action, mode);
-      }
-    }
-    await execNotifyBlock(async () => {
-      await Promise.all(
-        this.sources.map(async (source) => {
-          return source.emitRequestRenderNodes(true);
-        }),
+  _doActions?: (actions: Action[], mode: ActionMode, count?: number) => Promise<void>;
+  async doActions(actions: Action[], mode: ActionMode, count: number = 1) {
+    if (!this._doActions) {
+      this._doActions = queueAsyncFunction(
+        async (actions: Action[], mode: ActionMode, count: number = 1) => {
+          for (var i = 0; i < count; i++) {
+            for (const action of actions) {
+              await this.doAction(action, mode);
+            }
+          }
+          await execNotifyBlock(async () => {
+            await Promise.all(
+              this.sources.map(async (source) => {
+                return source.emitRequestRenderNodes(true);
+              }),
+            );
+          });
+        },
       );
-    });
+    }
+    return this._doActions(actions, mode, count);
   }
 
   async doAction(action: Action, mode: ActionMode = 'n') {
@@ -470,11 +524,23 @@ export class Explorer {
     }
   }
 
+  async currentSource(): Promise<ExplorerSource<BaseTreeNode<any>> | undefined> {
+    return this.sources[await this.currentSourceIndex()];
+  }
+
   async currentSourceIndex() {
     const lineIndex = await this.currentLineIndex();
     return this.sources.findIndex(
-      (source) => lineIndex >= source.startLine && lineIndex <= source.endLine,
+      (source) => lineIndex >= source.startLine && lineIndex < source.endLine,
     );
+  }
+
+  async currentNode() {
+    const source = await this.currentSource();
+    if (source) {
+      const nodeIndex = (await this.currentLineIndex()) - source.startLine;
+      return source.flattenedNodes[nodeIndex];
+    }
   }
 
   async currentCursor() {
@@ -541,7 +607,7 @@ export class Explorer {
       const win = await this.win;
       if (win) {
         win.setCursor([lineIndex + 1, finalCol - 1], true);
-        if (!(await this.explorerManager.currentExplorer())) {
+        if (!this.explorerManager.currentExplorer()) {
           this.nvim.command('redraw!', true);
         }
       }
@@ -622,7 +688,7 @@ export class Explorer {
     }
   }
 
-  async openHelp(source: ExplorerSource<any>, isRoot: boolean) {
+  async showHelp(source: ExplorerSource<any>, isRoot: boolean) {
     this.isHelpUI = true;
     const builder = new SourceViewBuilder();
     const width = await this.nvim.call('winwidth', '%');
@@ -630,7 +696,7 @@ export class Explorer {
     const lines: string[] = [];
 
     lines.push(
-      await builder.drawLine((row) => {
+      await builder.drawRowLine((row) => {
         row.add(
           `Help for [${source.sourceName}${
             isRoot ? ' root' : ''
@@ -639,7 +705,7 @@ export class Explorer {
       }),
     );
     lines.push(
-      await builder.drawLine((row) => {
+      await builder.drawRowLine((row) => {
         row.add('—'.repeat(width), helpHightlights.line);
       }),
     );
@@ -661,7 +727,7 @@ export class Explorer {
         continue;
       }
       lines.push(
-        await builder.drawLine((row) => {
+        await builder.drawRowLine((row) => {
           row.add(' ');
           row.add(key, helpHightlights.mappingKey);
           row.add(' - ');
@@ -670,7 +736,7 @@ export class Explorer {
       );
       for (const action of actions.slice(1)) {
         lines.push(
-          await builder.drawLine((row) => {
+          await builder.drawRowLine((row) => {
             row.add(' '.repeat(key.length + 4));
             drawAction(row, action);
           }),
@@ -685,25 +751,21 @@ export class Explorer {
     await this.explorerManager.clearMappings();
 
     const disposables: Disposable[] = [];
-    await new Promise((resolve) => {
-      ['<esc>', 'q'].forEach((key) => {
-        disposables.push(
-          workspace.registerLocalKeymap(
-            'n',
-            key,
-            () => {
-              resolve();
-            },
-            true,
-          ),
-        );
-      });
+    ['<esc>', 'q'].forEach((key) => {
+      disposables.push(
+        workspace.registerLocalKeymap(
+          'n',
+          key,
+          async () => {
+            disposables.forEach((d) => d.dispose());
+            await this.quitHelp();
+            await this.renderAll({ storeCursor: false });
+            await storeCursor();
+          },
+          true,
+        ),
+      );
     });
-    disposables.forEach((d) => d.dispose());
-
-    await this.quitHelp();
-    await this.renderAll({ storeCursor: false });
-    await storeCursor();
   }
 
   async quitHelp() {

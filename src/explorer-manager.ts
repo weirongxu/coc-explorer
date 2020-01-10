@@ -55,8 +55,8 @@ export class ExplorerManager {
 
     this.updatePreviousBufnr(workspace.bufnr).catch(onError);
     this.subscriptions.push(
-      onBufEnter(1, (bufnr) => {
-        this.updatePreviousBufnr(bufnr).catch(onError);
+      onBufEnter(async (bufnr) => {
+        await this.updatePreviousBufnr(bufnr);
       }),
     );
   }
@@ -131,9 +131,13 @@ export class ExplorerManager {
     return explorers;
   }
 
-  async currentExplorer() {
+  currentExplorer() {
     const bufnr = workspace.bufnr;
     return this.explorers().find((e) => e.bufnr === bufnr);
+  }
+
+  inExplorer() {
+    return this.currentExplorer() !== undefined;
   }
 
   async registerMappings() {
@@ -151,7 +155,7 @@ export class ExplorerManager {
             plugKey,
             async () => {
               const count = (await this.nvim.eval('v:count')) as number;
-              const explorer = await this.currentExplorer();
+              const explorer = this.currentExplorer();
               explorer?.doActions(actions, mode, count || 1).catch(onError);
             },
             { sync: true },

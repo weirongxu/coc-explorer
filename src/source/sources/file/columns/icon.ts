@@ -4,11 +4,10 @@ import { sourceIcons, enableNerdfont } from '../../../source';
 //   icon code from https://github.com/ryanoasis/vim-devicons/blob/830f0fe48a337ed26384c43929032786f05c8d24/plugin/webdevicons.vim#L129
 //   icon color from https://github.com/microsoft/vscode/blob/e75e71f41911633be838344377df26842f2b8c7c/extensions/theme-seti/icons/vs-seti-icon-theme.json
 import nerdfontJson from './icons.nerdfont.json';
-import { highlights as filenameHighlights } from './filename';
-import { hlGroupManager, Hightlight } from '../../../highlight-manager';
+import { hlGroupManager, Highlight } from '../../../highlight-manager';
 import { config, getExtensions } from '../../../../util';
 import { workspace } from 'coc.nvim';
-import { FileNode } from '../file-source';
+import { FileNode, fileHighlights } from '../file-source';
 import { getSymbol } from '../../../../util/symbol';
 
 const enableVimDevions = config.get<boolean>('icon.enableVimDevions')!;
@@ -33,7 +32,7 @@ Object.assign(nerdfont.extensions, customIcon.extensions);
 Object.assign(nerdfont.filenames, customIcon.filenames);
 Object.assign(nerdfont.patternMatches, customIcon.patternMatches);
 
-export const nerdfontHighlights: Record<string, Hightlight> = {};
+export const nerdfontHighlights: Record<string, Highlight> = {};
 Object.entries(nerdfont.icons).forEach(([name, icon]) => {
   nerdfontHighlights[name] = hlGroupManager.group(
     `FileIconNerdfont_${name}`,
@@ -109,12 +108,12 @@ fileColumnRegistrar.registerColumn('icon', (source) => ({
           source.expandStore.isExpanded(node)
             ? nerdfont.icons.folderOpened.code
             : nerdfont.icons.folderClosed.code,
-          filenameHighlights.directory,
+          fileHighlights.directory,
         );
       } else {
         row.add(
           source.expandStore.isExpanded(node) ? sourceIcons.expanded : sourceIcons.collapsed,
-          filenameHighlights.directory,
+          fileHighlights.directory,
         );
       }
       row.add(' ');

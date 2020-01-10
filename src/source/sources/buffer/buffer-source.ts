@@ -1,6 +1,6 @@
-import { events, workspace } from 'coc.nvim';
+import { workspace } from 'coc.nvim';
 import pathLib from 'path';
-import { activeMode, onBufEnter, debounce, normalizePath } from '../../../util';
+import { activeMode, onBufEnter, debounce, normalizePath, onEvents } from '../../../util';
 import { hlGroupManager } from '../../highlight-manager';
 import { ExplorerSource, sourceIcons } from '../../source';
 import { sourceManager } from '../../source-manager';
@@ -11,6 +11,7 @@ import { initBufferActions } from './buffer-actions';
 const regex = /^\s*(\d+)(.+?)"(.+?)".*/;
 
 export interface BufferNode {
+  isRoot?: boolean;
   uid: string;
   level: number;
   drawnLine: string;
@@ -35,13 +36,20 @@ export interface BufferNode {
 
 const hl = hlGroupManager.linkGroup.bind(hlGroupManager);
 
-const highlights = {
+export const bufferHighlights = {
   title: hl('BufferRoot', 'Constant'),
   expandIcon: hl('BufferExpandIcon', 'Special'),
+  nameVisible: hl('BufferNameVisible', 'String'),
+  bufname: hl('BufferBufname', 'Comment'),
+  modified: hl('BufferModified', 'Operator'),
+  bufnr: hl('BufferBufnr', 'Special'),
+  readonly: hl('BufferReadonly', 'Operator'),
+  fullpath: hl('BufferFullpath', 'Comment'),
 };
 
 export class BufferSource extends ExplorerSource<BufferNode> {
   rootNode: BufferNode = {
+    isRoot: true,
     uid: this.sourceName + '://',
     level: 0,
     drawnLine: '',
@@ -71,7 +79,7 @@ export class BufferSource extends ExplorerSource<BufferNode> {
     if (activeMode) {
       if (!workspace.env.isVim) {
         this.subscriptions.push(
-          events.on(
+          onEvents(
             ['BufCreate', 'BufHidden', 'BufUnload', 'BufWritePost', 'InsertLeave'],
             debounce(500, async () => {
               await this.reload(this.rootNode);
@@ -80,11 +88,11 @@ export class BufferSource extends ExplorerSource<BufferNode> {
         );
       } else {
         this.subscriptions.push(
-          onBufEnter(500, async (bufnr) => {
+          onBufEnter(async (bufnr) => {
             if (bufnr === this.explorer.bufnr) {
               await this.reload(this.rootNode, { render: false });
             }
-          }),
+          }, 500),
         );
       }
     }
@@ -131,22 +139,22 @@ export class BufferSource extends ExplorerSource<BufferNode> {
     }, []);
   }
 
+  async drawRootNode(node: BufferNode) {
+    node.drawnLine = await this.viewBuilder.drawRowLine(async (row) => {
+      row.add(
+        this.expanded ? sourceIcons.expanded : sourceIcons.collapsed,
+        bufferHighlights.expandIcon,
+      );
+      row.add(' ');
+      row.add(`[BUFFER${this.showHidden ? ' ' + sourceIcons.hidden : ''}]`, bufferHighlights.title);
+    });
+  }
+
   async drawNode(node: BufferNode, nodeIndex: number) {
-    if (!node.parent) {
-      node.drawnLine = await this.viewBuilder.drawLine(async (row) => {
-        row.add(
-          this.expanded ? sourceIcons.expanded : sourceIcons.collapsed,
-          highlights.expandIcon,
-        );
-        row.add(' ');
-        row.add(`[BUFFER${this.showHidden ? ' ' + sourceIcons.hidden : ''}]`, highlights.title);
-      });
-    } else {
-      node.drawnLine = await this.viewBuilder.drawLine(async (row) => {
-        row.add('  ');
-        await this.columnManager.draw(row, node, nodeIndex);
-      });
-    }
+    node.drawnLine = await this.viewBuilder.drawRowLine(async (row) => {
+      row.add('  ');
+      await this.columnManager.draw(row, node, nodeIndex);
+    });
   }
 }
 

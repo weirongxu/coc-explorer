@@ -1,15 +1,11 @@
 import { fileColumnRegistrar } from '../file-column-registrar';
 import { hlGroupManager } from '../../../highlight-manager';
 import { diagnosticManager } from '../../../../diagnostic-manager';
-import { config, debounce } from '../../../../util';
-import { events } from 'coc.nvim';
+import { config, debounce, onEvents } from '../../../../util';
+import { fileHighlights } from '../file-source';
 
 const diagnosticCountMax = config.get<number>('file.diagnosticCountMax')!;
 const errorMaxWidth = diagnosticCountMax.toString().length;
-
-const highlights = {
-  error: hlGroupManager.linkGroup('FileDiagnosticError', 'CocErrorSign'),
-};
 
 const concealable = hlGroupManager.concealable('FileDiagnosticError');
 
@@ -19,7 +15,7 @@ fileColumnRegistrar.registerColumn(
     concealable,
     init() {
       source.subscriptions.push(
-        events.on(
+        onEvents(
           'BufWritePost',
           debounce(1000, async () => {
             diagnosticManager.errorReload(source.root);
@@ -55,14 +51,14 @@ fileColumnRegistrar.registerColumn(
         this.concealable?.requestHide();
       }
     },
-    draw(row, node, nodeIndex) {
+    draw(row, node, { nodeIndex }) {
       if (node.fullpath in diagnosticManager.errorMixedCount) {
         if (node.directory && source.expandStore.isExpanded(node)) {
           row.add(' '.padStart(errorMaxWidth));
           source.removeIndexes('diagnosticError', nodeIndex);
         } else {
           const count = diagnosticManager.errorMixedCount[node.fullpath];
-          row.add(count.padStart(errorMaxWidth), highlights.error);
+          row.add(count.padStart(errorMaxWidth), fileHighlights.diagnosticError);
           source.addIndexes('diagnosticError', nodeIndex);
         }
       } else {

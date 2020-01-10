@@ -1,4 +1,17 @@
 import { setImmediate } from 'timers';
+import { onError } from '../logger';
+
+export function asyncCatchError<R extends any, ARGS extends any[]>(
+  fn: (...args: ARGS) => Promise<R>,
+) {
+  return async (...args: ARGS) => {
+    try {
+      return await fn(...args);
+    } catch (e) {
+      onError(e);
+    }
+  };
+}
 
 export function queueAsyncFunction<R extends any, ARGS extends any[]>(
   fn: (...args: ARGS) => Promise<R>,

@@ -10,7 +10,7 @@ export const HlEscapeCode = {
   rightEnd: '\x04',
 };
 
-export type Hightlight = {
+export type Highlight = {
   group: string;
   commands: string[];
   markerID: number;
@@ -26,7 +26,7 @@ class HighlightManager {
   static maxMarkerID = 0;
 
   nvim = workspace.nvim;
-  highlights: Hightlight[] = [];
+  highlights: Highlight[] = [];
   concealableHighlightsVisible: Map<string, boolean> = new Map();
   concealableHighlights: HighlightConcealable[] = [];
 
@@ -132,7 +132,7 @@ class HighlightManager {
     }
   }
 
-  linkGroup(groupName: string, targetGroup: string): Hightlight {
+  linkGroup(groupName: string, targetGroup: string): Highlight {
     const group = `CocExplorer${groupName}`;
     const markerID = this.createMarkerID();
     const commands = [
@@ -150,7 +150,7 @@ class HighlightManager {
     return highlight;
   }
 
-  group(groupName: string, hlArgs: string): Hightlight {
+  group(groupName: string, hlArgs: string): Highlight {
     const group = `CocExplorer${groupName}`;
     const markerID = this.createMarkerID();
     const commands = [

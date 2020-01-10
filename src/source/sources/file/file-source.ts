@@ -23,6 +23,8 @@ import './load';
 import { filesList } from '../../../lists/files';
 import { initFileActions } from './file-actions';
 import { homedir } from 'os';
+import { HighlightPosition } from '../../view-builder';
+import { labelHighlight } from '../../column-manager';
 
 const hiddenRules = config.get<{
   extensions: string[];
@@ -41,6 +43,7 @@ function isHidden(filename: string) {
 }
 
 export type FileNode = {
+  isRoot?: boolean;
   uid: string;
   level: number;
   drawnLine: string;
@@ -62,11 +65,24 @@ export type FileNode = {
 };
 
 const hl = hlGroupManager.linkGroup.bind(hlGroupManager);
-const highlights = {
+export const fileHighlights = {
   title: hl('FileRoot', 'Constant'),
   name: hl('FileRootName', 'Identifier'),
   expandIcon: hl('FileExpandIcon', 'Direcoty'),
   fullpath: hl('FileFullpath', 'Comment'),
+  directory: hl('FileDirectory', 'Directory'),
+  linkTarget: hl('FileLinkTarget', 'Comment'),
+  gitStage: hl('FileGitStage', 'Comment'),
+  gitUnstage: hl('FileGitUnstage', 'Operator'),
+  indentLine: hl('IndentLine', 'Comment'),
+  clip: hl('FileClip', 'Statement'),
+  size: hl('FileSize', 'Constant'),
+  readonly: hl('FileReadonly', 'Operator'),
+  timeAccessed: hl('TimeAccessed', 'Identifier'),
+  timeModified: hl('TimeModified', 'Identifier'),
+  timeCreated: hl('TimeCreated', 'Identifier'),
+  diagnosticError: hl('FileDiagnosticError', 'CocErrorSign'),
+  diagnosticWarning: hl('FileDiagnosticWarning', 'CocWarningSign'),
 };
 
 export class FileSource extends ExplorerSource<FileNode> {
@@ -75,6 +91,7 @@ export class FileSource extends ExplorerSource<FileNode> {
   copiedNodes: Set<FileNode> = new Set();
   cutNodes: Set<FileNode> = new Set();
   rootNode: FileNode = {
+    isRoot: true,
     uid: this.sourceName + '://',
     level: 0,
     drawnLine: '',
@@ -111,7 +128,7 @@ export class FileSource extends ExplorerSource<FileNode> {
       if (!workspace.env.isVim) {
         if (autoReveal) {
           this.subscriptions.push(
-            onBufEnter(200, async (bufnr) => {
+            onBufEnter(async (bufnr) => {
               if (bufnr !== this.explorer.bufnr) {
                 const bufinfo = await nvim.call('getbufinfo', [bufnr]);
                 if (bufinfo[0] && bufinfo[0].name) {
@@ -126,16 +143,16 @@ export class FileSource extends ExplorerSource<FileNode> {
                   });
                 }
               }
-            }),
+            }, 200),
           );
         }
       } else {
         this.subscriptions.push(
-          onBufEnter(200, async (bufnr) => {
+          onBufEnter(async (bufnr) => {
             if (bufnr === this.explorer.bufnr) {
               await this.reload(this.rootNode);
             }
-          }),
+          }, 200),
         );
       }
     }
@@ -288,28 +305,50 @@ export class FileSource extends ExplorerSource<FileNode> {
     return await this.renderNodes(nodes);
   }
 
-  async drawNode(node: FileNode, nodeIndex: number, options: DrawNodeOption<FileNode>) {
-    if (!node.parent) {
-      node.drawnLine = await this.viewBuilder.drawLine(async (row) => {
-        row.add(
-          this.expanded ? sourceIcons.expanded : sourceIcons.collapsed,
-          highlights.expandIcon,
-        );
+  async drawRootLabeling(node: FileNode) {
+    const highlightPositions: HighlightPosition[] = [];
+    const lines: string[] = [];
+    const row = await this.viewBuilder.drawRow(
+      async (row) => {
+        row.add('Fullpath:', labelHighlight);
         row.add(' ');
-        row.add(`[FILE${this.showHidden ? ' ' + sourceIcons.hidden : ''}]:`, highlights.title);
-        row.add(' ');
-        row.add(pathLib.basename(this.root), highlights.name);
-        row.add(' ');
-        row.add(this.root, highlights.fullpath);
-      });
-    } else {
-      node.isFirstInLevel = options.prevSiblingNode === undefined;
-      node.isLastInLevel = options.nextSiblingNode === undefined;
+        row.add(node.fullpath, fileHighlights.directory);
+      },
+      {
+        highlightMode: 'highlight',
+        relativeLineIndex: 0,
+      },
+    );
+    lines.push(row.content);
+    highlightPositions.push(...row.highlightPositions);
+    return {
+      highlightPositions,
+      lines,
+    };
+  }
 
-      node.drawnLine = await this.viewBuilder.drawLine(async (row) => {
-        await this.columnManager.draw(row, node, nodeIndex);
-      });
-    }
+  async drawRootNode(node: FileNode) {
+    node.drawnLine = await this.viewBuilder.drawRowLine(async (row) => {
+      row.add(
+        this.expanded ? sourceIcons.expanded : sourceIcons.collapsed,
+        fileHighlights.expandIcon,
+      );
+      row.add(' ');
+      row.add(`[FILE${this.showHidden ? ' ' + sourceIcons.hidden : ''}]:`, fileHighlights.title);
+      row.add(' ');
+      row.add(pathLib.basename(this.root), fileHighlights.name);
+      row.add(' ');
+      row.add(this.root, fileHighlights.fullpath);
+    });
+  }
+
+  async drawNode(node: FileNode, nodeIndex: number, options: DrawNodeOption<FileNode>) {
+    node.isFirstInLevel = options.prevSiblingNode === undefined;
+    node.isLastInLevel = options.nextSiblingNode === undefined;
+
+    node.drawnLine = await this.viewBuilder.drawRowLine(async (row) => {
+      await this.columnManager.draw(row, node, nodeIndex);
+    });
   }
 }
 

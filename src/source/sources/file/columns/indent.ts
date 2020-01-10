@@ -1,7 +1,6 @@
-import { hlGroupManager } from '../../../highlight-manager';
 import { enableNerdfont } from '../../../source';
 import { fileColumnRegistrar } from '../file-column-registrar';
-import { FileNode } from '../file-source';
+import { FileNode, fileHighlights } from '../file-source';
 
 export const indentChars = fileColumnRegistrar.getColumnConfig<string>('indent.chars');
 export const topLevel = fileColumnRegistrar.getColumnConfig<string>('indent.topLevel');
@@ -9,10 +8,6 @@ let indentLine = fileColumnRegistrar.getColumnConfig<boolean | undefined>('inden
 if (enableNerdfont && indentLine === undefined) {
   indentLine = true;
 }
-
-const highlights = {
-  line: hlGroupManager.linkGroup('IndentLine', 'Comment'),
-};
 
 /**
  * indentLine
@@ -48,7 +43,7 @@ function printIndentLine(node: FileNode) {
 fileColumnRegistrar.registerColumn('indent', () => ({
   draw(row, node) {
     if (indentLine) {
-      row.add(printIndentLine(node), highlights.line);
+      row.add(printIndentLine(node), fileHighlights.indentLine);
     } else {
       row.add(indentChars.repeat(node.level - (topLevel ? 0 : 1)));
     }
