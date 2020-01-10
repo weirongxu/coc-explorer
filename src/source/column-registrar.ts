@@ -7,6 +7,8 @@ import { startCase } from 'lodash';
 export interface Column<TreeNode extends BaseTreeNode<TreeNode>> {
   label?: string;
 
+  labelOnly?: (node: TreeNode, option: { nodeIndex: number }) => boolean | Promise<boolean>;
+
   inited?: boolean;
 
   concealable?: HighlightConcealable;
@@ -25,7 +27,7 @@ export interface Column<TreeNode extends BaseTreeNode<TreeNode>> {
   draw(
     row: SourceRowBuilder,
     node: TreeNode,
-    option: { nodeIndex: number; isMultiLine: boolean },
+    option: { nodeIndex: number; isLabeling: boolean },
   ): void | Promise<void>;
 }
 
@@ -44,8 +46,8 @@ export class ColumnRegistrar<
 
   async getColumns(source: S, columnStrings: (string | string[])[]) {
     const columns: C[] = [];
-    const multiLineColumns: C[][] = [];
-    let multiLineColumn = false;
+    const labelingColumns: C[][] = [];
+    let labelingColumn = false;
     const getRegisteredColumn = async (columnString: string) => {
       const registeredColumn = this.registeredColumns[columnString];
       if (registeredColumn) {
@@ -63,9 +65,9 @@ export class ColumnRegistrar<
     };
     for (const columnStrs of columnStrings) {
       if (Array.isArray(columnStrs)) {
-        multiLineColumn = true;
+        labelingColumn = true;
       }
-      if (!multiLineColumn) {
+      if (!labelingColumn) {
         const columnStr = columnStrs as string;
         const column = await getRegisteredColumn(columnStr);
         if (column) {
@@ -75,20 +77,20 @@ export class ColumnRegistrar<
           });
         }
       } else {
-        const multiLineRow: C[] = [];
+        const labelingRow: C[] = [];
         for (const columnStr of columnStrs as string[]) {
           const column = await getRegisteredColumn(columnStr);
           if (column) {
-            multiLineRow.push({
+            labelingRow.push({
               label: startCase(columnStr),
               ...column,
             });
           }
         }
-        multiLineColumns.push(multiLineRow);
+        labelingColumns.push(labelingRow);
       }
     }
-    return [columns, multiLineColumns] as const;
+    return [columns, labelingColumns] as const;
   }
 
   registerColumn<T>(

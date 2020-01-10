@@ -305,7 +305,7 @@ export class FileSource extends ExplorerSource<FileNode> {
     return await this.renderNodes(nodes);
   }
 
-  async drawRootMultiLine(node: FileNode) {
+  async drawRootLabeling(node: FileNode) {
     const highlightPositions: HighlightPosition[] = [];
     const lines: string[] = [];
     const row = await this.viewBuilder.drawRow(

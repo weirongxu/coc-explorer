@@ -107,9 +107,9 @@
         "explorer.previewAction.strategy": {
           "description": "Strategy for preview action",
           "enum": [
-            "multiLineColumns"
+            "labeling"
           ],
-          "default": "none"
+          "default": "labeling"
         },
         "explorer.previewAction.onHover": {
           "description": "Open preview when hovering over on node",
@@ -526,6 +526,7 @@
     "lodash": "^4.17.15",
     "make-dir": "^3.0.0",
     "minimatch": "^3.0.4",
+    "p-filter": "^2.1.0",
     "pretty-bytes": "^5.3.0",
     "rimraf": "^3.0.0",
     "ts-jest": "^24.2.0",

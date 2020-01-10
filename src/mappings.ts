@@ -92,7 +92,7 @@ export const defaultMappings: Record<keyof typeof MappingMode, OriginalMappings>
     E: 'openInVsplit',
     t: 'openInTab',
     '<bs>': 'gotoParent',
-    P: 'preview',
+    gp: 'preview:labeling',
 
     y: 'copyFilepath',
     Y: 'copyFilename',

@@ -8,10 +8,15 @@ export const activeMode = config.get<boolean>('activeMode')!;
 
 export const autoReveal = config.get<boolean>('file.autoReveal')!;
 
-export const openStrategy = config.get<
-  'select' | 'vsplit' | 'previousBuffer' | 'previousWindow' | 'sourceWindow'
->('openAction.strategy')!;
+export type OpenStrategy =
+  | 'select'
+  | 'vsplit'
+  | 'previousBuffer'
+  | 'previousWindow'
+  | 'sourceWindow';
+export const openStrategy = config.get<OpenStrategy>('openAction.strategy')!;
 
-export const previewStrategy = config.get<'multiLineColumns'>('previewAction.strategy')!;
+export type PreviewStrategy = 'labeling';
+export const previewStrategy = config.get<PreviewStrategy>('previewAction.strategy')!;
 
 export const datetimeFormat = config.get<string>('datetime.format')!;

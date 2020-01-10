@@ -7,7 +7,7 @@ import { ActionSyms, mappings, reverseMappings, ActionMode } from '../mappings';
 import { config, execNotifyBlock, openStrategy } from '../util';
 import { SourceViewBuilder } from './view-builder';
 import { hlGroupManager } from './highlight-manager';
-import { ColumnManager, DrawMultiLineResult } from './column-manager';
+import { ColumnManager, DrawLabelingResult } from './column-manager';
 
 export type ActionOptions = {
   multi: boolean;
@@ -260,7 +260,7 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>> {
     };
   }
 
-  async doRootAction(name: ActionSyms, arg: string = '', mode: ActionMode = 'n') {
+  async doRootAction(name: ActionSyms, arg?: string, mode: ActionMode = 'n') {
     const action = this.rootActions[name];
     if (action) {
       const { render = false, reload = false } = action.options;
@@ -487,9 +487,9 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>> {
 
   abstract drawRootNode(node: TreeNode): void | Promise<void>;
 
-  drawRootMultiLine(
+  drawRootLabeling(
     _node: TreeNode,
-  ): undefined | DrawMultiLineResult | Promise<DrawMultiLineResult> {
+  ): undefined | DrawLabelingResult | Promise<DrawLabelingResult> {
     return;
   }
 
