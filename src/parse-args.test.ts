@@ -17,4 +17,7 @@ it('should parse args', async () => {
   args = await parseArgs([rootPath, '--no-toggle']);
   expect(args.toggle).toEqual(false);
   expect(args.rootPath).toEqual('/root/path');
+
+  args = await parseArgs([rootPath, '--file-columns=git:filename;fullpath;size;modified']);
+  expect(args.fileColumns).toEqual(['git', 'filename', ['fullpath'], ['size'], ['modified']]);
 });

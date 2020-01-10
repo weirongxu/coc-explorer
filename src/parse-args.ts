@@ -15,14 +15,32 @@ export interface Args {
   toggle: boolean;
   width: number;
   position: ArgPosition;
-  bufferColumns: string[];
-  fileColumns: string[];
+  bufferColumns: (string | string[])[];
+  fileColumns: (string | string[])[];
   revealPath: string;
   rootPath: string;
 }
 
 const boolTrueArgs = ['toggle', 'tab-isolate'];
 const boolFalseArgs = boolTrueArgs.map((a) => 'no-' + a);
+
+function parseColumns(columnsStr: string) {
+  const semicolonIndex = columnsStr.indexOf(';');
+  if (semicolonIndex === -1) {
+    return columnsStr.split(/:/);
+  } else {
+    return [
+      ...columnsStr
+        .slice(0, semicolonIndex)
+        .split(':')
+        .concat(),
+      ...columnsStr
+        .slice(semicolonIndex + 1)
+        .split(';')
+        .map((c) => c.split(':')),
+    ];
+  }
+}
 
 function parseSources(sources: string): ArgsSource[] {
   const sourceArray = sources.split(',');
@@ -67,8 +85,8 @@ export async function parseArgs(args: string[]): Promise<Args> {
     toggle: config.get<boolean>('toggle')!,
     width: config.get<number>('width')!,
     position: config.get<ArgPosition>('position')!,
-    bufferColumns: config.get<string[]>('buffer.columns')!,
-    fileColumns: config.get<string[]>('file.columns')!,
+    bufferColumns: config.get<(string | string[])[]>('buffer.columns')!,
+    fileColumns: config.get<(string | string[])[]>('file.columns')!,
     rootPath: '',
     revealPath: '',
   };
@@ -105,9 +123,9 @@ export async function parseArgs(args: string[]): Promise<Args> {
         } else if (key === 'position') {
           parsedArgs.position = value as ArgPosition;
         } else if (key === 'buffer-columns') {
-          parsedArgs.bufferColumns = (value as string).split(',');
+          parsedArgs.bufferColumns = parseColumns(value as string);
         } else if (key === 'file-columns') {
-          parsedArgs.fileColumns = (value as string).split(',');
+          parsedArgs.fileColumns = parseColumns(value as string);
         }
       } else {
         parsedArgs.rootPath = arg;
