@@ -84,27 +84,27 @@ Explorer root, default:
 - `getcwd()` when `buftype` is `nofile`
 - `workspace.rootPath`
 
-#### `--sources`
+#### `--sources <sources>`
 
 Explorer sources, example: `buffer+,file+`, default: `buffer-,file+`
 
-#### `--toggle --no-toggle`
+#### `--toggle | --no-toggle`
 
 Close the explorer if it exists, default: `--toggle`
 
-#### `--width`
+#### `--width <number>`
 
 Explorer window width, default: `40`
 
-#### `--position`
+#### `--position <position>`
 
 Explorer position, supported position: `left`, `right`, `tab`, default: `left`
 
-#### `--reveal`
+#### `--reveal <filepath>`
 
 Explorer will expand to this filepath, default: `current buffer`
 
-#### `--buffer-columns`
+#### `--buffer-columns <buffer-columns>`
 
 Explorer buffer columns, supported columns:
 
@@ -116,7 +116,7 @@ Explorer buffer columns, supported columns:
 
 Use columns with label for floating preview, same with `--file-columns`
 
-#### `--file-columns`
+#### `--file-columns <file-columns>`
 
 Explorer file columns, supported columns:
 
