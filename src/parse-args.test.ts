@@ -1,4 +1,4 @@
-import { parseArgs, Args } from './parse-args';
+import { Args, argOptions } from './parse-args';
 import { workspace } from 'coc.nvim';
 
 it('should parse args', async () => {
@@ -6,18 +6,24 @@ it('should parse args', async () => {
   workspace.nvim = { call: async () => '/buffer/path' };
   const rootPath = '/root/path';
   let args: Args;
-  args = await parseArgs([rootPath, '--reveal', '/reveal/path', '/cwd/path']);
-  expect(args.rootPath).toEqual('/cwd/path');
-  expect(args.revealPath).toEqual('/reveal/path');
+  args = await Args.parse([rootPath, '--reveal', '/reveal/path', '/cwd/path']);
+  expect(await args.rootPath()).toEqual('/cwd/path');
+  expect(await args.value(argOptions.reveal)).toEqual('/reveal/path');
 
-  args = await parseArgs([rootPath, '--toggle']);
-  expect(args.toggle).toEqual(true);
-  expect(args.rootPath).toEqual('/root/path');
+  args = await Args.parse([rootPath, '--toggle']);
+  expect(await args.value(argOptions.toggle)).toEqual(true);
+  expect(await args.rootPath()).toEqual('/root/path');
 
-  args = await parseArgs([rootPath, '--no-toggle']);
-  expect(args.toggle).toEqual(false);
-  expect(args.rootPath).toEqual('/root/path');
+  args = await Args.parse([rootPath, '--no-toggle']);
+  expect(await args.value(argOptions.toggle)).toEqual(false);
+  expect(await args.rootPath()).toEqual('/root/path');
 
-  args = await parseArgs([rootPath, '--file-columns=git:filename;fullpath;size;modified']);
-  expect(args.fileColumns).toEqual(['git', 'filename', ['fullpath'], ['size'], ['modified']]);
+  args = await Args.parse([rootPath, '--file-columns=git:filename;fullpath;size;modified']);
+  expect(await args.value(argOptions.fileColumns)).toEqual([
+    'git',
+    'filename',
+    ['fullpath'],
+    ['size'],
+    ['modified'],
+  ]);
 });

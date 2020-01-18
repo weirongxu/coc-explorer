@@ -8,6 +8,7 @@ let &runtimepath .= ',' . expand('<sfile>:h:h')
 
 nmap ge :CocCommand explorer<CR>
 nmap gE :CocCommand explorer --position=right<CR>
+execute "nmap <space>r :CocCommand explorer --reveal=".expand('<sfile>:h')."/package.json<CR>"
 nmap <space>t :CocCommand explorer --position=tab<CR>
 nmap <space>a :CocCommand explorer --file-columns=git:selection:clip:diagnosticError:indent:icon:filename;fullpath;size;modified;readonly<CR>
 nmap <space>b :CocCommand explorer --file-columns=git:selection:clip:diagnosticError:indent:icon:filename;fullpath;size;created;modified;accessed;readonly<CR>

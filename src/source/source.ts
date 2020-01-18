@@ -184,7 +184,11 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>> {
     this.expanded = expanded;
   }
 
-  init() {}
+  abstract init(): Promise<void>;
+
+  abstract open(isNotify: boolean): Promise<void>;
+
+  async opened(_isNotify: boolean) {}
 
   addGlobalAction(
     name: ActionSyms,
@@ -487,9 +491,7 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>> {
 
   abstract drawRootNode(node: TreeNode): void | Promise<void>;
 
-  drawRootLabeling(
-    _node: TreeNode,
-  ): undefined | DrawLabelingResult | Promise<DrawLabelingResult> {
+  drawRootLabeling(_node: TreeNode): undefined | DrawLabelingResult | Promise<DrawLabelingResult> {
     return;
   }
 
@@ -546,8 +548,6 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>> {
   currentSourceIndex() {
     return this.explorer.sources.indexOf(this as ExplorerSource<any>);
   }
-
-  opened(_notify = false): void | Promise<void> {}
 
   async reload(node: TreeNode, { render = true, notify = false, force = false } = {}) {
     this.selectedNodes = new Set();

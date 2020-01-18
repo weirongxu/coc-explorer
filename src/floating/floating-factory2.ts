@@ -22,6 +22,7 @@ import { CancellationTokenSource } from 'vscode-languageserver-protocol';
 import createPopup, { Popup } from 'coc.nvim/lib/model/popup';
 import { Explorer } from '../explorer';
 import { floatSupported } from './utils';
+import { argOptions } from '../parse-args';
 
 export class FloatingFactory2 implements Disposable {
   private targetBufnr?: number;
@@ -203,9 +204,10 @@ export class FloatingFactory2 implements Disposable {
 
     let col = 0;
     const explorerCol = await explorer.currentCol();
-    if (explorer.args.position === 'left') {
+    const position = await explorer.args.value(argOptions.position);
+    if (position === 'left') {
       col = explorerWidth - explorerCol + 1;
-    } else if (explorer.args.position === 'right') {
+    } else if (position === 'right') {
       col = -width - explorerCol + 1;
     } else {
       return;

@@ -7,6 +7,7 @@ import { sourceManager } from '../../source-manager';
 import { bufferColumnRegistrar } from './buffer-column-registrar';
 import './load';
 import { initBufferActions } from './buffer-actions';
+import { argOptions } from '../../../parse-args';
 
 const regex = /^\s*(\d+)(.+?)"(.+?)".*/;
 
@@ -71,11 +72,6 @@ export class BufferSource extends ExplorerSource<BufferNode> {
   };
 
   async init() {
-    await this.columnManager.registerColumns(
-      this.explorer.args.bufferColumns,
-      bufferColumnRegistrar,
-    );
-
     if (activeMode) {
       if (!workspace.env.isVim) {
         this.subscriptions.push(
@@ -98,6 +94,13 @@ export class BufferSource extends ExplorerSource<BufferNode> {
     }
 
     initBufferActions(this);
+  }
+
+  async open() {
+    await this.columnManager.registerColumns(
+      await this.explorer.args.value(argOptions.bufferColumns),
+      bufferColumnRegistrar,
+    );
   }
 
   async loadChildren() {

@@ -1,6 +1,6 @@
 import { workspace, ExtensionContext, Emitter, Disposable } from 'coc.nvim';
 import { Explorer } from './explorer';
-import { parseArgs } from './parse-args';
+import { argOptions, Args } from './parse-args';
 import { onError } from './logger';
 import { mappings, ActionMode } from './mappings';
 import { onBufEnter } from './util';
@@ -184,10 +184,11 @@ export class ExplorerManager {
       });
     }
 
-    const args = await parseArgs(argStrs);
+    const args = await Args.parse(argStrs);
 
+    const position = await args.value(argOptions.position);
     const tabid =
-      args.position === 'tab' ? (await this.currentTabIdMax()) + 1 : await this.currentTabId();
+      position === 'tab' ? (await this.currentTabIdMax()) + 1 : await this.currentTabId();
     if (!(tabid in this.tabContainer)) {
       this.tabContainer[tabid] = {
         left: [],
@@ -196,11 +197,11 @@ export class ExplorerManager {
       };
     }
     let explorers: Explorer[] = [];
-    if (args.position === 'left') {
+    if (position === 'left') {
       explorers = this.tabContainer[tabid].left;
-    } else if (args.position === 'right') {
+    } else if (position === 'right') {
       explorers = this.tabContainer[tabid].right;
-    } else if (args.position === 'tab') {
+    } else if (position === 'tab') {
       explorers = this.tabContainer[tabid].tab;
     }
 
@@ -220,7 +221,7 @@ export class ExplorerManager {
       explorers[0] = explorer;
     } else {
       const win = await explorer.win;
-      if (win && args.toggle) {
+      if (win && (await args.value(argOptions.toggle))) {
         await explorer.quit();
         return;
       }

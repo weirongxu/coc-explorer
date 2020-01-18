@@ -1,13 +1,12 @@
 import { Buffer, ExtensionContext, Window, workspace, Disposable } from 'coc.nvim';
 import { Action, ActionMode, mappings, ActionSyms } from './mappings';
-import { Args } from './parse-args';
+import { Args, argOptions } from './parse-args';
 import { IndexesManager } from './indexes-manager';
 import './source/load';
 import { BaseTreeNode, ExplorerSource, ActionOptions } from './source/source';
 import { sourceManager } from './source/source-manager';
 import {
   execNotifyBlock,
-  autoReveal,
   config,
   enableDebug,
   enableWrapscan,
@@ -62,11 +61,13 @@ export class Explorer {
   static async create(explorerManager: ExplorerManager, args: Args) {
     explorerManager.maxExplorerID += 1;
     const explorer = await avoidOnBufEnter(async () => {
+      const position = await args.value(argOptions.position);
+      const width = await args.value(argOptions.width);
       const bufnr = (await workspace.nvim.call('coc_explorer#create', [
         explorerManager.bufferName,
         explorerManager.maxExplorerID,
-        args.position,
-        args.width,
+        position,
+        width,
       ])) as number;
       return new Explorer(explorerManager.maxExplorerID, explorerManager, bufnr);
     });
@@ -297,6 +298,18 @@ export class Explorer {
     return winnr;
   }
 
+  async sourceBufnrBySourceWinid() {
+    const winid = await this.sourceWinid.get();
+    if (!winid) {
+      return null;
+    }
+    const bufnr = (await this.nvim.call('winbufnr', [winid])) as number;
+    if (bufnr <= 0) {
+      return null;
+    }
+    return bufnr;
+  }
+
   async executeHighlightSyntax() {
     const winnr = await this.winnr;
     const curWinnr = await this.nvim.call('winnr');
@@ -320,7 +333,9 @@ export class Explorer {
       await this.nvim.command(`${await win.number}wincmd w`);
     } else {
       // resume the explorer window
-      await this.nvim.call('coc_explorer#resume', [this.bufnr, args.position, args.width]);
+      const position = await args.value(argOptions.position);
+      const width = await args.value(argOptions.width);
+      await this.nvim.call('coc_explorer#resume', [this.bufnr, position, width]);
     }
   }
 
@@ -335,35 +350,14 @@ export class Explorer {
 
     await execNotifyBlock(async () => {
       for (const source of this.sources) {
-        await source.opened(true);
-      }
-
-      const firstFileSource = this.sources.find((s) => s instanceof FileSource) as
-        | FileSource
-        | undefined;
-      let node: FileNode | null = null;
-
-      if (firstFileSource) {
-        firstFileSource.root = this.args.rootPath;
-      }
-
-      if (firstFileSource) {
-        if (autoReveal && this.args.revealPath) {
-          node = await firstFileSource.revealNodeByPath(this.args.revealPath);
-        }
+        await source.open(true);
       }
 
       await this.reloadAll({ render: false, notify: true });
       await this.renderAll({ notify: true });
 
-      if (firstFileSource) {
-        if (autoReveal) {
-          if (node !== null) {
-            await firstFileSource.gotoNode(node, { col: 1, notify: true });
-          } else {
-            await firstFileSource.gotoRoot({ col: 1, notify: true });
-          }
-        }
+      for (const source of this.sources) {
+        await source.opened(true);
       }
     });
   }
@@ -379,15 +373,19 @@ export class Explorer {
 
   private async initArgs(args: Args) {
     this._args = args;
-    if (!this.lastArgSources || this.lastArgSources !== args.sources.toString()) {
-      this.lastArgSources = args.sources.toString();
+    const sources = await args.value(argOptions.sources);
+    if (!sources) {
+      return;
+    }
+    if (!this.lastArgSources || this.lastArgSources !== sources.toString()) {
+      this.lastArgSources = sources.toString();
 
-      this._sources = this.args.sources
+      this._sources = sources
         .map((sourceArg) => sourceManager.createSource(sourceArg.name, this, sourceArg.expand))
         .filter((source): source is ExplorerSource<any> => source !== null);
     }
 
-    this.explorerManager.rootPathRecords.add(this.args.rootPath);
+    this.explorerManager.rootPathRecords.add(await this.args.rootPath());
   }
 
   addGlobalAction(
@@ -773,5 +771,3 @@ export class Explorer {
     this.isHelpUI = false;
   }
 }
-
-import { FileNode, FileSource } from './source/sources/file/file-source';

@@ -25,6 +25,7 @@ import { initFileActions } from './file-actions';
 import { homedir } from 'os';
 import { HighlightPosition } from '../../view-builder';
 import { labelHighlight } from '../../column-manager';
+import { argOptions } from '../../../parse-args';
 
 const hiddenRules = config.get<{
   extensions: string[];
@@ -122,8 +123,6 @@ export class FileSource extends ExplorerSource<FileNode> {
   async init() {
     const { nvim } = this;
 
-    await this.columnManager.registerColumns(this.explorer.args.fileColumns, fileColumnRegistrar);
-
     if (activeMode) {
       if (!workspace.env.isVim) {
         if (autoReveal) {
@@ -158,6 +157,48 @@ export class FileSource extends ExplorerSource<FileNode> {
     }
 
     initFileActions(this);
+  }
+
+  async open() {
+    await this.columnManager.registerColumns(
+      await this.explorer.args.value(argOptions.fileColumns),
+      fileColumnRegistrar,
+    );
+
+    const args = this.explorer.args;
+    this.root = await args.rootPath();
+  }
+
+  async revealPath() {
+    const revealPath = await this.explorer.args.value(argOptions.reveal);
+    if (revealPath) {
+      return revealPath;
+    } else {
+      const bufnr = await this.explorer.sourceBufnrBySourceWinid();
+      if (bufnr) {
+        return (await this.nvim.call('expand', `#${bufnr}:p`)) as string;
+      }
+      return null;
+    }
+  }
+
+  async opened(isNotify: boolean) {
+    await execNotifyBlock(async () => {
+      const args = this.explorer.args;
+      const revealPath = await this.revealPath();
+      if (!revealPath) {
+        return;
+      }
+      const hasRevealPath = args.has(argOptions.reveal);
+      if (autoReveal || hasRevealPath) {
+        const revealNode = await this.revealNodeByPath(revealPath, { render: true, notify: true });
+        if (revealNode !== null) {
+          await this.gotoNode(revealNode, { col: 1, notify: true });
+        } else {
+          await this.gotoRoot({ col: 1, notify: true });
+        }
+      }
+    }, isNotify);
   }
 
   getPutTargetNode(node: FileNode | null) {

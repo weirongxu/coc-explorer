@@ -1,5 +1,6 @@
 import { BufferSource } from './buffer-source';
 import { avoidOnBufEnter, execNotifyBlock } from '../../../util';
+import { argOptions } from '../../../parse-args';
 
 export function initBufferActions(buffer: BufferSource) {
   const { nvim } = buffer;
@@ -81,12 +82,13 @@ export function initBufferActions(buffer: BufferSource) {
     'openInVsplit',
     async (node) => {
       await execNotifyBlock(async () => {
+        const position = await buffer.explorer.args.value(argOptions.position);
         nvim.command(`vertical sbuffer ${node.bufnr}`, true);
-        if (buffer.explorer.args.position === 'left') {
+        if (position === 'left') {
           nvim.command('wincmd L', true);
-        } else if (buffer.explorer.args.position === 'right') {
+        } else if (position === 'right') {
           nvim.command('wincmd H', true);
-        } else if (buffer.explorer.args.position === 'tab') {
+        } else if (position === 'tab') {
           nvim.command('wincmd L', true);
         }
         await buffer.quitOnOpen();

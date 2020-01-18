@@ -19,6 +19,7 @@ import { workspace, listManager } from 'coc.nvim';
 import open from 'open';
 import { driveList } from '../../../lists/drives';
 import { gitManager } from '../../../git-manager';
+import { argOptions } from '../../../parse-args';
 
 export function initFileActions(file: FileSource) {
   const { nvim } = file;
@@ -116,12 +117,13 @@ export function initFileActions(file: FileSource) {
     async (node) => {
       if (!node.directory) {
         await execNotifyBlock(async () => {
+          const position = await file.explorer.args.value(argOptions.position);
           nvim.command(`vsplit ${node.fullpath}`, true);
-          if (file.explorer.args.position === 'left') {
+          if (position === 'left') {
             nvim.command('wincmd L', true);
-          } else if (file.explorer.args.position === 'right') {
+          } else if (position === 'right') {
             nvim.command('wincmd H', true);
-          } else if (file.explorer.args.position === 'tab') {
+          } else if (position === 'tab') {
             nvim.command('wincmd L', true);
           }
           await file.quitOnOpen();
