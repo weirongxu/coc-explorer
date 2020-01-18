@@ -22,11 +22,11 @@ Explorer extension for [coc.nvim](https://github.com/neoclide/coc.nvim)
    ```
 2. Configuration custom vim mapping
    ```
-   :nmap ge :CocCommand explorer<CR>
+   :nmap <space>e :CocCommand explorer<CR>
    ```
 3. Open explorer
    ```
-   ge
+   <space>e
    ```
 4. Press `?` to show mappings help
 
