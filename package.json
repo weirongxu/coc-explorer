@@ -313,7 +313,7 @@
         },
         "explorer.file.hiddenRules": {
           "description": "Custom hidden rules for file",
-          "type": "boolean",
+          "type": "object",
           "default": {
             "extensions": [
               "o",

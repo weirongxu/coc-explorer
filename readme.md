@@ -296,7 +296,7 @@ Default: <pre><code>true</code></pre>
 Default: <pre><code>99</code></pre>
 </details>
 <details>
-<summary><code>explorer.file.hiddenRules</code>: Custom hidden rules for file. type: <code>boolean</code></summary>
+<summary><code>explorer.file.hiddenRules</code>: Custom hidden rules for file. type: <code>object</code></summary>
 Default: <pre><code>{
   "extensions": [
     "o",
