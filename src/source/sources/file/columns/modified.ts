@@ -1,12 +1,12 @@
 import { fileColumnRegistrar } from '../file-column-registrar';
 import dayjs from 'dayjs';
-import { datetimeFormat } from '../../../../util';
+import { getDatetimeFormat } from '../../../../util';
 import { fileHighlights } from '../file-source';
 
 fileColumnRegistrar.registerColumn('modified', () => ({
   draw(row, node) {
     if (node.lstat) {
-      row.add(dayjs(node.lstat.mtime).format(datetimeFormat), fileHighlights.timeModified);
+      row.add(dayjs(node.lstat.mtime).format(getDatetimeFormat()), fileHighlights.timeModified);
     } else {
       row.add('                 ');
     }

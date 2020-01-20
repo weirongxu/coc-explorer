@@ -1,5 +1,5 @@
 import { fileColumnRegistrar } from '../file-column-registrar';
-import { indentChars, topLevel } from './indent';
+import { getIndentChars, getTopLevel } from './indent';
 import { FileNode, FileSource, fileHighlights } from '../file-source';
 import { workspace } from 'coc.nvim';
 import { fsReadlink } from '../../../../util';
@@ -26,7 +26,7 @@ function indentWidth(source: FileSource, node: FileNode) {
     source.columnManager.columnNames.includes('indent') ||
     source.columnManager.columnNames.includes('indentLine')
   ) {
-    return indentChars.length * (node.level - (topLevel ? 0 : 1));
+    return getIndentChars.length * (node.level - (getTopLevel ? 0 : 1));
   } else {
     return 0;
   }

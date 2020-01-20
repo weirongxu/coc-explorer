@@ -1,5 +1,5 @@
 import { workspace } from 'coc.nvim';
-import { execNotifyBlock, skipOnBufEnter, enableDebug } from '../util';
+import { execNotifyBlock, skipOnBufEnter, getEnableDebug } from '../util';
 
 export const HlEscapeCode = {
   left: (s: string | number) => HlEscapeCode.leftBegin + s + HlEscapeCode.leftEnd,
@@ -105,7 +105,7 @@ class HighlightManager {
     }
 
     if (winnr && mode === 'n') {
-      if (enableDebug) {
+      if (getEnableDebug()) {
         // tslint:disable-next-line: ban
         workspace.showMessage(
           `Concealable Render ${requestedRenderList.length} (${Array.from(

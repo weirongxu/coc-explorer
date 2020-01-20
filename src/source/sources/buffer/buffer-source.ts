@@ -1,6 +1,6 @@
 import { workspace } from 'coc.nvim';
 import pathLib from 'path';
-import { activeMode, onBufEnter, debounce, normalizePath, onEvents } from '../../../util';
+import { getActiveMode, onBufEnter, debounce, normalizePath, onEvents } from '../../../util';
 import { hlGroupManager } from '../../highlight-manager';
 import { ExplorerSource, sourceIcons } from '../../source';
 import { sourceManager } from '../../source-manager';
@@ -72,7 +72,7 @@ export class BufferSource extends ExplorerSource<BufferNode> {
   };
 
   async init() {
-    if (activeMode) {
+    if (getActiveMode()) {
       if (!workspace.env.isVim) {
         this.subscriptions.push(
           onEvents(
@@ -145,11 +145,14 @@ export class BufferSource extends ExplorerSource<BufferNode> {
   async drawRootNode(node: BufferNode) {
     node.drawnLine = await this.viewBuilder.drawRowLine(async (row) => {
       row.add(
-        this.expanded ? sourceIcons.expanded : sourceIcons.collapsed,
+        this.expanded ? sourceIcons.getExpanded() : sourceIcons.getCollapsed(),
         bufferHighlights.expandIcon,
       );
       row.add(' ');
-      row.add(`[BUFFER${this.showHidden ? ' ' + sourceIcons.hidden : ''}]`, bufferHighlights.title);
+      row.add(
+        `[BUFFER${this.showHidden ? ' ' + sourceIcons.getHidden() : ''}]`,
+        bufferHighlights.title,
+      );
     });
   }
 

@@ -2,11 +2,11 @@ import { workspace } from 'coc.nvim';
 
 export const config = workspace.getConfiguration('explorer');
 
-export const enableDebug = config.get<boolean>('debug')!;
+export const getEnableDebug = () => config.get<boolean>('debug')!;
 
-export const activeMode = config.get<boolean>('activeMode')!;
+export const getActiveMode = () => config.get<boolean>('activeMode')!;
 
-export const autoReveal = config.get<boolean>('file.autoReveal')!;
+export const getAutoReveal = () => config.get<boolean>('file.autoReveal')!;
 
 export type OpenStrategy =
   | 'select'
@@ -14,9 +14,11 @@ export type OpenStrategy =
   | 'previousBuffer'
   | 'previousWindow'
   | 'sourceWindow';
-export const openStrategy = config.get<OpenStrategy>('openAction.strategy')!;
+export const getOpenStrategy = () => config.get<OpenStrategy>('openAction.strategy')!;
 
 export type PreviewStrategy = 'labeling';
-export const previewStrategy = config.get<PreviewStrategy>('previewAction.strategy')!;
+export const getPreviewStrategy = () => config.get<PreviewStrategy>('previewAction.strategy')!;
 
-export const datetimeFormat = config.get<string>('datetime.format')!;
+export const getDatetimeFormat = () => config.get<string>('datetime.format')!;
+
+export const getEnableNerdfont = () => config.get<string>('icon.enableNerdfont')!;

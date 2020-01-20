@@ -3,8 +3,8 @@ import fs from 'fs';
 import pathLib from 'path';
 import { onError } from '../../../logger';
 import {
-  activeMode,
-  autoReveal,
+  getActiveMode,
+  getAutoReveal,
   config,
   execNotifyBlock,
   onBufEnter,
@@ -27,12 +27,16 @@ import { HighlightPosition } from '../../view-builder';
 import { labelHighlight } from '../../column-manager';
 import { argOptions } from '../../../parse-args';
 
-const hiddenRules = config.get<{
-  extensions: string[];
-  filenames: string[];
-  patternMatches: string[];
-}>('file.hiddenRules')!;
+const getHiddenRules = () =>
+  config.get<{
+    extensions: string[];
+    filenames: string[];
+    patternMatches: string[];
+  }>('file.hiddenRules')!;
+
 function isHidden(filename: string) {
+  const hiddenRules = getHiddenRules();
+
   const { basename, extensions } = getExtensions(filename);
   const extname = extensions[extensions.length - 1];
 
@@ -123,9 +127,9 @@ export class FileSource extends ExplorerSource<FileNode> {
   async init() {
     const { nvim } = this;
 
-    if (activeMode) {
+    if (getActiveMode()) {
       if (!workspace.env.isVim) {
-        if (autoReveal) {
+        if (getAutoReveal()) {
           this.subscriptions.push(
             onBufEnter(async (bufnr) => {
               if (bufnr !== this.explorer.bufnr) {
@@ -190,7 +194,7 @@ export class FileSource extends ExplorerSource<FileNode> {
         return;
       }
       const hasRevealPath = args.has(argOptions.reveal);
-      if (autoReveal || hasRevealPath) {
+      if (getAutoReveal() || hasRevealPath) {
         const revealNode = await this.revealNodeByPath(revealPath, { render: true, notify: true });
         if (revealNode !== null) {
           await this.gotoNode(revealNode, { col: 1, notify: true });
@@ -371,11 +375,14 @@ export class FileSource extends ExplorerSource<FileNode> {
   async drawRootNode(node: FileNode) {
     node.drawnLine = await this.viewBuilder.drawRowLine(async (row) => {
       row.add(
-        this.expanded ? sourceIcons.expanded : sourceIcons.collapsed,
+        this.expanded ? sourceIcons.getExpanded() : sourceIcons.getCollapsed(),
         fileHighlights.expandIcon,
       );
       row.add(' ');
-      row.add(`[FILE${this.showHidden ? ' ' + sourceIcons.hidden : ''}]:`, fileHighlights.title);
+      row.add(
+        `[FILE${this.showHidden ? ' ' + sourceIcons.getHidden() : ''}]:`,
+        fileHighlights.title,
+      );
       row.add(' ');
       row.add(pathLib.basename(this.root), fileHighlights.name);
       row.add(' ');

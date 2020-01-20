@@ -1,12 +1,11 @@
 import { fileColumnRegistrar } from '../file-column-registrar';
 import { hlGroupManager } from '../../../highlight-manager';
-import { enableNerdfont } from '../../../source';
-import { max } from '../../../../util';
+import { max, getEnableNerdfont } from '../../../../util';
 import { fileHighlights } from '../file-source';
 
 let copy = fileColumnRegistrar.getColumnConfig<string>('clip.copy');
 let cut = fileColumnRegistrar.getColumnConfig<string>('clip.cut');
-if (enableNerdfont) {
+if (getEnableNerdfont()) {
   if (copy === undefined) {
     copy = '';
   }

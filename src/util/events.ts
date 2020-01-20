@@ -1,5 +1,5 @@
 import { events, workspace, Disposable } from 'coc.nvim';
-import { enableDebug } from './config';
+import { getEnableDebug } from './config';
 import { throttle } from './throttle-debounce';
 import { asyncCatchError } from './function';
 
@@ -23,7 +23,7 @@ export function onBufEnter(callback: (bufnr: number) => void | Promise<void>, de
       skipBufnrQueue.splice(skipIndex, 1);
       return;
     }
-    if (enableDebug) {
+    if (getEnableDebug()) {
       // tslint:disable-next-line: ban
       workspace.showMessage(`BufEnter: Bufnr(${bufnr}), Count(${count++})`, 'more');
     }

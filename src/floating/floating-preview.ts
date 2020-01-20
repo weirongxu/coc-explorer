@@ -1,7 +1,7 @@
 import { Explorer } from '../explorer';
 import { DrawLabelingResult } from '../source/column-manager';
 import { BaseTreeNode, ExplorerSource } from '../source/source';
-import { Cancellable, debouncePromise, PreviewStrategy, previewStrategy } from '../util';
+import { Cancellable, debouncePromise, PreviewStrategy, getPreviewStrategy } from '../util';
 import { workspace } from 'coc.nvim';
 import { FloatingFactory2 } from './floating-factory2';
 import { floatSupported } from './utils';
@@ -68,7 +68,7 @@ export class FloatingPreview {
         const nodeIndex = await source.currentLineIndex();
         if (nodeIndex !== null) {
           const node = source.flattenedNodes[nodeIndex];
-          await this.previewNode(previewStrategy, source, node, nodeIndex);
+          await this.previewNode(getPreviewStrategy(), source, node, nodeIndex);
         }
       });
     }

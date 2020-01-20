@@ -14,7 +14,7 @@ fileColumnRegistrar.registerColumn('selection', (source) => ({
     }
   },
   draw(row, node) {
-    row.add(source.isSelectedNode(node) ? sourceIcons.selected : sourceIcons.unselected);
+    row.add(source.isSelectedNode(node) ? sourceIcons.getSelected() : sourceIcons.getUnselected());
     row.add(' ');
   },
 }));

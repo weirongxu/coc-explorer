@@ -8,14 +8,14 @@ import { sourceManager } from './source/source-manager';
 import {
   execNotifyBlock,
   config,
-  enableDebug,
+  getEnableDebug,
   enableWrapscan,
   avoidOnBufEnter,
   onEvents,
   onBufEnter,
   PreviewStrategy,
   queueAsyncFunction,
-  previewStrategy,
+  getPreviewStrategy,
 } from './util';
 import { ExplorerManager } from './explorer-manager';
 import { hlGroupManager } from './source/highlight-manager';
@@ -145,7 +145,7 @@ export class Explorer {
           const node = nodes[0];
           const nodeIndex = source.getLineByNode(node);
           await this.floatingWindow.previewNode(
-            (arg as PreviewStrategy) || previewStrategy,
+            (arg as PreviewStrategy) || getPreviewStrategy,
             source,
             node,
             nodeIndex,
@@ -477,7 +477,7 @@ export class Explorer {
       }),
     );
 
-    if (enableDebug) {
+    if (getEnableDebug()) {
       let actionDisplay = action.name;
       if (action.arg) {
         actionDisplay += ':' + action.arg;

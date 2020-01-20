@@ -1,11 +1,11 @@
 import { fileColumnRegistrar } from '../file-column-registrar';
-import { sourceIcons, enableNerdfont } from '../../../source';
+import { sourceIcons } from '../../../source';
 // modified from:
 //   icon code from https://github.com/ryanoasis/vim-devicons/blob/830f0fe48a337ed26384c43929032786f05c8d24/plugin/webdevicons.vim#L129
 //   icon color from https://github.com/microsoft/vscode/blob/e75e71f41911633be838344377df26842f2b8c7c/extensions/theme-seti/icons/vs-seti-icon-theme.json
 import nerdfontJson from './icons.nerdfont.json';
 import { hlGroupManager, Highlight } from '../../../highlight-manager';
-import { config, getExtensions } from '../../../../util';
+import { config, getExtensions, getEnableNerdfont } from '../../../../util';
 import { workspace } from 'coc.nvim';
 import { FileNode, fileHighlights } from '../file-source';
 import { getSymbol } from '../../../../util/symbol';
@@ -103,7 +103,7 @@ fileColumnRegistrar.registerColumn('icon', (source) => ({
   },
   async draw(row, node) {
     if (node.directory) {
-      if (enableNerdfont) {
+      if (getEnableNerdfont()) {
         row.add(
           source.expandStore.isExpanded(node)
             ? nerdfont.icons.folderOpened.code
@@ -112,13 +112,15 @@ fileColumnRegistrar.registerColumn('icon', (source) => ({
         );
       } else {
         row.add(
-          source.expandStore.isExpanded(node) ? sourceIcons.expanded : sourceIcons.collapsed,
+          source.expandStore.isExpanded(node)
+            ? sourceIcons.getExpanded()
+            : sourceIcons.getCollapsed(),
           fileHighlights.directory,
         );
       }
       row.add(' ');
     } else {
-      if (enableNerdfont) {
+      if (getEnableNerdfont()) {
         const icon = getIcon(node.name.toLowerCase());
         if (icon && enableVimDevions) {
           icon.code = getAttr(node).devicons;

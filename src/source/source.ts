@@ -4,7 +4,7 @@ import { explorerActionList } from '../lists/actions';
 import { Explorer } from '../explorer';
 import { onError } from '../logger';
 import { ActionSyms, mappings, reverseMappings, ActionMode } from '../mappings';
-import { config, execNotifyBlock, openStrategy } from '../util';
+import { config, execNotifyBlock, getOpenStrategy, getEnableNerdfont } from '../util';
 import { SourceViewBuilder } from './view-builder';
 import { hlGroupManager } from './highlight-manager';
 import { ColumnManager, DrawLabelingResult } from './column-manager';
@@ -16,14 +16,12 @@ export type ActionOptions = {
   select: boolean;
 };
 
-export const enableNerdfont = config.get<string>('icon.enableNerdfont')!;
-
 export const sourceIcons = {
-  expanded: config.get<string>('icon.expanded') || (enableNerdfont ? '' : '-'),
-  collapsed: config.get<string>('icon.collapsed') || (enableNerdfont ? '' : '+'),
-  selected: config.get<string>('icon.selected')!,
-  unselected: config.get<string>('icon.unselected')!,
-  hidden: config.get<string>('icon.hidden')!,
+  getExpanded: () => config.get<string>('icon.expanded') || (getEnableNerdfont() ? '' : '-'),
+  getCollapsed: () => config.get<string>('icon.collapsed') || (getEnableNerdfont() ? '' : '+'),
+  getSelected: () => config.get<string>('icon.selected')!,
+  getUnselected: () => config.get<string>('icon.unselected')!,
+  getHidden: () => config.get<string>('icon.hidden')!,
 };
 
 export interface BaseTreeNode<TreeNode extends BaseTreeNode<TreeNode>> {
@@ -330,6 +328,7 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>> {
   }
 
   async openAction(node: TreeNode, openByWinnr: (winnr: number) => Promise<void>) {
+    const openStrategy = getOpenStrategy();
     if (openStrategy === 'vsplit') {
       await this.doAction('openInVsplit', node);
       await this.quitOnOpen();
