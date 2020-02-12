@@ -20,6 +20,7 @@ import open from 'open';
 import { driveList } from '../../../lists/drives';
 import { gitManager } from '../../../git-manager';
 import { argOptions } from '../../../parse-args';
+import { onError } from '../../../logger';
 
 export function initFileActions(file: FileSource) {
   const { nvim } = file;
@@ -91,12 +92,18 @@ export function initFileActions(file: FileSource) {
           await file.doAction('expandOrCollapse', node);
         }
       } else {
-        await file.openAction(node, async (winnr) => {
-          await avoidOnBufEnter(async () => {
-            await file.nvim.command(`${winnr}wincmd w`);
+        try {
+          await file.openAction(node, async (winnr) => {
+            await avoidOnBufEnter(async () => {
+              await file.nvim.command(`${winnr}wincmd w`);
+            });
+
+            await nvim.command(`edit ${node.fullpath}`);
           });
-          await nvim.command(`edit ${node.fullpath}`);
-        });
+        }
+        catch (e) {
+          onError(e.message);
+        }
       }
     },
     'open file or directory',
