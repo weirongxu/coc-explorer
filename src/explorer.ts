@@ -10,15 +10,16 @@ import {
   config,
   getEnableDebug,
   enableWrapscan,
-  avoidOnBufEnter,
-  onEvents,
+  avoidOnBufEnter as avoidOnBufEvents,
   onBufEnter,
   PreviewStrategy,
   queueAsyncFunction,
   getPreviewStrategy,
+  onCursorMoved,
+  onEvents,
 } from './util';
 import { ExplorerManager } from './explorer-manager';
-import { hlGroupManager } from './source/highlight-manager';
+import { hlGroupManager, HighlightPositionWithLine } from './source/highlight-manager';
 import { BuffuerContextVars } from './context-variables';
 import { SourceViewBuilder, SourceRowBuilder } from './source/view-builder';
 import { FloatingPreview } from './floating/floating-preview';
@@ -35,6 +36,9 @@ const helpHightlights = {
 export class Explorer {
   nvim = workspace.nvim;
   isHelpUI: boolean = false;
+  helpHlSrcId = workspace.createNameSpace('coc-explorer-help');
+  readonly concealMatchStartId = 10000;
+  concealMatchEndId = 10000;
   indexesManager = new IndexesManager(this);
   inited = new BuffuerContextVars<boolean>('inited', this);
   sourceWinid = new BuffuerContextVars<number>('sourceWinid', this);
@@ -52,22 +56,65 @@ export class Explorer {
   > = {};
   context: ExtensionContext;
   floatingWindow = new FloatingPreview(this);
+  contentWidth = 0;
 
   private _buffer?: Buffer;
   private _args?: Args;
   private _sources?: ExplorerSource<any>[];
   private lastArgSources?: string;
 
+  private static async getExplorerPosition(args: Args) {
+    let width: number = 0;
+    let height: number = 0;
+    let left: number = 0;
+    let top: number = 0;
+    const position = await args.value(argOptions.position);
+
+    if (position !== 'floating') {
+      width = await args.value(argOptions.width);
+    } else {
+      width = await args.value(argOptions.floatingWidth);
+      height = await args.value(argOptions.floatingHeight);
+      const [vimWidth, vimHeight] = [
+        workspace.env.columns,
+        workspace.env.lines - workspace.env.cmdheight,
+      ];
+      if (width <= 0) {
+        width = vimWidth + width;
+      }
+      if (height <= 0) {
+        height = vimHeight + height;
+      }
+      const floatingPosition = await args.value(argOptions.floatingPosition);
+      if (floatingPosition === 'left-center') {
+        left = 0;
+        top = (vimHeight - height) / 2;
+      } else if (floatingPosition === 'center') {
+        left = (vimWidth - width) / 2;
+        top = (vimHeight - height) / 2;
+      } else if (floatingPosition === 'right-center') {
+        left = vimWidth - width;
+        top = (vimHeight - height) / 2;
+      } else {
+        [left, top] = floatingPosition;
+      }
+    }
+    return { width, height, top, left };
+  }
+
   static async create(explorerManager: ExplorerManager, args: Args) {
     explorerManager.maxExplorerID += 1;
-    const explorer = await avoidOnBufEnter(async () => {
+    const explorer = await avoidOnBufEvents(async () => {
       const position = await args.value(argOptions.position);
-      const width = await args.value(argOptions.width);
+      const { width, height, top, left } = await this.getExplorerPosition(args);
       const bufnr = (await workspace.nvim.call('coc_explorer#create', [
         explorerManager.bufferName,
         explorerManager.maxExplorerID,
         position,
         width,
+        height,
+        left,
+        top,
       ])) as number;
       return new Explorer(explorerManager.maxExplorerID, explorerManager, bufnr);
     });
@@ -82,8 +129,14 @@ export class Explorer {
   ) {
     this.context = explorerManager.context;
 
+    onCursorMoved(async (bufnr) => {
+      if (bufnr === this.bufnr) {
+        await this.executeConcealableHighlight();
+      }
+    });
+
     if (config.get<boolean>('previewAction.onHover')!) {
-      onEvents('CursorMoved', async (bufnr) => {
+      onCursorMoved(async (bufnr) => {
         if (bufnr === this.bufnr) {
           await this.floatingWindow.hoverPreview();
         }
@@ -96,6 +149,11 @@ export class Explorer {
         }
       });
     }
+    onEvents('BufWinLeave', (bufnr) => {
+      if (bufnr === this.bufnr) {
+        this.floatingWindow.floatFactory.close();
+      }
+    });
 
     this.addGlobalAction(
       'nodePrev',
@@ -310,6 +368,18 @@ export class Explorer {
     return bufnr;
   }
 
+  clearHighlightsNotify(hlSrcId: number, lineStart?: number, lineEnd?: number) {
+    hlGroupManager.clearHighlights(this, hlSrcId, lineStart, lineEnd);
+  }
+
+  async executeHighlightsNotify(hlSrcId: number, highlights: HighlightPositionWithLine[]) {
+    await hlGroupManager.executeHighlightsNotify(this, hlSrcId, highlights);
+  }
+
+  async executeConcealableHighlight({ isNotify = false } = {}) {
+    await hlGroupManager.executeConcealableHighlight(this, { isNotify });
+  }
+
   async executeHighlightSyntax() {
     const winnr = await this.winnr;
     const curWinnr = await this.nvim.call('winnr');
@@ -334,8 +404,8 @@ export class Explorer {
     } else {
       // resume the explorer window
       const position = await args.value(argOptions.position);
-      const width = await args.value(argOptions.width);
-      await this.nvim.call('coc_explorer#resume', [this.bufnr, position, width]);
+      const { width, height, top, left } = await Explorer.getExplorerPosition(args);
+      await this.nvim.call('coc_explorer#resume', [this.bufnr, position, width, height, left, top]);
     }
   }
 
@@ -360,6 +430,57 @@ export class Explorer {
         await source.opened(true);
       }
     });
+  }
+
+  async refreshWidth() {
+    type ContentWidthType = 'win-width' | 'vim-width';
+    const window = await this.win;
+    if (!window) {
+      return;
+    }
+
+    const setWidth = async (contentWidthType: ContentWidthType, contentWidth: number) => {
+      if (contentWidth <= 0) {
+        let contentBaseWidth: number | undefined;
+        if (contentWidthType === 'win-width') {
+          contentBaseWidth = await window?.width;
+        } else if (contentWidthType === 'vim-width') {
+          contentBaseWidth = (await workspace.nvim.eval('&columns')) as number;
+        }
+        if (contentBaseWidth) {
+          this.contentWidth = contentBaseWidth + contentWidth;
+          return true;
+        }
+      } else {
+        this.contentWidth = contentWidth;
+        return true;
+      }
+    };
+
+    const position = await this.args.value(argOptions.position);
+    if (position === 'floating') {
+      if (await setWidth('win-width', config.get<number>('floating.contentWidth')!)) {
+        return;
+      }
+    }
+
+    if (
+      await setWidth(
+        config.get<ContentWidthType>('contentWidthType')!,
+        config.get<number>('contentWidth')!,
+      )
+    ) {
+      return;
+    }
+  }
+
+  async quitOnOpen() {
+    if (
+      config.get<boolean>('quitOnOpen') ||
+      (await this.args.value(argOptions.position)) === 'floating'
+    ) {
+      await this.quit();
+    }
   }
 
   async quit() {
@@ -454,7 +575,7 @@ export class Explorer {
         if (!nodesGroup.has(source)) {
           nodesGroup.set(source, new Set());
         }
-        const relativeLineIndex = lineIndex - source.startLine;
+        const relativeLineIndex = lineIndex - source.startLineIndex;
 
         nodesGroup
           .get(source)!
@@ -514,7 +635,7 @@ export class Explorer {
   }
 
   private findSourceByLineIndex(lineIndex: number) {
-    const sourceIndex = this.sources.findIndex((source) => lineIndex < source.endLine);
+    const sourceIndex = this.sources.findIndex((source) => lineIndex < source.endLineIndex);
     if (sourceIndex === -1) {
       return [null, -1] as [null, -1];
     } else {
@@ -529,14 +650,14 @@ export class Explorer {
   async currentSourceIndex() {
     const lineIndex = await this.currentLineIndex();
     return this.sources.findIndex(
-      (source) => lineIndex >= source.startLine && lineIndex < source.endLine,
+      (source) => lineIndex >= source.startLineIndex && lineIndex < source.endLineIndex,
     );
   }
 
   async currentNode() {
     const source = await this.currentSource();
     if (source) {
-      const nodeIndex = (await this.currentLineIndex()) - source.startLine;
+      const nodeIndex = (await this.currentLineIndex()) - source.startLineIndex;
       return source.flattenedNodes[nodeIndex];
     }
   }
@@ -578,7 +699,7 @@ export class Explorer {
       const [, sourceIndex] = this.findSourceByLineIndex(storeCursor.lineIndex);
       const source = this.sources[sourceIndex];
       if (source) {
-        const sourceLineIndex = storeCursor.lineIndex - source.startLine;
+        const sourceLineIndex = storeCursor.lineIndex - source.startLineIndex;
         const storeNode: BaseTreeNode<any> = source.getNodeByLine(sourceLineIndex);
         return async (notify = false) => {
           await execNotifyBlock(async () => {
@@ -634,8 +755,8 @@ export class Explorer {
   //
   //   this.sources.forEach((source) => {
   //     source.lines = [];
-  //     source.startLine = 0;
-  //     source.endLine = 0;
+  //     source.startIndex = 0;
+  //     source.endIndex = 0;
   //   });
   // }
 
@@ -674,6 +795,7 @@ export class Explorer {
   async selectWindowsUI(
     selected: (winnr: number) => void | Promise<void>,
     noChoice: () => void | Promise<void> = () => {},
+    cancel: () => void | Promise<void> = () => {},
   ) {
     const winnr = await this.nvim.call('coc_explorer#select_wins', [
       this.explorerManager.bufferName,
@@ -683,18 +805,30 @@ export class Explorer {
       await Promise.resolve(selected(winnr));
     } else if (winnr === 0) {
       await Promise.resolve(noChoice());
+    } else {
+      await Promise.resolve(cancel());
     }
   }
 
   async showHelp(source: ExplorerSource<any>, isRoot: boolean) {
     this.isHelpUI = true;
-    const builder = new SourceViewBuilder();
+    const builder = new SourceViewBuilder(this);
     const width = await this.nvim.call('winwidth', '%');
     const storeCursor = await this.storeCursor();
-    const lines: string[] = [];
+    const nodes: BaseTreeNode<any>[] = [];
 
-    lines.push(
-      await builder.drawRowLine((row) => {
+    let curUid = 0;
+    function createNode(): BaseTreeNode<any> {
+      curUid += 1;
+      return {
+        uid: `help://${curUid}`,
+        level: 0,
+        drawnLine: '',
+      };
+    }
+
+    nodes.push(
+      await builder.drawRowForNode(createNode(), (row) => {
         row.add(
           `Help for [${source.sourceName}${
             isRoot ? ' root' : ''
@@ -702,9 +836,9 @@ export class Explorer {
         );
       }),
     );
-    lines.push(
-      await builder.drawRowLine((row) => {
-        row.add('—'.repeat(width), helpHightlights.line);
+    nodes.push(
+      await builder.drawRowForNode(createNode(), (row) => {
+        row.add('—'.repeat(width), { hl: helpHightlights.line });
       }),
     );
 
@@ -713,28 +847,28 @@ export class Explorer {
       ...(isRoot ? source.rootActions : source.actions),
     };
     const drawAction = (row: SourceRowBuilder, action: Action) => {
-      row.add(action.name, helpHightlights.action);
+      row.add(action.name, { hl: helpHightlights.action });
       if (action.arg) {
-        row.add(`(${action.arg})`, helpHightlights.arg);
+        row.add(`(${action.arg})`, { hl: helpHightlights.arg });
       }
       row.add(' ');
-      row.add(registeredActions[action.name].description, helpHightlights.description);
+      row.add(registeredActions[action.name].description, { hl: helpHightlights.description });
     };
     for (const [key, actions] of Object.entries(mappings)) {
       if (!actions.every((action) => action.name in registeredActions)) {
         continue;
       }
-      lines.push(
-        await builder.drawRowLine((row) => {
+      nodes.push(
+        await builder.drawRowForNode(createNode(), (row) => {
           row.add(' ');
-          row.add(key, helpHightlights.mappingKey);
+          row.add(key, { hl: helpHightlights.mappingKey });
           row.add(' - ');
           drawAction(row, actions[0]);
         }),
       );
       for (const action of actions.slice(1)) {
-        lines.push(
-          await builder.drawRowLine((row) => {
+        nodes.push(
+          await builder.drawRowForNode(createNode(), (row) => {
             row.add(' '.repeat(key.length + 4));
             drawAction(row, action);
           }),
@@ -743,7 +877,25 @@ export class Explorer {
     }
 
     await execNotifyBlock(async () => {
-      await this.setLines(lines, 0, -1, true);
+      await this.setLines(
+        nodes.map((n) => n.drawnLine),
+        0,
+        -1,
+        true,
+      );
+      const highlightPositions: HighlightPositionWithLine[] = [];
+      for (let i = 0; i < nodes.length; i++) {
+        const node = nodes[i];
+        if (node.highlightPositions) {
+          highlightPositions.push(
+            ...node.highlightPositions.map((hl) => ({
+              line: i,
+              ...hl,
+            })),
+          );
+        }
+      }
+      await this.executeHighlightsNotify(this.helpHlSrcId, highlightPositions);
     });
 
     await this.explorerManager.clearMappings();

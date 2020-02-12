@@ -12,7 +12,7 @@ Explorer extension for [coc.nvim](https://github.com/neoclide/coc.nvim)
 
 ## Requirements
 
-`>= vim 8.0` or `>= neovim 0.3.1`
+`>= vim 8.1.0579` or `>= neovim 0.3.1`
 
 ## Usage
 

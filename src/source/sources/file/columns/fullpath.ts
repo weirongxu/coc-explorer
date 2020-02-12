@@ -4,10 +4,9 @@ import { fileHighlights } from '../file-source';
 fileColumnRegistrar.registerColumn('fullpath', () => ({
   draw(row, node) {
     if (node.directory) {
-      row.add(node.fullpath + '/', fileHighlights.directory);
+      row.add(node.fullpath + '/', { hl: fileHighlights.directory });
     } else {
       row.add(node.fullpath);
     }
-    row.add(' ');
   },
 }));

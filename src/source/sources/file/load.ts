@@ -2,6 +2,7 @@ import './columns/git';
 import './columns/selection';
 import './columns/icon';
 import './columns/filename';
+import './columns/link';
 import './columns/fullpath';
 import './columns/indent';
 import './columns/clip';

@@ -7,11 +7,6 @@
     "curly": true,
     "prefer-const": true,
     "no-floating-promises": true,
-    "ban": [
-      true,
-      ["workspace", "showMessage"],
-      ["log"],
-      ["prettyPrint"]
-    ]
+    "ban": [true, ["workspace", "showMessage"], ["log"], ["prettyPrint"]]
   }
 }

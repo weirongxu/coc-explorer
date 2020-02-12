@@ -4,8 +4,7 @@ import { bufferHighlights } from '../buffer-source';
 bufferColumnRegistrar.registerColumn('fullpath', () => ({
   draw(row, node) {
     if (node.basename !== node.bufname) {
-      row.add(node.fullpath, bufferHighlights.fullpath);
-      row.add(' ');
+      row.add(node.fullpath, { hl: bufferHighlights.fullpath });
     }
   },
 }));

@@ -1,14 +1,12 @@
 import { config, normalizePath, splitCount } from './util';
 import { workspace } from 'coc.nvim';
 
-const { nvim } = workspace;
-
 export interface ArgsSource {
   name: string;
   expand: boolean;
 }
 
-export type ArgPosition = 'tab' | 'left' | 'right';
+export type ArgPosition = 'tab' | 'left' | 'right' | 'floating';
 
 type OptionType = 'boolean' | 'string';
 
@@ -35,16 +33,18 @@ export class Args {
     handler: (path: string) => normalizePath(path),
     getDefault: async () => {
       let useGetcwd = false;
-      const buftype = await nvim.getVar('&buftype');
+      const buftype = await workspace.nvim.getVar('&buftype');
       if (buftype === 'nofile') {
         useGetcwd = true;
       } else {
-        const bufname = await nvim.call('bufname', ['%']);
+        const bufname = await workspace.nvim.call('bufname', ['%']);
         if (!bufname) {
           useGetcwd = true;
         }
       }
-      const rootPath = useGetcwd ? ((await nvim.call('getcwd', [])) as string) : workspace.rootPath;
+      const rootPath = useGetcwd
+        ? ((await workspace.nvim.call('getcwd', [])) as string)
+        : workspace.rootPath;
       return normalizePath(rootPath);
     },
     description: 'Explorer root',
@@ -165,6 +165,7 @@ export class Args {
 }
 
 type Columns = (string | string[])[];
+type floatingPositionEnum = 'left-center' | 'right-center' | 'center';
 
 export const argOptions = {
   toggle: Args.registerBoolOption('toggle', true),
@@ -189,13 +190,34 @@ export const argOptions = {
       }),
     getDefault: () => config.get<ArgsSource[]>('sources')!,
   }),
+  position: Args.registerOption<ArgPosition>('position', {
+    getDefault: () => config.get<ArgPosition>('position')!,
+  }),
   width: Args.registerOption('width', {
     handler: (s) => parseInt(s, 10),
     getDefault: () => config.get<number>('width')!,
   }),
-  position: Args.registerOption<ArgPosition>('position', {
-    getDefault: () => config.get<ArgPosition>('position')!,
+  floatingWidth: Args.registerOption('floating-width', {
+    handler: (s) => parseInt(s, 10),
+    getDefault: () => config.get<number>('floating.width')!,
   }),
+  floatingHeight: Args.registerOption('floating-height', {
+    handler: (s) => parseInt(s, 10),
+    getDefault: () => config.get<number>('floating.height')!,
+  }),
+  floatingPosition: Args.registerOption<floatingPositionEnum | [number, number]>(
+    'floating-position',
+    {
+      handler: (s) => {
+        if (['left-center', 'right-center', 'center'].includes(s)) {
+          return s as floatingPositionEnum;
+        } else {
+          return s.split(',').map((i) => parseInt(i, 10)) as [number, number];
+        }
+      },
+      getDefault: () => config.get<floatingPositionEnum | [number, number]>('floating.position')!,
+    },
+  ),
   bufferColumns: Args.registerOption<Columns>('buffer-columns', {
     handler: parseColumns,
     getDefault: () => config.get<Columns>('buffer.columns')!,

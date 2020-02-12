@@ -20,24 +20,24 @@ if (getEnableNerdfont()) {
     cut = 'X';
   }
 }
-const width = max([copy.length, cut.length]) + 1;
+const width = max([copy.length, cut.length]);
 copy = copy.padEnd(width, ' ');
 cut = cut.padEnd(width, ' ');
 const space = ' '.repeat(width);
 
 const concealable = hlGroupManager.concealable('FileClip');
 
-fileColumnRegistrar.registerColumn('clip', (source) => ({
-  concealable,
+fileColumnRegistrar.registerColumn('clip', ({ source, column }) => ({
+  concealable: concealable(source),
   async beforeDraw() {
     if (source.copiedNodes.size === 0 && source.cutNodes.size === 0) {
-      this.concealable?.requestHide();
+      column.concealable.hide();
     } else {
-      this.concealable?.requestShow();
+      column.concealable.show();
     }
   },
   draw(row, node) {
     const chars = source.copiedNodes.has(node) ? copy : source.cutNodes.has(node) ? cut : space;
-    row.add(chars, fileHighlights.clip);
+    row.add(chars, { hl: fileHighlights.clip });
   },
 }));

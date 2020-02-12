@@ -1,8 +1,15 @@
 import { workspace } from 'coc.nvim';
 import pathLib from 'path';
-import { getActiveMode, onBufEnter, debounce, normalizePath, onEvents } from '../../../util';
+import {
+  getActiveMode,
+  onBufEnter,
+  debounce,
+  normalizePath,
+  onEvents,
+  config,
+} from '../../../util';
 import { hlGroupManager } from '../../highlight-manager';
-import { ExplorerSource, sourceIcons } from '../../source';
+import { ExplorerSource, sourceIcons, BaseTreeNode } from '../../source';
 import { sourceManager } from '../../source-manager';
 import { bufferColumnRegistrar } from './buffer-column-registrar';
 import './load';
@@ -11,13 +18,7 @@ import { argOptions } from '../../../parse-args';
 
 const regex = /^\s*(\d+)(.+?)"(.+?)".*/;
 
-export interface BufferNode {
-  isRoot?: boolean;
-  uid: string;
-  level: number;
-  drawnLine: string;
-  parent?: BufferNode;
-  children?: BufferNode[];
+export interface BufferNode extends BaseTreeNode<BufferNode> {
   bufnr: number;
   bufnrStr: string;
   bufname: string;
@@ -49,6 +50,8 @@ export const bufferHighlights = {
 };
 
 export class BufferSource extends ExplorerSource<BufferNode> {
+  hlSrcId = workspace.createNameSpace('coc-explorer-buffer');
+  showHidden: boolean = config.get<boolean>('file.showHiddenBuffers')!;
   rootNode: BufferNode = {
     isRoot: true,
     uid: this.sourceName + '://',
@@ -143,21 +146,19 @@ export class BufferSource extends ExplorerSource<BufferNode> {
   }
 
   async drawRootNode(node: BufferNode) {
-    node.drawnLine = await this.viewBuilder.drawRowLine(async (row) => {
-      row.add(
-        this.expanded ? sourceIcons.getExpanded() : sourceIcons.getCollapsed(),
-        bufferHighlights.expandIcon,
-      );
+    await this.viewBuilder.drawRowForNode(node, async (row) => {
+      row.add(this.expanded ? sourceIcons.getExpanded() : sourceIcons.getCollapsed(), {
+        hl: bufferHighlights.expandIcon,
+      });
       row.add(' ');
-      row.add(
-        `[BUFFER${this.showHidden ? ' ' + sourceIcons.getHidden() : ''}]`,
-        bufferHighlights.title,
-      );
+      row.add(`[BUFFER${this.showHidden ? ' ' + sourceIcons.getHidden() : ''}]`, {
+        hl: bufferHighlights.title,
+      });
     });
   }
 
   async drawNode(node: BufferNode, nodeIndex: number) {
-    node.drawnLine = await this.viewBuilder.drawRowLine(async (row) => {
+    await this.viewBuilder.drawRowForNode(node, async (row) => {
       row.add('  ');
       await this.columnManager.draw(row, node, nodeIndex);
     });

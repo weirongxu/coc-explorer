@@ -1,10 +1,10 @@
 let s:explorer_root = expand('<sfile>:p:h:h')
 
-function! coc_explorer#create(name, explorer_id, position, width)
+" Buffer & window manage
+function! coc_explorer#create(name, explorer_id, position, width, height, left, top)
   let name = a:name.'-'.a:explorer_id
   if a:position ==# 'tab'
     execute 'silent keepalt tabnew '.name
-    call coc_explorer#resize_win(a:position, a:width)
   elseif a:position ==# 'left'
     wincmd t
     execute 'silent keepalt leftabove vsplit '.name
@@ -13,6 +13,8 @@ function! coc_explorer#create(name, explorer_id, position, width)
     wincmd b
     execute 'silent keepalt rightbelow vsplit '.name
     call coc_explorer#resize_win(a:position, a:width)
+  elseif a:position ==# 'floating'
+    call nvim_open_win(nvim_create_buf(v:false, v:true), v:true, coc_explorer#floating_win_config(a:width, a:height, a:left, a:top))
   else
     throw 'No support position '.a:position
   endif
@@ -20,7 +22,7 @@ function! coc_explorer#create(name, explorer_id, position, width)
   return bufnr('%')
 endfunction
 
-function! coc_explorer#resume(bufnr, position, width)
+function! coc_explorer#resume(bufnr, position, width, height, left, top)
   if a:position ==# 'left'
     wincmd t
     execute 'silent keepalt leftabove vertical sb '.a:bufnr
@@ -29,14 +31,28 @@ function! coc_explorer#resume(bufnr, position, width)
     wincmd b
     execute 'silent keepalt rightbelow vertical sb '.a:bufnr
     call coc_explorer#resize_win(a:position, a:width)
+  elseif a:position ==# 'floating'
+    call nvim_open_win(a:bufnr, v:true, coc_explorer#floating_win_config(a:width, a:height, a:left, a:top))
   else
     throw 'No support position '.a:position
   endif
 endfunction
 
+function! coc_explorer#floating_win_config(width, height, left, top)
+  return {
+        \ 'relative': 'editor',
+        \ 'row': a:top,
+        \ 'col': a:left,
+        \ 'width': a:width,
+        \ 'height': a:height,
+        \ }
+endfunction
+
 function! coc_explorer#resize_win(position, width)
   if a:position !=# 'tab'
-    silent setlocal winfixwidth
+    if a:position !=# 'floating'
+      silent setlocal winfixwidth
+    endif
     silent execute 'vertical resize '.a:width
   endif
 endfunction
@@ -67,6 +83,7 @@ function! coc_explorer#is_float_window(winnr)
 endfunction
 
 
+" Select action
 let s:select_wins_chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
 
 function! coc_explorer#select_wins_restore(store)
@@ -124,28 +141,18 @@ function! coc_explorer#select_wins(buffer_name, filterFloatWindows)
   endif
 endfunction
 
-function! coc_explorer#add_matchids(ids)
-  let w:coc_matchids = get(w:, 'coc_explorer_matchids', []) + a:ids
-endfunction
 
-function! coc_explorer#clearmatches(ids, ...)
-  let winid = get(a:, 1, 0)
-  if winid != 0 && win_getid() != winid
-    return
-  endif
-  for id in a:ids
-    try
-      call matchdelete(id)
-    catch /.*/
-      " matches have been cleared in other ways,
-    endtry
-  endfor
-  let exists = get(w:, 'coc_explorer_matchids', [])
-  if !empty(exists)
-    call filter(w:coc_matchids, 'index(a:ids, v:val) == -1')
+" Commands
+function! coc_explorer#execute_commands(cmds)
+  if &filetype == 'coc-explorer'
+    for cmd in a:cmds
+      execute cmd
+    endfor
   endif
 endfunction
 
+
+" mappings
 function! coc_explorer#register_mappings(mappings)
   let s:coc_explorer_mappings = a:mappings
   augroup coc_explorer_mappings
@@ -174,15 +181,17 @@ function! coc_explorer#clear_mappings(mappings)
   endif
 endfunction
 
-function! coc_explorer#execute_syntax_highlights(syntax_highlight_cmds)
-  if &filetype == 'coc-explorer'
-    for cmd in a:syntax_highlight_cmds
-      execute cmd
-    endfor
-  endif
+function! coc_explorer#matchdelete_by_ids(ids)
+  for id in a:ids
+    try
+      call matchdelete(id)
+    catch /.*/
+    endtry
+  endfor
 endfunction
 
 
+" Tab ID
 let s:tab_id_max = 0
 
 function! coc_explorer#tab_id()
@@ -198,78 +207,16 @@ function! coc_explorer#tab_id_max()
 endfunction
 
 
-function! coc_explorer#truncate(name, link_target, fullwidth, padding_end, omit)
-  let name_text_width = strdisplaywidth(a:name)
-  let link_text_width = strdisplaywidth(a:link_target)
-  if name_text_width < a:fullwidth - 3
-    return [a:name, s:truncate(a:link_target, a:fullwidth - name_text_width, a:padding_end, a:omit)]
-  else
-    let text_width = name_text_width + link_text_width
-    if link_text_width == 0
-      let name_fullwidth = a:fullwidth
-      let link_fullwidth = 0
-    else
-      let name_fullwidth = float2nr(ceil(a:fullwidth * 0.7 - 3))
-      let link_fullwidth = a:fullwidth - name_fullwidth
-    endif
-    let name = s:truncate(a:name, name_fullwidth, a:padding_end, a:omit)
-    if link_fullwidth > 0
-      let link = s:truncate(a:link_target, link_fullwidth, a:padding_end, a:omit)
-    else
-      let link = ''
-    endif
-    return [name, link]
-  endif
-endfunction
-
-function! s:truncate(str, fullwidth, padding_end, omit)
-  " Modified from https://github.com/Shougo/defx.nvim/blob/f81aa358afae22c89ce254db3f589212637bc1ba/autoload/defx/util.vim#L258
-  let width = strdisplaywidth(a:str)
-  if width <= a:fullwidth
-    let ret = a:str
-  else
-    let omit_width = strdisplaywidth(a:omit)
-    let left_width = float2nr(ceil((a:fullwidth - omit_width) / 2.0))
-    let right_width = a:fullwidth - left_width - omit_width
-    let ret = s:strwidthpart(a:str, left_width) . a:omit
-         \ . s:strwidthpart_reverse(a:str, right_width)
-  endif
-  if a:padding_end
-    return s:pad_end(ret, a:fullwidth)
-  else
-    return ret
-  endif
-endfunction
-
+" displayslice
 function! s:pad_end(str, width)
-  if a:str =~# '^[\x00-\x7f]*$'
-    return strdisplaywidth(a:str) < a:width
-          \ ? printf('%-' . a:width . 's', a:str)
-          \ : strpart(a:str, 0, a:width)
-  endif
-
-  let ret = a:str
-  let width = strdisplaywidth(a:str)
-  if width > a:width
-    let ret = s:strwidthpart(ret, a:width)
-    let width = strdisplaywidth(ret)
-  endif
-
-  if width < a:width
-    let ret .= repeat(' ', a:width - width)
-  endif
-
-  return ret
+  return a:str . repeat(' ', a:width - strdisplaywidth(a:str))
 endfunction
 
-function! s:strwidthpart(str, width)
-  let str = tr(a:str, "\t", ' ')
-  let vcol = a:width + 2
-  return matchstr(str, '.*\%<' . (vcol < 0 ? 0 : vcol) . 'v')
-endfunction
-
-function! s:strwidthpart_reverse(str, width)
-  let str = tr(a:str, "\t", ' ')
-  let vcol = strdisplaywidth(str) - a:width
-  return matchstr(str, '\%>' . (vcol < 0 ? 0 : vcol) . 'v.*')
+function! coc_explorer#strdisplayslice(str, start, end)
+  let str = a:str
+  if a:end != v:null
+    let str = matchstr(str, '.*\%<' . (a:end + 2) . 'v')
+  endif
+  let str = matchstr(str, '\%>' . a:start . 'v.*')
+  return s:pad_end(str, a:end - a:start)
 endfunction

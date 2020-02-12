@@ -4,10 +4,9 @@ import { bufferHighlights } from '../buffer-source';
 bufferColumnRegistrar.registerColumn('name', () => ({
   draw(row, node) {
     if (node.visible) {
-      row.add(node.basename, bufferHighlights.nameVisible);
+      row.add(node.basename, { hl: bufferHighlights.nameVisible });
     } else {
       row.add(node.basename);
     }
-    row.add(' ');
   },
 }));

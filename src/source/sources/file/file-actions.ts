@@ -1,7 +1,6 @@
 import { FileSource } from './file-source';
 import pathLib from 'path';
 import {
-  avoidOnBufEnter,
   execNotifyBlock,
   fsCopyFileRecursive,
   fsRename,
@@ -14,6 +13,7 @@ import {
   config,
   prompt,
   overwritePrompt,
+  skipOnEventsByWinnrs,
 } from '../../../util';
 import { workspace, listManager } from 'coc.nvim';
 import open from 'open';
@@ -92,9 +92,8 @@ export function initFileActions(file: FileSource) {
         }
       } else {
         await file.openAction(node, async (winnr) => {
-          await avoidOnBufEnter(async () => {
-            await file.nvim.command(`${winnr}wincmd w`);
-          });
+          await skipOnEventsByWinnrs([winnr]);
+          await file.nvim.command(`${winnr}wincmd w`);
           await nvim.command(`edit ${node.fullpath}`);
         });
       }
@@ -107,7 +106,7 @@ export function initFileActions(file: FileSource) {
     async (node) => {
       if (!node.directory) {
         await nvim.command(`split ${node.fullpath}`);
-        await file.quitOnOpen();
+        await file.explorer.quitOnOpen();
       }
     },
     'open file via split command',
@@ -126,7 +125,7 @@ export function initFileActions(file: FileSource) {
           } else if (position === 'tab') {
             nvim.command('wincmd L', true);
           }
-          await file.quitOnOpen();
+          await file.explorer.quitOnOpen();
         });
       }
     },
@@ -136,7 +135,7 @@ export function initFileActions(file: FileSource) {
     'openInTab',
     async (node) => {
       if (!node.directory) {
-        await file.quitOnOpen();
+        await file.explorer.quitOnOpen();
         await nvim.command(`tabedit ${node.fullpath}`);
       }
     },
@@ -149,7 +148,7 @@ export function initFileActions(file: FileSource) {
         await file.doAction('expand', node);
       } else {
         await nvim.command(`drop ${node.fullpath}`);
-        await file.quitOnOpen();
+        await file.explorer.quitOnOpen();
       }
     },
     'open file via drop command',

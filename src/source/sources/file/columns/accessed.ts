@@ -6,10 +6,11 @@ import { fileHighlights } from '../file-source';
 fileColumnRegistrar.registerColumn('accessed', () => ({
   draw(row, node) {
     if (node.lstat) {
-      row.add(dayjs(node.lstat.atime).format(getDatetimeFormat()), fileHighlights.timeAccessed);
+      row.add(dayjs(node.lstat.atime).format(getDatetimeFormat()), {
+        hl: fileHighlights.timeAccessed,
+      });
     } else {
       row.add('                 ');
     }
-    row.add(' ');
   },
 }));

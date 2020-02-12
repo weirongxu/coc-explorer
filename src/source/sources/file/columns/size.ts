@@ -6,13 +6,12 @@ fileColumnRegistrar.registerColumn('size', () => ({
   draw(row, node, { isLabeling }) {
     if (node.lstat) {
       if (isLabeling) {
-        row.add(prettyBytes(node.lstat.size), fileHighlights.size);
+        row.add(prettyBytes(node.lstat.size), { hl: fileHighlights.size });
       } else {
-        row.add(prettyBytes(node.lstat.size).padStart(10), fileHighlights.size);
+        row.add(prettyBytes(node.lstat.size).padStart(10), { hl: fileHighlights.size });
       }
     } else {
       row.add(' '.repeat(10));
     }
-    row.add(' ');
   },
 }));

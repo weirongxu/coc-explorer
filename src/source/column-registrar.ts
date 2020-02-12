@@ -1,17 +1,21 @@
 import { SourceRowBuilder } from './view-builder';
 import { ExplorerSource, BaseTreeNode } from './source';
 import { Disposable } from 'coc.nvim';
-import { HighlightConcealable } from './highlight-manager';
+import { HighlightConcealableCommand } from './highlight-manager';
 import { startCase } from 'lodash';
 
-export interface Column<TreeNode extends BaseTreeNode<TreeNode>> {
+export interface Column<TreeNode extends BaseTreeNode<TreeNode>, Data = any> {
   label?: string;
 
   labelOnly?: (node: TreeNode, option: { nodeIndex: number }) => boolean | Promise<boolean>;
 
+  labelVisible?: (node: TreeNode, option: { nodeIndex: number }) => boolean | Promise<boolean>;
+
   inited?: boolean;
 
-  concealable?: HighlightConcealable;
+  readonly data?: Data;
+
+  readonly concealable?: HighlightConcealableCommand;
 
   init?(): void | Promise<void>;
 
@@ -31,27 +35,39 @@ export interface Column<TreeNode extends BaseTreeNode<TreeNode>> {
   ): void | Promise<void>;
 }
 
+export interface ColumnRequired<TreeNode extends BaseTreeNode<TreeNode>, Data>
+  extends Column<TreeNode, Data> {
+  data: Data;
+  concealable: HighlightConcealableCommand;
+}
+
+type GetColumn<
+  S extends ExplorerSource<TreeNode>,
+  TreeNode extends BaseTreeNode<TreeNode>,
+  Data
+> = (context: { source: S; column: ColumnRequired<TreeNode, Data> }) => Column<TreeNode, Data>;
+
 export class ColumnRegistrar<
   TreeNode extends BaseTreeNode<TreeNode>,
-  S extends ExplorerSource<TreeNode>,
-  C extends Column<TreeNode>
+  S extends ExplorerSource<TreeNode>
 > {
   registeredColumns: Record<
     string,
     {
-      getColumn: (source: S, data: any) => C;
-      getInitialData: () => any;
+      getColumn: GetColumn<S, TreeNode, any>;
     }
   > = {};
 
   async getColumns(source: S, columnStrings: (string | string[])[]) {
+    type C = Column<TreeNode>;
     const columns: C[] = [];
     const labelingColumns: C[][] = [];
     let labelingColumn = false;
     const getRegisteredColumn = async (columnString: string) => {
       const registeredColumn = this.registeredColumns[columnString];
       if (registeredColumn) {
-        const column = registeredColumn.getColumn(source, registeredColumn.getInitialData());
+        const column = {} as ColumnRequired<TreeNode, any>;
+        Object.assign(column, registeredColumn.getColumn({ source, column }));
         if (column.inited) {
           return column;
         } else {
@@ -93,14 +109,9 @@ export class ColumnRegistrar<
     return [columns, labelingColumns] as const;
   }
 
-  registerColumn<T>(
-    name: string,
-    getColumn: (source: S, data: T) => C,
-    getInitialData: () => T = () => null as any,
-  ) {
+  registerColumn<Data>(name: string, getColumn: GetColumn<S, TreeNode, Data>) {
     this.registeredColumns[name] = {
-      getColumn: getColumn,
-      getInitialData,
+      getColumn,
     };
     return Disposable.create(() => {
       delete this.registeredColumns[name];

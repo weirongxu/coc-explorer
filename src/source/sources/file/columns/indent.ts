@@ -24,20 +24,20 @@ function printIndentLine(node: FileNode) {
   if (!node.parent && !getTopLevel) {
     return row;
   }
-  if (node.isLastInLevel) {
-    row = '└ ';
+  if (node.nextSiblingNode === undefined) {
+    row = '└';
   } else {
-    row = '│ ';
+    row = '│';
   }
   let curNode = node.parent;
   while (curNode) {
     if (!curNode.parent && !getTopLevel) {
       break;
     }
-    if (curNode.isLastInLevel) {
-      row = '  ' + row;
+    if (curNode.nextSiblingNode === undefined) {
+      row = ' ' + row;
     } else {
-      row = '│ ' + row;
+      row = '│' + row;
     }
     curNode = curNode.parent;
   }
@@ -47,7 +47,7 @@ function printIndentLine(node: FileNode) {
 fileColumnRegistrar.registerColumn('indent', () => ({
   draw(row, node) {
     if (getIndentLine()) {
-      row.add(printIndentLine(node), fileHighlights.indentLine);
+      row.add(printIndentLine(node), { hl: fileHighlights.indentLine });
     } else {
       row.add(getIndentChars.repeat(node.level - (getTopLevel ? 0 : 1)));
     }

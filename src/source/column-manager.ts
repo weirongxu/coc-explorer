@@ -1,11 +1,11 @@
 import { Column, ColumnRegistrar } from './column-registrar';
 import { BaseTreeNode, ExplorerSource } from './source';
-import { SourceRowBuilder, HighlightPosition } from './view-builder';
-import { hlGroupManager } from './highlight-manager';
+import { SourceRowBuilder } from './view-builder';
+import { hlGroupManager, HighlightPositionWithLine } from './highlight-manager';
 import pFilter from 'p-filter';
 
 export interface DrawLabelingResult {
-  highlightPositions: HighlightPosition[];
+  highlightPositions: HighlightPositionWithLine[];
   lines: string[];
 }
 
@@ -20,7 +20,7 @@ export class ColumnManager<TreeNode extends BaseTreeNode<TreeNode>> {
 
   async registerColumns(
     columnNames: (string | string[])[],
-    columnRegistrar: ColumnRegistrar<TreeNode, any, any>,
+    columnRegistrar: ColumnRegistrar<TreeNode, any>,
   ) {
     if (this.columnNames.toString() !== columnNames.toString()) {
       this.columnNames = columnNames;
@@ -65,54 +65,50 @@ export class ColumnManager<TreeNode extends BaseTreeNode<TreeNode>> {
     } = {},
   ) {
     for (const column of columns) {
-      if (column.concealable) {
-        row.concealableColumn(column.concealable, async () => {
-          await column.draw(row, node, { nodeIndex, isLabeling });
-        });
-      } else {
-        await column.draw(row, node, { nodeIndex, isLabeling });
-      }
+      await row.addColumn(node, nodeIndex, column, isLabeling);
     }
     return row;
   }
 
   async drawLabeling(node: TreeNode, nodeIndex: number): Promise<DrawLabelingResult> {
-    const highlightPositions: HighlightPosition[] = [];
+    const highlightPositionWithLines: HighlightPositionWithLine[] = [];
     const lines: string[] = [];
-    let lineIndex = 0;
+    let lineIndex: number = 0;
     for (const columns of this.labelingColumns) {
       const allLabelOnly = columns.every((column) => column.labelOnly);
       const displayedColumns = await pFilter(
         columns,
-        async (column) => !column.labelOnly || (await column.labelOnly(node, { nodeIndex })),
+        async (column) =>
+          (!column.labelOnly || (await column.labelOnly(node, { nodeIndex }))) &&
+          (!column.labelVisible || (await column.labelVisible(node, { nodeIndex }))),
       );
       if (!displayedColumns.length) {
         continue;
       }
       const contentColumns = displayedColumns.filter((column) => !column.labelOnly);
-      const row = await this.source.viewBuilder.drawRow(
-        async (row) => {
-          row.add(
-            displayedColumns.map((column) => column.label).join(' & ') + (allLabelOnly ? '' : ':'),
-            labelHighlight,
-          );
-          row.add(' ');
-          await this.draw(row, node, nodeIndex, {
-            columns: contentColumns,
-            isLabeling: true,
-          });
-        },
-        {
-          highlightMode: 'highlight',
-          relativeLineIndex: lineIndex,
-        },
+      const row = await this.source.viewBuilder.drawRow(async (row) => {
+        row.add(
+          displayedColumns.map((column) => column.label).join(' & ') + (allLabelOnly ? '' : ':'),
+          { hl: labelHighlight },
+        );
+        row.add(' ');
+        await this.draw(row, node, nodeIndex, {
+          columns: contentColumns,
+          isLabeling: true,
+        });
+      });
+      const { highlightPositions, content } = await row.draw({ flexible: false });
+      highlightPositionWithLines.push(
+        ...highlightPositions.map((hl) => ({
+          line: lineIndex,
+          ...hl,
+        })),
       );
-      highlightPositions.push(...row.highlightPositions);
       lineIndex += 1;
-      lines.push(row.content);
+      lines.push(content);
     }
     return {
-      highlightPositions,
+      highlightPositions: highlightPositionWithLines,
       lines,
     };
   }

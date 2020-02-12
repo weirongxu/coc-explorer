@@ -16,12 +16,11 @@ import { distinct } from 'coc.nvim/lib/util/array';
 import { equals } from 'coc.nvim/lib/util/object';
 import { BufferHighlight } from '@chemzqm/neovim';
 import { log } from '../logger';
-import { debounce, onEvents } from '../util';
+import { debounce, onEvents, supportedFloat } from '../util';
 import { WindowConfig } from 'coc.nvim/lib/model/floatFactory';
 import { CancellationTokenSource } from 'vscode-languageserver-protocol';
 import createPopup, { Popup } from 'coc.nvim/lib/model/popup';
 import { Explorer } from '../explorer';
-import { floatSupported } from './utils';
 import { argOptions } from '../parse-args';
 
 export class FloatingFactory2 implements Disposable {
@@ -47,7 +46,7 @@ export class FloatingFactory2 implements Disposable {
     private maxHeight = 999,
     private autoHide = true,
   ) {
-    if (!floatSupported()) {
+    if (!supportedFloat()) {
       return;
     }
     onEvents(
@@ -186,43 +185,59 @@ export class FloatingFactory2 implements Disposable {
     if (!this.floatBuffer) {
       throw Error('floatBuffer not initialize yet');
     }
-    const height = Math.min(this.floatBuffer.getHeight(docs, maxWidth), this.maxHeight);
+    const previewHeight = Math.min(this.floatBuffer.getHeight(docs, maxWidth), this.maxHeight);
     if (!preferTop) {
-      if (lines - cursorRow < height && cursorRow > height) {
+      if (lines - cursorRow < previewHeight && cursorRow > previewHeight) {
         alignTop = true;
       }
     } else {
-      if (cursorRow >= height || cursorRow >= lines - cursorRow) {
+      if (cursorRow >= previewHeight || cursorRow >= lines - cursorRow) {
         alignTop = true;
       }
     }
     if (alignTop) {
       docs.reverse();
     }
+    this.alignTop = alignTop;
     await this.floatBuffer.setDocuments(docs, maxWidth);
-    const { width } = this.floatBuffer;
+    const { width: previewWidth } = this.floatBuffer;
 
-    let col = 0;
-    const explorerCol = await explorer.currentCol();
-    const position = await explorer.args.value(argOptions.position);
-    if (position === 'left') {
-      col = explorerWidth - explorerCol + 1;
-    } else if (position === 'right') {
-      col = -width - explorerCol + 1;
-    } else {
+    const explorerCursor = await explorer.currentCursor();
+    if (!explorerCursor) {
       return;
     }
-
-    this.alignTop = alignTop;
-
-    const row = alignTop ? -height + 1 : 0;
+    let col = 0;
+    let row = explorerCursor.lineIndex + (alignTop ? -previewHeight + 1 : 0);
+    const position = await explorer.args.value(argOptions.position);
+    if (position === 'left') {
+      col = explorerWidth;
+    } else if (position === 'right') {
+      col = columns - previewWidth - explorerWidth;
+    } else if (position === 'floating') {
+      const winid = await explorer.winid;
+      if (!winid) {
+        return;
+      }
+      const { row: floatingRow, col: floatingCol } = (await nvim.call('nvim_win_get_config', [
+        winid,
+      ])) as WindowConfig;
+      const floatingPosition = await explorer.args.value(argOptions.floatingPosition);
+      row += floatingRow;
+      if (floatingPosition === 'left-center') {
+        col = floatingCol + explorerWidth;
+      } else if (floatingPosition === 'right-center') {
+        col = floatingCol - previewWidth;
+      } else {
+        return;
+      }
+    }
 
     return {
       row,
       col,
-      width,
-      height,
-      relative: 'cursor',
+      width: previewWidth,
+      height: previewHeight,
+      relative: 'editor',
     };
   }
 
@@ -232,7 +247,7 @@ export class FloatingFactory2 implements Disposable {
     highlights: BufferHighlight[] = [],
     allowSelection = false,
   ): Promise<void> {
-    if (!floatSupported()) {
+    if (!supportedFloat()) {
       // tslint:disable-next-line: ban
       log('error', 'Floating window & textprop not supported!');
       return;

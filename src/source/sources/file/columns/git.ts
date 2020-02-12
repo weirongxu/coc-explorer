@@ -22,90 +22,86 @@ const statusIcons = {
   [GitFormat.ignored]: getIconConf('ignored'),
 };
 
-fileColumnRegistrar.registerColumn(
-  'git',
-  (source, data) => ({
-    init() {
-      const statusEqual = (a: GitMixedStatus, b: GitMixedStatus) => {
-        return a.x === b.x && a.y === b.y;
-      };
-
-      source.subscriptions.push(
-        onEvents(
-          'BufWritePost',
-          debounce(1000, async (bufnr) => {
-            const bufinfo = await source.nvim.call('getbufinfo', [bufnr]);
-            if (bufinfo[0] && bufinfo[0].name) {
-              const name: string = bufinfo[0].name;
-              const filename = pathLib.basename(name);
-              const path = pathLib.dirname(name);
-              await gitManager.reload(path);
-              const statuses = await gitManager.getStatuses(path);
-
-              const updatePaths: Set<string> = new Set();
-              if (filename === '.gitignore') {
-                for (const fullpath of Object.keys(statuses)) {
-                  updatePaths.add(fullpath);
-                }
-                for (const fullpath of Object.keys(data.prevStatuses)) {
-                  updatePaths.add(fullpath);
-                }
-              } else {
-                for (const [fullpath, status] of Object.entries(statuses)) {
-                  if (fullpath in data.prevStatuses) {
-                    if (statusEqual(data.prevStatuses[fullpath], status)) {
-                      continue;
-                    }
-                    delete data.prevStatuses[fullpath];
-                  }
-                  updatePaths.add(fullpath);
-                }
-                for (const fullpath of Object.keys(data.prevStatuses)) {
-                  updatePaths.add(fullpath);
-                }
-              }
-              await source.renderPaths(updatePaths);
-              data.prevStatuses = statuses;
-            }
-          }),
-        ),
-      );
-    },
-    async validate() {
-      try {
-        await commandExists('git');
-        return true;
-      } catch (e) {
-        return false;
-      }
-    },
-    async reload(node) {
-      const folderPath =
-        'isRoot' in node
-          ? source.root
-          : node.directory
-          ? node.fullpath
-          : pathLib.dirname(node.fullpath);
-      await gitManager.reload(folderPath);
-      data.prevStatuses = await gitManager.getStatuses(folderPath);
-    },
-    draw(row, node, { nodeIndex }) {
-      const showFormat = (f: string, staged: boolean) => {
-        row.add(f, staged ? fileHighlights.gitStage : fileHighlights.gitUnstage);
-      };
-      const status = gitManager.getStatus(node.fullpath);
-      if (status) {
-        showFormat(statusIcons[status.x], true);
-        showFormat(statusIcons[status.y], false);
-        row.add(' ');
-        source.addIndexes('git', nodeIndex);
-      } else {
-        row.add('   ');
-        source.removeIndexes('git', nodeIndex);
-      }
-    },
-  }),
-  () => ({
+fileColumnRegistrar.registerColumn('git', ({ source, column }) => ({
+  data: {
     prevStatuses: {} as Record<string, GitMixedStatus>,
-  }),
-);
+  },
+  init() {
+    const statusEqual = (a: GitMixedStatus, b: GitMixedStatus) => {
+      return a.x === b.x && a.y === b.y;
+    };
+
+    source.subscriptions.push(
+      onEvents(
+        'BufWritePost',
+        debounce(1000, async (bufnr) => {
+          const bufinfo = await source.nvim.call('getbufinfo', [bufnr]);
+          if (bufinfo[0] && bufinfo[0].name) {
+            const name: string = bufinfo[0].name;
+            const filename = pathLib.basename(name);
+            const path = pathLib.dirname(name);
+            await gitManager.reload(path);
+            const statuses = await gitManager.getStatuses(path);
+
+            const updatePaths: Set<string> = new Set();
+            if (filename === '.gitignore') {
+              for (const fullpath of Object.keys(statuses)) {
+                updatePaths.add(fullpath);
+              }
+              for (const fullpath of Object.keys(column.data.prevStatuses)) {
+                updatePaths.add(fullpath);
+              }
+            } else {
+              for (const [fullpath, status] of Object.entries(statuses)) {
+                if (fullpath in column.data.prevStatuses) {
+                  if (statusEqual(column.data.prevStatuses[fullpath], status)) {
+                    continue;
+                  }
+                  delete column.data.prevStatuses[fullpath];
+                }
+                updatePaths.add(fullpath);
+              }
+              for (const fullpath of Object.keys(column.data.prevStatuses)) {
+                updatePaths.add(fullpath);
+              }
+            }
+            await source.renderPaths(updatePaths);
+            column.data.prevStatuses = statuses;
+          }
+        }),
+      ),
+    );
+  },
+  async validate() {
+    try {
+      await commandExists('git');
+      return true;
+    } catch (e) {
+      return false;
+    }
+  },
+  async reload(node) {
+    const folderPath =
+      'isRoot' in node
+        ? source.root
+        : node.directory
+        ? node.fullpath
+        : pathLib.dirname(node.fullpath);
+    await gitManager.reload(folderPath);
+    column.data.prevStatuses = await gitManager.getStatuses(folderPath);
+  },
+  draw(row, node, { nodeIndex }) {
+    const showFormat = (f: string, staged: boolean) => {
+      row.add(f, { hl: staged ? fileHighlights.gitStage : fileHighlights.gitUnstage });
+    };
+    const status = gitManager.getStatus(node.fullpath);
+    if (status) {
+      showFormat(statusIcons[status.x], true);
+      showFormat(statusIcons[status.y], false);
+      source.addIndexes('git', nodeIndex);
+    } else {
+      row.add('  ');
+      source.removeIndexes('git', nodeIndex);
+    }
+  },
+}));
