@@ -313,11 +313,6 @@
           "type": "string",
           "default": "✓"
         },
-        "explorer.icon.unselected": {
-          "description": "Selection unselected chars for File source",
-          "type": "string",
-          "default": " "
-        },
         "explorer.icon.hidden": {
           "description": "Icon for hidden status",
           "type": "string",
@@ -328,42 +323,15 @@
           "type": "boolean",
           "default": false
         },
-        "explorer.buffer.columns": {
-          "description": "Default columns for buffer source",
-          "type": "array",
-          "items": {
-            "oneOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "array",
-                "items": {
-                  "type": "string"
-                }
-              }
-            ]
-          },
-          "default": [
-            "selection",
-            "bufnr",
-            "name",
-            "modified",
-            "readonly",
-            "fullpath",
-            [
-              "bufname"
-            ],
-            [
-              "fullpath"
-            ],
-            [
-              "modified"
-            ],
-            [
-              "readonly"
-            ]
-          ]
+        "explorer.buffer.template": {
+          "description": "Default template for buffer source",
+          "type": "string",
+          "default": "[selection | 1] [bufnr] [name][modified][readonly] [fullpath]"
+        },
+        "explorer.buffer.labelingTemplate": {
+          "description": "Default template for buffer source labeling",
+          "type": "string",
+          "default": "[bufname][fullpath][modified][readonly]"
         },
         "explorer.datetime.format": {
           "description": "Explorer datetime format, check out https://github.com/iamkun/dayjs/blob/dev/docs/en/API-reference.md#format-formatstringwithtokens-string",
@@ -419,56 +387,15 @@
           "type": "boolean",
           "default": false
         },
-        "explorer.file.columns": {
-          "description": "Default columns for file source",
-          "type": "array",
-          "items": {
-            "oneOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "array",
-                "items": {
-                  "type": "string"
-                }
-              }
-            ]
-          },
-          "default": [
-            "git",
-            "selection",
-            "clip",
-            "diagnosticError",
-            "indent",
-            "icon",
-            "filename",
-            "link",
-            "size",
-            "modified",
-            "readonly",
-            [
-              "fullpath"
-            ],
-            [
-              "link"
-            ],
-            [
-              "size"
-            ],
-            [
-              "accessed"
-            ],
-            [
-              "modified"
-            ],
-            [
-              "created"
-            ],
-            [
-              "readonly"
-            ]
-          ]
+        "explorer.file.template": {
+          "description": "Default template for file source",
+          "type": "string",
+          "default": "[git | 2] [selection | clip | 1] [indent][icon | 1] [diagnosticError & 1][filename omitCenter 1][readonly] [linkIcon & 1][link alignLeft 1 omitCenter 3]"
+        },
+        "explorer.file.labelingTemplate": {
+          "description": "Default template for file source labeling",
+          "type": "string",
+          "default": "[fullpath][link][diagnosticError][size][accessed][modified][created][readonly]"
         },
         "explorer.file.column.git.showIgnored": {
           "description": "Show ignored files in git column",
@@ -537,11 +464,6 @@
           "description": "Indent chars for file source",
           "type": "string",
           "default": "  "
-        },
-        "explorer.file.column.indent.topLevel": {
-          "description": "Whether to indent it in top level",
-          "type": "boolean",
-          "default": false
         },
         "explorer.file.column.indent.indentLine": {
           "description": "Whether to display the alignment line",

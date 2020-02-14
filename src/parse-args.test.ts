@@ -19,14 +19,8 @@ it('should parse args', async () => {
   expect(await args.value(argOptions.toggle)).toEqual(false);
   expect(await args.rootPath()).toEqual('/root/path');
 
-  args = await Args.parse([rootPath, '--file-columns=git:filename;fullpath;size;modified']);
-  expect(await args.value(argOptions.fileColumns)).toEqual([
-    'git',
-    'filename',
-    ['fullpath'],
-    ['size'],
-    ['modified'],
-  ]);
+  args = await Args.parse([rootPath, '--file-template', '[git][fileame] [fullpath]']);
+  expect(await args.value(argOptions.fileTemplate)).toEqual('[git][fileame] [fullpath]');
 
   // @ts-ignore
   workspace.nvim = oldNvim;

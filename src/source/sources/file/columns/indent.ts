@@ -2,8 +2,7 @@ import { fileColumnRegistrar } from '../file-column-registrar';
 import { FileNode, fileHighlights } from '../file-source';
 import { getEnableNerdfont } from '../../../../util';
 
-export const getIndentChars = fileColumnRegistrar.getColumnConfig<string>('indent.chars');
-export const getTopLevel = fileColumnRegistrar.getColumnConfig<string>('indent.topLevel');
+export const getIndentChars = () => fileColumnRegistrar.getColumnConfig<string>('indent.chars');
 const getIndentLine = () => {
   const indentLine = fileColumnRegistrar.getColumnConfig<boolean | undefined>('indent.indentLine');
   if (getEnableNerdfont() && indentLine === undefined) {
@@ -21,23 +20,23 @@ const getIndentLine = () => {
  */
 function printIndentLine(node: FileNode) {
   let row = '';
-  if (!node.parent && !getTopLevel) {
+  if (!node.parent) {
     return row;
   }
   if (node.nextSiblingNode === undefined) {
-    row = '└';
+    row = '└ ';
   } else {
-    row = '│';
+    row = '│ ';
   }
   let curNode = node.parent;
   while (curNode) {
-    if (!curNode.parent && !getTopLevel) {
+    if (!curNode.parent) {
       break;
     }
     if (curNode.nextSiblingNode === undefined) {
-      row = ' ' + row;
+      row = '  ' + row;
     } else {
-      row = '│' + row;
+      row = '│ ' + row;
     }
     curNode = curNode.parent;
   }
@@ -49,7 +48,7 @@ fileColumnRegistrar.registerColumn('indent', () => ({
     if (getIndentLine()) {
       row.add(printIndentLine(node), { hl: fileHighlights.indentLine });
     } else {
-      row.add(getIndentChars.repeat(node.level - (getTopLevel ? 0 : 1)));
+      row.add(getIndentChars().repeat(node.level));
     }
   },
 }));

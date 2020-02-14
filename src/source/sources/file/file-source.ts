@@ -23,7 +23,7 @@ import './load';
 import { filesList } from '../../../lists/files';
 import { initFileActions } from './file-actions';
 import { homedir } from 'os';
-import { labelHighlight } from '../../column-manager';
+import { labelHighlight, TemplateRenderer } from '../../column-manager';
 import { argOptions } from '../../../parse-args';
 
 const getHiddenRules = () =>
@@ -103,6 +103,7 @@ export class FileSource extends ExplorerSource<FileNode> {
     symbolicLink: true,
     lstat: null,
   };
+  templateRenderer: TemplateRenderer<FileNode> = new TemplateRenderer<FileNode>(this, fileColumnRegistrar);
 
   get root() {
     return this.rootNode.fullpath;
@@ -153,9 +154,9 @@ export class FileSource extends ExplorerSource<FileNode> {
   }
 
   async open() {
-    await this.columnManager.registerColumns(
-      await this.explorer.args.value(argOptions.fileColumns),
-      fileColumnRegistrar,
+    await this.templateRenderer.parse(
+      await this.explorer.args.value(argOptions.fileTemplate),
+      await this.explorer.args.value(argOptions.fileLabelingTemplate),
     );
 
     const args = this.explorer.args;
@@ -373,7 +374,7 @@ export class FileSource extends ExplorerSource<FileNode> {
 
   async drawNode(node: FileNode, nodeIndex: number) {
     await this.viewBuilder.drawRowForNode(node, async (row) => {
-      await this.columnManager.draw(row, node, nodeIndex);
+      await this.templateRenderer.draw(row, node, nodeIndex);
     });
   }
 }

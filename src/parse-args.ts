@@ -164,7 +164,6 @@ export class Args {
   }
 }
 
-type Columns = (string | string[])[];
 type floatingPositionEnum = 'left-center' | 'right-center' | 'center';
 
 export const argOptions = {
@@ -218,33 +217,37 @@ export const argOptions = {
       getDefault: () => config.get<floatingPositionEnum | [number, number]>('floating.position')!,
     },
   ),
-  bufferColumns: Args.registerOption<Columns>('buffer-columns', {
-    handler: parseColumns,
-    getDefault: () => config.get<Columns>('buffer.columns')!,
+  bufferTemplate: Args.registerOption<string>('buffer-template', {
+    getDefault: () => config.get<string>('buffer.template')!,
   }),
-  fileColumns: Args.registerOption<Columns>('file-columns', {
-    handler: parseColumns,
-    getDefault: () => config.get<Columns>('file.columns')!,
+  bufferLabelingTemplate: Args.registerOption<string>('buffer-labeling-template', {
+    getDefault: () => config.get<string>('buffer.labelingTemplate')!,
+  }),
+  fileTemplate: Args.registerOption<string>('file-template', {
+    getDefault: () => config.get<string>('file.template')!,
+  }),
+  fileLabelingTemplate: Args.registerOption<string>('file-labeling-template', {
+    getDefault: () => config.get<string>('file.labelingTemplate')!,
   }),
   reveal: Args.registerOption('reveal', {
     handler: normalizePath,
   }),
 };
 
-export function parseColumns(columnsStr: string) {
-  const semicolonIndex = columnsStr.indexOf(';');
-  if (semicolonIndex === -1) {
-    return columnsStr.split(/:/);
-  } else {
-    return [
-      ...columnsStr
-        .slice(0, semicolonIndex)
-        .split(':')
-        .concat(),
-      ...columnsStr
-        .slice(semicolonIndex + 1)
-        .split(';')
-        .map((c) => c.split(':')),
-    ];
-  }
-}
+// export function parseColumns(columnsStr: string) {
+//   const semicolonIndex = columnsStr.indexOf(';');
+//   if (semicolonIndex === -1) {
+//     return columnsStr.split(/:/);
+//   } else {
+//     return [
+//       ...columnsStr
+//         .slice(0, semicolonIndex)
+//         .split(':')
+//         .concat(),
+//       ...columnsStr
+//         .slice(semicolonIndex + 1)
+//         .split(';')
+//         .map((c) => c.split(':')),
+//     ];
+//   }
+// }

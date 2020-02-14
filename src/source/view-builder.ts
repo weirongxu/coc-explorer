@@ -6,10 +6,11 @@ import {
   hlGroupManager,
 } from './highlight-manager';
 import { byteLength, displayWidth, displaySlice } from '../util';
-import { Column } from './column-registrar';
 import { BaseTreeNode } from './source';
 import { Explorer } from '../explorer';
 import { compact, flatten, sum } from 'lodash';
+import { InitedPart } from './column-manager';
+import { ColumnRequired } from './column-registrar';
 
 // Flexible types
 export type DrawFlexiblePosition = 'left' | 'right' | 'center';
@@ -467,14 +468,21 @@ export class SourceRowBuilder {
     }
   }
 
-  async flexible(flexible: DrawFlexible | undefined, drawFn: () => any | Promise<any>) {
+  private async drawTo(drawFn: () => any | Promise<any>) {
     const storeList = this.drawableList;
     this.drawableList = [];
-    await drawFn();
-    storeList.push({
+    drawFn();
+    const drawableList = this.drawableList;
+    this.drawableList = storeList;
+    return drawableList;
+  }
+
+  async flexible(flexible: DrawFlexible | undefined, drawFn: () => any | Promise<any>) {
+    const list = await this.drawTo(drawFn);
+    this.drawableList.push({
       type: 'group',
       contents: flatten(
-        this.drawableList.map((c) => {
+        list.map((c) => {
           if (c.type === 'content') {
             return c;
           } else if (c.type === 'group') {
@@ -486,30 +494,100 @@ export class SourceRowBuilder {
       ),
       flexible,
     });
-    this.drawableList = storeList;
   }
 
   async addColumn<TreeNode extends BaseTreeNode<TreeNode>>(
     node: TreeNode,
     nodeIndex: number,
-    column: Column<TreeNode>,
+    column: string | ColumnRequired<TreeNode, any>,
     isLabeling = false,
   ) {
+    if (typeof column === 'string') {
+      this.add(column);
+      return;
+    }
+
     if (column.concealable) {
       this.drawableList.push({
         type: 'conceal',
         concealStart: column.concealable,
       });
     }
-    await column.draw(this, node, {
-      nodeIndex,
-      isLabeling,
-    });
+    this.drawableList.push(
+      ...(await this.drawTo(async () => {
+        await column.draw(this, node, {
+          nodeIndex,
+          isLabeling,
+        });
+      })),
+    );
     if (column.concealable) {
       this.drawableList.push({
         type: 'conceal',
         concealEnd: column.concealable,
       });
     }
+  }
+
+  async addColumnTo<TreeNode extends BaseTreeNode<TreeNode>>(
+    node: TreeNode,
+    nodeIndex: number,
+    column: string | ColumnRequired<TreeNode, any>,
+    isLabeling = false,
+  ) {
+    return await this.drawTo(async () => {
+      await this.addColumn(node, nodeIndex, column, isLabeling);
+    });
+  }
+
+  async addTemplatePart<TreeNode extends BaseTreeNode<TreeNode>>(
+    node: TreeNode,
+    nodeIndex: number,
+    part: InitedPart<TreeNode>,
+    isLabeling = false,
+  ) {
+    if (typeof part === 'string') {
+      this.add(part);
+      return;
+    }
+
+    const drawableList: Drawable[] = [];
+    const column = part.column;
+    drawableList.push(...(await this.addColumnTo(node, nodeIndex, column, isLabeling)));
+
+    function isEmpty() {
+      return (
+        sum(
+          drawableList.map((p) =>
+            p.type === 'content'
+              ? p.content.length
+              : p.type === 'group'
+              ? sum(p.contents.map((c) => (c.type === 'content' ? c.content.length : 0)))
+              : 0,
+          ),
+        ) === 0
+      );
+    }
+
+    if (part.modifiers) {
+      for (const modifier of part.modifiers) {
+        if (modifier.name === '|') {
+          if (isEmpty()) {
+            drawableList.push(
+              ...(await this.addColumnTo(node, nodeIndex, modifier.column, isLabeling)),
+            );
+          }
+        }
+        if (modifier.name === '&') {
+          if (!isEmpty()) {
+            drawableList.push(
+              ...(await this.addColumnTo(node, nodeIndex, modifier.column, isLabeling)),
+            );
+          }
+        }
+      }
+    }
+    // TODO modifiers align omit
+    this.drawableList.push(...drawableList);
   }
 }

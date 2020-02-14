@@ -102,9 +102,11 @@ async function drawColumn(names: string[], width: number) {
   const view = new SourceViewBuilder(explorer);
   const r = new SourceRowBuilder(view);
   r.add('||');
-  const [columns] = await testColumnRegistrar.getColumns(null as any, names);
+  const columns = await Promise.all(
+    names.map((name) => testColumnRegistrar.getInitedColumn(null as any, name)),
+  );
   for (const column of columns) {
-    await r.addColumn<TestNode>(
+    await r.addTemplatePart<TestNode>(
       {
         uid: '1',
         drawnLine: '',
@@ -115,7 +117,7 @@ async function drawColumn(names: string[], width: number) {
         directory: true,
       },
       1,
-      column,
+      { column },
     );
   }
   explorer.contentWidth = width;

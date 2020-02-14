@@ -132,8 +132,6 @@ fileColumnRegistrar.registerColumn('icon', ({ source }) => ({
         } else {
           row.add(nerdfont.icons.file.code, { hl: nerdfontHighlights['file'] });
         }
-      } else {
-        row.add(' ');
       }
     }
   },

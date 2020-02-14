@@ -15,6 +15,7 @@ import { bufferColumnRegistrar } from './buffer-column-registrar';
 import './load';
 import { initBufferActions } from './buffer-actions';
 import { argOptions } from '../../../parse-args';
+import { TemplateRenderer } from '../../column-manager';
 
 const regex = /^\s*(\d+)(.+?)"(.+?)".*/;
 
@@ -73,6 +74,10 @@ export class BufferSource extends ExplorerSource<BufferNode> {
     modified: false,
     readErrors: false,
   };
+  templateRenderer: TemplateRenderer<BufferNode> = new TemplateRenderer<BufferNode>(
+    this,
+    bufferColumnRegistrar,
+  );
 
   async init() {
     if (getActiveMode()) {
@@ -100,9 +105,9 @@ export class BufferSource extends ExplorerSource<BufferNode> {
   }
 
   async open() {
-    await this.columnManager.registerColumns(
-      await this.explorer.args.value(argOptions.bufferColumns),
-      bufferColumnRegistrar,
+    await this.templateRenderer.parse(
+      await this.explorer.args.value(argOptions.bufferTemplate),
+      await this.explorer.args.value(argOptions.bufferLabelingTemplate),
     );
   }
 
@@ -160,7 +165,7 @@ export class BufferSource extends ExplorerSource<BufferNode> {
   async drawNode(node: BufferNode, nodeIndex: number) {
     await this.viewBuilder.drawRowForNode(node, async (row) => {
       row.add('  ');
-      await this.columnManager.draw(row, node, nodeIndex);
+      await this.templateRenderer.draw(row, node, nodeIndex);
     });
   }
 }

@@ -1,8 +1,9 @@
-import { Column, ColumnRegistrar } from './column-registrar';
+import { ColumnRegistrar, ColumnRequired } from './column-registrar';
 import { BaseTreeNode, ExplorerSource } from './source';
 import { SourceRowBuilder } from './view-builder';
 import { hlGroupManager, HighlightPositionWithLine } from './highlight-manager';
 import pFilter from 'p-filter';
+import { parseTemplate, TemplatePart } from '../parse-template';
 
 export interface DrawLabelingResult {
   highlightPositions: HighlightPositionWithLine[];
@@ -11,32 +12,92 @@ export interface DrawLabelingResult {
 
 export const labelHighlight = hlGroupManager.linkGroup('Label', 'Label');
 
-export class ColumnManager<TreeNode extends BaseTreeNode<TreeNode>> {
-  columnNames: (string | string[])[] = [];
-  columns: Column<TreeNode>[] = [];
-  labelingColumns: Column<TreeNode>[][] = [];
+export type InitedPartColumn<TreeNode extends BaseTreeNode<TreeNode>> = {
+  column: string | ColumnRequired<TreeNode, any>;
+  modifiers?: { name: string; column: string | ColumnRequired<TreeNode, any> }[];
+};
+export type InitedPart<TreeNode extends BaseTreeNode<TreeNode>> =
+  | string
+  | InitedPartColumn<TreeNode>;
 
-  constructor(public source: ExplorerSource<TreeNode>) {}
+export class TemplateRenderer<TreeNode extends BaseTreeNode<TreeNode>> {
+  templateStr: string = '';
+  labelingTemplateStr: string = '';
+  uniqueColumns: ColumnRequired<TreeNode, any>[] = [];
+  initedParts: InitedPart<TreeNode>[] = [];
+  initedLabelingParts: InitedPart<TreeNode>[] = [];
 
-  async registerColumns(
-    columnNames: (string | string[])[],
-    columnRegistrar: ColumnRegistrar<TreeNode, any>,
-  ) {
-    if (this.columnNames.toString() !== columnNames.toString()) {
-      this.columnNames = columnNames;
-      [this.columns, this.labelingColumns] = await columnRegistrar.getColumns(
-        this.source,
-        columnNames,
-      );
+  constructor(
+    public source: ExplorerSource<TreeNode>,
+    public columnRegistrar: ColumnRegistrar<TreeNode, any>,
+  ) {}
+
+  private async initPart(part: TemplatePart): Promise<InitedPart<TreeNode>> {
+    if (typeof part !== 'string') {
+      const column: InitedPartColumn<TreeNode> = {
+        column: await this.columnRegistrar.getInitedColumn(this.source, part.column),
+      };
+      if (part.modifiers) {
+        column.modifiers = await Promise.all(
+          part.modifiers.map(async (modifier) => ({
+            name: modifier.name,
+            column: await this.columnRegistrar.getInitedColumn(this.source, modifier.column),
+          })),
+        );
+      }
+      return column;
+    } else {
+      return part;
     }
   }
 
-  /**
-   * @returns return true to redraw all rows
-   */
+  async parse(template: string, labelingTemplate?: string) {
+    let updateUniqueColumns = false;
+    this.uniqueColumns = [];
+    if (this.templateStr !== template) {
+      this.templateStr = template;
+      this.initedParts = [];
+
+      for (const parsedPart of parseTemplate(template)) {
+        this.initedParts.push(await this.initPart(parsedPart));
+      }
+      updateUniqueColumns = true;
+    }
+    if (labelingTemplate) {
+      if (this.labelingTemplateStr !== labelingTemplate) {
+        this.labelingTemplateStr = labelingTemplate;
+        this.initedLabelingParts = [];
+
+        for (const parsedPart of parseTemplate(labelingTemplate)) {
+          this.initedLabelingParts.push(await this.initPart(parsedPart));
+        }
+        updateUniqueColumns = true;
+      }
+    }
+
+    if (updateUniqueColumns) {
+      this.uniqueColumns = [];
+
+      for (const item of this.initedParts) {
+        if (typeof item !== 'string') {
+          if (typeof item.column !== 'string') {
+            this.uniqueColumns.push(item.column);
+          }
+          if (item.modifiers) {
+            for (const modifier of item.modifiers) {
+              if (typeof modifier.column !== 'string') {
+                this.uniqueColumns.push(modifier.column);
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+
   async beforeDraw(nodes: TreeNode[]) {
     let redraw = false;
-    for (const column of this.columns) {
+    for (const column of this.uniqueColumns) {
       if (column.beforeDraw) {
         if (await column.beforeDraw(nodes)) {
           redraw = true;
@@ -47,7 +108,7 @@ export class ColumnManager<TreeNode extends BaseTreeNode<TreeNode>> {
   }
 
   async reload(sourceNode: TreeNode) {
-    for (const column of this.columns) {
+    for (const column of this.uniqueColumns) {
       await (column.reload && column.reload(sourceNode));
     }
   }
@@ -57,15 +118,13 @@ export class ColumnManager<TreeNode extends BaseTreeNode<TreeNode>> {
     node: TreeNode,
     nodeIndex: number,
     {
-      columns = this.columns,
       isLabeling = false,
     }: {
-      columns?: Column<TreeNode>[];
       isLabeling?: boolean;
     } = {},
   ) {
-    for (const column of columns) {
-      await row.addColumn(node, nodeIndex, column, isLabeling);
+    for (const item of this.initedParts) {
+      await row.addTemplatePart(node, nodeIndex, item, isLabeling);
     }
     return row;
   }
@@ -73,39 +132,42 @@ export class ColumnManager<TreeNode extends BaseTreeNode<TreeNode>> {
   async drawLabeling(node: TreeNode, nodeIndex: number): Promise<DrawLabelingResult> {
     const highlightPositionWithLines: HighlightPositionWithLine[] = [];
     const lines: string[] = [];
-    let lineIndex: number = 0;
-    for (const columns of this.labelingColumns) {
-      const allLabelOnly = columns.every((column) => column.labelOnly);
-      const displayedColumns = await pFilter(
-        columns,
-        async (column) =>
-          (!column.labelOnly || (await column.labelOnly(node, { nodeIndex }))) &&
-          (!column.labelVisible || (await column.labelVisible(node, { nodeIndex }))),
-      );
-      if (!displayedColumns.length) {
+    for (const part of this.initedLabelingParts) {
+      if (typeof part === 'string') {
+        lines.push(part);
         continue;
       }
-      const contentColumns = displayedColumns.filter((column) => !column.labelOnly);
+      const columns = [
+        part.column,
+        ...(part.modifiers?.map((m) => (m.name === '&' ? m.column : '')) ?? []),
+      ].filter((c): c is ColumnRequired<TreeNode, any> => typeof c !== 'string');
+      const visibleColumns = await pFilter(
+        columns,
+        async (c) => !c.labelVisible || (await c.labelVisible(node, { nodeIndex })),
+      );
+      if (!visibleColumns.length) {
+        continue;
+      }
+      const isAllLabelOnly = visibleColumns.every((c) => c.labelOnly);
+      const contentColumns = visibleColumns.filter(async (c) => !c.labelOnly);
       const row = await this.source.viewBuilder.drawRow(async (row) => {
         row.add(
-          displayedColumns.map((column) => column.label).join(' & ') + (allLabelOnly ? '' : ':'),
+          contentColumns.map((column) => column.label).join(' & ') + (isAllLabelOnly ? '' : ':'),
           { hl: labelHighlight },
         );
         row.add(' ');
-        await this.draw(row, node, nodeIndex, {
-          columns: contentColumns,
-          isLabeling: true,
-        });
+        for (const column of contentColumns) {
+          await row.addColumn(node, nodeIndex, column, true);
+        }
       });
       const { highlightPositions, content } = await row.draw({ flexible: false });
+      lines.push(content);
       highlightPositionWithLines.push(
         ...highlightPositions.map((hl) => ({
-          line: lineIndex,
+          line: lines.length - 1,
           ...hl,
         })),
       );
-      lineIndex += 1;
-      lines.push(content);
     }
     return {
       highlightPositions: highlightPositionWithLines,

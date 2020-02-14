@@ -2,12 +2,11 @@ import { SourceRowBuilder } from './view-builder';
 import { ExplorerSource, BaseTreeNode } from './source';
 import { Disposable } from 'coc.nvim';
 import { HighlightConcealableCommand } from './highlight-manager';
-import { startCase } from 'lodash';
 
 export interface Column<TreeNode extends BaseTreeNode<TreeNode>, Data = any> {
   label?: string;
 
-  labelOnly?: (node: TreeNode, option: { nodeIndex: number }) => boolean | Promise<boolean>;
+  labelOnly?: boolean;
 
   labelVisible?: (node: TreeNode, option: { nodeIndex: number }) => boolean | Promise<boolean>;
 
@@ -37,6 +36,7 @@ export interface Column<TreeNode extends BaseTreeNode<TreeNode>, Data = any> {
 
 export interface ColumnRequired<TreeNode extends BaseTreeNode<TreeNode>, Data>
   extends Column<TreeNode, Data> {
+  label: string;
   data: Data;
   concealable: HighlightConcealableCommand;
 }
@@ -58,16 +58,19 @@ export class ColumnRegistrar<
     }
   > = {};
 
-  async getColumns(source: S, columnStrings: (string | string[])[]) {
-    type C = Column<TreeNode>;
-    const columns: C[] = [];
-    const labelingColumns: C[][] = [];
-    let labelingColumn = false;
-    const getRegisteredColumn = async (columnString: string) => {
-      const registeredColumn = this.registeredColumns[columnString];
+  async getInitedColumn(
+    source: S,
+    columnName: string,
+  ): Promise<string | ColumnRequired<TreeNode, any>> {
+    if (/\d+/.test(columnName)) {
+      const num = parseInt(columnName, 10);
+      return ' '.repeat(num);
+    } else {
+      const registeredColumn = this.registeredColumns[columnName];
       if (registeredColumn) {
-        const column = {} as ColumnRequired<TreeNode, any>;
+        const column = { label: columnName } as ColumnRequired<TreeNode, any>;
         Object.assign(column, registeredColumn.getColumn({ source, column }));
+
         if (column.inited) {
           return column;
         } else {
@@ -78,35 +81,8 @@ export class ColumnRegistrar<
           }
         }
       }
-    };
-    for (const columnStrs of columnStrings) {
-      if (Array.isArray(columnStrs)) {
-        labelingColumn = true;
-      }
-      if (!labelingColumn) {
-        const columnStr = columnStrs as string;
-        const column = await getRegisteredColumn(columnStr);
-        if (column) {
-          columns.push({
-            label: startCase(columnStr),
-            ...column,
-          });
-        }
-      } else {
-        const labelingRow: C[] = [];
-        for (const columnStr of columnStrs as string[]) {
-          const column = await getRegisteredColumn(columnStr);
-          if (column) {
-            labelingRow.push({
-              label: startCase(columnStr),
-              ...column,
-            });
-          }
-        }
-        labelingColumns.push(labelingRow);
-      }
+      throw Error(`column(${columnName}) not found`);
     }
-    return [columns, labelingColumns] as const;
   }
 
   registerColumn<Data>(name: string, getColumn: GetColumn<S, TreeNode, Data>) {

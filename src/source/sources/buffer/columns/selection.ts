@@ -14,6 +14,8 @@ bufferColumnRegistrar.registerColumn('selection', ({ source, column }) => ({
     }
   },
   draw(row, node) {
-    row.add(source.isSelectedNode(node) ? sourceIcons.getSelected() : sourceIcons.getUnselected());
+    if (source.isSelectedNode(node)) {
+      row.add(sourceIcons.getSelected());
+    }
   },
 }));

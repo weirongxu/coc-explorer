@@ -4,42 +4,46 @@ import { diagnosticManager } from '../../../../diagnostic-manager';
 import { config, debounce, onEvents } from '../../../../util';
 import { fileHighlights } from '../file-source';
 
-const diagnosticCountMax = config.get<number>('file.diagnosticCountMax', 99);
-const warningMaxWidth = diagnosticCountMax.toString().length;
-
 const concealable = hlGroupManager.concealable('FileDiagnosticWarning');
 
 fileColumnRegistrar.registerColumn<{
-  prevDiagnosticWarning: Record<string, string>;
+  warningMap: Record<string, string>;
 }>('diagnosticWarning', ({ source, column }) => ({
   concealable: concealable(source),
   data: {
-    prevDiagnosticWarning: {},
+    warningMap: {},
   },
+  labelVisible: (node) => node.fullpath in column.data.warningMap,
   init() {
     source.subscriptions.push(
       onEvents(
         'BufWritePost',
         debounce(1000, async () => {
+          const diagnosticCountMax = config.get<number>('file.diagnosticCountMax', 99);
           diagnosticManager.warningReload(source.root);
 
           const warningMixedCount = diagnosticManager.warningMixedCount;
+          const warningMap: Record<string, string> = {};
+          const prevWarningMap = column.data.warningMap;
           const updatePaths: Set<string> = new Set();
           for (const [fullpath, count] of Object.entries(warningMixedCount)) {
-            if (fullpath in column.data.prevDiagnosticWarning) {
-              if (column.data.prevDiagnosticWarning[fullpath] === count) {
+            const ch = count > diagnosticCountMax ? '✗' : count.toString();
+            warningMap[fullpath] = ch;
+
+            if (fullpath in prevWarningMap) {
+              if (prevWarningMap[fullpath] === ch) {
                 continue;
               }
-              delete column.data.prevDiagnosticWarning[fullpath];
+              delete prevWarningMap[fullpath];
             } else {
               updatePaths.add(fullpath);
             }
           }
-          for (const [fullpath] of Object.keys(column.data.prevDiagnosticWarning)) {
+          for (const [fullpath] of Object.keys(prevWarningMap)) {
             updatePaths.add(fullpath);
           }
           await source.renderPaths(updatePaths);
-          column.data.prevDiagnosticWarning = warningMixedCount;
+          column.data.warningMap = warningMap;
         }),
       ),
     );
@@ -55,17 +59,16 @@ fileColumnRegistrar.registerColumn<{
     }
   },
   draw(row, node, { nodeIndex }) {
-    if (node.fullpath in diagnosticManager.warningMixedCount) {
+    const warningMap = column.data.warningMap;
+    if (node.fullpath in warningMap) {
       if (node.directory && source.expandStore.isExpanded(node)) {
-        row.add(' '.padStart(warningMaxWidth));
         source.removeIndexes('diagnosticWarning', nodeIndex);
       } else {
-        const count = diagnosticManager.warningMixedCount[node.fullpath];
-        row.add(count.padStart(warningMaxWidth), { hl: fileHighlights.diagnosticWarning });
+        const count = warningMap[node.fullpath];
+        row.add(count, { hl: fileHighlights.diagnosticWarning });
         source.addIndexes('diagnosticWarning', nodeIndex);
       }
     } else {
-      row.add(' '.repeat(warningMaxWidth));
       source.removeIndexes('diagnosticWarning', nodeIndex);
     }
   },

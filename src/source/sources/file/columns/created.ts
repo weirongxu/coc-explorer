@@ -9,8 +9,6 @@ fileColumnRegistrar.registerColumn('created', () => ({
       row.add(dayjs(node.lstat.ctime).format(getDatetimeFormat()), {
         hl: fileHighlights.timeCreated,
       });
-    } else {
-      row.add('                 ');
     }
   },
 }));

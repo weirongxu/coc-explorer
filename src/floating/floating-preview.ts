@@ -32,7 +32,7 @@ export class FloatingPreview {
     if (node.isRoot) {
       drawLabelingResult = await source.drawRootLabeling(node);
     } else {
-      drawLabelingResult = await source.columnManager.drawLabeling(node, nodeIndex);
+      drawLabelingResult = await source.templateRenderer?.drawLabeling(node, nodeIndex);
     }
     if (!drawLabelingResult || !this.explorer.explorerManager.inExplorer()) {
       return;

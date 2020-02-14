@@ -100,7 +100,6 @@ fileColumnRegistrar.registerColumn('git', ({ source, column }) => ({
       showFormat(statusIcons[status.y], false);
       source.addIndexes('git', nodeIndex);
     } else {
-      row.add('  ');
       source.removeIndexes('git', nodeIndex);
     }
   },

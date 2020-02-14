@@ -4,42 +4,47 @@ import { diagnosticManager } from '../../../../diagnostic-manager';
 import { config, debounce, onEvents } from '../../../../util';
 import { fileHighlights } from '../file-source';
 
-const diagnosticCountMax = config.get<number>('file.diagnosticCountMax', 99);
-const errorMaxWidth = diagnosticCountMax.toString().length;
-
 const concealable = hlGroupManager.concealable('FileDiagnosticError');
 
 fileColumnRegistrar.registerColumn<{
-  prevDiagnosticError: Record<string, string>;
+  errorMap: Record<string, string>;
 }>('diagnosticError', ({ source, column }) => ({
   concealable: concealable(source),
   data: {
-    prevDiagnosticError: {},
+    errorMap: {},
   },
+  labelVisible: (node) => node.fullpath in column.data.errorMap,
   init() {
     source.subscriptions.push(
       onEvents(
         'BufWritePost',
         debounce(1000, async () => {
+          const diagnosticCountMax = config.get<number>('file.diagnosticCountMax')!;
           diagnosticManager.errorReload(source.root);
 
           const errorMixedCount = diagnosticManager.errorMixedCount;
+          const errorMap: Record<string, string> = {};
+          const prevErrorMap = column.data.errorMap;
           const updatePaths: Set<string> = new Set();
           for (const [fullpath, count] of Object.entries(errorMixedCount)) {
-            if (fullpath in column.data.prevDiagnosticError) {
-              if (column.data.prevDiagnosticError[fullpath] === count) {
+            const ch = count > diagnosticCountMax ? '✗' : count.toString();
+            errorMap[fullpath] = ch;
+
+            if (fullpath in prevErrorMap) {
+              if (prevErrorMap[fullpath] === ch) {
                 continue;
               }
-              delete column.data.prevDiagnosticError[fullpath];
+              delete prevErrorMap[fullpath];
+              updatePaths.add(fullpath);
             } else {
               updatePaths.add(fullpath);
             }
           }
-          for (const [fullpath] of Object.keys(column.data.prevDiagnosticError)) {
+          for (const [fullpath] of Object.keys(prevErrorMap)) {
             updatePaths.add(fullpath);
           }
           await source.renderPaths(updatePaths);
-          column.data.prevDiagnosticError = errorMixedCount;
+          column.data.errorMap = errorMap;
         }),
       ),
     );
@@ -55,17 +60,16 @@ fileColumnRegistrar.registerColumn<{
     }
   },
   draw(row, node, { nodeIndex }) {
-    if (node.fullpath in diagnosticManager.errorMixedCount) {
+    const errorMap = column.data.errorMap;
+    if (node.fullpath in errorMap) {
       if (node.directory && source.expandStore.isExpanded(node)) {
-        row.add(' '.padStart(errorMaxWidth));
         source.removeIndexes('diagnosticError', nodeIndex);
       } else {
-        const count = diagnosticManager.errorMixedCount[node.fullpath];
-        row.add(count.padStart(errorMaxWidth), { hl: fileHighlights.diagnosticError });
+        const count = errorMap[node.fullpath];
+        row.add(count, { hl: fileHighlights.diagnosticError });
         source.addIndexes('diagnosticError', nodeIndex);
       }
     } else {
-      row.add(' '.repeat(errorMaxWidth));
       source.removeIndexes('diagnosticError', nodeIndex);
     }
   },

@@ -7,8 +7,8 @@ const diagnosticCountMax = config.get<number>('file.diagnosticCountMax')!;
 class DiagnosticManager {
   errorPathCount: Record<string, number> = {};
   warningPathCount: Record<string, number> = {};
-  errorMixedCount: Record<string, string> = {};
-  warningMixedCount: Record<string, string> = {};
+  errorMixedCount: Record<string, number> = {};
+  warningMixedCount: Record<string, number> = {};
 
   private lastReloadTime = 0;
 
@@ -46,7 +46,7 @@ class DiagnosticManager {
   errorReload(root: string) {
     this.reload();
 
-    const errorMixedCount: Record<string, number> = {};
+    this.errorMixedCount = {};
 
     Object.entries(this.errorPathCount).forEach(([fullpath, count]) => {
       const relativePath = pathLib.relative(root, fullpath);
@@ -54,28 +54,19 @@ class DiagnosticManager {
 
       for (let i = 1; i <= parts.length; i++) {
         const frontalPath = pathLib.join(root, parts.slice(0, i).join(pathLib.sep));
-        if (errorMixedCount[frontalPath]) {
-          errorMixedCount[frontalPath] += count;
+        if (this.errorMixedCount[frontalPath]) {
+          this.errorMixedCount[frontalPath] += count;
         } else {
-          errorMixedCount[frontalPath] = count;
+          this.errorMixedCount[frontalPath] = count;
         }
       }
     });
-
-    this.errorMixedCount = Object.entries(errorMixedCount).reduce((mixed, [fullpath, count]) => {
-      if (count > diagnosticCountMax) {
-        mixed[fullpath] = '●';
-      } else {
-        mixed[fullpath] = count.toString();
-      }
-      return mixed;
-    }, {} as Record<string, string>);
   }
 
   warningReload(root: string) {
     this.reload();
 
-    const warningMixedCount: Record<string, number> = {};
+    this.warningMixedCount = {};
 
     Object.entries(this.warningPathCount).forEach(([fullpath, count]) => {
       const relativePath = pathLib.relative(root, fullpath);
@@ -83,25 +74,13 @@ class DiagnosticManager {
 
       for (let i = 1; i <= parts.length; i++) {
         const frontalPath = pathLib.join(root, parts.slice(0, i).join(pathLib.sep));
-        if (warningMixedCount[frontalPath]) {
-          warningMixedCount[frontalPath] += count;
+        if (this.warningMixedCount[frontalPath]) {
+          this.warningMixedCount[frontalPath] += count;
         } else {
-          warningMixedCount[frontalPath] = count;
+          this.warningMixedCount[frontalPath] = count;
         }
       }
     });
-
-    this.warningMixedCount = Object.entries(warningMixedCount).reduce(
-      (mixed, [fullpath, count]) => {
-        if (count > diagnosticCountMax) {
-          mixed[fullpath] = '●';
-        } else {
-          mixed[fullpath] = count.toString();
-        }
-        return mixed;
-      },
-      {} as Record<string, string>,
-    );
   }
 }
 

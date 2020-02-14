@@ -11,7 +11,7 @@ import {
   HighlightPositionWithLine,
   HighlightConcealablePosition,
 } from './highlight-manager';
-import { ColumnManager, DrawLabelingResult } from './column-manager';
+import { TemplateRenderer, DrawLabelingResult } from './column-manager';
 import { argOptions } from '../parse-args';
 
 export type ActionOptions = {
@@ -25,7 +25,6 @@ export const sourceIcons = {
   getExpanded: () => config.get<string>('icon.expanded') || (getEnableNerdfont() ? '' : '-'),
   getCollapsed: () => config.get<string>('icon.collapsed') || (getEnableNerdfont() ? '' : '+'),
   getSelected: () => config.get<string>('icon.selected')!,
-  getUnselected: () => config.get<string>('icon.unselected')!,
   getHidden: () => config.get<string>('icon.hidden')!,
 };
 
@@ -48,6 +47,7 @@ export type ExplorerSourceClass = {
 };
 
 export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>> {
+  abstract hlSrcId: number;
   startLineIndex: number = 0;
   endLineIndex: number = 0;
   abstract rootNode: TreeNode;
@@ -56,8 +56,8 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>> {
   showHidden: boolean = false;
   selectedNodes: Set<TreeNode> = new Set();
   relativeHlRanges: Record<string, Range[]> = {};
-  viewBuilder = new SourceViewBuilder(this.explorer);
-  expandStore = {
+  readonly viewBuilder = new SourceViewBuilder(this.explorer);
+  readonly expandStore = {
     record: new Map<string, boolean>(),
     expand(node: TreeNode) {
       this.record.set(node.uid, true);
@@ -69,9 +69,7 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>> {
       return this.record.get(node.uid) || false;
     },
   };
-  columnManager = new ColumnManager<TreeNode>(this);
-
-  abstract hlSrcId: number;
+  templateRenderer?: TemplateRenderer<TreeNode>;
 
   actions: Record<
     string,
@@ -510,15 +508,15 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>> {
   abstract loadChildren(sourceNode: TreeNode): Promise<TreeNode[]>;
 
   async loaded(sourceNode: TreeNode): Promise<void> {
-    await this.columnManager.reload(sourceNode);
+    await this.templateRenderer?.reload(sourceNode);
   }
 
   /**
    * @returns return true to redraw all rows
    */
   async beforeDraw(nodes: TreeNode[], { force = false } = {}) {
-    const renderAll = await this.columnManager.beforeDraw(nodes);
-    return renderAll;
+    const renderAll = await this.templateRenderer?.beforeDraw(nodes);
+    return !!renderAll;
   }
 
   abstract drawRootNode(node: TreeNode): void | Promise<void>;
