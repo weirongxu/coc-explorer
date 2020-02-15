@@ -11,7 +11,7 @@ beforeAll(async () => {
   await helper.setup();
 });
 
-interface TestNode extends BaseTreeNode<TestNode> {
+interface TestNode extends BaseTreeNode<TestNode, 'child'> {
   name: string;
   fullpath: string;
   directory: boolean;
@@ -22,7 +22,7 @@ class TestColumnRegistrar extends ColumnRegistrar<TestNode, any> {}
 const testColumnRegistrar = new TestColumnRegistrar();
 
 (['left', 'right', 'center'] as const).forEach((pos) => {
-  testColumnRegistrar.registerColumn(`grow-${pos}`, () => ({
+  testColumnRegistrar.registerColumn('child', `grow-${pos}`, () => ({
     async draw(row, node) {
       await row.flexible(
         {
@@ -36,7 +36,7 @@ const testColumnRegistrar = new TestColumnRegistrar();
       );
     },
   }));
-  testColumnRegistrar.registerColumn(`omit-${pos}`, () => ({
+  testColumnRegistrar.registerColumn('child', `omit-${pos}`, () => ({
     async draw(row, node) {
       await row.flexible(
         {
@@ -52,7 +52,7 @@ const testColumnRegistrar = new TestColumnRegistrar();
   }));
 });
 
-testColumnRegistrar.registerColumn('filename', () => ({
+testColumnRegistrar.registerColumn('child', 'filename', () => ({
   async draw(row, node) {
     await row.flexible(
       {
@@ -66,7 +66,7 @@ testColumnRegistrar.registerColumn('filename', () => ({
   },
 }));
 
-testColumnRegistrar.registerColumn('link', () => ({
+testColumnRegistrar.registerColumn('child', 'link', () => ({
   async draw(row, node) {
     await row.flexible(
       {
@@ -104,11 +104,12 @@ async function drawColumn(names: string[], width: number) {
   const r = new SourceRowBuilder(view);
   r.add('||');
   const columns = await Promise.all(
-    names.map((name) => testColumnRegistrar.getInitedColumn(null as any, name)),
+    names.map((name) => testColumnRegistrar.getInitedColumn('child', null as any, name)),
   );
   for (const column of columns) {
     await r.addTemplatePart<TestNode>(
       {
+        type: 'child',
         uid: '1',
         drawnLine: '',
         isRoot: false,
