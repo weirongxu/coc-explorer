@@ -70,23 +70,23 @@ type DrawableFlatWithWidth = DrawContentWithWidth | DrawConcealMark;
 
 const omitSymbolHighlight = hlGroupManager.linkGroup('OmitSymbol', 'SpecialComment');
 
-function divideVolumnBy(totalWidth: number, volumns: number[], widthLimit?: number[]) {
-  let unit = totalWidth / sum(volumns);
-  const widthes: number[] = new Array(volumns.length);
+function divideVolumeBy(totalWidth: number, volumes: number[], widthLimit?: number[]) {
+  let unit = totalWidth / sum(volumes);
+  const widthes: number[] = new Array(volumes.length);
   if (widthLimit) {
-    for (let i = 0; i < volumns.length; i++) {
-      const width = Math.ceil(volumns[i] * unit);
+    for (let i = 0; i < volumes.length; i++) {
+      const width = Math.ceil(volumes[i] * unit);
       if (width > widthLimit[i]) {
         widthes[i] = widthLimit[i];
         totalWidth -= widthLimit[i];
-        volumns[i] = 0;
+        volumes[i] = 0;
       }
     }
-    unit = totalWidth / sum(volumns);
+    unit = totalWidth / sum(volumes);
   }
-  for (let i = 0; i < volumns.length; i++) {
+  for (let i = 0; i < volumes.length; i++) {
     if (widthes[i] === undefined) {
-      const width = Math.ceil(volumns[i] * unit);
+      const width = Math.ceil(volumes[i] * unit);
       if (width <= totalWidth) {
         totalWidth -= width;
         widthes[i] = width;
@@ -225,7 +225,7 @@ export class SourceRowBuilder {
     drawableList: DrawableWithWidth[],
   ): Promise<DrawableFlatWithWidth[]> {
     const allSpaceWidth = fullwidth - usedWidth;
-    const spaceWids = divideVolumnBy(
+    const spaceWids = divideVolumeBy(
       allSpaceWidth,
       drawableList.map((c) =>
         c.type === 'group' && c.flexible?.grow ? c.flexible.growVolume ?? 1 : 0,
@@ -300,7 +300,7 @@ export class SourceRowBuilder {
     drawableList: DrawableWithWidth[],
   ): Promise<DrawableFlatWithWidth[]> {
     const allOmitWidth = usedWidth - fullwidth;
-    const omitWids = divideVolumnBy(
+    const omitWids = divideVolumeBy(
       allOmitWidth,
       drawableList.map((c) =>
         c.type === 'group' && c.flexible?.omit ? c.flexible.omitVolume ?? 1 : 0,
@@ -687,7 +687,7 @@ export class SourceRowBuilder {
         ),
       ) === 0;
 
-    const getVolumn = (c: number | ColumnRequired<TreeNode, any>) =>
+    const getVolume = (c: number | ColumnRequired<TreeNode, any>) =>
       typeof c === 'number' ? c : 1;
 
     if (part.modifiers) {
@@ -706,22 +706,22 @@ export class SourceRowBuilder {
           }
         } else if (modifier.name === 'growLeft') {
           flexible.grow = 'left';
-          flexible.growVolume = getVolumn(modifier.column);
+          flexible.growVolume = getVolume(modifier.column);
         } else if (modifier.name === 'growCenter') {
           flexible.grow = 'center';
-          flexible.growVolume = getVolumn(modifier.column);
+          flexible.growVolume = getVolume(modifier.column);
         } else if (modifier.name === 'growRight') {
           flexible.grow = 'right';
-          flexible.growVolume = getVolumn(modifier.column);
+          flexible.growVolume = getVolume(modifier.column);
         } else if (modifier.name === 'omitLeft') {
           flexible.omit = 'left';
-          flexible.omitVolume = getVolumn(modifier.column);
+          flexible.omitVolume = getVolume(modifier.column);
         } else if (modifier.name === 'omitCenter') {
           flexible.omit = 'center';
-          flexible.omitVolume = getVolumn(modifier.column);
+          flexible.omitVolume = getVolume(modifier.column);
         } else if (modifier.name === 'omitRight') {
           flexible.omit = 'right';
-          flexible.omitVolume = getVolumn(modifier.column);
+          flexible.omitVolume = getVolume(modifier.column);
         }
       }
     }

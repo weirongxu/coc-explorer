@@ -26,6 +26,10 @@ type ArgOptionRequired<T> = {
   description?: string;
 };
 
+export type ArgContentWidthTypes = 'win-width' | 'vim-width';
+
+export type ArgFloatingPositions = 'left-center' | 'right-center' | 'center';
+
 export class Args {
   private static registeredOptions: Map<string, ArgOption<any>> = new Map();
   private static registeredPositional = {
@@ -164,8 +168,6 @@ export class Args {
   }
 }
 
-type floatingPositionEnum = 'left-center' | 'right-center' | 'center';
-
 export const argOptions = {
   toggle: Args.registerBoolOption('toggle', true),
   sources: Args.registerOption('sources', {
@@ -196,6 +198,26 @@ export const argOptions = {
     handler: (s) => parseInt(s, 10),
     getDefault: () => config.get<number>('width')!,
   }),
+  contentWidth: Args.registerOption('content-width', {
+    handler: (s) => parseInt(s, 10),
+    getDefault: () => config.get<number>('contentWidth')!,
+  }),
+  contentWidthType: Args.registerOption('content-width-type', {
+    getDefault: () => config.get<ArgContentWidthTypes>('contentWidthType')!,
+  }),
+  floatingPosition: Args.registerOption<ArgFloatingPositions | [number, number]>(
+    'floating-position',
+    {
+      handler: (s) => {
+        if (['left-center', 'right-center', 'center'].includes(s)) {
+          return s as ArgFloatingPositions;
+        } else {
+          return s.split(',').map((i) => parseInt(i, 10)) as [number, number];
+        }
+      },
+      getDefault: () => config.get<ArgFloatingPositions | [number, number]>('floating.position')!,
+    },
+  ),
   floatingWidth: Args.registerOption('floating-width', {
     handler: (s) => parseInt(s, 10),
     getDefault: () => config.get<number>('floating.width')!,
@@ -204,19 +226,10 @@ export const argOptions = {
     handler: (s) => parseInt(s, 10),
     getDefault: () => config.get<number>('floating.height')!,
   }),
-  floatingPosition: Args.registerOption<floatingPositionEnum | [number, number]>(
-    'floating-position',
-    {
-      handler: (s) => {
-        if (['left-center', 'right-center', 'center'].includes(s)) {
-          return s as floatingPositionEnum;
-        } else {
-          return s.split(',').map((i) => parseInt(i, 10)) as [number, number];
-        }
-      },
-      getDefault: () => config.get<floatingPositionEnum | [number, number]>('floating.position')!,
-    },
-  ),
+  floatingContentWidth: Args.registerOption('floating-content-width', {
+    handler: (s) => parseInt(s, 10),
+    getDefault: () => config.get<number>('floating.contentWidth')!,
+  }),
   bufferRootTemplate: Args.registerOption<string>('buffer-root-template', {
     getDefault: () => config.get<string>('buffer.root.template')!,
   }),
@@ -242,21 +255,3 @@ export const argOptions = {
     handler: normalizePath,
   }),
 };
-
-// export function parseColumns(columnsStr: string) {
-//   const semicolonIndex = columnsStr.indexOf(';');
-//   if (semicolonIndex === -1) {
-//     return columnsStr.split(/:/);
-//   } else {
-//     return [
-//       ...columnsStr
-//         .slice(0, semicolonIndex)
-//         .split(':')
-//         .concat(),
-//       ...columnsStr
-//         .slice(semicolonIndex + 1)
-//         .split(';')
-//         .map((c) => c.split(':')),
-//     ];
-//   }
-// }

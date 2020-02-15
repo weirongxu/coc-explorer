@@ -47,9 +47,10 @@ Explorer extension for [coc.nvim](https://github.com/neoclide/coc.nvim)
     - [x] Cut / Copy / Paste
     - [x] Delete action use trash by default
   - [x] Git status
-  - [x] Highlight current buffer in real time (neovim only)
+  - [x] Reveal current file in real time (neovim only)
   - [x] Icons, use [nerdfont](https://github.com/ryanoasis/nerd-fonts)
   - [x] Search files by Coc-list
+  - [x] Preview file attribute by floating window
   - [ ] LSP
     - [x] diagnostic
     - [ ] file rename
@@ -84,67 +85,193 @@ Explorer root, default:
 - `getcwd()` when `buftype` is `nofile`
 - `workspace.rootPath`
 
-#### `--sources <sources>`
-
-Explorer sources, example: `buffer+,file+`, default: `buffer-,file+`
-
 #### `--toggle | --no-toggle`
 
 Close the explorer if it exists, default: `--toggle`
 
-#### `--width <number>`
+#### `--sources <sources>`
 
-Explorer window width, default: `40`
+Explorer sources, example: `buffer+,file+`, default: `buffer-,file+`
+
+```
+              expand
+      collapsed ¦
+          ¦     ¦
+          ↓     ↓
+    buffer-,file+
+      ↑       ↑
+      ¦       +--+
+      ¦          ¦
+buffer source    ¦
+                 ¦
+            file source
+```
 
 #### `--position <position>`
 
-Explorer position, supported position: `left`, `right`, `tab`, default: `left`
+Explorer position, supported position: `left`, `right`, `tab`, `floating`, default: `left`
 
-#### `--reveal <filepath>`
+#### `--width <number>`
 
-Explorer will expand to this filepath, default: `current buffer`
+Width of Explorer window for open in left or right side, default: `40`
 
-#### `--buffer-columns <buffer-columns>`
+#### `--content-width <number>`
 
-Explorer buffer columns, supported columns:
+Content width, default: `0`
+
+#### `--content-width-type <type>`
+
+Type of content width, types: `win-width`, `vim-width`, , default: `vim-width`
+
+#### `--floating-position <position>`
+
+Explorer position for floating window, positions:
+
+- `left-center`
+- `center`
+- `right-center`
+- `<number for left>,<number for top>`
+
+default: `center`
+
+#### `--floating-width <number>`
+
+Width of Explorer window when position is floating, use negative value or zero to as `width - value`, default: `0`
+
+#### `--floating-height <number>`
+
+Height of Explorer window when position is floating, use negative value or zero to as `height - value`, default: `0`
+
+#### `--floating-content-width <number>`
+
+Width of content when position is floating, use negative value or zero to as `width - value`, default: `0`
+
+#### `--buffer-root-template <template>`
+
+Template for root node of buffer source
+
+Columns:
+
+- icon
+- title
+
+default: `[icon] [title]`
+
+#### `--buffer-child-template <template>`
+
+Template for child node of buffer source
+
+Columns:
 
 - selection
 - name
 - bufname
 - modified
 - bufnr
+- readonly
+- fullpath
 
-Use columns with label for floating preview, same with `--file-columns`
+default: `[selection | 1] [bufnr] [name][modified][readonly] [fullpath]`
 
-#### `--file-columns <file-columns>`
+#### `--buffer-child-labeling-template <template>`
 
-Explorer file columns, supported columns:
+Template for child node of buffer source
+
+Columns: same with `--buffer-child-template`
+
+default: `[name][bufname][fullpath][modified][readonly]`
+
+#### `--file-root-template <template>`
+
+Template for root node of file source
+
+Columns:
+
+- icon
+- title
+- root
+- fullpath
+
+default: `[icon] [title] [root] [fullpath]`
+
+#### `--file-root-labeling-template <template>`
+
+Labeling template for root node of file source
+
+Columns: same with `--file-root-template`
+
+default: `[fullpath]`
+
+#### `--file-child-template <template>`
+
+Template for child node file source
+
+Columns:
 
 - git
 - selection
 - icon
 - filename
+- linkIcon
+- link
+- fullpath
 - indent
 - clip
 - size
+- readonly
+- modified
+- created
+- accessed
 - diagnosticError
 - diagnosticWarning
-- created
-- modified
-- accessed
 
-Use columns with label for floating preview
+default: `[git | 2] [selection | clip | 1] [indent][icon | 1] [diagnosticError & 1][filename omitCenter 1][readonly] [linkIcon & 1][link growRight 1 omitCenter 5][size]`
+
+#### `--file-child-labeling-template <template>`
+
+Labeling template for child node of file source
+
+Columns: same with `--file-child-template`
+
+default: `[fullpath][link][diagnosticWarning][diagnosticError][size][accessed][modified][created][readonly]`
+
+#### `--reveal <filepath>`
+
+Explorer will expand to this filepath, default: `current buffer`
+
+## Template grammar
+
+**Example:**
 
 ```
---file-columns=selection:clip:indent:icon:filename;fullpath;size;modified;readonly
-
-selection:clip:indent:icon:filename # explorer
-fullpath;size;modified;readonly # floating preview
+[git | 2] [selection | clip | 1] [diagnosticError & 1][filename growRight 1 omitCenter 5]
 ```
 
-![image](https://user-images.githubusercontent.com/1709861/72122161-f616f780-3397-11ea-8dd2-e80278e6f1a0.png)
+- `[git]`
+  - Display `git`.
+- `[git | 2]`
+  - If `git` is not empty, display `git`, otherwise display `2 spaces`.
+- `[selection | clip | 1]`
+  - Checking `selection` and `clip` in turn, if one is not empty, display it, otherwise display `1 spaces`.
+- `[diagnosticError & 1]`
+  - If `diagnosticError` is empty, display nothing. otherwise display `diagnosticError` and `1 space`.
+- `[filename growRight 1 omitCenter 5]`
+  - Flexible to display `filename`, grow right column volume is 1, omit center volume is 5
 
-The columns are designed in two parts, split by first `;`, then the first part is used to display in the explorer, and the second part is used to display in floating-preview with label.
+**Grammar:**
+
+```
+column
+  ├────────────────────────┐
+  │                        │
+  └──┐  volume of modifier │
+     │         ├────┬──────│───────────────┬────────────┐
+     ↓         ↓    ↓      ↓               ↓            ↓
+[selection | clip | 1] [filename growRight 1 omitCenter 5]
+           ↑      ↑                  ↑            ↑
+           ├──────┴──────────────────┴────────────┘
+        modifier
+```
 
 ## Configuration
 
@@ -159,16 +286,40 @@ Default: <pre><code>"default"</code></pre>
 Default: <pre><code>{}</code></pre>
 </details>
 <details>
+<summary><code>explorer.toggle</code>: Close the explorer if it exists. type: <code>boolean</code></summary>
+Default: <pre><code>true</code></pre>
+</details>
+<details>
 <summary><code>explorer.position</code>: Explorer position. type: <code>left | right | tab</code></summary>
 Default: <pre><code>"left"</code></pre>
 </details>
 <details>
-<summary><code>explorer.width</code>: Explorer window width for open in left or right side. type: <code>number</code></summary>
+<summary><code>explorer.width</code>: Width of explorer window for open in left or right side. type: <code>number</code></summary>
 Default: <pre><code>40</code></pre>
 </details>
 <details>
-<summary><code>explorer.toggle</code>: Close the explorer if it exists. type: <code>boolean</code></summary>
-Default: <pre><code>true</code></pre>
+<summary><code>explorer.contentWidth</code>: Content width, use negative value or zero to as `width - value`. type: <code>integer</code></summary>
+Default: <pre><code>0</code></pre>
+</details>
+<details>
+<summary><code>explorer.contentWidthType</code>: Type of content width. type: <code>win-width | vim-width</code></summary>
+Default: <pre><code>"vim-width"</code></pre>
+</details>
+<details>
+<summary><code>explorer.floating.position</code>: Position of Explorer for floating window. type: <code>undefined</code></summary>
+Default: <pre><code>"center"</code></pre>
+</details>
+<details>
+<summary><code>explorer.floating.width</code>: Width of explorer window when position is floating, use negative value or zero to as `width - value`. type: <code>integer</code></summary>
+Default: <pre><code>-10</code></pre>
+</details>
+<details>
+<summary><code>explorer.floating.height</code>: Height of explorer window when position is floating, use negative value or zero to as `height - value`. type: <code>integer</code></summary>
+Default: <pre><code>-10</code></pre>
+</details>
+<details>
+<summary><code>explorer.floating.contentWidth</code>: Width of content when position is floating, use negative value or zero to as `width - value`. type: <code>integer</code></summary>
+Default: <pre><code>0</code></pre>
 </details>
 <details>
 <summary><code>explorer.autoExpandSingleNode</code>: Automatically expand next node when it's a single node. type: <code>boolean</code></summary>
@@ -249,10 +400,6 @@ Default: <pre><code>"+"</code></pre>
 Default: <pre><code>"✓"</code></pre>
 </details>
 <details>
-<summary><code>explorer.icon.unselected</code>: Selection unselected chars for File source. type: <code>string</code></summary>
-Default: <pre><code>" "</code></pre>
-</details>
-<details>
 <summary><code>explorer.icon.hidden</code>: Icon for hidden status. type: <code>string</code></summary>
 Default: <pre><code>"I"</code></pre>
 </details>
@@ -261,27 +408,16 @@ Default: <pre><code>"I"</code></pre>
 Default: <pre><code>false</code></pre>
 </details>
 <details>
-<summary><code>explorer.buffer.columns</code>: Default columns for buffer source. type: <code>array</code></summary>
-Default: <pre><code>[
-  "selection",
-  "bufnr",
-  "name",
-  "modified",
-  "readonly",
-  "fullpath",
-  [
-    "bufname"
-  ],
-  [
-    "fullpath"
-  ],
-  [
-    "modified"
-  ],
-  [
-    "readonly"
-  ]
-]</code></pre>
+<summary><code>explorer.buffer.root.template</code>: Template for root node of buffer source. type: <code>string</code></summary>
+Default: <pre><code>"[icon] [title]"</code></pre>
+</details>
+<details>
+<summary><code>explorer.buffer.child.template</code>: Template for child node of buffer source. type: <code>string</code></summary>
+Default: <pre><code>"[selection | 1] [bufnr] [name][modified][readonly] [fullpath]"</code></pre>
+</details>
+<details>
+<summary><code>explorer.buffer.child.labelingTemplate</code>: Labeling template for child node of buffer source. type: <code>string</code></summary>
+Default: <pre><code>"[name][bufname][fullpath][modified][readonly]"</code></pre>
 </details>
 <details>
 <summary><code>explorer.datetime.format</code>: Explorer datetime format, check out https://github.com/iamkun/dayjs/blob/dev/docs/en/API-reference.md#format-formatstringwithtokens-string. type: <code>string</code></summary>
@@ -315,37 +451,20 @@ Default: <pre><code>{
 Default: <pre><code>false</code></pre>
 </details>
 <details>
-<summary><code>explorer.file.columns</code>: Default columns for file source. type: <code>array</code></summary>
-Default: <pre><code>[
-  "git",
-  "selection",
-  "clip",
-  "diagnosticError",
-  "indent",
-  "icon",
-  "filename",
-  "size",
-  "modified",
-  "readonly",
-  [
-    "fullpath"
-  ],
-  [
-    "size"
-  ],
-  [
-    "accessed"
-  ],
-  [
-    "modified"
-  ],
-  [
-    "created"
-  ],
-  [
-    "readonly"
-  ]
-]</code></pre>
+<summary><code>explorer.file.root.template</code>: Template for root node of file source. type: <code>string</code></summary>
+Default: <pre><code>"[icon] [title] [root] [fullpath]"</code></pre>
+</details>
+<details>
+<summary><code>explorer.file.root.labelingTemplate</code>: Labeling template for root node of file source. type: <code>string</code></summary>
+Default: <pre><code>"[fullpath]"</code></pre>
+</details>
+<details>
+<summary><code>explorer.file.child.template</code>: Template for child node file source. type: <code>string</code></summary>
+Default: <pre><code>"[git | 2] [selection | clip | 1] [indent][icon | 1] [diagnosticError & 1][filename omitCenter 1][readonly] [linkIcon & 1][link growRight 1 omitCenter 5][size]"</code></pre>
+</details>
+<details>
+<summary><code>explorer.file.child.labelingTemplate</code>: Labeling template for child node of file source. type: <code>string</code></summary>
+Default: <pre><code>"[fullpath][link][diagnosticWarning][diagnosticError][size][accessed][modified][created][readonly]"</code></pre>
 </details>
 <details>
 <summary><code>explorer.file.column.git.showIgnored</code>: Show ignored files in git column. type: <code>boolean</code></summary>
@@ -404,20 +523,8 @@ Default: <pre><code>"!"</code></pre>
 Default: <pre><code>"  "</code></pre>
 </details>
 <details>
-<summary><code>explorer.file.column.indent.topLevel</code>: Whether to indent it in top level. type: <code>boolean</code></summary>
-Default: <pre><code>false</code></pre>
-</details>
-<details>
 <summary><code>explorer.file.column.indent.indentLine</code>: Whether to display the alignment line. type: <code>boolean</code></summary>
 
-</details>
-<details>
-<summary><code>explorer.file.column.filename.width</code>: Filename with. type: <code>integer</code></summary>
-Default: <pre><code>80</code></pre>
-</details>
-<details>
-<summary><code>explorer.file.column.filename.paddingEnd</code>: Enable filename padding end. type: <code>boolean</code></summary>
-Default: <pre><code>true</code></pre>
 </details>
 <details>
 <summary><code>explorer.git.command</code>: Git command. type: <code>string</code></summary>

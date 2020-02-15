@@ -1,6 +1,6 @@
 import { Buffer, ExtensionContext, Window, workspace, Disposable } from 'coc.nvim';
 import { Action, ActionMode, mappings, ActionSyms } from './mappings';
-import { Args, argOptions } from './parse-args';
+import { Args, argOptions, ArgContentWidthTypes } from './parse-args';
 import { IndexesManager } from './indexes-manager';
 import './source/load';
 import { BaseTreeNode, ExplorerSource, ActionOptions } from './source/source';
@@ -434,13 +434,12 @@ export class Explorer {
   }
 
   async refreshWidth() {
-    type ContentWidthType = 'win-width' | 'vim-width';
     const window = await this.win;
     if (!window) {
       return;
     }
 
-    const setWidth = async (contentWidthType: ContentWidthType, contentWidth: number) => {
+    const setWidth = async (contentWidthType: ArgContentWidthTypes, contentWidth: number) => {
       if (contentWidth <= 0) {
         let contentBaseWidth: number | undefined;
         if (contentWidthType === 'win-width') {
@@ -460,15 +459,15 @@ export class Explorer {
 
     const position = await this.args.value(argOptions.position);
     if (position === 'floating') {
-      if (await setWidth('win-width', config.get<number>('floating.contentWidth')!)) {
+      if (await setWidth('win-width', await this.args.value(argOptions.floatingContentWidth))) {
         return;
       }
     }
 
     if (
       await setWidth(
-        config.get<ContentWidthType>('contentWidthType')!,
-        config.get<number>('contentWidth')!,
+        await this.args.value(argOptions.contentWidthType),
+        await this.args.value(argOptions.contentWidth),
       )
     ) {
       return;

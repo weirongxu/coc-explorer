@@ -85,6 +85,11 @@
           },
           "default": {}
         },
+        "explorer.toggle": {
+          "description": "Close the explorer if it exists",
+          "type": "boolean",
+          "default": true
+        },
         "explorer.position": {
           "description": "Explorer position",
           "enum": [
@@ -95,9 +100,14 @@
           "default": "left"
         },
         "explorer.width": {
-          "description": "Width of Explorer window for open in left or right side",
+          "description": "Width of explorer window for open in left or right side",
           "type": "number",
           "default": 40
+        },
+        "explorer.contentWidth": {
+          "description": "Content width, use negative value or zero to as `width - value`",
+          "type": "integer",
+          "default": 0
         },
         "explorer.contentWidthType": {
           "description": "Type of content width",
@@ -107,13 +117,8 @@
           ],
           "default": "vim-width"
         },
-        "explorer.contentWidth": {
-          "description": "Content width",
-          "type": "integer",
-          "default": 0
-        },
         "explorer.floating.position": {
-          "description": "Explorer position for floating window",
+          "description": "Position of Explorer for floating window",
           "anyOf": [
             {
               "enum": [
@@ -134,12 +139,12 @@
           "default": "center"
         },
         "explorer.floating.width": {
-          "description": "Width of Explorer window when position is floating, use negative value or zero to as `width - value`",
+          "description": "Width of explorer window when position is floating, use negative value or zero to as `width - value`",
           "type": "integer",
           "default": -10
         },
         "explorer.floating.height": {
-          "description": "Height of Explorer window when position is floating, use negative value or zero to as `height - value`",
+          "description": "Height of explorer window when position is floating, use negative value or zero to as `height - value`",
           "type": "integer",
           "default": -10
         },
@@ -147,11 +152,6 @@
           "description": "Width of content when position is floating, use negative value or zero to as `width - value`",
           "type": "integer",
           "default": 0
-        },
-        "explorer.toggle": {
-          "description": "Close the explorer if it exists",
-          "type": "boolean",
-          "default": true
         },
         "explorer.autoExpandSingleNode": {
           "description": "Automatically expand next node when it's a single node",
@@ -324,17 +324,17 @@
           "default": false
         },
         "explorer.buffer.root.template": {
-          "description": "Default template for root node of buffer source",
+          "description": "Template for root node of buffer source",
           "type": "string",
           "default": "[icon] [title]"
         },
         "explorer.buffer.child.template": {
-          "description": "Default template for child node of buffer source",
+          "description": "Template for child node of buffer source",
           "type": "string",
           "default": "[selection | 1] [bufnr] [name][modified][readonly] [fullpath]"
         },
         "explorer.buffer.child.labelingTemplate": {
-          "description": "Default labeling template for child node of buffer source",
+          "description": "Labeling template for child node of buffer source",
           "type": "string",
           "default": "[name][bufname][fullpath][modified][readonly]"
         },
@@ -393,24 +393,24 @@
           "default": false
         },
         "explorer.file.root.template": {
-          "description": "Default template for root node of file source",
+          "description": "Template for root node of file source",
           "type": "string",
           "default": "[icon] [title] [root] [fullpath]"
         },
         "explorer.file.root.labelingTemplate": {
-          "description": "Default labeling template for root node of file source",
+          "description": "Labeling template for root node of file source",
           "type": "string",
           "default": "[fullpath]"
         },
         "explorer.file.child.template": {
-          "description": "Default template for child node file source",
+          "description": "Template for child node file source",
           "type": "string",
           "default": "[git | 2] [selection | clip | 1] [indent][icon | 1] [diagnosticError & 1][filename omitCenter 1][readonly] [linkIcon & 1][link growRight 1 omitCenter 5][size]"
         },
         "explorer.file.child.labelingTemplate": {
-          "description": "Default labeling template for child node of file source",
+          "description": "Labeling template for child node of file source",
           "type": "string",
-          "default": "[fullpath][link][diagnosticError][size][accessed][modified][created][readonly]"
+          "default": "[fullpath][link][diagnosticWarning][diagnosticError][size][accessed][modified][created][readonly]"
         },
         "explorer.file.column.git.showIgnored": {
           "description": "Show ignored files in git column",
