@@ -293,7 +293,7 @@
             "patternMatches": {}
           }
         },
-        "explorer.icon.enableVimDevions": {
+        "explorer.icon.enableVimDevicons": {
           "description": "Enable use vim-devicons instead of built-in icon configuration",
           "type": "boolean",
           "default": false

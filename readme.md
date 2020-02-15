@@ -50,7 +50,7 @@ Explorer extension for [coc.nvim](https://github.com/neoclide/coc.nvim)
   - [x] Reveal current file in real time (neovim only)
   - [x] Icons, use [nerdfont](https://github.com/ryanoasis/nerd-fonts)
   - [x] Search files by Coc-list
-  - [x] Preview file attribute by floating window
+  - [x] Preview file attributes by floating window
   - [ ] LSP
     - [x] diagnostic
     - [ ] file rename
@@ -384,7 +384,7 @@ Default: <pre><code>{
 }</code></pre>
 </details>
 <details>
-<summary><code>explorer.icon.enableVimDevions</code>: Enable use vim-devicons instead of built-in icon configuration. type: <code>boolean</code></summary>
+<summary><code>explorer.icon.enableVimDevicons</code>: Enable use vim-devicons instead of built-in icon configuration. type: <code>boolean</code></summary>
 Default: <pre><code>false</code></pre>
 </details>
 <details>

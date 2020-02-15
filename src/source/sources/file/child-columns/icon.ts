@@ -10,7 +10,7 @@ import { workspace } from 'coc.nvim';
 import { FileNode, fileHighlights } from '../file-source';
 import { getSymbol } from '../../../../util/symbol';
 
-const enableVimDevions = config.get<boolean>('icon.enableVimDevions')!;
+const enableVimDevicons = config.get<boolean>('icon.enableVimDevicons')!;
 
 interface NerdFontOption {
   icons?: Record<
@@ -91,7 +91,7 @@ function getAttr(node: FileNode) {
 
 fileColumnRegistrar.registerColumn('child', 'icon', ({ source }) => ({
   async beforeDraw(nodes) {
-    if (enableVimDevions) {
+    if (enableVimDevicons) {
       await Promise.all(
         nodes.map(async (node) => {
           getAttr(node).devicons = await workspace.nvim.call('WebDevIconsGetFileTypeSymbol', [
@@ -122,7 +122,7 @@ fileColumnRegistrar.registerColumn('child', 'icon', ({ source }) => ({
     } else {
       if (getEnableNerdfont()) {
         const icon = getIcon(node.name.toLowerCase());
-        if (icon && enableVimDevions) {
+        if (icon && enableVimDevicons) {
           icon.code = getAttr(node).devicons;
         }
         if (icon) {
