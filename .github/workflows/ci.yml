@@ -1,0 +1,47 @@
+name: coc-explorer CI
+
+on:
+  push:
+    branches:
+      - master
+      - develop
+  pull_request:
+    branches:
+      - master
+      - develop
+
+jobs:
+  test:
+    runs-on: ${{ matrix.os }}
+
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest]
+        node-version: [10, 12, 13]
+
+    env:
+      NODE_ENV: test
+
+    steps:
+      - name: Use Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v1
+        with:
+          node-version: ${{ matrix.node-version }}
+      - name: Install yarn
+        run: |
+          curl --compressed -o- -L https://yarnpkg.com/install.sh | bash
+      - uses: actions/checkout@v1
+      - name: Install Packages
+        run: yarn
+      - name: Lint
+        run: yarn lint
+      - name: Install vim
+        uses: rhysd/action-setup-vim@v1
+        with:
+          neovim: true
+          version: nightly
+      - name: Run unit tests
+        env:
+          NODE_ENV: test
+        run: yarn test

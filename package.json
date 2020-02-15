@@ -504,7 +504,7 @@
     "prepare": "yarn run clean && yarn run build",
     "lint": "tslint --exclude 'src/tests/coc.nvim/**' -p .",
     "gen:doc": "ts-node ./scripts/gen_doc.ts",
-    "test": "yarn run lint && jest --runInBand --detectOpenHandles --forceExit"
+    "test": "jest --runInBand --detectOpenHandles --forceExit"
   },
   "dependencies": {
     "open": "^7.0.2",
