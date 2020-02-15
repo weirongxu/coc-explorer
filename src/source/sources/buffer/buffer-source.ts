@@ -1,23 +1,25 @@
 import { workspace } from 'coc.nvim';
 import pathLib from 'path';
-import { getActiveMode, onBufEnter, debounce, normalizePath, onEvents } from '../../../util';
+import {
+  getActiveMode,
+  onBufEnter,
+  debounce,
+  normalizePath,
+  onEvents,
+  config,
+} from '../../../util';
 import { hlGroupManager } from '../../highlight-manager';
-import { ExplorerSource, sourceIcons } from '../../source';
+import { ExplorerSource, sourceIcons, BaseTreeNode } from '../../source';
 import { sourceManager } from '../../source-manager';
 import { bufferColumnRegistrar } from './buffer-column-registrar';
 import './load';
 import { initBufferActions } from './buffer-actions';
 import { argOptions } from '../../../parse-args';
+import { TemplateRenderer } from '../../template-renderer';
 
 const regex = /^\s*(\d+)(.+?)"(.+?)".*/;
 
-export interface BufferNode {
-  isRoot?: boolean;
-  uid: string;
-  level: number;
-  drawnLine: string;
-  parent?: BufferNode;
-  children?: BufferNode[];
+export interface BufferNode extends BaseTreeNode<BufferNode, 'root' | 'child'> {
   bufnr: number;
   bufnrStr: string;
   bufname: string;
@@ -49,7 +51,10 @@ export const bufferHighlights = {
 };
 
 export class BufferSource extends ExplorerSource<BufferNode> {
+  hlSrcId = workspace.createNameSpace('coc-explorer-buffer');
+  showHidden: boolean = config.get<boolean>('file.showHiddenBuffers')!;
   rootNode: BufferNode = {
+    type: 'root',
     isRoot: true,
     uid: this.sourceName + '://',
     level: 0,
@@ -70,6 +75,10 @@ export class BufferSource extends ExplorerSource<BufferNode> {
     modified: false,
     readErrors: false,
   };
+  templateRenderer: TemplateRenderer<BufferNode> = new TemplateRenderer<BufferNode>(
+    this,
+    bufferColumnRegistrar,
+  );
 
   async init() {
     if (getActiveMode()) {
@@ -97,9 +106,14 @@ export class BufferSource extends ExplorerSource<BufferNode> {
   }
 
   async open() {
-    await this.columnManager.registerColumns(
-      await this.explorer.args.value(argOptions.bufferColumns),
-      bufferColumnRegistrar,
+    await this.templateRenderer.parse(
+      'root',
+      await this.explorer.args.value(argOptions.bufferRootTemplate),
+    );
+    await this.templateRenderer.parse(
+      'child',
+      await this.explorer.args.value(argOptions.bufferChildTemplate),
+      await this.explorer.args.value(argOptions.bufferChildLabelingTemplate),
     );
   }
 
@@ -118,6 +132,7 @@ export class BufferSource extends ExplorerSource<BufferNode> {
       const flags = matches[2];
       const bufname = matches[3];
       res.push({
+        type: 'child',
         uid: this.sourceName + '://' + bufnr,
         level: 1,
         drawnLine: '',
@@ -142,24 +157,9 @@ export class BufferSource extends ExplorerSource<BufferNode> {
     }, []);
   }
 
-  async drawRootNode(node: BufferNode) {
-    node.drawnLine = await this.viewBuilder.drawRowLine(async (row) => {
-      row.add(
-        this.expanded ? sourceIcons.getExpanded() : sourceIcons.getCollapsed(),
-        bufferHighlights.expandIcon,
-      );
-      row.add(' ');
-      row.add(
-        `[BUFFER${this.showHidden ? ' ' + sourceIcons.getHidden() : ''}]`,
-        bufferHighlights.title,
-      );
-    });
-  }
-
   async drawNode(node: BufferNode, nodeIndex: number) {
-    node.drawnLine = await this.viewBuilder.drawRowLine(async (row) => {
-      row.add('  ');
-      await this.columnManager.draw(row, node, nodeIndex);
+    await this.viewBuilder.drawRowForNode(node, async (row) => {
+      await this.templateRenderer.draw(row, node, nodeIndex);
     });
   }
 }

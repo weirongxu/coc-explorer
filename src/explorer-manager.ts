@@ -3,7 +3,7 @@ import { Explorer } from './explorer';
 import { argOptions, Args } from './parse-args';
 import { onError } from './logger';
 import { mappings, ActionMode } from './mappings';
-import { onBufEnter } from './util';
+import { onBufEnter, supportedNvimFloating } from './util';
 import { GlobalContextVars } from './context-variables';
 
 export class ExplorerManager {
@@ -19,6 +19,7 @@ export class ExplorerManager {
       left: Explorer[];
       right: Explorer[];
       tab: Explorer[];
+      floating: Explorer[];
     }
   > = {};
   rootPathRecords: Set<string> = new Set();
@@ -127,6 +128,7 @@ export class ExplorerManager {
       explorers.push(...container.left);
       explorers.push(...container.right);
       explorers.push(...container.tab);
+      explorers.push(...container.floating);
     }
     return explorers;
   }
@@ -194,6 +196,7 @@ export class ExplorerManager {
         left: [],
         right: [],
         tab: [],
+        floating: [],
       };
     }
     let explorers: Explorer[] = [];
@@ -203,6 +206,12 @@ export class ExplorerManager {
       explorers = this.tabContainer[tabid].right;
     } else if (position === 'tab') {
       explorers = this.tabContainer[tabid].tab;
+    } else if (position === 'floating') {
+      if (supportedNvimFloating()) {
+        explorers = this.tabContainer[tabid].floating;
+      } else {
+        throw new Error('not support floating position in vim');
+      }
     }
 
     const sourceWinid = (await this.nvim.eval('bufwinid(bufnr("%"))')) as number;

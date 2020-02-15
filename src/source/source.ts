@@ -1,13 +1,25 @@
-import { listManager, workspace, ExtensionContext, Disposable } from 'coc.nvim';
+import { listManager, workspace, ExtensionContext, Disposable, IList } from 'coc.nvim';
 import { Range } from 'vscode-languageserver-protocol';
 import { explorerActionList } from '../lists/actions';
 import { Explorer } from '../explorer';
 import { onError } from '../logger';
 import { ActionSyms, mappings, reverseMappings, ActionMode } from '../mappings';
-import { config, execNotifyBlock, getOpenStrategy, getEnableNerdfont } from '../util';
+import {
+  config,
+  execNotifyBlock,
+  getOpenStrategy,
+  getEnableNerdfont,
+  delay,
+  onEvents,
+} from '../util';
 import { SourceViewBuilder } from './view-builder';
-import { hlGroupManager } from './highlight-manager';
-import { ColumnManager, DrawLabelingResult } from './column-manager';
+import {
+  HighlightPosition,
+  HighlightPositionWithLine,
+  HighlightConcealablePosition,
+} from './highlight-manager';
+import { TemplateRenderer, DrawLabelingResult } from './template-renderer';
+import { argOptions, Args } from '../parse-args';
 
 export type ActionOptions = {
   multi: boolean;
@@ -20,21 +32,23 @@ export const sourceIcons = {
   getExpanded: () => config.get<string>('icon.expanded') || (getEnableNerdfont() ? '' : '-'),
   getCollapsed: () => config.get<string>('icon.collapsed') || (getEnableNerdfont() ? '' : '+'),
   getSelected: () => config.get<string>('icon.selected')!,
-  getUnselected: () => config.get<string>('icon.unselected')!,
   getHidden: () => config.get<string>('icon.hidden')!,
 };
 
-export interface BaseTreeNode<TreeNode extends BaseTreeNode<TreeNode>> {
+export interface BaseTreeNode<
+  TreeNode extends BaseTreeNode<TreeNode>,
+  Type extends string = string
+> {
+  type: Type;
   isRoot?: boolean;
   uid: string;
   level: number;
   drawnLine: string;
+  highlightPositions?: HighlightPosition[];
+  concealHighlightPositions?: HighlightConcealablePosition[];
   expandable?: boolean;
-  parent?: BaseTreeNode<TreeNode>;
+  parent?: TreeNode;
   children?: TreeNode[];
-}
-
-export interface DrawNodeOption<TreeNode extends BaseTreeNode<TreeNode>> {
   prevSiblingNode?: TreeNode;
   nextSiblingNode?: TreeNode;
 }
@@ -44,15 +58,17 @@ export type ExplorerSourceClass = {
 };
 
 export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>> {
-  startLine: number = 0;
-  endLine: number = 0;
+  abstract hlSrcId: number;
+  startLineIndex: number = 0;
+  endLineIndex: number = 0;
   abstract rootNode: TreeNode;
+  width: number = 0;
   flattenedNodes: TreeNode[] = [];
   showHidden: boolean = false;
   selectedNodes: Set<TreeNode> = new Set();
   relativeHlRanges: Record<string, Range[]> = {};
-  viewBuilder = new SourceViewBuilder();
-  expandStore = {
+  readonly viewBuilder = new SourceViewBuilder(this.explorer);
+  readonly expandStore = {
     record: new Map<string, boolean>(),
     expand(node: TreeNode) {
       this.record.set(node.uid, true);
@@ -64,7 +80,7 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>> {
       return this.record.get(node.uid) || false;
     },
   };
-  columnManager = new ColumnManager<TreeNode>(this);
+  templateRenderer?: TemplateRenderer<TreeNode>;
 
   actions: Record<
     string,
@@ -109,7 +125,24 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>> {
       'refresh',
       async () => {
         await this.reload(this.rootNode, { force: true });
-        await this.explorer.executeHighlightSyntax();
+
+        await execNotifyBlock(async () => {
+          this.clearHighlightsNotify();
+          const highlights: HighlightPositionWithLine[] = [];
+          for (let i = 0; i < this.flattenedNodes.length; i++) {
+            const node = this.flattenedNodes[i];
+            if (node.highlightPositions) {
+              for (const highlightPosition of node.highlightPositions) {
+                highlights.push({
+                  ...highlightPosition,
+                  line: this.startLineIndex + i,
+                });
+              }
+            }
+          }
+          await this.executeHighlightsNotify(highlights);
+          await this.executeConcealableHighlight({ isNotify: true });
+        });
       },
       'refresh',
       { multi: false },
@@ -331,16 +364,25 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>> {
     const openStrategy = getOpenStrategy();
     if (openStrategy === 'vsplit') {
       await this.doAction('openInVsplit', node);
-      await this.quitOnOpen();
+      await this.explorer.quitOnOpen();
     } else if (openStrategy === 'select') {
+      const position = await this.explorer.args.value(argOptions.position);
+      if (position === 'floating') {
+        await this.explorer.quit();
+      }
       await this.explorer.selectWindowsUI(
         async (winnr) => {
           await openByWinnr(winnr);
-          await this.quitOnOpen();
+          await this.explorer.quitOnOpen();
         },
         async () => {
           await this.doAction('openInVsplit', node);
-          await this.quitOnOpen();
+          await this.explorer.quitOnOpen();
+        },
+        async () => {
+          if (position === 'floating') {
+            await this.explorer.resume(this.explorer.args);
+          }
         },
       );
     } else if (openStrategy === 'previousBuffer') {
@@ -350,7 +392,7 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>> {
       } else {
         await this.doAction('openInVsplit', node);
       }
-      await this.quitOnOpen();
+      await this.explorer.quitOnOpen();
     } else if (openStrategy === 'previousWindow') {
       const prevWinnr = await this.explorer.explorerManager.prevWinnrByPrevWindowID();
       if (prevWinnr) {
@@ -358,7 +400,7 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>> {
       } else {
         await this.doAction('openInVsplit', node);
       }
-      await this.quitOnOpen();
+      await this.explorer.quitOnOpen();
     } else if (openStrategy === 'sourceWindow') {
       const prevWinnr = await this.explorer.sourceWinnr();
       if (prevWinnr) {
@@ -366,16 +408,16 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>> {
       } else {
         await this.doAction('openInVsplit', node);
       }
-      await this.quitOnOpen();
+      await this.explorer.quitOnOpen();
     }
   }
 
   addIndexes(name: string, relativeIndex: number) {
-    this.explorer.addIndexes(name, relativeIndex + this.startLine);
+    this.explorer.addIndexes(name, relativeIndex + this.startLineIndex);
   }
 
   removeIndexes(name: string, relativeIndex: number) {
-    this.explorer.removeIndexes(name, relativeIndex + this.startLine);
+    this.explorer.removeIndexes(name, relativeIndex + this.startLineIndex);
   }
 
   async copy(content: string) {
@@ -383,11 +425,56 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>> {
     await this.nvim.call('setreg', ['"', content]);
   }
 
+  async startCocList(list: IList) {
+    const isFloating = (await this.explorer.args.value(argOptions.position)) === 'floating';
+    if (isFloating) {
+      await this.explorer.hide();
+    }
+
+    let isResolve = false;
+    let showExplorer = async () => {};
+    const promise = new Promise(async (resolve) => {
+      showExplorer = async () => {
+        if (isFloating && !isResolve) {
+          isResolve = true;
+          // TODO FIXME remove delay
+          await delay(200);
+          await this.explorer.show();
+          resolve();
+        }
+      };
+      const disposable = listManager.registerList(list);
+      await listManager.start(['--normal', '--number-select', list.name]);
+      disposable.dispose();
+
+      listManager.ui.onDidClose(async () => {
+        await new Promise((resolve) => {
+          const disposable = onEvents('BufWinLeave', (_bufnr, winid) => {
+            if (winid === listManager.ui.window.id) {
+              disposable.dispose();
+              resolve();
+            }
+          });
+        });
+        if (isFloating && !isResolve) {
+          await showExplorer();
+        }
+      });
+    });
+    return {
+      resolve: showExplorer,
+      done() {
+        return promise;
+      },
+    };
+  }
+
   async listActionMenu(nodes: TreeNode[] | null) {
     const actions = {
       ...this.explorer.globalActions,
       ...(nodes === null ? this.rootActions : this.actions),
     };
+
     explorerActionList.setExplorerActions(
       Object.entries(actions)
         .sort(([aName], [bName]) => aName.localeCompare(bName))
@@ -398,13 +485,15 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>> {
           root: nodes === null,
           key: reverseMappings[name],
           description,
-          callback,
+          async callback() {
+            callback();
+            await task.resolve();
+          },
         }))
         .filter((a) => a.name !== 'actionMenu'),
     );
-    const disposable = listManager.registerList(explorerActionList);
-    await listManager.start(['--normal', '--number-select', explorerActionList.name]);
-    disposable.dispose();
+    const task = await this.startCocList(explorerActionList);
+    await task.done();
   }
 
   isSelectedAny() {
@@ -430,7 +519,7 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>> {
   async currentLineIndex() {
     const cursor = await this.explorer.currentCursor();
     if (cursor) {
-      return cursor.lineIndex - this.startLine;
+      return cursor.lineIndex - this.startLineIndex;
     } else {
       return null;
     }
@@ -443,7 +532,7 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>> {
     if (lineIndex > this.height) {
       lineIndex = this.height - 1;
     }
-    await this.explorer.gotoLineIndex(this.startLine + lineIndex, col, notify);
+    await this.explorer.gotoLineIndex(this.startLineIndex + lineIndex, col, notify);
   }
 
   async gotoRoot({ col, notify = false }: { col?: number; notify?: boolean } = {}) {
@@ -476,29 +565,22 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>> {
   abstract loadChildren(sourceNode: TreeNode): Promise<TreeNode[]>;
 
   async loaded(sourceNode: TreeNode): Promise<void> {
-    await this.columnManager.reload(sourceNode);
+    await this.templateRenderer?.reload(sourceNode);
   }
 
   /**
    * @returns return true to redraw all rows
    */
   async beforeDraw(nodes: TreeNode[], { force = false } = {}) {
-    const renderAll = this.columnManager.beforeDraw(nodes);
-    await hlGroupManager.emitRequestedConcealableRender(this.explorer, { force });
-    return renderAll;
+    const renderAll = await this.templateRenderer?.beforeDraw(nodes);
+    return !!renderAll;
   }
-
-  abstract drawRootNode(node: TreeNode): void | Promise<void>;
 
   drawRootLabeling(_node: TreeNode): undefined | DrawLabelingResult | Promise<DrawLabelingResult> {
     return;
   }
 
-  abstract drawNode(
-    node: TreeNode,
-    nodeIndex: number,
-    options: DrawNodeOption<TreeNode>,
-  ): void | Promise<void>;
+  abstract drawNode(node: TreeNode, nodeIndex: number): void | Promise<void>;
 
   flattenByNode(node: TreeNode) {
     return [node, ...(node.children ? this.flattenByNodes(node.children) : [])];
@@ -520,28 +602,57 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>> {
   }
 
   async drawNodes(nodes: TreeNode[]) {
-    for (let i = 0, len = nodes.length; i < len; i++) {
-      const node = nodes[i];
+    const highlightPositions: HighlightPositionWithLine[] = [];
+    await Promise.all(
+      nodes.map(async (node) => {
+        if (node.isRoot) {
+          await this.drawNode(node, 0);
+          if (node.highlightPositions) {
+            highlightPositions.push(
+              ...node.highlightPositions.map((hl) => ({
+                line: this.startLineIndex,
+                ...hl,
+              })),
+            );
+          }
+          return;
+        }
 
-      if (node.isRoot) {
-        await this.drawRootNode(node);
-        continue;
-      }
-
-      const nodeIndex = this.flattenedNodes.findIndex((it) => it.uid === node.uid);
-      if (nodeIndex > -1) {
-        let prevSiblingNode = undefined;
-        let nextSiblingNode = undefined;
-        if (node.parent?.children) {
-          const siblingIndex = node.parent.children.indexOf(node);
-          if (siblingIndex !== -1) {
-            prevSiblingNode = node.parent.children[siblingIndex - 1];
-            nextSiblingNode = node.parent.children[siblingIndex + 1];
+        const nodeIndex = this.flattenedNodes.findIndex((it) => it.uid === node.uid);
+        if (nodeIndex > -1) {
+          if (node.parent?.children) {
+            const siblingIndex = node.parent.children.indexOf(node);
+            if (siblingIndex !== -1) {
+              node.prevSiblingNode = node.parent.children[siblingIndex - 1];
+              node.nextSiblingNode = node.parent.children[siblingIndex + 1];
+            }
+          }
+          await this.drawNode(node, nodeIndex);
+          if (node.highlightPositions) {
+            highlightPositions.push(
+              ...node.highlightPositions.map((hl) => ({
+                line: this.startLineIndex + nodeIndex,
+                ...hl,
+              })),
+            );
           }
         }
-        await this.drawNode(node, nodeIndex, { prevSiblingNode, nextSiblingNode });
-      }
-    }
+      }),
+    );
+
+    return highlightPositions;
+  }
+
+  clearHighlightsNotify(lineStart?: number, lineEnd?: number) {
+    this.explorer.clearHighlightsNotify(this.hlSrcId, lineStart, lineEnd);
+  }
+
+  async executeHighlightsNotify(highlights: HighlightPositionWithLine[]) {
+    await this.explorer.executeHighlightsNotify(this.hlSrcId, highlights);
+  }
+
+  async executeConcealableHighlight({ isNotify = false } = {}) {
+    await this.explorer.executeConcealableHighlight({ isNotify });
   }
 
   currentSourceIndex() {
@@ -549,6 +660,7 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>> {
   }
 
   async reload(node: TreeNode, { render = true, notify = false, force = false } = {}) {
+    await this.explorer.refreshWidth();
     this.selectedNodes = new Set();
     node.children = this.expandStore.isExpanded(node) ? await this.loadChildren(node) : [];
     await this.loaded(node);
@@ -558,19 +670,19 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>> {
   }
 
   private offsetAfterLine(offset: number, afterLine: number) {
-    this.explorer.indexesManager.offsetLines(offset, this.startLine + afterLine + 1);
-    this.endLine += offset;
+    this.explorer.indexesManager.offsetLines(offset, this.startLineIndex + afterLine + 1);
+    this.endLineIndex += offset;
     this.explorer.sources.slice(this.currentSourceIndex() + 1).forEach((source) => {
-      source.startLine += offset;
-      source.offsetAfterLine(offset, source.startLine);
+      source.startLineIndex += offset;
+      source.offsetAfterLine(offset, source.startLineIndex);
     });
   }
 
   setLines(lines: string[], startIndex: number, endIndex: number, notify = false) {
     return this.explorer.setLines(
       lines,
-      this.startLine + startIndex,
-      this.startLine + endIndex,
+      this.startLineIndex + startIndex,
+      this.startLineIndex + endIndex,
       notify,
     );
   }
@@ -608,13 +720,15 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>> {
           return this.render();
         }
         this.offsetAfterLine(flattenedNodes.length - 1, startIndex);
-        await this.drawNodes(flattenedNodes);
+        const highlights = await this.drawNodes(flattenedNodes);
         await this.setLines(
           flattenedNodes.map((node) => node.drawnLine),
           startIndex,
           endIndex + 1,
           true,
         );
+        await this.executeHighlightsNotify(highlights);
+        await this.executeConcealableHighlight({ isNotify: true });
         await this.gotoLineIndex(startIndex, 1);
       }
     }, notify);
@@ -656,15 +770,17 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>> {
       const { startIndex, endIndex } = range;
       this.flattenedNodes.splice(startIndex + 1, endIndex - startIndex);
       this.explorer.indexesManager.removeLines(
-        this.startLine + startIndex + 1,
-        this.startLine + endIndex,
+        this.startLineIndex + startIndex + 1,
+        this.startLineIndex + endIndex,
       );
       if (await this.beforeDraw([node])) {
         return this.render();
       }
       this.offsetAfterLine(-(endIndex - startIndex), endIndex);
-      await this.drawNodes([node]);
+      const highlights = await this.drawNodes([node]);
       await this.setLines([node.drawnLine], startIndex, endIndex + 1, true);
+      await this.executeHighlightsNotify(highlights);
+      await this.executeConcealableHighlight({ isNotify: true });
       await this.gotoLineIndex(startIndex, 1);
     }, notify);
   }
@@ -707,6 +823,7 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>> {
     if (await this.beforeDraw(nodes)) {
       return this.render();
     }
+    const highlights: HighlightPositionWithLine[] = [];
     await execNotifyBlock(async () => {
       await Promise.all(
         nodes.map(async (node) => {
@@ -714,10 +831,12 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>> {
           if (nodeIndex === -1) {
             return;
           }
-          await this.drawNodes([node]);
+          highlights.push(...(await this.drawNodes([node])));
           await this.setLines([node.drawnLine], nodeIndex, nodeIndex + 1, true);
         }),
       );
+      await this.executeHighlightsNotify(highlights);
+      await this.executeConcealableHighlight({ isNotify: true });
     }, notify);
   }
 
@@ -752,23 +871,25 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>> {
 
       if (newHeight < oldHeight) {
         this.explorer.indexesManager.removeLines(
-          this.startLine + newHeight + 1,
-          this.startLine + oldHeight + 1,
+          this.startLineIndex + newHeight + 1,
+          this.startLineIndex + oldHeight + 1,
         );
       }
-      this.offsetAfterLine(newHeight - oldHeight, this.endLine);
+      this.offsetAfterLine(newHeight - oldHeight, this.endLineIndex);
       await this.beforeDraw(this.flattenedNodes, { force });
-      await this.drawNodes(this.flattenedNodes);
+      const highlights = await this.drawNodes(this.flattenedNodes);
 
       const sourceIndex = this.currentSourceIndex();
       const isLastSource = this.explorer.sources.length - 1 == sourceIndex;
 
       await this.explorer.setLines(
         this.flattenedNodes.map((node) => node.drawnLine),
-        this.startLine,
-        isLastSource ? -1 : this.startLine + oldHeight,
+        this.startLineIndex,
+        isLastSource ? -1 : this.startLineIndex + oldHeight,
         true,
       );
+      await this.executeHighlightsNotify(highlights);
+      await this.executeConcealableHighlight();
 
       if (restore) {
         await restore(true);
@@ -778,11 +899,5 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>> {
         nvim.command('redraw', true);
       }
     }, notify);
-  }
-
-  async quitOnOpen() {
-    if (config.get<boolean>('quitOnOpen')) {
-      await this.explorer.quit();
-    }
   }
 }

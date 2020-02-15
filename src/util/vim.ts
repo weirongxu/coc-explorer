@@ -1,22 +1,38 @@
 import { workspace } from 'coc.nvim';
 
-const { nvim } = workspace;
+const nvim = () => workspace.nvim;
 
-let _supportSetbufline: boolean | null = null;
-export async function supportSetbufline() {
-  if (_supportSetbufline === null) {
-    _supportSetbufline = Boolean(await nvim.call('exists', ['*setbufline']));
+let _supportedSetbufline: boolean | null = null;
+export async function supportedSetbufline() {
+  if (_supportedSetbufline === null) {
+    _supportedSetbufline = Boolean(await nvim().call('exists', ['*setbufline']));
   }
-  return _supportSetbufline;
+  return _supportedSetbufline;
 }
 
-export function supportBufferHighlight() {
+export function supportedFloat(): boolean {
+  // @ts-ignore
+  return workspace.floatSupported;
+}
+export function supportedNvimFloating() {
+  return workspace.isNvim && supportedFloat();
+}
+
+export function supportedBufferHighlight() {
   return !workspace.env.isVim || workspace.env.textprop;
 }
 
 export async function enableWrapscan() {
-  const wrapscan = await nvim.getOption('wrapscan');
+  const wrapscan = await nvim().getOption('wrapscan');
   return !!wrapscan;
+}
+
+export async function displayWidth(str: string) {
+  return (await nvim().call('strdisplaywidth', [str])) as number;
+}
+
+export async function displaySlice(str: string, start: number, end?: number) {
+  return (await nvim().call('coc_explorer#strdisplayslice', [str, start, end ?? null])) as string;
 }
 
 export async function prompt(msg: string): Promise<'yes' | 'no' | null>;
@@ -35,7 +51,7 @@ export async function prompt(
     defaultChoice = 'no';
   }
   const defaultNumber = defaultChoice ? choices.indexOf(defaultChoice) : -1;
-  const result = (await nvim.call('confirm', [
+  const result = (await nvim().call('confirm', [
     msg,
     choices
       .map((choice) => {
@@ -98,6 +114,6 @@ export async function input(
   defaultInput = '',
   completion: InputCompletion = undefined,
 ) {
-  const result = (await nvim.call('input', [prompt, defaultInput, completion])) as string;
+  const result = (await nvim().call('input', [prompt, defaultInput, completion])) as string;
   return result || null;
 }

@@ -1,5 +1,5 @@
 import { BufferSource } from './buffer-source';
-import { avoidOnBufEnter, execNotifyBlock } from '../../../util';
+import { avoidOnBufEnter, execNotifyBlock, skipOnEventsByWinnrs } from '../../../util';
 import { argOptions } from '../../../parse-args';
 
 export function initBufferActions(buffer: BufferSource) {
@@ -34,9 +34,8 @@ export function initBufferActions(buffer: BufferSource) {
     'open',
     async (node) => {
       await buffer.openAction(node, async (winnr) => {
-        await avoidOnBufEnter(async () => {
-          await buffer.nvim.command(`${winnr}wincmd w`);
-        });
+        await skipOnEventsByWinnrs([winnr]);
+        await buffer.nvim.command(`${winnr}wincmd w`);
         await nvim.command(`buffer ${node.bufnr}`);
       });
     },
@@ -51,12 +50,12 @@ export function initBufferActions(buffer: BufferSource) {
         if (info.length && info[0].windows.length) {
           const winid = info[0].windows[0];
           await nvim.call('win_gotoid', winid);
-          await buffer.quitOnOpen();
+          await buffer.explorer.quitOnOpen();
           return;
         }
       }
       await nvim.command(`buffer ${node.bufnr}`);
-      await buffer.quitOnOpen();
+      await buffer.explorer.quitOnOpen();
     },
     'open buffer via drop command',
     { multi: false },
@@ -64,7 +63,7 @@ export function initBufferActions(buffer: BufferSource) {
   buffer.addNodeAction(
     'openInTab',
     async (node) => {
-      await buffer.quitOnOpen();
+      await buffer.explorer.quitOnOpen();
       const escaped = await nvim.call('fnameescape', node.bufname);
       await nvim.command(`tabe ${escaped}`);
     },
@@ -74,7 +73,7 @@ export function initBufferActions(buffer: BufferSource) {
     'openInSplit',
     async (node) => {
       await nvim.command(`sbuffer ${node.bufnr}`);
-      await buffer.quitOnOpen();
+      await buffer.explorer.quitOnOpen();
     },
     'open buffer via split command',
   );
@@ -91,7 +90,6 @@ export function initBufferActions(buffer: BufferSource) {
         } else if (position === 'tab') {
           nvim.command('wincmd L', true);
         }
-        await buffer.quitOnOpen();
       });
     },
     'open buffer via vsplit command',

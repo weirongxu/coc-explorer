@@ -1,171 +1,180 @@
 import { workspace } from 'coc.nvim';
-import { execNotifyBlock, skipOnBufEnter, getEnableDebug } from '../util';
+import { execNotifyBlock, max, min, skipOnEventsByWinnrs } from '../util';
+import { ExplorerSource } from './source';
+import { range } from 'lodash';
 
-export const HlEscapeCode = {
-  left: (s: string | number) => HlEscapeCode.leftBegin + s + HlEscapeCode.leftEnd,
-  leftBegin: '\x01',
-  leftEnd: '\x02',
-  right: (s: string | number) => HlEscapeCode.rightBegin + s + HlEscapeCode.rightEnd,
-  rightBegin: '\x03',
-  rightEnd: '\x04',
-};
+// Highlight types
+export interface HighlightPosition {
+  group: string;
+  start: number;
+  size: number;
+}
 
-export type Highlight = {
+export interface HighlightPositionWithLine extends HighlightPosition {
+  line: number;
+}
+
+export interface HighlightConcealablePosition {
+  concealable: HighlightConcealableCommand;
+  start: number;
+  size: number;
+}
+
+export interface HighlightConcealablePositionWithLine extends HighlightConcealablePosition {
+  line: number;
+}
+
+export type HighlightCommand = {
   group: string;
   commands: string[];
-  markerID: number;
 };
 
-export type HighlightConcealable = {
-  markerID: number;
-  requestHide: () => void;
-  requestShow: () => void;
+export type HighlightConcealableCommand = {
+  group: string;
+  source: ExplorerSource<any>;
+  visible: boolean;
+  hide: () => void;
+  show: () => void;
 };
 
 class HighlightManager {
-  static maxMarkerID = 0;
-
   nvim = workspace.nvim;
-  highlights: Highlight[] = [];
-  concealableHighlightsVisible: Map<string, boolean> = new Map();
-  concealableHighlights: HighlightConcealable[] = [];
+  highlights: HighlightCommand[] = [];
 
-  private requestedConcealableQueue: Map<
-    string,
-    {
-      handler: (notify: boolean) => Promise<void>;
-      action: 'show' | 'hide';
-    }
-  > = new Map();
-
-  createMarkerID() {
-    HighlightManager.maxMarkerID += 1;
-    return HighlightManager.maxMarkerID;
-  }
-
-  concealable(groupName: string): HighlightConcealable {
-    const group = `CocExplorerConcealable${groupName}`;
-    const markerID = this.createMarkerID();
-    const { nvim } = this;
-    const hideCommand = `syntax match ${group} conceal /\\V${HlEscapeCode.left(
-      markerID,
-    )}\\.\\*${HlEscapeCode.right(markerID)}/`;
-    const showCommand = `syntax match ${group} conceal /\\V${HlEscapeCode.left(
-      markerID,
-    )}\\|${HlEscapeCode.right(markerID)}/`;
-    const hide = async (notify = false) => {
-      await execNotifyBlock(() => {
-        nvim.command(`silent! syntax clear ${group}`, true);
-        nvim.command(hideCommand, true);
-      }, notify);
-    };
-    const show = async (notify = false) => {
-      await execNotifyBlock(() => {
-        nvim.command(`silent! syntax clear ${group}`, true);
-        nvim.command(showCommand, true);
-      }, notify);
-    };
-
-    const concealable: HighlightConcealable = {
-      markerID,
-      requestShow: () =>
-        this.requestedConcealableQueue.set(group, { action: 'show', handler: show }),
-      requestHide: () =>
-        this.requestedConcealableQueue.set(group, { action: 'hide', handler: hide }),
-    };
-    this.concealableHighlights.push(concealable);
-    return concealable;
-  }
-
-  async emitRequestedConcealableRender(explorer: Explorer, { notify = false, force = false } = {}) {
-    if (this.requestedConcealableQueue.size <= 0) {
-      return;
-    }
-
-    const { nvim } = this;
-    const { mode } = await nvim.mode;
-    const winnr = await explorer.winnr;
-
-    const storeWinnr = await nvim.call('winnr');
-    const jumpWin = storeWinnr !== winnr;
-
-    const requestedRenderList = Array.from(this.requestedConcealableQueue).filter(
-      ([group, value]) => {
-        if (force || !this.concealableHighlightsVisible.has(group)) {
-          return true;
-        }
-        const visible = this.concealableHighlightsVisible.get(group)!;
-        return (value.action === 'show' && !visible) || (value.action === 'hide' && visible);
+  concealable(group: string) {
+    return (source: ExplorerSource<any>): HighlightConcealableCommand => ({
+      group,
+      source,
+      visible: true,
+      show() {
+        this.visible = true;
       },
-    );
-    this.requestedConcealableQueue.clear();
+      hide() {
+        this.visible = false;
+      },
+    });
+  }
 
-    if (!requestedRenderList.length) {
-      return;
-    }
+  async executeConcealableHighlight(explorer: Explorer, { isNotify = false }) {
+    // XXX disable
+    // const { nvim } = this;
+    //
+    // const [topLine, lines] = (await nvim.eval('[line("w0"), &lines]')) as [number, number];
+    // const startIndex = max([topLine - lines - 1, 0]);
+    // const endIndex = topLine + lines * 2;
+    // const concealHighlightPositions: HighlightConcealablePositionWithLine[] = [];
+    // for (const source of explorer.sources) {
+    //   const sourceStartIndex = max([startIndex - source.startLineIndex, 0]);
+    //   const sourceEndIndex = min([endIndex - source.startLineIndex, source.height]);
+    //   if (sourceStartIndex == source.height) {
+    //     continue;
+    //   }
+    //   if (sourceEndIndex == 0) {
+    //     continue;
+    //   }
+    //   const nodes = source.flattenedNodes.slice(sourceStartIndex, sourceEndIndex);
+    //   for (let i = 0; i < nodes.length; i++) {
+    //     const line = source.startLineIndex + sourceStartIndex + i;
+    //     const node = nodes[i];
+    //     if (node.concealHighlightPositions) {
+    //       for (const conceal of node.concealHighlightPositions) {
+    //         if (!conceal.concealable.visible) {
+    //           concealHighlightPositions.push({
+    //             ...conceal,
+    //             line,
+    //           });
+    //         }
+    //       }
+    //     }
+    //   }
+    // }
+    // const winnr = await explorer.winnr;
+    //
+    // if (winnr === null) {
+    //   return;
+    // }
+    //
+    // const storeWinnr = (await nvim.call('winnr')) as number;
+    // const jumpWin = storeWinnr !== winnr;
+    //
+    // if (jumpWin) {
+    //   await skipOnEventsByWinnrs([winnr!, storeWinnr]);
+    // }
+    //
+    // await execNotifyBlock(async () => {
+    //   if (jumpWin) {
+    //     nvim.command(`${winnr}wincmd w`, true);
+    //   }
+    //   this.nvim.call(
+    //     'coc_explorer#matchdelete_by_ids',
+    //     [range(explorer.concealMatchStartId, explorer.concealMatchEndId)],
+    //     true,
+    //   );
+    //   explorer.concealMatchEndId = explorer.concealMatchStartId;
+    //
+    //   for (const conceal of concealHighlightPositions) {
+    //     this.nvim.call(
+    //       'matchaddpos',
+    //       [
+    //         'Conceal',
+    //         [[conceal.line + 1, conceal.start + 1, conceal.size]],
+    //         100,
+    //         explorer.concealMatchEndId,
+    //         { conceal: true },
+    //       ],
+    //       true,
+    //     );
+    //     explorer.concealMatchEndId += 1;
+    //   }
+    //
+    //   if (jumpWin) {
+    //     nvim.command(`${storeWinnr}wincmd w`, true);
+    //   }
+    // }, isNotify);
+  }
 
-    if (winnr && mode === 'n') {
-      if (getEnableDebug()) {
-        // tslint:disable-next-line: ban
-        workspace.showMessage(
-          `Concealable Render ${requestedRenderList.length} (${Array.from(
-            requestedRenderList.map(([group]) => group),
-          ).join(',')})`,
-          'more',
-        );
+  linkGroup(groupName: string, targetGroup: string): HighlightCommand {
+    const group = `CocExplorer${groupName}`;
+    const commands = [`highlight default link ${group} ${targetGroup}`];
+    const highlight = {
+      group,
+      commands,
+    };
+    this.highlights.push(highlight);
+    return highlight;
+  }
+
+  group(groupName: string, hlCommand: string): HighlightCommand {
+    const group = `CocExplorer${groupName}`;
+    const commands = [`highlight default ${group} ${hlCommand}`];
+    const highlight = {
+      group,
+      commands,
+    };
+    this.highlights.push(highlight);
+    return highlight;
+  }
+
+  clearHighlights(explorer: Explorer, hlSrcId: number, lineStart?: number, lineEnd?: number) {
+    explorer.buffer.clearNamespace(hlSrcId, lineStart, lineEnd);
+  }
+
+  async executeHighlightsNotify(
+    explorer: Explorer,
+    hlSrcId: number,
+    highlights: HighlightPositionWithLine[],
+  ) {
+    await execNotifyBlock(async () => {
+      for (const hl of highlights) {
+        await explorer.buffer.addHighlight({
+          srcId: hlSrcId,
+          hlGroup: hl.group,
+          line: hl.line,
+          colStart: hl.start,
+          colEnd: hl.start + hl.size,
+        });
       }
-      await execNotifyBlock(async () => {
-        if (jumpWin) {
-          skipOnBufEnter(
-            (await nvim.eval(`[winbufnr(${winnr}), winbufnr(${storeWinnr})]`)) as [number, number],
-          );
-          nvim.command(`${winnr}wincmd w`, true);
-        }
-        for (const [group, value] of requestedRenderList) {
-          this.concealableHighlightsVisible.set(group, value.action === 'show');
-          await value.handler(true);
-        }
-        if (jumpWin) {
-          nvim.command(`${storeWinnr}wincmd w`, true);
-        }
-      }, notify);
-    }
-  }
-
-  linkGroup(groupName: string, targetGroup: string): Highlight {
-    const group = `CocExplorer${groupName}`;
-    const markerID = this.createMarkerID();
-    const commands = [
-      `syntax region ${group} concealends matchgroup=${group}Marker start=/\\V${HlEscapeCode.left(
-        markerID,
-      )}/ end=/\\V${HlEscapeCode.right(markerID)}/`,
-      `highlight default link ${group} ${targetGroup}`,
-    ];
-    const highlight = {
-      group,
-      commands,
-      markerID,
-    };
-    this.highlights.push(highlight);
-    return highlight;
-  }
-
-  group(groupName: string, hlArgs: string): Highlight {
-    const group = `CocExplorer${groupName}`;
-    const markerID = this.createMarkerID();
-    const commands = [
-      `syntax region ${group} concealends matchgroup=${group}Marker start=/\\V${HlEscapeCode.left(
-        markerID,
-      )}/ end=/\\V${HlEscapeCode.right(markerID)}/`,
-      `highlight default ${group} ${hlArgs}`,
-    ];
-    const highlight = {
-      group,
-      commands,
-      markerID,
-    };
-    this.highlights.push(highlight);
-    return highlight;
+    });
   }
 
   async executeHighlightSyntax(notify = false) {
@@ -175,7 +184,7 @@ class HighlightManager {
         this.nvim.command(`silent! syntax clear ${highlight.group}`, true);
         commands.push(...highlight.commands);
       }
-      this.nvim.call('coc_explorer#execute_syntax_highlights', [commands], true);
+      this.nvim.call('coc_explorer#execute_commands', [commands], true);
     }, notify);
   }
 }

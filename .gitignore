@@ -3,7 +3,5 @@ yarn-error.log*
 node_modules
 /coverage
 /lib
-/mini_vimrc/db.json
-/mini_vimrc/package.json
-/memos.json
-/history.json
+/mini_vimrc/data_home
+/src/tests/coc.nvim

@@ -12,6 +12,7 @@
   "explorer.keyMappings": {
     "<space>": "toggleSelection"
   },
+  "explorer.previewAction.onHover": true,
   "explorer.icon.enableNerdfont": true,
   "explorer.debug": true
 }

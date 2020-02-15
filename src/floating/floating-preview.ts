@@ -1,10 +1,15 @@
 import { Explorer } from '../explorer';
-import { DrawLabelingResult } from '../source/column-manager';
+import { DrawLabelingResult } from '../source/template-renderer';
 import { BaseTreeNode, ExplorerSource } from '../source/source';
-import { Cancellable, debouncePromise, PreviewStrategy, getPreviewStrategy } from '../util';
+import {
+  Cancellable,
+  debouncePromise,
+  PreviewStrategy,
+  getPreviewStrategy,
+  supportedFloat,
+} from '../util';
 import { workspace } from 'coc.nvim';
 import { FloatingFactory2 } from './floating-factory2';
-import { floatSupported } from './utils';
 
 export class FloatingPreview {
   nvim = workspace.nvim;
@@ -19,7 +24,7 @@ export class FloatingPreview {
     node: BaseTreeNode<any>,
     nodeIndex: number,
   ) {
-    if (!floatSupported()) {
+    if (!supportedFloat()) {
       return;
     }
 
@@ -27,7 +32,7 @@ export class FloatingPreview {
     if (node.isRoot) {
       drawLabelingResult = await source.drawRootLabeling(node);
     } else {
-      drawLabelingResult = await source.columnManager.drawLabeling(node, nodeIndex);
+      drawLabelingResult = await source.templateRenderer?.drawLabeling(node, nodeIndex);
     }
     if (!drawLabelingResult || !this.explorer.explorerManager.inExplorer()) {
       return;
@@ -43,7 +48,7 @@ export class FloatingPreview {
       ],
       drawLabelingResult.highlightPositions.map((hl) => ({
         hlGroup: hl.group,
-        line: hl.relativeLineIndex,
+        line: hl.line,
         colStart: hl.start,
         colEnd: hl.start + hl.size,
       })),
@@ -52,7 +57,7 @@ export class FloatingPreview {
 
   _hoverPreview?: Cancellable<() => Promise<void>>;
   async hoverPreview() {
-    if (!floatSupported()) {
+    if (!supportedFloat()) {
       return;
     }
 
@@ -76,7 +81,7 @@ export class FloatingPreview {
   }
 
   hoverPreviewCancel() {
-    if (!floatSupported()) {
+    if (!supportedFloat()) {
       return;
     }
 

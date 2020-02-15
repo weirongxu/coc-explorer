@@ -2,8 +2,9 @@ import { Args, argOptions } from './parse-args';
 import { workspace } from 'coc.nvim';
 
 it('should parse args', async () => {
+  const oldNvim = workspace.nvim;
   // @ts-ignore
-  workspace.nvim = { call: async () => '/buffer/path' };
+  workspace.nvim = { call: async (fn) => (fn === 'getcwd' ? '/buffer/path' : oldNvim()) };
   const rootPath = '/root/path';
   let args: Args;
   args = await Args.parse([rootPath, '--reveal', '/reveal/path', '/cwd/path']);
@@ -18,12 +19,9 @@ it('should parse args', async () => {
   expect(await args.value(argOptions.toggle)).toEqual(false);
   expect(await args.rootPath()).toEqual('/root/path');
 
-  args = await Args.parse([rootPath, '--file-columns=git:filename;fullpath;size;modified']);
-  expect(await args.value(argOptions.fileColumns)).toEqual([
-    'git',
-    'filename',
-    ['fullpath'],
-    ['size'],
-    ['modified'],
-  ]);
+  args = await Args.parse([rootPath, '--file-child-template', '[git][fileame] [fullpath]']);
+  expect(await args.value(argOptions.fileChildTemplate)).toEqual('[git][fileame] [fullpath]');
+
+  // @ts-ignore
+  workspace.nvim = oldNvim;
 });

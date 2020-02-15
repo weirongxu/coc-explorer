@@ -1,14 +1,12 @@
 import { config, normalizePath, splitCount } from './util';
 import { workspace } from 'coc.nvim';
 
-const { nvim } = workspace;
-
 export interface ArgsSource {
   name: string;
   expand: boolean;
 }
 
-export type ArgPosition = 'tab' | 'left' | 'right';
+export type ArgPosition = 'tab' | 'left' | 'right' | 'floating';
 
 type OptionType = 'boolean' | 'string';
 
@@ -28,6 +26,10 @@ type ArgOptionRequired<T> = {
   description?: string;
 };
 
+export type ArgContentWidthTypes = 'win-width' | 'vim-width';
+
+export type ArgFloatingPositions = 'left-center' | 'right-center' | 'center';
+
 export class Args {
   private static registeredOptions: Map<string, ArgOption<any>> = new Map();
   private static registeredPositional = {
@@ -35,16 +37,18 @@ export class Args {
     handler: (path: string) => normalizePath(path),
     getDefault: async () => {
       let useGetcwd = false;
-      const buftype = await nvim.getVar('&buftype');
+      const buftype = await workspace.nvim.getVar('&buftype');
       if (buftype === 'nofile') {
         useGetcwd = true;
       } else {
-        const bufname = await nvim.call('bufname', ['%']);
+        const bufname = await workspace.nvim.call('bufname', ['%']);
         if (!bufname) {
           useGetcwd = true;
         }
       }
-      const rootPath = useGetcwd ? ((await nvim.call('getcwd', [])) as string) : workspace.rootPath;
+      const rootPath = useGetcwd
+        ? ((await workspace.nvim.call('getcwd', [])) as string)
+        : workspace.rootPath;
       return normalizePath(rootPath);
     },
     description: 'Explorer root',
@@ -164,8 +168,6 @@ export class Args {
   }
 }
 
-type Columns = (string | string[])[];
-
 export const argOptions = {
   toggle: Args.registerBoolOption('toggle', true),
   sources: Args.registerOption('sources', {
@@ -189,40 +191,67 @@ export const argOptions = {
       }),
     getDefault: () => config.get<ArgsSource[]>('sources')!,
   }),
+  position: Args.registerOption<ArgPosition>('position', {
+    getDefault: () => config.get<ArgPosition>('position')!,
+  }),
   width: Args.registerOption('width', {
     handler: (s) => parseInt(s, 10),
     getDefault: () => config.get<number>('width')!,
   }),
-  position: Args.registerOption<ArgPosition>('position', {
-    getDefault: () => config.get<ArgPosition>('position')!,
+  contentWidth: Args.registerOption('content-width', {
+    handler: (s) => parseInt(s, 10),
+    getDefault: () => config.get<number>('contentWidth')!,
   }),
-  bufferColumns: Args.registerOption<Columns>('buffer-columns', {
-    handler: parseColumns,
-    getDefault: () => config.get<Columns>('buffer.columns')!,
+  contentWidthType: Args.registerOption('content-width-type', {
+    getDefault: () => config.get<ArgContentWidthTypes>('contentWidthType')!,
   }),
-  fileColumns: Args.registerOption<Columns>('file-columns', {
-    handler: parseColumns,
-    getDefault: () => config.get<Columns>('file.columns')!,
+  floatingPosition: Args.registerOption<ArgFloatingPositions | [number, number]>(
+    'floating-position',
+    {
+      handler: (s) => {
+        if (['left-center', 'right-center', 'center'].includes(s)) {
+          return s as ArgFloatingPositions;
+        } else {
+          return s.split(',').map((i) => parseInt(i, 10)) as [number, number];
+        }
+      },
+      getDefault: () => config.get<ArgFloatingPositions | [number, number]>('floating.position')!,
+    },
+  ),
+  floatingWidth: Args.registerOption('floating-width', {
+    handler: (s) => parseInt(s, 10),
+    getDefault: () => config.get<number>('floating.width')!,
+  }),
+  floatingHeight: Args.registerOption('floating-height', {
+    handler: (s) => parseInt(s, 10),
+    getDefault: () => config.get<number>('floating.height')!,
+  }),
+  floatingContentWidth: Args.registerOption('floating-content-width', {
+    handler: (s) => parseInt(s, 10),
+    getDefault: () => config.get<number>('floating.contentWidth')!,
+  }),
+  bufferRootTemplate: Args.registerOption<string>('buffer-root-template', {
+    getDefault: () => config.get<string>('buffer.root.template')!,
+  }),
+  bufferChildTemplate: Args.registerOption<string>('buffer-child-template', {
+    getDefault: () => config.get<string>('buffer.child.template')!,
+  }),
+  bufferChildLabelingTemplate: Args.registerOption<string>('buffer-child-labeling-template', {
+    getDefault: () => config.get<string>('buffer.child.labelingTemplate')!,
+  }),
+  fileRootTemplate: Args.registerOption<string>('file-root-template', {
+    getDefault: () => config.get<string>('file.root.template')!,
+  }),
+  fileRootLabelingTemplate: Args.registerOption<string>('file-root-labeling-template', {
+    getDefault: () => config.get<string>('file.root.labelingTemplate')!,
+  }),
+  fileChildTemplate: Args.registerOption<string>('file-child-template', {
+    getDefault: () => config.get<string>('file.child.template')!,
+  }),
+  fileChildLabelingTemplate: Args.registerOption<string>('file-child-labeling-template', {
+    getDefault: () => config.get<string>('file.child.labelingTemplate')!,
   }),
   reveal: Args.registerOption('reveal', {
     handler: normalizePath,
   }),
 };
-
-export function parseColumns(columnsStr: string) {
-  const semicolonIndex = columnsStr.indexOf(';');
-  if (semicolonIndex === -1) {
-    return columnsStr.split(/:/);
-  } else {
-    return [
-      ...columnsStr
-        .slice(0, semicolonIndex)
-        .split(':')
-        .concat(),
-      ...columnsStr
-        .slice(semicolonIndex + 1)
-        .split(';')
-        .map((c) => c.split(':')),
-    ];
-  }
-}

@@ -14,17 +14,17 @@ import {
   fsStat,
   normalizePath,
   getExtensions,
+  delay,
 } from '../../../util';
 import { hlGroupManager } from '../../highlight-manager';
-import { ExplorerSource, sourceIcons, DrawNodeOption } from '../../source';
+import { ExplorerSource, BaseTreeNode } from '../../source';
 import { sourceManager } from '../../source-manager';
 import { fileColumnRegistrar } from './file-column-registrar';
 import './load';
 import { filesList } from '../../../lists/files';
 import { initFileActions } from './file-actions';
 import { homedir } from 'os';
-import { HighlightPosition } from '../../view-builder';
-import { labelHighlight } from '../../column-manager';
+import { labelHighlight, TemplateRenderer } from '../../template-renderer';
 import { argOptions } from '../../../parse-args';
 
 const getHiddenRules = () =>
@@ -47,14 +47,7 @@ function isHidden(filename: string) {
   );
 }
 
-export type FileNode = {
-  isRoot?: boolean;
-  uid: string;
-  level: number;
-  drawnLine: string;
-  parent?: FileNode;
-  children?: FileNode[];
-  expandable: boolean;
+export interface FileNode extends BaseTreeNode<FileNode, 'root' | 'child'> {
   name: string;
   fullpath: string;
   directory: boolean;
@@ -65,16 +58,15 @@ export type FileNode = {
   hidden: boolean;
   symbolicLink: boolean;
   lstat: fs.Stats | null;
-  isFirstInLevel: boolean;
-  isLastInLevel: boolean;
-};
+}
 
 const hl = hlGroupManager.linkGroup.bind(hlGroupManager);
 export const fileHighlights = {
   title: hl('FileRoot', 'Constant'),
-  name: hl('FileRootName', 'Identifier'),
+  rootName: hl('FileRootName', 'Identifier'),
   expandIcon: hl('FileExpandIcon', 'Direcoty'),
   fullpath: hl('FileFullpath', 'Comment'),
+  filename: hl('FileFilename', 'Ignore'),
   directory: hl('FileDirectory', 'Directory'),
   linkTarget: hl('FileLinkTarget', 'Comment'),
   gitStage: hl('FileGitStage', 'Comment'),
@@ -91,11 +83,12 @@ export const fileHighlights = {
 };
 
 export class FileSource extends ExplorerSource<FileNode> {
-  hlRevealedLineSrcId = workspace.createNameSpace('coc-explorer-file-revealed-line');
+  hlSrcId = workspace.createNameSpace('coc-explorer-file');
   showHidden: boolean = config.get<boolean>('file.showHiddenFiles')!;
   copiedNodes: Set<FileNode> = new Set();
   cutNodes: Set<FileNode> = new Set();
   rootNode: FileNode = {
+    type: 'root',
     isRoot: true,
     uid: this.sourceName + '://',
     level: 0,
@@ -111,9 +104,11 @@ export class FileSource extends ExplorerSource<FileNode> {
     hidden: false,
     symbolicLink: true,
     lstat: null,
-    isFirstInLevel: true,
-    isLastInLevel: true,
   };
+  templateRenderer: TemplateRenderer<FileNode> = new TemplateRenderer<FileNode>(
+    this,
+    fileColumnRegistrar,
+  );
 
   get root() {
     return this.rootNode.fullpath;
@@ -164,9 +159,16 @@ export class FileSource extends ExplorerSource<FileNode> {
   }
 
   async open() {
-    await this.columnManager.registerColumns(
-      await this.explorer.args.value(argOptions.fileColumns),
-      fileColumnRegistrar,
+    await this.templateRenderer.parse(
+      'root',
+      await this.explorer.args.value(argOptions.fileRootTemplate),
+      await this.explorer.args.value(argOptions.fileRootLabelingTemplate),
+    );
+
+    await this.templateRenderer.parse(
+      'child',
+      await this.explorer.args.value(argOptions.fileChildTemplate),
+      await this.explorer.args.value(argOptions.fileChildLabelingTemplate),
     );
 
     const args = this.explorer.args;
@@ -232,13 +234,14 @@ export class FileSource extends ExplorerSource<FileNode> {
           notify: true,
         });
         if (node) {
+          await task.resolve();
           await this.gotoNode(node, { notify: true });
         }
       });
     };
-    const disposable = listManager.registerList(filesList);
-    await listManager.start([filesList.name]);
-    disposable.dispose();
+
+    const task = await this.startCocList(filesList);
+    await task.done();
   }
 
   async revealNodeByPath(
@@ -303,6 +306,7 @@ export class FileSource extends ExplorerSource<FileNode> {
           const readable = await fsAccess(fullpath, fs.constants.R_OK);
           const directory = stat ? stat.isDirectory() : false;
           const child: FileNode = {
+            type: 'child',
             uid: this.sourceName + '://' + fullpath,
             level: parent ? parent.level + 1 : 1,
             drawnLine: '',
@@ -317,8 +321,6 @@ export class FileSource extends ExplorerSource<FileNode> {
             writable,
             hidden,
             symbolicLink: lstat ? lstat.isSymbolicLink() : false,
-            isFirstInLevel: false,
-            isLastInLevel: false,
             lstat: lstat || null,
           };
           if (this.expandStore.isExpanded(child)) {
@@ -351,51 +353,26 @@ export class FileSource extends ExplorerSource<FileNode> {
   }
 
   async drawRootLabeling(node: FileNode) {
-    const highlightPositions: HighlightPosition[] = [];
     const lines: string[] = [];
-    const row = await this.viewBuilder.drawRow(
-      async (row) => {
-        row.add('Fullpath:', labelHighlight);
-        row.add(' ');
-        row.add(node.fullpath, fileHighlights.directory);
-      },
-      {
-        highlightMode: 'highlight',
-        relativeLineIndex: 0,
-      },
-    );
-    lines.push(row.content);
-    highlightPositions.push(...row.highlightPositions);
+    const row = await this.viewBuilder.drawRow(async (row) => {
+      row.add('Fullpath:', { hl: labelHighlight });
+      row.add(' ');
+      row.add(node.fullpath, { hl: fileHighlights.directory });
+    });
+    const { highlightPositions, content } = await row.draw();
+    lines.push(content);
     return {
-      highlightPositions,
+      highlightPositions: highlightPositions.map((hl) => ({
+        line: 0,
+        ...hl,
+      })),
       lines,
     };
   }
 
-  async drawRootNode(node: FileNode) {
-    node.drawnLine = await this.viewBuilder.drawRowLine(async (row) => {
-      row.add(
-        this.expanded ? sourceIcons.getExpanded() : sourceIcons.getCollapsed(),
-        fileHighlights.expandIcon,
-      );
-      row.add(' ');
-      row.add(
-        `[FILE${this.showHidden ? ' ' + sourceIcons.getHidden() : ''}]:`,
-        fileHighlights.title,
-      );
-      row.add(' ');
-      row.add(pathLib.basename(this.root), fileHighlights.name);
-      row.add(' ');
-      row.add(this.root, fileHighlights.fullpath);
-    });
-  }
-
-  async drawNode(node: FileNode, nodeIndex: number, options: DrawNodeOption<FileNode>) {
-    node.isFirstInLevel = options.prevSiblingNode === undefined;
-    node.isLastInLevel = options.nextSiblingNode === undefined;
-
-    node.drawnLine = await this.viewBuilder.drawRowLine(async (row) => {
-      await this.columnManager.draw(row, node, nodeIndex);
+  async drawNode(node: FileNode, nodeIndex: number) {
+    await this.viewBuilder.drawRowForNode(node, async (row) => {
+      await this.templateRenderer.draw(row, node, nodeIndex);
     });
   }
 }
