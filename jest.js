@@ -27,10 +27,10 @@ const execCli = (name, args, options) => {
 };
 
 module.exports = async () => {
-  const testDir = './src/tests';
+  const testDir = __dirname + '/src/tests';
   const cocDir = pathLib.join(testDir, 'coc.nvim');
   if (!fs.existsSync(cocDir)) {
-    await execCli('git', ['clone', '--depth', '1', 'git@github.com:neoclide/coc.nvim.git'], {
+    await execCli('git', ['clone', '--depth', '1', 'https://github.com/neoclide/coc.nvim.git'], {
       cwd: testDir,
     });
     await execCli('yarn', ['install'], {
