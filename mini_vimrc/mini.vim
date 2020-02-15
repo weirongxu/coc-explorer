@@ -13,10 +13,17 @@ nmap <space>ff :CocCommand explorer --position=floating<CR>
 nmap <space>fl :CocCommand explorer --position=floating --floating-position=left-center --floating-width=50 --floating-height=-10<CR>
 nmap <space>fr :CocCommand explorer --position=floating --floating-position=right-center --floating-width=50 --floating-height=-10<CR>
 nmap <space>t :CocCommand explorer --position=tab<CR>
-let template_a = escape('[git | 2] [selection | clip | 1] [indent][icon | 1] [filename growRight 1 omitCenter 1][modified]', ' |')
-let template_b = escape('[git | 2] [selection | clip | 1] [indent][icon | 1] [filename growRight 1 omitCenter 1][size]', ' |')
-execute 'nmap <space>a :CocCommand explorer --file-template '.template_a.' --file-labeling-template=[fullpath][size][modified][readonly]<CR>'
-execute 'nmap <space>b :CocCommand explorer --file-template '.template_b.' --file-labeling-template=[fullpath][size][created][modified][accessed][readonly]<CR>'
+
+let a = coc_explorer#command#generate({
+      \ 'file-child-template': '[git | 2] [selection | clip | 1] [indent][icon | 1] [filename growRight 1 omitCenter 1][modified]',
+      \ 'file-child-labeling-template': '[fullpath][size][modified][readonly]',
+      \ })
+let b = coc_explorer#command#generate({
+      \ 'file-child-template': '[git | 2] [selection | clip | 1] [indent][icon | 1] [filename growRight 1 omitCenter 1][size]',
+      \ 'file-child-labeling-template': '[fullpath][size][created][modified][accessed][readonly]',
+      \ })
+nmap <space>a :execute a<CR>
+nmap <space>b :execute b<CR>
 
 set hidden
 set cmdheight=2

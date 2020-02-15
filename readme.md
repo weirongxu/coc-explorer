@@ -69,11 +69,19 @@ Explorer extension for [coc.nvim](https://github.com/neoclide/coc.nvim)
 
 ### Example
 
-```
+```vim
 :CocCommand explorer
     \ --toggle
     \ --sources=buffer+,file+
-    \ --file-columns=git:selection:clip:diagnosticError:indent:icon:filename;fullpath;size;modified;readonly /root/path
+    \ /root/path
+
+" or
+let a = coc_explorer#command#generate({
+    \ 'toggle': v:true,
+    \ 'file-child-template': '[git | 2] [selection | clip | 1] [indent][icon | 1] [filename growRight 1 omitCenter 1][modified]',
+    \ 'file-child-labeling-template': '[fullpath][size][modified][readonly]',
+    \ }, '/root/path')
+nmap <space>a :execute a<CR>
 ```
 
 ### Options
