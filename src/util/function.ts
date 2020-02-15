@@ -19,7 +19,8 @@ export function queueAsyncFunction<R extends any, ARGS extends any[]>(
   type Task = {
     args: ARGS;
     fn: (...args: ARGS) => Promise<R>;
-    callback: (r: R) => void;
+    resolve: (r: R) => void;
+    reject: (error: Error) => void;
   };
   let queueStarted = false;
   const queueTasks: Task[] = [];
@@ -29,18 +30,24 @@ export function queueAsyncFunction<R extends any, ARGS extends any[]>(
       setImmediate(async () => {
         while (queueTasks.length) {
           const task = queueTasks.shift()!;
-          task.callback(await task.fn(...task.args));
+          try {
+            const result = await task.fn(...task.args);
+            task.resolve(result);
+          } catch (error) {
+            task.reject(error);
+          }
         }
         queueStarted = false;
       });
     }
-    return await new Promise<R>((resolve) => {
+    return await new Promise<R>((resolve, reject) => {
       queueTasks.push({
         args,
         fn,
-        callback: (r: R) => {
+        resolve: (r: R) => {
           resolve(r);
         },
+        reject,
       });
     });
   };

@@ -20,6 +20,7 @@ import open from 'open';
 import { driveList } from '../../../lists/drives';
 import { gitManager } from '../../../git-manager';
 import { argOptions } from '../../../parse-args';
+import { onError } from '../../../logger';
 
 export function initFileActions(file: FileSource) {
   const { nvim } = file;
