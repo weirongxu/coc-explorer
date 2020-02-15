@@ -34,7 +34,7 @@ describe('parse columns', () => {
   test('file columns', () => {
     expect(
       parseTemplate(
-        '[git | 2] [selection | clip | 1] [indent][icon | 1] [diagnosticError][filename omitCenter 1][readonly] [linkIcon & 1][link alignLeft 1 omitCenter 3]',
+        '[git | 2] [selection | clip | 1] [indent][icon | 1] [diagnosticError][filename omitCenter 1][readonly] [linkIcon & 1][link growLeft 1 omitCenter 3]',
       ),
     ).toEqual([
       { column: 'git', modifiers: [{ name: '|', column: '2' }] },
@@ -61,7 +61,7 @@ describe('parse columns', () => {
       {
         column: 'link',
         modifiers: [
-          { name: 'alignLeft', column: '1' },
+          { name: 'growLeft', column: '1' },
           { name: 'omitCenter', column: '3' },
         ],
       },

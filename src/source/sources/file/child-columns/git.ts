@@ -22,7 +22,7 @@ const statusIcons = {
   [GitFormat.ignored]: getIconConf('ignored'),
 };
 
-fileColumnRegistrar.registerColumn('git', ({ source, column }) => ({
+fileColumnRegistrar.registerColumn('child', 'git', ({ source, column }) => ({
   data: {
     prevStatuses: {} as Record<string, GitMixedStatus>,
   },

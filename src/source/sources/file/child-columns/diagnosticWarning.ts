@@ -8,7 +8,7 @@ const concealable = hlGroupManager.concealable('FileDiagnosticWarning');
 
 fileColumnRegistrar.registerColumn<{
   warningMap: Record<string, string>;
-}>('diagnosticWarning', ({ source, column }) => ({
+}>('child', 'diagnosticWarning', ({ source, column }) => ({
   concealable: concealable(source),
   data: {
     warningMap: {},

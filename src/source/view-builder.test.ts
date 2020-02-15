@@ -22,11 +22,11 @@ class TestColumnRegistrar extends ColumnRegistrar<TestNode, any> {}
 const testColumnRegistrar = new TestColumnRegistrar();
 
 (['left', 'right', 'center'] as const).forEach((pos) => {
-  testColumnRegistrar.registerColumn(`align-${pos}`, () => ({
+  testColumnRegistrar.registerColumn(`grow-${pos}`, () => ({
     async draw(row, node) {
       await row.flexible(
         {
-          align: pos,
+          grow: pos,
         },
         () => {
           row.add(node.name);
@@ -71,7 +71,8 @@ testColumnRegistrar.registerColumn('link', () => ({
     await row.flexible(
       {
         omit: 'center',
-        align: 'right',
+        omitVolume: 5,
+        grow: 'right',
       },
       () => {
         row.add('→ ' + node.fullpath);
@@ -127,18 +128,18 @@ async function drawColumn(names: string[], width: number) {
 describe('SourceRowBuilder.draw()', () => {
   // '||name /path/to/file'
 
-  test('align left', async () => {
-    const r = await drawColumn(['align-left'], 30);
+  test('grow left', async () => {
+    const r = await drawColumn(['grow-left'], 30);
     expect(r.content).toBe('||          name /path/to/file');
   });
 
-  test('align right', async () => {
-    const r = await drawColumn(['align-right'], 30);
+  test('grow right', async () => {
+    const r = await drawColumn(['grow-right'], 30);
     expect(r.content).toBe('||name /path/to/file          ');
   });
 
-  test('align center', async () => {
-    const r = await drawColumn(['align-center'], 30);
+  test('grow center', async () => {
+    const r = await drawColumn(['grow-center'], 30);
     expect(r.content).toBe('||     name /path/to/file     ');
   });
 
@@ -157,12 +158,11 @@ describe('SourceRowBuilder.draw()', () => {
     expect(r.content).toBe('||name /‥o/file');
   });
 
-  test.only('filename and link', async () => {
+  test('filename & link', async () => {
     let r = await drawColumn(['filename', 'link'], 30);
     expect(r.content).toBe('||name → /path/to/file        ');
 
     r = await drawColumn(['filename', 'link'], 20);
-    // TOD expect '||n‥e → /pat‥o/file '
-    expect(r.content).toBe('||n‥ → /pat‥o/file ');
+    expect(r.content).toBe('||n‥e → /pat‥o/file ');
   });
 });

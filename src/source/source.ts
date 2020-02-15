@@ -1,18 +1,25 @@
-import { listManager, workspace, ExtensionContext, Disposable } from 'coc.nvim';
+import { listManager, workspace, ExtensionContext, Disposable, IList } from 'coc.nvim';
 import { Range } from 'vscode-languageserver-protocol';
 import { explorerActionList } from '../lists/actions';
 import { Explorer } from '../explorer';
 import { onError } from '../logger';
 import { ActionSyms, mappings, reverseMappings, ActionMode } from '../mappings';
-import { config, execNotifyBlock, getOpenStrategy, getEnableNerdfont } from '../util';
+import {
+  config,
+  execNotifyBlock,
+  getOpenStrategy,
+  getEnableNerdfont,
+  delay,
+  onEvents,
+} from '../util';
 import { SourceViewBuilder } from './view-builder';
 import {
   HighlightPosition,
   HighlightPositionWithLine,
   HighlightConcealablePosition,
 } from './highlight-manager';
-import { TemplateRenderer, DrawLabelingResult } from './column-manager';
-import { argOptions } from '../parse-args';
+import { TemplateRenderer, DrawLabelingResult } from './template-renderer';
+import { argOptions, Args } from '../parse-args';
 
 export type ActionOptions = {
   multi: boolean;
@@ -28,7 +35,11 @@ export const sourceIcons = {
   getHidden: () => config.get<string>('icon.hidden')!,
 };
 
-export interface BaseTreeNode<TreeNode extends BaseTreeNode<TreeNode>> {
+export interface BaseTreeNode<
+  TreeNode extends BaseTreeNode<TreeNode>,
+  Type extends string = string
+> {
+  type: Type;
   isRoot?: boolean;
   uid: string;
   level: number;
@@ -414,12 +425,56 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>> {
     await this.nvim.call('setreg', ['"', content]);
   }
 
+  async startCocList(list: IList) {
+    const isFloating = (await this.explorer.args.value(argOptions.position)) === 'floating';
+    if (isFloating) {
+      await this.explorer.hide();
+    }
+
+    let isResolve = false;
+    let showExplorer = async () => {};
+    const promise = new Promise(async (resolve) => {
+      showExplorer = async () => {
+        if (isFloating && !isResolve) {
+          isResolve = true;
+          // TODO FIXME remove delay
+          await delay(200);
+          await this.explorer.show();
+          resolve();
+        }
+      };
+      const disposable = listManager.registerList(list);
+      await listManager.start(['--normal', '--number-select', list.name]);
+      disposable.dispose();
+
+      listManager.ui.onDidClose(async () => {
+        await new Promise((resolve) => {
+          const disposable = onEvents('BufWinLeave', (_bufnr, winid) => {
+            if (winid === listManager.ui.window.id) {
+              disposable.dispose();
+              resolve();
+            }
+          });
+        });
+        if (isFloating && !isResolve) {
+          await showExplorer();
+        }
+      });
+    });
+    return {
+      resolve: showExplorer,
+      done() {
+        return promise;
+      },
+    };
+  }
+
   async listActionMenu(nodes: TreeNode[] | null) {
     const actions = {
       ...this.explorer.globalActions,
       ...(nodes === null ? this.rootActions : this.actions),
     };
-    // TODO hide explorer is position if floating
+
     explorerActionList.setExplorerActions(
       Object.entries(actions)
         .sort(([aName], [bName]) => aName.localeCompare(bName))
@@ -430,13 +485,15 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>> {
           root: nodes === null,
           key: reverseMappings[name],
           description,
-          callback,
+          async callback() {
+            callback();
+            await task.resolve();
+          },
         }))
         .filter((a) => a.name !== 'actionMenu'),
     );
-    const disposable = listManager.registerList(explorerActionList);
-    await listManager.start(['--normal', '--number-select', explorerActionList.name]);
-    disposable.dispose();
+    const task = await this.startCocList(explorerActionList);
+    await task.done();
   }
 
   isSelectedAny() {
@@ -519,8 +576,6 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>> {
     return !!renderAll;
   }
 
-  abstract drawRootNode(node: TreeNode): void | Promise<void>;
-
   drawRootLabeling(_node: TreeNode): undefined | DrawLabelingResult | Promise<DrawLabelingResult> {
     return;
   }
@@ -551,7 +606,7 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>> {
     await Promise.all(
       nodes.map(async (node) => {
         if (node.isRoot) {
-          await this.drawRootNode(node);
+          await this.drawNode(node, 0);
           if (node.highlightPositions) {
             highlightPositions.push(
               ...node.highlightPositions.map((hl) => ({

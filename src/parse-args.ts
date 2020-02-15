@@ -217,17 +217,26 @@ export const argOptions = {
       getDefault: () => config.get<floatingPositionEnum | [number, number]>('floating.position')!,
     },
   ),
-  bufferTemplate: Args.registerOption<string>('buffer-template', {
-    getDefault: () => config.get<string>('buffer.template')!,
+  bufferRootTemplate: Args.registerOption<string>('buffer-root-template', {
+    getDefault: () => config.get<string>('buffer.root.template')!,
   }),
-  bufferLabelingTemplate: Args.registerOption<string>('buffer-labeling-template', {
-    getDefault: () => config.get<string>('buffer.labelingTemplate')!,
+  bufferChildTemplate: Args.registerOption<string>('buffer-child-template', {
+    getDefault: () => config.get<string>('buffer.child.template')!,
   }),
-  fileTemplate: Args.registerOption<string>('file-template', {
-    getDefault: () => config.get<string>('file.template')!,
+  bufferChildLabelingTemplate: Args.registerOption<string>('buffer-child-labeling-template', {
+    getDefault: () => config.get<string>('buffer.child.labelingTemplate')!,
   }),
-  fileLabelingTemplate: Args.registerOption<string>('file-labeling-template', {
-    getDefault: () => config.get<string>('file.labelingTemplate')!,
+  fileRootTemplate: Args.registerOption<string>('file-root-template', {
+    getDefault: () => config.get<string>('file.root.template')!,
+  }),
+  fileRootLabelingTemplate: Args.registerOption<string>('file-root-labeling-template', {
+    getDefault: () => config.get<string>('file.root.labelingTemplate')!,
+  }),
+  fileChildTemplate: Args.registerOption<string>('file-child-template', {
+    getDefault: () => config.get<string>('file.child.template')!,
+  }),
+  fileChildLabelingTemplate: Args.registerOption<string>('file-child-labeling-template', {
+    getDefault: () => config.get<string>('file.child.labelingTemplate')!,
   }),
   reveal: Args.registerOption('reveal', {
     handler: normalizePath,

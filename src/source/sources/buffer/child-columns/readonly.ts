@@ -2,7 +2,7 @@ import { bufferColumnRegistrar } from '../buffer-column-registrar';
 import { bufferHighlights } from '../buffer-source';
 import { getEnableNerdfont } from '../../../../util';
 
-bufferColumnRegistrar.registerColumn('readonly', () => ({
+bufferColumnRegistrar.registerColumn('child', 'readonly', () => ({
   labelOnly: true,
   labelVisible: (node) => node.readonly,
   draw(row, node) {

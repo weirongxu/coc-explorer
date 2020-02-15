@@ -13,8 +13,10 @@ nmap <space>ff :CocCommand explorer --position=floating<CR>
 nmap <space>fl :CocCommand explorer --position=floating --floating-position=left-center --floating-width=50 --floating-height=-10<CR>
 nmap <space>fr :CocCommand explorer --position=floating --floating-position=right-center --floating-width=50 --floating-height=-10<CR>
 nmap <space>t :CocCommand explorer --position=tab<CR>
-nmap <space>a :CocCommand explorer --file-columns=git:selection:" ":clip:" ":diagnosticError:indent:icon:filename;fullpath;size;modified;readonly<CR>
-nmap <space>b :CocCommand explorer --file-columns=git:selection:clip:diagnosticError:indent:icon:filename;fullpath;size;created;modified;accessed;readonly<CR>
+let template_a = escape('[git | 2] [selection | clip | 1] [indent][icon | 1] [filename growRight 1 omitCenter 1][modified]', ' |')
+let template_b = escape('[git | 2] [selection | clip | 1] [indent][icon | 1] [filename growRight 1 omitCenter 1][size]', ' |')
+execute 'nmap <space>a :CocCommand explorer --file-template '.template_a.' --file-labeling-template=[fullpath][size][modified][readonly]<CR>'
+execute 'nmap <space>b :CocCommand explorer --file-template '.template_b.' --file-labeling-template=[fullpath][size][created][modified][accessed][readonly]<CR>'
 
 set hidden
 set cmdheight=2

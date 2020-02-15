@@ -3,14 +3,12 @@ import dayjs from 'dayjs';
 import { getDatetimeFormat } from '../../../../util';
 import { fileHighlights } from '../file-source';
 
-fileColumnRegistrar.registerColumn('accessed', () => ({
+fileColumnRegistrar.registerColumn('child', 'created', () => ({
   draw(row, node) {
     if (node.lstat) {
-      row.add(dayjs(node.lstat.atime).format(getDatetimeFormat()), {
-        hl: fileHighlights.timeAccessed,
+      row.add(dayjs(node.lstat.ctime).format(getDatetimeFormat()), {
+        hl: fileHighlights.timeCreated,
       });
-    } else {
-      row.add('                 ');
     }
   },
 }));

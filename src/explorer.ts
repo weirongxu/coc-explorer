@@ -62,6 +62,7 @@ export class Explorer {
   private _args?: Args;
   private _sources?: ExplorerSource<any>[];
   private lastArgSources?: string;
+  private isHide = false;
 
   private static async getExplorerPosition(args: Args) {
     let width: number = 0;
@@ -483,6 +484,18 @@ export class Explorer {
     }
   }
 
+  async hide() {
+    this.isHide = true;
+    await this.quit();
+  }
+
+  async show() {
+    if (this.isHide) {
+      this.isHide = false;
+      await this.resume(this.args);
+    }
+  }
+
   async quit() {
     const win = await this.win;
     if (win) {
@@ -821,6 +834,7 @@ export class Explorer {
     function createNode(): BaseTreeNode<any> {
       curUid += 1;
       return {
+        type: '',
         uid: `help://${curUid}`,
         level: 0,
         drawnLine: '',

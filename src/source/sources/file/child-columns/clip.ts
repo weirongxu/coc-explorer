@@ -23,7 +23,7 @@ if (getEnableNerdfont()) {
 
 const concealable = hlGroupManager.concealable('FileClip');
 
-fileColumnRegistrar.registerColumn('clip', ({ source, column }) => ({
+fileColumnRegistrar.registerColumn('child', 'clip', ({ source, column }) => ({
   concealable: concealable(source),
   async beforeDraw() {
     if (source.copiedNodes.size === 0 && source.cutNodes.size === 0) {

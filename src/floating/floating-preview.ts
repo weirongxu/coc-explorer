@@ -1,5 +1,5 @@
 import { Explorer } from '../explorer';
-import { DrawLabelingResult } from '../source/column-manager';
+import { DrawLabelingResult } from '../source/template-renderer';
 import { BaseTreeNode, ExplorerSource } from '../source/source';
 import {
   Cancellable,

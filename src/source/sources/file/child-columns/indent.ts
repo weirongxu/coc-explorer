@@ -43,7 +43,7 @@ function printIndentLine(node: FileNode) {
   return row;
 }
 
-fileColumnRegistrar.registerColumn('indent', () => ({
+fileColumnRegistrar.registerColumn('child', 'indent', () => ({
   draw(row, node) {
     if (getIndentLine()) {
       row.add(printIndentLine(node), { hl: fileHighlights.indentLine });

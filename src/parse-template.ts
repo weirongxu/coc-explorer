@@ -11,7 +11,7 @@
  * '[fullpath]'
  *
  * file
- * '[git | 2] [selection | clip | 1] [indent][icon | 1] [diagnosticError][filename alignLeft 2 omitCenter 1][readonly] [linkIcon & 1][link]'
+ * '[git | 2] [selection | clip | 1] [indent][icon | 1] [diagnosticError][filename growLeft 2 omitCenter 1][readonly] [linkIcon & 1][link]'
  * '[fullpath][link][diagnosticError][size][accessed][modified][created][readonly]'
  *
  * git root

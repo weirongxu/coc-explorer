@@ -48,25 +48,29 @@ type GetColumn<
 > = (context: { source: S; column: ColumnRequired<TreeNode, Data> }) => Column<TreeNode, Data>;
 
 export class ColumnRegistrar<
-  TreeNode extends BaseTreeNode<TreeNode>,
-  S extends ExplorerSource<TreeNode>
+  TreeNode extends BaseTreeNode<TreeNode, Type>,
+  S extends ExplorerSource<TreeNode>,
+  Type extends string = TreeNode['type']
 > {
   registeredColumns: Record<
     string,
-    {
-      getColumn: GetColumn<S, TreeNode, any>;
-    }
+    Record<
+      string,
+      {
+        getColumn: GetColumn<S, TreeNode, any>;
+      }
+    >
   > = {};
 
   async getInitedColumn(
+    type: string,
     source: S,
     columnName: string,
-  ): Promise<string | ColumnRequired<TreeNode, any>> {
+  ): Promise<number | ColumnRequired<TreeNode, any>> {
     if (/\d+/.test(columnName)) {
-      const num = parseInt(columnName, 10);
-      return ' '.repeat(num);
+      return parseInt(columnName, 10);
     } else {
-      const registeredColumn = this.registeredColumns[columnName];
+      const registeredColumn = this.registeredColumns[type]?.[columnName];
       if (registeredColumn) {
         const column = { label: columnName } as ColumnRequired<TreeNode, any>;
         Object.assign(column, registeredColumn.getColumn({ source, column }));
@@ -85,12 +89,15 @@ export class ColumnRegistrar<
     }
   }
 
-  registerColumn<Data>(name: string, getColumn: GetColumn<S, TreeNode, Data>) {
-    this.registeredColumns[name] = {
+  registerColumn<Data>(type: Type, name: string, getColumn: GetColumn<S, TreeNode, Data>) {
+    if (!(type in this.registeredColumns)) {
+      this.registeredColumns[type] = {};
+    }
+    this.registeredColumns[type][name] = {
       getColumn,
     };
     return Disposable.create(() => {
-      delete this.registeredColumns[name];
+      delete this.registeredColumns[type][name];
     });
   }
 }

@@ -42,7 +42,7 @@
         "flexible": {
           "type": "object",
           "properties": {
-            "align": {
+            "grow": {
               "$ref": "#/definitions/flexible.position"
             },
             "omit": {
@@ -323,15 +323,20 @@
           "type": "boolean",
           "default": false
         },
-        "explorer.buffer.template": {
-          "description": "Default template for buffer source",
+        "explorer.buffer.root.template": {
+          "description": "Default template for root node of buffer source",
+          "type": "string",
+          "default": "[icon] [title]"
+        },
+        "explorer.buffer.child.template": {
+          "description": "Default template for child node of buffer source",
           "type": "string",
           "default": "[selection | 1] [bufnr] [name][modified][readonly] [fullpath]"
         },
-        "explorer.buffer.labelingTemplate": {
-          "description": "Default template for buffer source labeling",
+        "explorer.buffer.child.labelingTemplate": {
+          "description": "Default labeling template for child node of buffer source",
           "type": "string",
-          "default": "[bufname][fullpath][modified][readonly]"
+          "default": "[name][bufname][fullpath][modified][readonly]"
         },
         "explorer.datetime.format": {
           "description": "Explorer datetime format, check out https://github.com/iamkun/dayjs/blob/dev/docs/en/API-reference.md#format-formatstringwithtokens-string",
@@ -387,13 +392,23 @@
           "type": "boolean",
           "default": false
         },
-        "explorer.file.template": {
-          "description": "Default template for file source",
+        "explorer.file.root.template": {
+          "description": "Default template for root node of file source",
           "type": "string",
-          "default": "[git | 2] [selection | clip | 1] [indent][icon | 1] [diagnosticError & 1][filename omitCenter 1][readonly] [linkIcon & 1][link alignLeft 1 omitCenter 3]"
+          "default": "[icon] [title] [root] [fullpath]"
         },
-        "explorer.file.labelingTemplate": {
-          "description": "Default template for file source labeling",
+        "explorer.file.root.labelingTemplate": {
+          "description": "Default labeling template for root node of file source",
+          "type": "string",
+          "default": "[fullpath]"
+        },
+        "explorer.file.child.template": {
+          "description": "Default template for child node file source",
+          "type": "string",
+          "default": "[git | 2] [selection | clip | 1] [indent][icon | 1] [diagnosticError & 1][filename omitCenter 1][readonly] [linkIcon & 1][link growRight 1 omitCenter 5][size]"
+        },
+        "explorer.file.child.labelingTemplate": {
+          "description": "Default labeling template for child node of file source",
           "type": "string",
           "default": "[fullpath][link][diagnosticError][size][accessed][modified][created][readonly]"
         },
@@ -468,21 +483,6 @@
         "explorer.file.column.indent.indentLine": {
           "description": "Whether to display the alignment line",
           "type": "boolean"
-        },
-        "explorer.file.column.filename.flexible": {
-          "description": "Filename flexible type",
-          "$ref": "#/definitions/flexible",
-          "default": {
-            "omit": "center"
-          }
-        },
-        "explorer.file.column.link.flexible": {
-          "description": "File link flexible type",
-          "$ref": "#/definitions/flexible",
-          "default": {
-            "omit": "center",
-            "align": "right"
-          }
         },
         "explorer.git.command": {
           "description": "Git command",

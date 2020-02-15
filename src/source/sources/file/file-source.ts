@@ -14,16 +14,17 @@ import {
   fsStat,
   normalizePath,
   getExtensions,
+  delay,
 } from '../../../util';
 import { hlGroupManager } from '../../highlight-manager';
-import { ExplorerSource, sourceIcons, BaseTreeNode } from '../../source';
+import { ExplorerSource, BaseTreeNode } from '../../source';
 import { sourceManager } from '../../source-manager';
 import { fileColumnRegistrar } from './file-column-registrar';
 import './load';
 import { filesList } from '../../../lists/files';
 import { initFileActions } from './file-actions';
 import { homedir } from 'os';
-import { labelHighlight, TemplateRenderer } from '../../column-manager';
+import { labelHighlight, TemplateRenderer } from '../../template-renderer';
 import { argOptions } from '../../../parse-args';
 
 const getHiddenRules = () =>
@@ -46,7 +47,7 @@ function isHidden(filename: string) {
   );
 }
 
-export interface FileNode extends BaseTreeNode<FileNode> {
+export interface FileNode extends BaseTreeNode<FileNode, 'root' | 'child'> {
   name: string;
   fullpath: string;
   directory: boolean;
@@ -87,6 +88,7 @@ export class FileSource extends ExplorerSource<FileNode> {
   copiedNodes: Set<FileNode> = new Set();
   cutNodes: Set<FileNode> = new Set();
   rootNode: FileNode = {
+    type: 'root',
     isRoot: true,
     uid: this.sourceName + '://',
     level: 0,
@@ -103,7 +105,10 @@ export class FileSource extends ExplorerSource<FileNode> {
     symbolicLink: true,
     lstat: null,
   };
-  templateRenderer: TemplateRenderer<FileNode> = new TemplateRenderer<FileNode>(this, fileColumnRegistrar);
+  templateRenderer: TemplateRenderer<FileNode> = new TemplateRenderer<FileNode>(
+    this,
+    fileColumnRegistrar,
+  );
 
   get root() {
     return this.rootNode.fullpath;
@@ -155,8 +160,15 @@ export class FileSource extends ExplorerSource<FileNode> {
 
   async open() {
     await this.templateRenderer.parse(
-      await this.explorer.args.value(argOptions.fileTemplate),
-      await this.explorer.args.value(argOptions.fileLabelingTemplate),
+      'root',
+      await this.explorer.args.value(argOptions.fileRootTemplate),
+      await this.explorer.args.value(argOptions.fileRootLabelingTemplate),
+    );
+
+    await this.templateRenderer.parse(
+      'child',
+      await this.explorer.args.value(argOptions.fileChildTemplate),
+      await this.explorer.args.value(argOptions.fileChildLabelingTemplate),
     );
 
     const args = this.explorer.args;
@@ -222,13 +234,14 @@ export class FileSource extends ExplorerSource<FileNode> {
           notify: true,
         });
         if (node) {
+          await task.resolve();
           await this.gotoNode(node, { notify: true });
         }
       });
     };
-    const disposable = listManager.registerList(filesList);
-    await listManager.start([filesList.name]);
-    disposable.dispose();
+
+    const task = await this.startCocList(filesList);
+    await task.done();
   }
 
   async revealNodeByPath(
@@ -293,6 +306,7 @@ export class FileSource extends ExplorerSource<FileNode> {
           const readable = await fsAccess(fullpath, fs.constants.R_OK);
           const directory = stat ? stat.isDirectory() : false;
           const child: FileNode = {
+            type: 'child',
             uid: this.sourceName + '://' + fullpath,
             level: parent ? parent.level + 1 : 1,
             drawnLine: '',
@@ -354,22 +368,6 @@ export class FileSource extends ExplorerSource<FileNode> {
       })),
       lines,
     };
-  }
-
-  async drawRootNode(node: FileNode) {
-    await this.viewBuilder.drawRowForNode(node, async (row) => {
-      row.add(this.expanded ? sourceIcons.getExpanded() : sourceIcons.getCollapsed(), {
-        hl: fileHighlights.expandIcon,
-      });
-      row.add(' ');
-      row.add(`[FILE${this.showHidden ? ' ' + sourceIcons.getHidden() : ''}]:`, {
-        hl: fileHighlights.title,
-      });
-      row.add(' ');
-      row.add(pathLib.basename(this.root), { hl: fileHighlights.rootName });
-      row.add(' ');
-      row.add(this.root, { hl: fileHighlights.fullpath });
-    });
   }
 
   async drawNode(node: FileNode, nodeIndex: number) {

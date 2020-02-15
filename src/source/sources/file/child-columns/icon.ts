@@ -89,7 +89,7 @@ function getAttr(node: FileNode) {
   }));
 }
 
-fileColumnRegistrar.registerColumn('icon', ({ source }) => ({
+fileColumnRegistrar.registerColumn('child', 'icon', ({ source }) => ({
   async beforeDraw(nodes) {
     if (enableVimDevions) {
       await Promise.all(

@@ -14,7 +14,7 @@ function! coc_explorer#create(name, explorer_id, position, width, height, left, 
     execute 'silent keepalt rightbelow vsplit '.name
     call coc_explorer#resize_win(a:position, a:width)
   elseif a:position ==# 'floating'
-    call nvim_open_win(nvim_create_buf(v:false, v:true), v:true, coc_explorer#floating_win_config(a:width, a:height, a:left, a:top))
+    call nvim_open_win(nvim_create_buf(v:false, v:true), v:true, s:floating_win_config(a:width, a:height, a:left, a:top))
   else
     throw 'No support position '.a:position
   endif
@@ -32,13 +32,13 @@ function! coc_explorer#resume(bufnr, position, width, height, left, top)
     execute 'silent keepalt rightbelow vertical sb '.a:bufnr
     call coc_explorer#resize_win(a:position, a:width)
   elseif a:position ==# 'floating'
-    call nvim_open_win(a:bufnr, v:true, coc_explorer#floating_win_config(a:width, a:height, a:left, a:top))
+    call nvim_open_win(a:bufnr, v:true, s:floating_win_config(a:width, a:height, a:left, a:top))
   else
     throw 'No support position '.a:position
   endif
 endfunction
 
-function! coc_explorer#floating_win_config(width, height, left, top)
+function! s:floating_win_config(width, height, left, top)
   return {
         \ 'relative': 'editor',
         \ 'row': a:top,

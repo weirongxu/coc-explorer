@@ -1,10 +1,10 @@
-import { fileColumnRegistrar } from '../file-column-registrar';
+import { bufferColumnRegistrar } from '../buffer-column-registrar';
 import { sourceIcons } from '../../../source';
 import { hlGroupManager } from '../../../highlight-manager';
 
-const concealable = hlGroupManager.concealable('FileSelection');
+const concealable = hlGroupManager.concealable('BufferSelection');
 
-fileColumnRegistrar.registerColumn('selection', ({ source, column }) => ({
+bufferColumnRegistrar.registerColumn('child', 'selection', ({ source, column }) => ({
   concealable: concealable(source),
   async beforeDraw() {
     if (source.isSelectedAny()) {

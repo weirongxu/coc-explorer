@@ -4,6 +4,7 @@ import { SourceRowBuilder } from './view-builder';
 import { hlGroupManager, HighlightPositionWithLine } from './highlight-manager';
 import pFilter from 'p-filter';
 import { parseTemplate, TemplatePart } from '../parse-template';
+import { groupBy } from 'lodash';
 
 export interface DrawLabelingResult {
   highlightPositions: HighlightPositionWithLine[];
@@ -13,35 +14,38 @@ export interface DrawLabelingResult {
 export const labelHighlight = hlGroupManager.linkGroup('Label', 'Label');
 
 export type InitedPartColumn<TreeNode extends BaseTreeNode<TreeNode>> = {
-  column: string | ColumnRequired<TreeNode, any>;
-  modifiers?: { name: string; column: string | ColumnRequired<TreeNode, any> }[];
+  column: number | ColumnRequired<TreeNode, any>;
+  modifiers?: { name: string; column: number | ColumnRequired<TreeNode, any> }[];
 };
 export type InitedPart<TreeNode extends BaseTreeNode<TreeNode>> =
   | string
   | InitedPartColumn<TreeNode>;
 
-export class TemplateRenderer<TreeNode extends BaseTreeNode<TreeNode>> {
-  templateStr: string = '';
-  labelingTemplateStr: string = '';
-  uniqueColumns: ColumnRequired<TreeNode, any>[] = [];
-  initedParts: InitedPart<TreeNode>[] = [];
-  initedLabelingParts: InitedPart<TreeNode>[] = [];
+export class TemplateRenderer<
+  TreeNode extends BaseTreeNode<TreeNode, Type>,
+  Type extends string = TreeNode['type']
+> {
+  templateStr = {} as Record<Type, string>;
+  labelingTemplateStr = {} as Record<Type, string>;
+  uniqueColumns = {} as Record<Type, ColumnRequired<TreeNode, any>[]>;
+  initedParts = {} as Record<Type, InitedPart<TreeNode>[]>;
+  initedLabelingParts = {} as Record<Type, InitedPart<TreeNode>[]>;
 
   constructor(
     public source: ExplorerSource<TreeNode>,
     public columnRegistrar: ColumnRegistrar<TreeNode, any>,
   ) {}
 
-  private async initPart(part: TemplatePart): Promise<InitedPart<TreeNode>> {
+  private async initPart(type: Type, part: TemplatePart): Promise<InitedPart<TreeNode>> {
     if (typeof part !== 'string') {
       const column: InitedPartColumn<TreeNode> = {
-        column: await this.columnRegistrar.getInitedColumn(this.source, part.column),
+        column: await this.columnRegistrar.getInitedColumn(type, this.source, part.column),
       };
       if (part.modifiers) {
         column.modifiers = await Promise.all(
           part.modifiers.map(async (modifier) => ({
             name: modifier.name,
-            column: await this.columnRegistrar.getInitedColumn(this.source, modifier.column),
+            column: await this.columnRegistrar.getInitedColumn(type, this.source, modifier.column),
           })),
         );
       }
@@ -51,42 +55,42 @@ export class TemplateRenderer<TreeNode extends BaseTreeNode<TreeNode>> {
     }
   }
 
-  async parse(template: string, labelingTemplate?: string) {
+  async parse(type: Type, template: string, labelingTemplate?: string) {
     let updateUniqueColumns = false;
-    this.uniqueColumns = [];
-    if (this.templateStr !== template) {
-      this.templateStr = template;
-      this.initedParts = [];
+    this.uniqueColumns[type] = [];
+    if (this.templateStr[type] !== template) {
+      this.templateStr[type] = template;
+      this.initedParts[type] = [];
 
       for (const parsedPart of parseTemplate(template)) {
-        this.initedParts.push(await this.initPart(parsedPart));
+        this.initedParts[type].push(await this.initPart(type, parsedPart));
       }
       updateUniqueColumns = true;
     }
     if (labelingTemplate) {
-      if (this.labelingTemplateStr !== labelingTemplate) {
-        this.labelingTemplateStr = labelingTemplate;
-        this.initedLabelingParts = [];
+      if (this.labelingTemplateStr[type] !== labelingTemplate) {
+        this.labelingTemplateStr[type] = labelingTemplate;
+        this.initedLabelingParts[type] = [];
 
         for (const parsedPart of parseTemplate(labelingTemplate)) {
-          this.initedLabelingParts.push(await this.initPart(parsedPart));
+          this.initedLabelingParts[type].push(await this.initPart(type, parsedPart));
         }
         updateUniqueColumns = true;
       }
     }
 
     if (updateUniqueColumns) {
-      this.uniqueColumns = [];
+      this.uniqueColumns[type] = [];
 
-      for (const item of this.initedParts) {
+      for (const item of this.initedParts[type]) {
         if (typeof item !== 'string') {
-          if (typeof item.column !== 'string') {
-            this.uniqueColumns.push(item.column);
+          if (typeof item.column !== 'number') {
+            this.uniqueColumns[type].push(item.column);
           }
           if (item.modifiers) {
             for (const modifier of item.modifiers) {
-              if (typeof modifier.column !== 'string') {
-                this.uniqueColumns.push(modifier.column);
+              if (typeof modifier.column !== 'number') {
+                this.uniqueColumns[type].push(modifier.column);
               }
             }
           }
@@ -97,10 +101,14 @@ export class TemplateRenderer<TreeNode extends BaseTreeNode<TreeNode>> {
 
   async beforeDraw(nodes: TreeNode[]) {
     let redraw = false;
-    for (const column of this.uniqueColumns) {
-      if (column.beforeDraw) {
-        if (await column.beforeDraw(nodes)) {
-          redraw = true;
+    const nodesGroup = groupBy(nodes, (n) => n.type);
+    const types = Object.keys(nodesGroup) as Type[];
+    for (const type of types) {
+      for (const column of this.uniqueColumns[type]) {
+        if (column.beforeDraw) {
+          if (await column.beforeDraw(nodesGroup[type])) {
+            redraw = true;
+          }
         }
       }
     }
@@ -108,7 +116,7 @@ export class TemplateRenderer<TreeNode extends BaseTreeNode<TreeNode>> {
   }
 
   async reload(sourceNode: TreeNode) {
-    for (const column of this.uniqueColumns) {
+    for (const column of this.uniqueColumns[sourceNode.type]) {
       await (column.reload && column.reload(sourceNode));
     }
   }
@@ -123,7 +131,7 @@ export class TemplateRenderer<TreeNode extends BaseTreeNode<TreeNode>> {
       isLabeling?: boolean;
     } = {},
   ) {
-    for (const item of this.initedParts) {
+    for (const item of this.initedParts[node.type]) {
       await row.addTemplatePart(node, nodeIndex, item, isLabeling);
     }
     return row;
@@ -132,7 +140,7 @@ export class TemplateRenderer<TreeNode extends BaseTreeNode<TreeNode>> {
   async drawLabeling(node: TreeNode, nodeIndex: number): Promise<DrawLabelingResult> {
     const highlightPositionWithLines: HighlightPositionWithLine[] = [];
     const lines: string[] = [];
-    for (const part of this.initedLabelingParts) {
+    for (const part of this.initedLabelingParts[node.type]) {
       if (typeof part === 'string') {
         lines.push(part);
         continue;

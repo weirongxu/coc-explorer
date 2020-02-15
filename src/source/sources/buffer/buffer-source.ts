@@ -15,11 +15,11 @@ import { bufferColumnRegistrar } from './buffer-column-registrar';
 import './load';
 import { initBufferActions } from './buffer-actions';
 import { argOptions } from '../../../parse-args';
-import { TemplateRenderer } from '../../column-manager';
+import { TemplateRenderer } from '../../template-renderer';
 
 const regex = /^\s*(\d+)(.+?)"(.+?)".*/;
 
-export interface BufferNode extends BaseTreeNode<BufferNode> {
+export interface BufferNode extends BaseTreeNode<BufferNode, 'root' | 'child'> {
   bufnr: number;
   bufnrStr: string;
   bufname: string;
@@ -54,6 +54,7 @@ export class BufferSource extends ExplorerSource<BufferNode> {
   hlSrcId = workspace.createNameSpace('coc-explorer-buffer');
   showHidden: boolean = config.get<boolean>('file.showHiddenBuffers')!;
   rootNode: BufferNode = {
+    type: 'root',
     isRoot: true,
     uid: this.sourceName + '://',
     level: 0,
@@ -106,8 +107,13 @@ export class BufferSource extends ExplorerSource<BufferNode> {
 
   async open() {
     await this.templateRenderer.parse(
-      await this.explorer.args.value(argOptions.bufferTemplate),
-      await this.explorer.args.value(argOptions.bufferLabelingTemplate),
+      'root',
+      await this.explorer.args.value(argOptions.bufferRootTemplate),
+    );
+    await this.templateRenderer.parse(
+      'child',
+      await this.explorer.args.value(argOptions.bufferChildTemplate),
+      await this.explorer.args.value(argOptions.bufferChildLabelingTemplate),
     );
   }
 
@@ -126,6 +132,7 @@ export class BufferSource extends ExplorerSource<BufferNode> {
       const flags = matches[2];
       const bufname = matches[3];
       res.push({
+        type: 'child',
         uid: this.sourceName + '://' + bufnr,
         level: 1,
         drawnLine: '',
@@ -150,21 +157,8 @@ export class BufferSource extends ExplorerSource<BufferNode> {
     }, []);
   }
 
-  async drawRootNode(node: BufferNode) {
-    await this.viewBuilder.drawRowForNode(node, async (row) => {
-      row.add(this.expanded ? sourceIcons.getExpanded() : sourceIcons.getCollapsed(), {
-        hl: bufferHighlights.expandIcon,
-      });
-      row.add(' ');
-      row.add(`[BUFFER${this.showHidden ? ' ' + sourceIcons.getHidden() : ''}]`, {
-        hl: bufferHighlights.title,
-      });
-    });
-  }
-
   async drawNode(node: BufferNode, nodeIndex: number) {
     await this.viewBuilder.drawRowForNode(node, async (row) => {
-      row.add('  ');
       await this.templateRenderer.draw(row, node, nodeIndex);
     });
   }
