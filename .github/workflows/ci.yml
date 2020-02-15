@@ -41,6 +41,8 @@ jobs:
         with:
           neovim: true
           version: nightly
+      - name: Setup tmate session
+        uses: mxschmitt/action-tmate@v1
       - name: Run unit tests
         env:
           NODE_ENV: test
