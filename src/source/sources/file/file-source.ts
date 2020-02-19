@@ -127,20 +127,22 @@ export class FileSource extends ExplorerSource<FileNode> {
         if (getAutoReveal()) {
           this.subscriptions.push(
             onBufEnter(async (bufnr) => {
-              if (bufnr !== this.explorer.bufnr) {
-                const bufinfo = await nvim.call('getbufinfo', [bufnr]);
-                if (bufinfo[0] && bufinfo[0].name) {
-                  await execNotifyBlock(async () => {
-                    const node = await this.revealNodeByPath(bufinfo[0].name, {
-                      render: true,
-                      notify: true,
-                    });
-                    if (node) {
-                      await this.gotoNode(node, { notify: true });
-                    }
-                  });
-                }
+              if (bufnr === this.explorer.bufnr) {
+                return;
               }
+              const bufinfo = await nvim.call('getbufinfo', [bufnr]);
+              if (!bufinfo[0] || bufinfo[0].name) {
+                return;
+              }
+              await execNotifyBlock(async () => {
+                const node = await this.revealNodeByPath(bufinfo[0].name, {
+                  render: true,
+                  notify: true,
+                });
+                if (node) {
+                  await this.gotoNode(node, { notify: true });
+                }
+              });
             }, 200),
           );
         }
@@ -188,11 +190,14 @@ export class FileSource extends ExplorerSource<FileNode> {
     }
   }
 
-  async opened(isNotify: boolean) {
+  async opened(isFirst: boolean, isNotify: boolean) {
     await execNotifyBlock(async () => {
       const args = this.explorer.args;
       const revealPath = await this.revealPath();
       if (!revealPath) {
+        if (isFirst) {
+          await this.gotoRoot({ col: 1, notify: true });
+        }
         return;
       }
       const hasRevealPath = args.has(argOptions.reveal);
@@ -200,9 +205,11 @@ export class FileSource extends ExplorerSource<FileNode> {
         const revealNode = await this.revealNodeByPath(revealPath, { render: true, notify: true });
         if (revealNode !== null) {
           await this.gotoNode(revealNode, { col: 1, notify: true });
-        } else {
+        } else if (isFirst) {
           await this.gotoRoot({ col: 1, notify: true });
         }
+      } else if (isFirst) {
+        await this.gotoRoot({ col: 1, notify: true });
       }
     }, isNotify);
   }

@@ -186,6 +186,8 @@ export class ExplorerManager {
       });
     }
 
+    let isFirst = true;
+
     const args = await Args.parse(argStrs);
 
     const position = await args.value(argOptions.position);
@@ -235,8 +237,9 @@ export class ExplorerManager {
         return;
       }
       await explorer.resume(args);
+      isFirst = false;
     }
     await explorer.sourceWinid.set(sourceWinid);
-    await explorer.open(args);
+    await explorer.open(args, isFirst);
   }
 }

@@ -396,7 +396,7 @@ export class Explorer {
     }
   }
 
-  async open(args: Args) {
+  async open(args: Args, isFirst: boolean) {
     if (this.isHelpUI) {
       await this.quitHelp();
     }
@@ -411,10 +411,10 @@ export class Explorer {
       }
 
       await this.reloadAll({ render: false, notify: true });
-      await this.renderAll({ notify: true });
+      await this.renderAll({ notify: true, storeCursor: false });
 
       for (const source of this.sources) {
-        await source.opened(true);
+        await source.opened(isFirst, true);
       }
     });
   }
@@ -707,28 +707,39 @@ export class Explorer {
     let storeView = await this.nvim.call('winsaveview');
     storeView = { topline: storeView.topline };
     if (storeCursor) {
+      const defaultRestore = async (notify = false) => {
+        await execNotifyBlock(async () => {
+          this.nvim.call('winrestview', [storeView], true);
+          await this.gotoLineIndex(storeCursor.lineIndex, storeCursor.col, true);
+        }, notify);
+      };
+
       const [, sourceIndex] = this.findSourceByLineIndex(storeCursor.lineIndex);
       const source = this.sources[sourceIndex];
-      if (source) {
-        const sourceLineIndex = storeCursor.lineIndex - source.startLineIndex;
-        const storeNode: BaseTreeNode<any> = source.getNodeByLine(sourceLineIndex);
-        return async (notify = false) => {
-          await execNotifyBlock(async () => {
-            this.nvim.call('winrestview', [storeView], true);
-            await source.gotoNode(storeNode, {
-              lineIndex: sourceLineIndex,
-              col: storeCursor.col,
-              notify: true,
-            });
-          }, notify);
-        };
+
+      if (!source) {
+        return defaultRestore;
       }
+
+      const relativeLineIndex = storeCursor.lineIndex - source.startLineIndex;
+      const storeNode = source.getNodeByLine(relativeLineIndex);
+
+      if (!storeNode) {
+        return defaultRestore;
+      }
+
+      return async (notify = false) => {
+        await execNotifyBlock(async () => {
+          this.nvim.call('winrestview', [storeView], true);
+          await source.gotoNode(storeNode, {
+            lineIndex: relativeLineIndex,
+            col: storeCursor.col,
+            notify: true,
+          });
+        }, notify);
+      };
     }
-    return async (notify = false) => {
-      await execNotifyBlock(() => {
-        this.nvim.call('winrestview', storeView, true);
-      }, notify);
-    };
+    return null;
   }
 
   async gotoLineIndex(lineIndex: number, col?: number, notify = false) {
@@ -785,7 +796,7 @@ export class Explorer {
     }, notify);
   }
 
-  async renderAll({ notify = false, storeCursor = false } = {}) {
+  async renderAll({ notify = false, storeCursor = true } = {}) {
     await execNotifyBlock(async () => {
       const store = storeCursor ? await this.storeCursor() : null;
 
@@ -918,7 +929,9 @@ export class Explorer {
             disposables.forEach((d) => d.dispose());
             await this.quitHelp();
             await this.renderAll({ storeCursor: false });
-            await storeCursor();
+            if (storeCursor) {
+              await storeCursor();
+            }
           },
           true,
         ),

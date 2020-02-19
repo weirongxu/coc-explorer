@@ -224,7 +224,7 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>> {
 
   abstract open(isNotify: boolean): Promise<void>;
 
-  async opened(_isNotify: boolean) {}
+  async opened(_isFirst: boolean, _isNotify: boolean) {}
 
   addNodesAction(
     name: string,
@@ -500,7 +500,7 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>> {
     return this.selectedNodes.has(node);
   }
 
-  getNodeByLine(lineIndex: number): TreeNode {
+  getNodeByLine(lineIndex: number): TreeNode | undefined {
     return this.flattenedNodes[lineIndex];
   }
 
