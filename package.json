@@ -183,7 +183,7 @@
         "explorer.previewAction.onHover": {
           "description": "Open preview when hovering over on node",
           "type": "boolean",
-          "default": false
+          "default": true
         },
         "explorer.openAction.strategy": {
           "description": "Strategy for open action",
@@ -202,6 +202,37 @@
           "description": "Filter floating windows in select strategy",
           "type": "boolean",
           "default": true
+        },
+        "explorer.openAction.select.filter": {
+          "description": "Filter windows for select strategy",
+          "type": "object",
+          "properties": {
+            "buftypes": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "filetypes": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "floatingWindows": {
+              "type": "boolean"
+            }
+          },
+          "default": {
+            "buftypes": [
+              "terminal"
+            ],
+            "filetypes": [
+              "vista_kind",
+              "qf"
+            ],
+            "floatingWindows": true
+          }
         },
         "explorer.openAction.changeDirectory": {
           "description": "Change directory if node is a directory",

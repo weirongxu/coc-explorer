@@ -97,12 +97,19 @@ endfunction
 "   -1  - User cancelled
 "   0   - No window selected
 "   > 0 - Selected winnr
-function! coc_explorer#select_wins(buffer_name, filterFloatWindows)
+function! coc_explorer#select_wins(buffer_name, buftypes, filetypes, floatingWindows)
   let store = {}
   let char_idx_mapto_winnr = {}
   let char_idx = 0
   for winnr in range(1, winnr('$'))
-    if a:filterFloatWindows && coc_explorer#is_float_window(winnr)
+    let bufnr = winbufnr(winnr)
+    if index(a:buftypes, getbufvar(bufnr, '&buftype')) >= 0
+      continue
+    endif
+    if index(a:filetypes, getbufvar(bufnr, '&filetype')) >= 0
+      continue
+    endif
+    if a:floatingWindows && coc_explorer#is_float_window(winnr)
       continue
     endif
     if stridx(bufname(winbufnr(winnr)), a:buffer_name) == 0

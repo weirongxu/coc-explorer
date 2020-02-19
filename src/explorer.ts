@@ -819,9 +819,16 @@ export class Explorer {
     noChoice: () => void | Promise<void> = () => {},
     cancel: () => void | Promise<void> = () => {},
   ) {
+    const filterOption = config.get<{
+      buftypes: string[];
+      filetypes: string[];
+      floatingWindows: boolean;
+    }>('openAction.select.filter')!;
     const winnr = await this.nvim.call('coc_explorer#select_wins', [
       this.explorerManager.bufferName,
-      config.get<boolean>('openAction.select.filterFloatWindows')!,
+      filterOption.buftypes,
+      filterOption.filetypes,
+      filterOption.floatingWindows,
     ]);
     if (winnr > 0) {
       await Promise.resolve(selected(winnr));
