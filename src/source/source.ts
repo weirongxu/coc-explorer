@@ -733,7 +733,6 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>> {
 
   private async expandNodeRecursive(node: TreeNode, recursive: boolean) {
     if (node.expandable) {
-      this.expandStore.expand(node);
       node.children = await this.loadChildren(node);
       if (
         recursive ||
@@ -747,6 +746,7 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>> {
           }),
         );
       }
+      this.expandStore.expand(node);
     }
   }
 
@@ -784,7 +784,6 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>> {
 
   private async collapseNodeRecursive(node: TreeNode, recursive: boolean) {
     if (node.expandable) {
-      this.expandStore.collapse(node);
       if (recursive || config.get<boolean>('autoCollapseChildren')!) {
         if (node.children) {
           for (const child of node.children) {
@@ -792,6 +791,7 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>> {
           }
         }
       }
+      this.expandStore.collapse(node);
     }
   }
 
