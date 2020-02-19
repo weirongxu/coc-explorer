@@ -1,9 +1,8 @@
-import { listManager, workspace, ExtensionContext, Disposable, IList } from 'coc.nvim';
-import { Range } from 'vscode-languageserver-protocol';
+import { listManager, workspace, ExtensionContext, Disposable, IList, Uri } from 'coc.nvim';
 import { explorerActionList } from '../lists/actions';
 import { Explorer } from '../explorer';
 import { onError } from '../logger';
-import { ActionSyms, mappings, reverseMappings, ActionMode } from '../mappings';
+import { mappings, reverseMappings } from '../mappings';
 import {
   config,
   execNotifyBlock,
@@ -11,6 +10,10 @@ import {
   getEnableNerdfont,
   delay,
   onEvents,
+  PreviewStrategy,
+  getPreviewStrategy,
+  OpenStrategy,
+  skipOnEventsByWinnrs,
 } from '../util';
 import { SourceViewBuilder } from './view-builder';
 import {
@@ -19,7 +22,7 @@ import {
   HighlightConcealablePosition,
 } from './highlight-manager';
 import { TemplateRenderer, DrawLabelingResult } from './template-renderer';
-import { argOptions, Args } from '../parse-args';
+import { argOptions } from '../parse-args';
 
 export type ActionOptions = {
   multi: boolean;
@@ -41,7 +44,7 @@ export interface BaseTreeNode<
 > {
   type: Type;
   isRoot?: boolean;
-  uid: string;
+  uri: string;
   level: number;
   drawnLine: string;
   highlightPositions?: HighlightPosition[];
@@ -58,6 +61,7 @@ export type ExplorerSourceClass = {
 };
 
 export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>> {
+  abstract scheme: string;
   abstract hlSrcId: number;
   startLineIndex: number = 0;
   endLineIndex: number = 0;
@@ -66,19 +70,21 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>> {
   flattenedNodes: TreeNode[] = [];
   showHidden: boolean = false;
   selectedNodes: Set<TreeNode> = new Set();
-  relativeHlRanges: Record<string, Range[]> = {};
   readonly viewBuilder = new SourceViewBuilder(this.explorer);
   readonly expandStore = {
     record: new Map<string, boolean>(),
     expand(node: TreeNode) {
-      this.record.set(node.uid, true);
+      this.record.set(node.uri, true);
     },
     collapse(node: TreeNode) {
-      this.record.set(node.uid, false);
+      this.record.set(node.uri, false);
     },
     isExpanded(node: TreeNode) {
-      return this.record.get(node.uid) || false;
+      return this.record.get(node.uri) || false;
     },
+  };
+  readonly helper = {
+    generateUri: (path: string) => this.scheme + '://' + path,
   };
   templateRenderer?: TemplateRenderer<TreeNode>;
 
@@ -87,19 +93,7 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>> {
     {
       description: string;
       options: Partial<ActionOptions>;
-      callback: (
-        nodes: TreeNode[],
-        arg: string | undefined,
-        mode: ActionMode,
-      ) => void | Promise<void>;
-    }
-  > = {};
-  rootActions: Record<
-    string,
-    {
-      description: string;
-      options: Partial<ActionOptions>;
-      callback: (arg: string | undefined, mode: ActionMode) => void | Promise<void>;
+      callback: (nodes: TreeNode[], arg?: string) => void | Promise<void>;
     }
   > = {};
   hlIds: number[] = []; // hightlight match ids for vim8.0
@@ -113,15 +107,28 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>> {
     this.context = this.explorer.context;
     this.subscriptions = this.context.subscriptions;
 
-    this.addAction(
+    this.addNodeAction(
+      'esc',
+      async () => {
+        const position = await this.explorer.args.value(argOptions.position);
+        if (position === 'floating') {
+          await this.explorer.quit();
+        } else {
+          this.requestRenderNodes(Array.from(this.selectedNodes));
+          this.selectedNodes.clear();
+        }
+      },
+      'esc action',
+    );
+    this.addNodeAction(
       'toggleHidden',
       async () => {
         this.showHidden = !this.showHidden;
       },
       'toggle visibility of hidden node',
-      { reload: true, multi: false },
+      { reload: true },
     );
-    this.addAction(
+    this.addNodeAction(
       'refresh',
       async () => {
         await this.reload(this.rootNode, { force: true });
@@ -145,17 +152,15 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>> {
         });
       },
       'refresh',
-      { multi: false },
     );
-    this.addAction(
+    this.addNodeAction(
       'help',
-      async (nodes) => {
-        await this.explorer.showHelp(this, nodes === null);
+      async () => {
+        await this.explorer.showHelp(this);
       },
       'show help',
-      { multi: false },
     );
-    this.addAction(
+    this.addNodesAction(
       'actionMenu',
       async (nodes) => {
         await this.listActionMenu(nodes);
@@ -168,8 +173,8 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>> {
         this.selectedNodes.add(node);
         this.requestRenderNodes([node]);
       },
-      'toggle node selection',
-      { multi: false, select: true },
+      'select node',
+      { select: true },
     );
     this.addNodeAction(
       'unselect',
@@ -177,8 +182,8 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>> {
         this.selectedNodes.delete(node);
         this.requestRenderNodes([node]);
       },
-      'toggle node selection',
-      { multi: false, select: true },
+      'unselect node',
+      { select: true },
     );
     this.addNodeAction(
       'toggleSelection',
@@ -190,7 +195,7 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>> {
         }
       },
       'toggle node selection',
-      { multi: false, select: true },
+      { select: true },
     );
   }
 
@@ -221,73 +226,32 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>> {
 
   async opened(_isNotify: boolean) {}
 
-  addGlobalAction(
-    name: ActionSyms,
-    callback: (
-      nodes: BaseTreeNode<any>[] | null,
-      arg: string | undefined,
-      mode: ActionMode,
-    ) => void | Promise<void>,
-    description: string,
-    options: Partial<ActionOptions> = {},
-  ) {
-    this.explorer.addGlobalAction(name, callback, description, options);
-  }
-
-  addAction(
-    name: ActionSyms,
-    callback: (
-      nodes: TreeNode[] | null,
-      arg: string | undefined,
-      mode: ActionMode,
-    ) => void | Promise<void>,
-    description: string,
-    options: Partial<ActionOptions> = {},
-  ) {
-    this.rootActions[name] = {
-      callback: (arg, mode) => callback(null, arg, mode),
-      description,
-      options,
-    };
-    this.actions[name] = {
-      callback,
-      description,
-      options,
-    };
-  }
-
-  addRootAction(
-    name: ActionSyms,
-    callback: (arg: string | undefined, mode: ActionMode) => void | Promise<void>,
-    description: string,
-    options: Partial<ActionOptions> = {},
-  ) {
-    this.rootActions[name] = { callback, options, description };
-  }
-
   addNodesAction(
-    name: ActionSyms,
-    callback: (node: TreeNode[], arg: string | undefined, mode: ActionMode) => void | Promise<void>,
+    name: string,
+    callback: (nodes: TreeNode[], arg?: string) => void | Promise<void>,
     description: string,
-    options: Partial<ActionOptions> = {},
+    options: Partial<Omit<ActionOptions, 'multi'>> = {},
   ) {
     this.actions[name] = {
       callback,
       description,
-      options,
+      options: {
+        ...options,
+        multi: true,
+      },
     };
   }
 
   addNodeAction(
-    name: ActionSyms,
-    callback: (node: TreeNode, arg: string | undefined, mode: ActionMode) => void | Promise<void>,
+    name: string,
+    callback: (node: TreeNode, arg: string | undefined) => void | Promise<void>,
     description: string,
     options: Partial<ActionOptions> = {},
   ) {
     this.actions[name] = {
-      callback: async (nodes: TreeNode[], arg, mode) => {
+      callback: async (nodes: TreeNode[], arg) => {
         for (const node of nodes) {
-          await callback(node, arg, mode);
+          await callback(node, arg);
         }
       },
       description,
@@ -295,62 +259,28 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>> {
     };
   }
 
-  async doRootAction(name: ActionSyms, arg?: string, mode: ActionMode = 'n') {
-    const action = this.rootActions[name];
-    if (action) {
-      const { render = false, reload = false } = action.options;
-
-      await action.callback(arg, mode);
-
-      if (reload) {
-        await this.reload(this.rootNode);
-      } else if (render) {
-        await this.render();
-      }
-      return;
-    }
-
-    const globalAction = this.explorer.globalActions[name];
-    if (globalAction) {
-      const { render = false, reload = false } = globalAction.options;
-
-      await globalAction.callback([this.rootNode], arg, mode);
-
-      if (reload) {
-        await this.reload(this.rootNode);
-      } else if (render) {
-        await this.render();
-      }
-      return;
-    }
-  }
-
-  async doAction(
-    name: ActionSyms,
-    nodes: TreeNode | TreeNode[],
-    arg?: string,
-    mode: ActionMode = 'n',
-  ) {
+  async doAction(name: string, nodes: TreeNode | TreeNode[], arg?: string) {
     const action = this.actions[name] || this.explorer.globalActions[name];
     if (!action) {
       return;
     }
 
-    const { multi = true, render = false, reload = false, select = false } = action.options;
+    const { multi = false, render = false, reload = false, select = false } = action.options;
 
     const finalNodes = Array.isArray(nodes) ? nodes : [nodes];
     if (select) {
-      await action.callback(finalNodes, arg, mode);
+      await action.callback(finalNodes, arg);
     } else if (multi) {
       if (this.selectedNodes.size > 0) {
         const nodes = Array.from(this.selectedNodes);
         this.selectedNodes.clear();
-        await action.callback(nodes, arg, mode);
+        this.requestRenderNodes(nodes);
+        await action.callback(nodes, arg);
       } else {
-        await action.callback(finalNodes, arg, mode);
+        await action.callback(finalNodes, arg);
       }
     } else {
-      await action.callback([finalNodes[0]], arg, mode);
+      await action.callback([finalNodes[0]], arg);
     }
 
     if (reload) {
@@ -360,56 +290,122 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>> {
     }
   }
 
-  async openAction(node: TreeNode, openByWinnr: (winnr: number) => Promise<void>) {
-    const openStrategy = getOpenStrategy();
-    if (openStrategy === 'vsplit') {
-      await this.doAction('openInVsplit', node);
-      await this.explorer.quitOnOpen();
-    } else if (openStrategy === 'select') {
-      const position = await this.explorer.args.value(argOptions.position);
-      if (position === 'floating') {
-        await this.explorer.quit();
-      }
-      await this.explorer.selectWindowsUI(
-        async (winnr) => {
-          await openByWinnr(winnr);
-          await this.explorer.quitOnOpen();
-        },
-        async () => {
-          await this.doAction('openInVsplit', node);
-          await this.explorer.quitOnOpen();
-        },
-        async () => {
-          if (position === 'floating') {
-            await this.explorer.resume(this.explorer.args);
-          }
-        },
-      );
-    } else if (openStrategy === 'previousBuffer') {
-      const prevWinnr = await this.explorer.explorerManager.prevWinnrByPrevBufnr();
-      if (prevWinnr) {
-        await openByWinnr(prevWinnr);
-      } else {
-        await this.doAction('openInVsplit', node);
-      }
-      await this.explorer.quitOnOpen();
-    } else if (openStrategy === 'previousWindow') {
-      const prevWinnr = await this.explorer.explorerManager.prevWinnrByPrevWindowID();
-      if (prevWinnr) {
-        await openByWinnr(prevWinnr);
-      } else {
-        await this.doAction('openInVsplit', node);
-      }
-      await this.explorer.quitOnOpen();
-    } else if (openStrategy === 'sourceWindow') {
-      const prevWinnr = await this.explorer.sourceWinnr();
-      if (prevWinnr) {
-        await openByWinnr(prevWinnr);
-      } else {
-        await this.doAction('openInVsplit', node);
-      }
-      await this.explorer.quitOnOpen();
+  async openAction(
+    node: TreeNode,
+    {
+      openByWinnr: originalOpenByWinnr,
+      getURI = async () => {
+        const uri = Uri.parse(node.uri);
+        if (uri.scheme === 'file') {
+          return (await this.nvim.call('fnameescape', uri.fsPath)) as string;
+        } else {
+          return (await this.nvim.call('fnameescape', node.uri)) as string;
+        }
+      },
+      openStrategy,
+    }: {
+      openByWinnr?: (winnr: number) => void | Promise<void>;
+      getURI?: () => string | Promise<string>;
+      openStrategy?: OpenStrategy;
+    },
+  ) {
+    if (node.expandable) {
+      return;
     }
+    const { nvim } = this;
+    const curWinnr = await nvim.call('winnr');
+    const openByWinnr =
+      originalOpenByWinnr ??
+      (async (winnr: number) => {
+        if (curWinnr !== winnr) {
+          await skipOnEventsByWinnrs([winnr]);
+        }
+        await nvim.command(`${winnr}wincmd w`);
+        await nvim.command(`edit ${await getURI()}`);
+      });
+    const actions: Record<OpenStrategy, () => void | Promise<void>> = {
+      select: async () => {
+        const position = await this.explorer.args.value(argOptions.position);
+        if (position === 'floating') {
+          await this.explorer.quit();
+        }
+        await this.explorer.selectWindowsUI(
+          async (winnr) => {
+            await openByWinnr(winnr);
+            await this.explorer.quitOnOpen();
+          },
+          async () => {
+            await actions.vsplit();
+          },
+          async () => {
+            if (position === 'floating') {
+              await this.explorer.resume(this.explorer.args);
+            }
+          },
+        );
+      },
+      split: async () => {
+        // TODO split like vscode
+        await nvim.command(`split ${await getURI()}`);
+        await this.explorer.quitOnOpen();
+      },
+      vsplit: async () => {
+        await execNotifyBlock(async () => {
+          nvim.command(`vsplit ${await getURI()}`, true);
+          const position = await this.explorer.args.value(argOptions.position);
+          if (position === 'left') {
+            nvim.command('wincmd L', true);
+          } else if (position === 'right') {
+            nvim.command('wincmd H', true);
+          } else if (position === 'tab') {
+            nvim.command('wincmd L', true);
+          }
+          await this.explorer.quitOnOpen();
+        });
+      },
+      tab: async () => {
+        await this.explorer.quitOnOpen();
+        await nvim.command(`tabedit ${await getURI()}`);
+      },
+      previousBuffer: async () => {
+        const prevWinnr = await this.explorer.explorerManager.prevWinnrByPrevBufnr();
+        if (prevWinnr) {
+          await openByWinnr(prevWinnr);
+        } else {
+          await actions.vsplit();
+        }
+        await this.explorer.quitOnOpen();
+      },
+      previousWindow: async () => {
+        const prevWinnr = await this.explorer.explorerManager.prevWinnrByPrevWindowID();
+        if (prevWinnr) {
+          await openByWinnr(prevWinnr);
+        } else {
+          await actions.vsplit();
+        }
+        await this.explorer.quitOnOpen();
+      },
+      sourceWindow: async () => {
+        const prevWinnr = await this.explorer.sourceWinnr();
+        if (prevWinnr) {
+          await openByWinnr(prevWinnr);
+        } else {
+          await actions.vsplit();
+        }
+        await this.explorer.quitOnOpen();
+      },
+    };
+    await actions[openStrategy || getOpenStrategy()]();
+  }
+
+  async previewAction(node: TreeNode, previewStrategy?: PreviewStrategy) {
+    const nodeIndex = this.getLineByNode(node);
+    await this.explorer.floatingWindow.previewNode(
+      previewStrategy || getPreviewStrategy(),
+      this,
+      node,
+      nodeIndex,
+    );
   }
 
   addIndexes(name: string, relativeIndex: number) {
@@ -469,24 +465,24 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>> {
     };
   }
 
-  async listActionMenu(nodes: TreeNode[] | null) {
+  async listActionMenu(nodes: TreeNode[]) {
     const actions = {
       ...this.explorer.globalActions,
-      ...(nodes === null ? this.rootActions : this.actions),
+      ...this.actions,
     };
 
     explorerActionList.setExplorerActions(
       Object.entries(actions)
         .sort(([aName], [bName]) => aName.localeCompare(bName))
-        .map(([name, { callback, description }]) => ({
-          name,
+        .map(([actionName, { callback, description }]) => ({
+          name: actionName,
           nodes,
           mappings,
           root: nodes === null,
-          key: reverseMappings[name],
+          key: reverseMappings[actionName],
           description,
           async callback() {
-            callback();
+            callback(nodes);
             await task.resolve();
           },
         }))
@@ -510,7 +506,7 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>> {
 
   getLineByNode(node: TreeNode): number {
     if (node) {
-      return this.flattenedNodes.findIndex((it) => it.uid === node.uid);
+      return this.flattenedNodes.findIndex((it) => it.uri === node.uri);
     } else {
       return 0;
     }
@@ -552,7 +548,7 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>> {
     }: { lineIndex?: number; col?: number; notify?: boolean } = {},
   ) {
     const finalCol = col === undefined ? await this.explorer.currentCol() : col;
-    const lineIndex = this.flattenedNodes.findIndex((it) => it.uid === node.uid);
+    const lineIndex = this.flattenedNodes.findIndex((it) => it.uri === node.uri);
     if (lineIndex !== -1) {
       await this.gotoLineIndex(lineIndex, finalCol, notify);
     } else if (fallbackLineIndex !== undefined) {
@@ -618,7 +614,7 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>> {
           return;
         }
 
-        const nodeIndex = this.flattenedNodes.findIndex((it) => it.uid === node.uid);
+        const nodeIndex = this.flattenedNodes.findIndex((it) => it.uri === node.uri);
         if (nodeIndex > -1) {
           if (node.parent?.children) {
             const siblingIndex = node.parent.children.indexOf(node);
@@ -688,7 +684,7 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>> {
   }
 
   private nodeAndChildrenRange(node: TreeNode): { startIndex: number; endIndex: number } | null {
-    const startIndex = this.flattenedNodes.findIndex((it) => it.uid === node.uid);
+    const startIndex = this.flattenedNodes.findIndex((it) => it.uri === node.uri);
     if (startIndex === -1) {
       return null;
     }
@@ -827,7 +823,7 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>> {
     await execNotifyBlock(async () => {
       await Promise.all(
         nodes.map(async (node) => {
-          const nodeIndex = this.flattenedNodes.findIndex((it) => it.uid === node.uid);
+          const nodeIndex = this.flattenedNodes.findIndex((it) => it.uri === node.uri);
           if (nodeIndex === -1) {
             return;
           }

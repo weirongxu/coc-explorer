@@ -9,7 +9,7 @@ import {
   config,
 } from '../../../util';
 import { hlGroupManager } from '../../highlight-manager';
-import { ExplorerSource, sourceIcons, BaseTreeNode } from '../../source';
+import { ExplorerSource, BaseTreeNode } from '../../source';
 import { sourceManager } from '../../source-manager';
 import { bufferColumnRegistrar } from './buffer-column-registrar';
 import './load';
@@ -51,14 +51,16 @@ export const bufferHighlights = {
 };
 
 export class BufferSource extends ExplorerSource<BufferNode> {
+  scheme = 'buf';
   hlSrcId = workspace.createNameSpace('coc-explorer-buffer');
   showHidden: boolean = config.get<boolean>('file.showHiddenBuffers')!;
   rootNode: BufferNode = {
     type: 'root',
     isRoot: true,
-    uid: this.sourceName + '://',
+    uri: this.helper.generateUri('/'),
     level: 0,
     drawnLine: '',
+    expandable: true,
     bufnr: 0,
     bufnrStr: '0',
     bufname: '',
@@ -131,16 +133,17 @@ export class BufferSource extends ExplorerSource<BufferNode> {
       const bufnr = matches[1];
       const flags = matches[2];
       const bufname = matches[3];
+      const fullpath = pathLib.resolve(normalizePath(bufname));
       res.push({
         type: 'child',
-        uid: this.sourceName + '://' + bufnr,
+        uri: this.helper.generateUri(`${fullpath}?bufnr=${bufnr}`),
         level: 1,
         drawnLine: '',
         parent: this.rootNode,
         bufnr: parseInt(bufnr),
         bufnrStr: bufnr,
         bufname,
-        fullpath: pathLib.resolve(normalizePath(bufname)),
+        fullpath,
         basename: pathLib.basename(bufname),
         unlisted: flags.includes('u'),
         current: flags.includes('%'),

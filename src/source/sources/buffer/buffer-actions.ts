@@ -1,46 +1,45 @@
 import { BufferSource } from './buffer-source';
-import { avoidOnBufEnter, execNotifyBlock, skipOnEventsByWinnrs } from '../../../util';
-import { argOptions } from '../../../parse-args';
+import { OpenStrategy, execNotifyBlock } from '../../../util';
 
 export function initBufferActions(buffer: BufferSource) {
   const { nvim } = buffer;
-
-  buffer.addAction(
+  buffer.addNodeAction(
+    'expand',
+    async (node) => {
+      if (node.expandable) {
+        await buffer.expandNode(node);
+      }
+    },
+    'expand node',
+    { multi: true },
+  );
+  buffer.addNodeAction(
     'collapse',
-    async () => {
-      buffer.expanded = false;
-      await buffer.reload(buffer.rootNode);
-      await buffer.gotoRoot();
+    async (node) => {
+      if (node.expandable && buffer.expandStore.isExpanded(node)) {
+        await buffer.collapseNode(node);
+      } else if (node.parent) {
+        await execNotifyBlock(async () => {
+          await buffer.collapseNode(node.parent!, { notify: true });
+          await buffer.gotoNode(node.parent!, { notify: true });
+        });
+      }
     },
-    'collapse root node',
-  );
-  buffer.addRootAction(
-    'expand',
-    async () => {
-      buffer.expanded = true;
-      await buffer.reload(buffer.rootNode);
-    },
-    'expand root node',
-  );
-
-  buffer.addNodesAction(
-    'expand',
-    async (nodes) => {
-      await buffer.doAction('open', nodes);
-    },
-    'open buffer',
+    'collapse node',
+    { multi: true },
   );
   buffer.addNodeAction(
     'open',
-    async (node) => {
-      await buffer.openAction(node, async (winnr) => {
-        await skipOnEventsByWinnrs([winnr]);
-        await buffer.nvim.command(`${winnr}wincmd w`);
-        await nvim.command(`buffer ${node.bufnr}`);
+    async (node, arg) => {
+      await buffer.openAction(node, {
+        async getURI() {
+          return (await nvim.call('fnameescape', node.bufname)) as string;
+        },
+        openStrategy: arg as OpenStrategy,
       });
     },
     'open buffer',
-    { multi: false },
+    { multi: true },
   );
   buffer.addNodeAction(
     'drop',
@@ -58,50 +57,15 @@ export function initBufferActions(buffer: BufferSource) {
       await buffer.explorer.quitOnOpen();
     },
     'open buffer via drop command',
-    { multi: false },
+    { multi: true },
   );
-  buffer.addNodeAction(
-    'openInTab',
-    async (node) => {
-      await buffer.explorer.quitOnOpen();
-      const escaped = await nvim.call('fnameescape', node.bufname);
-      await nvim.command(`tabe ${escaped}`);
-    },
-    'open buffer via tab',
-  );
-  buffer.addNodeAction(
-    'openInSplit',
-    async (node) => {
-      await nvim.command(`sbuffer ${node.bufnr}`);
-      await buffer.explorer.quitOnOpen();
-    },
-    'open buffer via split command',
-  );
-  buffer.addNodeAction(
-    'openInVsplit',
-    async (node) => {
-      await execNotifyBlock(async () => {
-        const position = await buffer.explorer.args.value(argOptions.position);
-        nvim.command(`vertical sbuffer ${node.bufnr}`, true);
-        if (position === 'left') {
-          nvim.command('wincmd L', true);
-        } else if (position === 'right') {
-          nvim.command('wincmd H', true);
-        } else if (position === 'tab') {
-          nvim.command('wincmd L', true);
-        }
-      });
-    },
-    'open buffer via vsplit command',
-  );
-
   buffer.addNodeAction(
     'delete',
     async (node) => {
       await nvim.command(`bdelete ${node.bufnr}`);
     },
     'delete buffer',
-    { reload: true },
+    { multi: true, reload: true },
   );
   buffer.addNodeAction(
     'deleteForever',
@@ -109,8 +73,6 @@ export function initBufferActions(buffer: BufferSource) {
       await nvim.command(`bwipeout ${node.bufnr}`);
     },
     'bwipeout buffer',
-    {
-      reload: true,
-    },
+    { multi: true, reload: true },
   );
 }

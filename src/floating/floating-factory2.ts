@@ -172,7 +172,7 @@ export class FloatingFactory2 implements Disposable {
     const { nvim, preferTop } = this;
     const { columns, lines } = this;
     let alignTop = false;
-    const [cursorRow] = (await nvim.call('coc#util#win_position')) as [number, number];
+    const [winBottomRow] = (await nvim.call('coc#util#win_position')) as [number, number];
     const explorerWin = await explorer.win;
     if (!explorerWin) {
       return;
@@ -187,11 +187,11 @@ export class FloatingFactory2 implements Disposable {
     }
     const previewHeight = Math.min(this.floatBuffer.getHeight(docs, maxWidth), this.maxHeight);
     if (!preferTop) {
-      if (lines - cursorRow < previewHeight && cursorRow > previewHeight) {
+      if (lines - winBottomRow < previewHeight && winBottomRow > previewHeight) {
         alignTop = true;
       }
     } else {
-      if (cursorRow >= previewHeight || cursorRow >= lines - cursorRow) {
+      if (winBottomRow >= previewHeight || winBottomRow >= lines - winBottomRow) {
         alignTop = true;
       }
     }
@@ -206,8 +206,14 @@ export class FloatingFactory2 implements Disposable {
     if (!explorerCursor) {
       return;
     }
+    const view: {
+      topline: number;
+      leftcol: number;
+      lnum: number;
+      col: number;
+    } = await nvim.call('winsaveview', []);
     let col = 0;
-    let row = explorerCursor.lineIndex + (alignTop ? -previewHeight + 1 : 0);
+    let row = explorerCursor.lineIndex - view.topline + 1 + (alignTop ? -previewHeight + 1 : 0);
     const position = await explorer.args.value(argOptions.position);
     if (position === 'left') {
       col = explorerWidth;
@@ -232,6 +238,7 @@ export class FloatingFactory2 implements Disposable {
       }
     }
 
+    // TODO FIXME nvim and vim
     return {
       row,
       col,
@@ -339,8 +346,8 @@ export class FloatingFactory2 implements Disposable {
         this.popup.setFiletype(filetypes[0]);
       }
       this.popup.move({
-        line: cursorPostion(config.row),
-        col: cursorPostion(config.col),
+        line: config.relative === 'cursor' ? cursorPostion(config.row) : config.row + 1,
+        col: config.relative === 'cursor' ? cursorPostion(config.col) : config.col + 1,
         minwidth: config.width - 2,
         minheight: config.height,
         maxwidth: config.width - 2,

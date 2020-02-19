@@ -10,7 +10,9 @@ export const getAutoReveal = () => config.get<boolean>('file.autoReveal')!;
 
 export type OpenStrategy =
   | 'select'
+  | 'split'
   | 'vsplit'
+  | 'tab'
   | 'previousBuffer'
   | 'previousWindow'
   | 'sourceWindow';

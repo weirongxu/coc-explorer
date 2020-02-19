@@ -189,7 +189,9 @@
           "description": "Strategy for open action",
           "enum": [
             "select",
+            "split",
             "vsplit",
+            "tab",
             "previousBuffer",
             "previousWindow",
             "sourceWindow"

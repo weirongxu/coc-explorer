@@ -1,8 +1,5 @@
 import { Uri, diagnosticManager as cocDiagnosticManager } from 'coc.nvim';
 import pathLib from 'path';
-import { config } from './util';
-
-const diagnosticCountMax = config.get<number>('file.diagnosticCountMax')!;
 
 class DiagnosticManager {
   errorPathCount: Record<string, number> = {};

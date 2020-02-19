@@ -103,16 +103,12 @@ Explorer sources, example: `buffer+,file+`, default: `buffer-,file+`
 
 ```
               expand
-      collapsed ¦
-          ¦     ¦
+      collapsed │
           ↓     ↓
     buffer-,file+
-      ↑       ↑
-      ¦       +--+
-      ¦          ¦
-buffer source    ¦
-                 ¦
-            file source
+    └──┬─┘  └─┬┘
+buffer source │
+          file source
 ```
 
 #### `--position <position>`
@@ -269,16 +265,15 @@ Explorer will expand to this filepath, default: `current buffer`
 **Grammar:**
 
 ```
-column
-  ├────────────────────────┐
-  │                        │
-  └──┐  volume of modifier │
-     │         ├────┬──────│───────────────┬────────────┐
-     ↓         ↓    ↓      ↓               ↓            ↓
+            column
+     ┌─────────┴───────────┐
+     │                     │   volume of modifier
+     │         ┌────┬──────│──────────┴────┬────────────┐
+ ┌───┴───┐   ┌─┴┐   ↓   ┌──┴───┐           ↓            ↓
 [selection | clip | 1] [filename growRight 1 omitCenter 5]
-           ↑      ↑                  ↑            ↑
-           ├──────┴──────────────────┴────────────┘
-        modifier
+           ↑      ↑              └───┬───┘   └────┬───┘
+           └──────┴───────────┬──────┴────────────┘
+                           modifier
 ```
 
 ## Configuration

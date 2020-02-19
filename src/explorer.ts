@@ -1,10 +1,11 @@
 import { Buffer, ExtensionContext, Window, workspace, Disposable } from 'coc.nvim';
-import { Action, ActionMode, mappings, ActionSyms } from './mappings';
+import { Action, ActionMode, mappings } from './mappings';
 import { Args, argOptions, ArgContentWidthTypes } from './parse-args';
 import { IndexesManager } from './indexes-manager';
 import './source/load';
 import { BaseTreeNode, ExplorerSource, ActionOptions } from './source/source';
 import { sourceManager } from './source/source-manager';
+import { Range } from 'vscode-languageserver-protocol';
 import {
   execNotifyBlock,
   config,
@@ -14,7 +15,6 @@ import {
   onBufEnter,
   PreviewStrategy,
   queueAsyncFunction,
-  getPreviewStrategy,
   onCursorMoved,
   onEvents,
 } from './util';
@@ -23,6 +23,7 @@ import { hlGroupManager, HighlightPositionWithLine } from './source/highlight-ma
 import { BuffuerContextVars } from './context-variables';
 import { SourceViewBuilder, SourceRowBuilder } from './source/view-builder';
 import { FloatingPreview } from './floating/floating-preview';
+import { partition } from 'lodash';
 
 const hl = hlGroupManager.linkGroup.bind(hlGroupManager);
 const helpHightlights = {
@@ -47,11 +48,7 @@ export class Explorer {
     {
       description: string;
       options: Partial<ActionOptions>;
-      callback: (
-        nodes: BaseTreeNode<any>[],
-        arg: string | undefined,
-        mode: ActionMode,
-      ) => void | Promise<void>;
+      callback: (nodes: BaseTreeNode<any>[], arg?: string) => void | Promise<void>;
     }
   > = {};
   context: ExtensionContext;
@@ -165,7 +162,6 @@ export class Explorer {
         }
       },
       'previous node',
-      { multi: false },
     );
     this.addGlobalAction(
       'nodeNext',
@@ -176,7 +172,6 @@ export class Explorer {
         }
       },
       'next node',
-      { multi: false },
     );
     this.addGlobalAction(
       'normal',
@@ -186,7 +181,6 @@ export class Explorer {
         }
       },
       'execute vim normal mode commands',
-      { multi: false },
     );
     this.addGlobalAction(
       'quit',
@@ -194,7 +188,6 @@ export class Explorer {
         await this.quit();
       },
       'quit explorer',
-      { multi: false },
     );
     this.addGlobalAction(
       'preview',
@@ -202,23 +195,16 @@ export class Explorer {
         const source = await this.currentSource();
         if (nodes && nodes[0] && source) {
           const node = nodes[0];
-          const nodeIndex = source.getLineByNode(node);
-          await this.floatingWindow.previewNode(
-            (arg as PreviewStrategy) || getPreviewStrategy,
-            source,
-            node,
-            nodeIndex,
-          );
+          return source.previewAction(node, arg as PreviewStrategy);
         }
       },
       'preview',
-      { multi: false },
     );
 
     this.addGlobalAction(
       'gotoSource',
-      async (_nodes, name) => {
-        const source = this.sources.find((s) => s.sourceName === name);
+      async (_nodes, arg) => {
+        const source = this.sources.find((s) => s.sourceName === arg);
         if (source) {
           await source.gotoLineIndex(0);
         }
@@ -522,12 +508,8 @@ export class Explorer {
   }
 
   addGlobalAction(
-    name: ActionSyms,
-    callback: (
-      nodes: BaseTreeNode<any>[] | null,
-      arg: string | undefined,
-      mode: ActionMode,
-    ) => void | Promise<void>,
+    name: string,
+    callback: (nodes: BaseTreeNode<any>[], arg: string | undefined) => void | Promise<void>,
     description: string,
     options: Partial<ActionOptions> = {},
   ) {
@@ -538,15 +520,19 @@ export class Explorer {
     };
   }
 
-  _doActions?: (actions: Action[], mode: ActionMode, count?: number) => Promise<void>;
-  async doActions(actions: Action[], mode: ActionMode, count: number = 1) {
-    if (!this._doActions) {
-      this._doActions = queueAsyncFunction(
+  private _doActionsWithCount?: (
+    actions: Action[],
+    mode: ActionMode,
+    count?: number,
+  ) => Promise<void>;
+  async doActionsWithCount(actions: Action[], mode: ActionMode, count: number = 1) {
+    if (!this._doActionsWithCount) {
+      this._doActionsWithCount = queueAsyncFunction(
         async (actions: Action[], mode: ActionMode, count: number = 1) => {
-          for (var i = 0; i < count; i++) {
-            for (const action of actions) {
-              await this.doAction(action, mode);
-            }
+          const now = Date.now();
+
+          for (let c = 0; c < count; c++) {
+            await this.doActions(actions, mode);
           }
           await execNotifyBlock(async () => {
             await Promise.all(
@@ -555,68 +541,80 @@ export class Explorer {
               }),
             );
           });
+
+          if (getEnableDebug()) {
+            const actionDisplay = actions.map((a) => (a.arg ? a.name + ':' + a.arg : a.name));
+            // tslint:disable-next-line: ban
+            workspace.showMessage(`action(${actionDisplay}): ${Date.now() - now}ms`, 'more');
+          }
         },
       );
     }
-    return this._doActions(actions, mode, count);
+    return this._doActionsWithCount(actions, mode, count);
   }
 
-  async doAction(action: Action, mode: ActionMode = 'n') {
+  async getSelectedNodesGroup(mode: ActionMode) {
     const { nvim } = this;
-    const now = Date.now();
-
-    const lineIndexes: number[] = [];
+    let selectedRange: undefined | Range;
     const document = await workspace.document;
     if (mode === 'v') {
       const range = await workspace.getSelectedRange('v', document);
       if (range) {
-        for (let line = range.start.line; line <= range.end.line; line++) {
-          lineIndexes.push(line);
-        }
+        selectedRange = range;
       }
-    } else {
-      const line = ((await nvim.call('line', '.')) as number) - 1;
-      lineIndexes.push(line);
+    }
+    if (!selectedRange) {
+      const line = ((await nvim.call('line', ['.'])) as number) - 1;
+      selectedRange = {
+        start: { line, character: 0 },
+        end: { line, character: 0 },
+      };
     }
 
-    const nodesGroup: Map<ExplorerSource<any>, Set<object | null>> = new Map();
+    const nodesGroup: Map<ExplorerSource<any>, BaseTreeNode<any>[]> = new Map();
 
-    for (const lineIndex of lineIndexes) {
+    for (
+      let lineIndex = selectedRange.start.line;
+      lineIndex <= selectedRange.end.line;
+      lineIndex++
+    ) {
       const [source] = this.findSourceByLineIndex(lineIndex);
-      if (source) {
-        if (!nodesGroup.has(source)) {
-          nodesGroup.set(source, new Set());
-        }
-        const relativeLineIndex = lineIndex - source.startLineIndex;
-
-        nodesGroup
-          .get(source)!
-          .add(relativeLineIndex === 0 ? null : source.flattenedNodes[relativeLineIndex]);
+      if (!nodesGroup.has(source)) {
+        nodesGroup.set(source, []);
       }
+      const relativeLineIndex = lineIndex - source.startLineIndex;
+
+      nodesGroup.get(source)!.push(source.flattenedNodes[relativeLineIndex]);
     }
 
-    await Promise.all(
-      Array.from(nodesGroup.entries()).map(async ([source, nodes]) => {
-        if (nodes.has(null)) {
-          await source.doRootAction(action.name, action.arg);
-        } else {
-          await source.doAction(
-            action.name,
-            Array.from(nodes).filter((node) => node),
-            action.arg,
-            mode,
-          );
-        }
-      }),
-    );
+    return nodesGroup;
+  }
 
-    if (getEnableDebug()) {
-      let actionDisplay = action.name;
-      if (action.arg) {
-        actionDisplay += ':' + action.arg;
+  async doActions(actions: Action[], mode: ActionMode) {
+    const nodesGroup = await this.getSelectedNodesGroup(mode);
+
+    const conditionActionRules: Record<
+      string,
+      (n: BaseTreeNode<any>, arg: string | undefined) => boolean | undefined
+    > = {
+      'expandable?': (n) => n.expandable,
+      'type?': (n, arg) => n.type === arg,
+    };
+
+    for (const [source, nodes] of nodesGroup.entries()) {
+      for (let i = 0; i < actions.length; i++) {
+        const action = actions[i];
+        const conditionRule = conditionActionRules[action.name];
+        if (conditionRule) {
+          const [trueNodes, falseNodes] = partition(nodes, (n) => conditionRule(n, action.arg));
+          const [trueAction, falseAction] = [actions[i + 1], actions[i + 2]];
+          i += 2;
+          await source.doAction(trueAction.name, trueNodes, trueAction.arg);
+          await source.doAction(falseAction.name, falseNodes, falseAction.arg);
+        } else {
+          await source.doAction(action.name, nodes, action.arg);
+        }
       }
-      // tslint:disable-next-line: ban
-      workspace.showMessage(`action(${actionDisplay}): ${Date.now() - now}ms`, 'more');
     }
   }
 
@@ -649,9 +647,10 @@ export class Explorer {
   private findSourceByLineIndex(lineIndex: number) {
     const sourceIndex = this.sources.findIndex((source) => lineIndex < source.endLineIndex);
     if (sourceIndex === -1) {
-      return [null, -1] as [null, -1];
+      const index = this.sources.length - 1;
+      return [this.sources[index], index] as const;
     } else {
-      return [this.sources[sourceIndex], sourceIndex] as [ExplorerSource<any>, number];
+      return [this.sources[sourceIndex], sourceIndex] as const;
     }
   }
 
@@ -822,7 +821,7 @@ export class Explorer {
     }
   }
 
-  async showHelp(source: ExplorerSource<any>, isRoot: boolean) {
+  async showHelp(source: ExplorerSource<any>) {
     this.isHelpUI = true;
     const builder = new SourceViewBuilder(this);
     const width = await this.nvim.call('winwidth', '%');
@@ -834,7 +833,7 @@ export class Explorer {
       curUid += 1;
       return {
         type: '',
-        uid: `help://${curUid}`,
+        uri: `help://${curUid}`,
         level: 0,
         drawnLine: '',
       };
@@ -842,11 +841,7 @@ export class Explorer {
 
     nodes.push(
       await builder.drawRowForNode(createNode(), (row) => {
-        row.add(
-          `Help for [${source.sourceName}${
-            isRoot ? ' root' : ''
-          }], (use q or <esc> return to explorer)`,
-        );
+        row.add(`Help for [${source.sourceName}], (use q or <esc> return to explorer)`);
       }),
     );
     nodes.push(
@@ -857,7 +852,7 @@ export class Explorer {
 
     const registeredActions = {
       ...this.globalActions,
-      ...(isRoot ? source.rootActions : source.actions),
+      ...source.actions,
     };
     const drawAction = (row: SourceRowBuilder, action: Action) => {
       row.add(action.name, { hl: helpHightlights.action });

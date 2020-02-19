@@ -7,68 +7,6 @@ enum MappingMode {
 
 export const mappingMode = config.get<MappingMode>('keyMappingMode', MappingMode.default);
 
-export const actionSyms = [
-  'select',
-  'unselect',
-  'toggleSelection',
-  'actionMenu',
-
-  'collapse',
-  'expand',
-  'expandRecursive',
-  'collapseRecursive',
-  'expandOrCollapse',
-  'cd',
-  'open',
-  'openInSplit',
-  'openInVsplit',
-  'openInTab',
-  'drop',
-  'gotoParent',
-  'preview',
-
-  'copyFilepath',
-  'copyFilename',
-  'copyFile',
-  'cutFile',
-  'pasteFile',
-  'delete',
-  'deleteForever',
-
-  'addFile',
-  'addDirectory',
-  'rename',
-
-  'toggleHidden',
-  'refresh',
-  'normal',
-
-  'help',
-  'quit',
-  'systemExecute',
-  'listDrive',
-
-  'search',
-  'searchRecursive',
-
-  'nodePrev',
-  'nodeNext',
-
-  'gotoSource',
-  'sourcePrev',
-  'sourceNext',
-
-  'diagnosticPrev',
-  'diagnosticNext',
-
-  'gitPrev',
-  'gitNext',
-  'gitStage',
-  'gitUnstage',
-] as const;
-
-export type ActionSyms = typeof actionSyms[number];
-
 type OriginalMappings = Record<string, false | string | string[]>;
 
 export const defaultMappings: Record<keyof typeof MappingMode, OriginalMappings> = {
@@ -81,7 +19,7 @@ export const defaultMappings: Record<keyof typeof MappingMode, OriginalMappings>
     '<tab>': 'actionMenu',
 
     h: 'collapse',
-    l: 'expand',
+    l: ['expandable?', 'expand', 'open'],
     J: ['toggleSelection', 'nodeNext'],
     K: ['toggleSelection', 'nodePrev'],
     gl: 'expandRecursive',
@@ -89,8 +27,9 @@ export const defaultMappings: Record<keyof typeof MappingMode, OriginalMappings>
     o: 'expandOrCollapse',
     '<cr>': 'open',
     e: 'open',
-    E: 'openInVsplit',
-    t: 'openInTab',
+    gv: 'open:split',
+    E: 'open:vsplit',
+    t: 'open:tab',
     '<bs>': 'gotoParent',
     gp: 'preview:labeling',
 
@@ -111,6 +50,7 @@ export const defaultMappings: Record<keyof typeof MappingMode, OriginalMappings>
 
     '?': 'help',
     q: 'quit',
+    '<esc>': 'esc',
     X: 'systemExecute',
     gd: 'listDrive',
 
@@ -134,7 +74,7 @@ export const defaultMappings: Record<keyof typeof MappingMode, OriginalMappings>
 };
 
 export type Action = {
-  name: ActionSyms;
+  name: string;
   arg?: string;
 };
 
@@ -150,7 +90,7 @@ export const mappings: Mappings = {};
  * // return { name: 'normal', arg: 'j' }
  */
 function parseAction(originalAction: string): Action {
-  const [name, arg] = originalAction.split(/:(.+)/, 2) as [ActionSyms, string | undefined];
+  const [name, arg] = originalAction.split(/:(.+)/, 2) as [string, string | undefined];
   return {
     name,
     arg,

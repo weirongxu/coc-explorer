@@ -1,4 +1,4 @@
-import { workspace, listManager, Uri } from 'coc.nvim';
+import { workspace, Uri } from 'coc.nvim';
 import fs from 'fs';
 import pathLib from 'path';
 import { onError } from '../../../logger';
@@ -14,7 +14,6 @@ import {
   fsStat,
   normalizePath,
   getExtensions,
-  delay,
 } from '../../../util';
 import { hlGroupManager } from '../../highlight-manager';
 import { ExplorerSource, BaseTreeNode } from '../../source';
@@ -83,6 +82,7 @@ export const fileHighlights = {
 };
 
 export class FileSource extends ExplorerSource<FileNode> {
+  scheme = 'file';
   hlSrcId = workspace.createNameSpace('coc-explorer-file');
   showHidden: boolean = config.get<boolean>('file.showHiddenFiles')!;
   copiedNodes: Set<FileNode> = new Set();
@@ -90,7 +90,7 @@ export class FileSource extends ExplorerSource<FileNode> {
   rootNode: FileNode = {
     type: 'root',
     isRoot: true,
-    uid: this.sourceName + '://',
+    uri: this.helper.generateUri('/'),
     level: 0,
     drawnLine: '',
     name: 'root',
@@ -207,8 +207,8 @@ export class FileSource extends ExplorerSource<FileNode> {
     }, isNotify);
   }
 
-  getPutTargetNode(node: FileNode | null) {
-    if (node === null) {
+  getPutTargetNode(node: FileNode) {
+    if (node.isRoot) {
       return this.rootNode;
     } else if (node.expandable && this.expandStore.isExpanded(node)) {
       return node;
@@ -219,7 +219,7 @@ export class FileSource extends ExplorerSource<FileNode> {
     }
   }
 
-  getPutTargetDir(node: FileNode | null) {
+  getPutTargetDir(node: FileNode) {
     return this.getPutTargetNode(node).fullpath;
   }
 
@@ -307,10 +307,10 @@ export class FileSource extends ExplorerSource<FileNode> {
           const directory = stat ? stat.isDirectory() : false;
           const child: FileNode = {
             type: 'child',
-            uid: this.sourceName + '://' + fullpath,
+            uri: this.helper.generateUri(fullpath),
             level: parent ? parent.level + 1 : 1,
             drawnLine: '',
-            parent: parent || undefined,
+            parent: parent || this.rootNode,
             expandable: directory,
             name: filename,
             fullpath,

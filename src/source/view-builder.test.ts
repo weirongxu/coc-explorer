@@ -110,7 +110,7 @@ async function drawColumn(names: string[], width: number) {
     await r.addTemplatePart<TestNode>(
       {
         type: 'child',
-        uid: '1',
+        uri: 'file:///1',
         drawnLine: '',
         isRoot: false,
         level: 0,

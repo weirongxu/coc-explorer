@@ -2,7 +2,7 @@ import { workspace, ExtensionContext, Emitter, Disposable } from 'coc.nvim';
 import { Explorer } from './explorer';
 import { argOptions, Args } from './parse-args';
 import { onError } from './logger';
-import { mappings, ActionMode } from './mappings';
+import { mappings } from './mappings';
 import { onBufEnter, supportedNvimFloating } from './util';
 import { GlobalContextVars } from './context-variables';
 
@@ -146,7 +146,7 @@ export class ExplorerManager {
     this.mappings = {};
     Object.entries(mappings).forEach(([key, actions]) => {
       this.mappings[key] = {};
-      (['n', 'v'] as ActionMode[]).forEach((mode) => {
+      (['n', 'v'] as const).forEach((mode) => {
         if (mode === 'v' && ['o', 'j', 'k'].includes(key)) {
           return;
         }
@@ -158,7 +158,7 @@ export class ExplorerManager {
             async () => {
               const count = (await this.nvim.eval('v:count')) as number;
               const explorer = this.currentExplorer();
-              explorer?.doActions(actions, mode, count || 1).catch(onError);
+              explorer?.doActionsWithCount(actions, mode, count || 1).catch(onError);
             },
             { sync: true },
           ),
