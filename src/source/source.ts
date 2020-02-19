@@ -445,8 +445,8 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>> {
 
       listManager.ui.onDidClose(async () => {
         await new Promise((resolve) => {
-          const disposable = onEvents('BufWinLeave', (_bufnr, winid) => {
-            if (winid === listManager.ui.window.id) {
+          const disposable = onEvents('BufEnter', () => {
+            if (listManager.ui.window?.id === undefined) {
               disposable.dispose();
               resolve();
             }
@@ -455,6 +455,7 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>> {
         if (isFloating && !isResolve) {
           await showExplorer();
         }
+        resolve();
       });
     });
     return {
