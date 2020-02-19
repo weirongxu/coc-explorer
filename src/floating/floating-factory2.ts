@@ -238,7 +238,6 @@ export class FloatingFactory2 implements Disposable {
       }
     }
 
-    // TODO FIXME nvim and vim
     return {
       row,
       col,

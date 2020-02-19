@@ -57,7 +57,6 @@ export class TemplateRenderer<
 
   async parse(type: Type, template: string, labelingTemplate?: string) {
     let updateUniqueColumns = false;
-    this.uniqueColumns[type] = [];
     if (this.templateStr[type] !== template) {
       this.templateStr[type] = template;
       this.initedParts[type] = [];
@@ -116,8 +115,10 @@ export class TemplateRenderer<
   }
 
   async reload(sourceNode: TreeNode) {
-    for (const column of this.uniqueColumns[sourceNode.type]) {
-      await (column.reload && column.reload(sourceNode));
+    for (const columns of Object.values<ColumnRequired<TreeNode, any>[]>(this.uniqueColumns)) {
+      for (const column of columns) {
+        await (column.reload && column.reload(sourceNode));
+      }
     }
   }
 
