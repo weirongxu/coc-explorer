@@ -27,7 +27,7 @@ export const defaultMappings: Record<keyof typeof MappingMode, OriginalMappings>
     o: 'expandOrCollapse',
     '<cr>': 'open',
     e: 'open',
-    gv: 'open:split',
+    s: 'open:split',
     E: 'open:vsplit',
     t: 'open:tab',
     '<bs>': 'gotoParent',

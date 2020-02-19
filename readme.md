@@ -346,15 +346,28 @@ Default: <pre><code>"labeling"</code></pre>
 </details>
 <details>
 <summary><code>explorer.previewAction.onHover</code>: Open preview when hovering over on node. type: <code>boolean</code></summary>
-Default: <pre><code>false</code></pre>
+Default: <pre><code>true</code></pre>
 </details>
 <details>
-<summary><code>explorer.openAction.strategy</code>: Strategy for open action. type: <code>select | vsplit | previousBuffer | previousWindow | sourceWindow</code></summary>
+<summary><code>explorer.openAction.strategy</code>: Strategy for open action. type: <code>select | split | vsplit | tab | previousBuffer | previousWindow | sourceWindow</code></summary>
 Default: <pre><code>"select"</code></pre>
 </details>
 <details>
 <summary><code>explorer.openAction.select.filterFloatWindows</code>: Filter floating windows in select strategy. type: <code>boolean</code></summary>
 Default: <pre><code>true</code></pre>
+</details>
+<details>
+<summary><code>explorer.openAction.select.filter</code>: Filter windows for select strategy. type: <code>object</code></summary>
+Default: <pre><code>{
+  "buftypes": [
+    "terminal"
+  ],
+  "filetypes": [
+    "vista_kind",
+    "qf"
+  ],
+  "floatingWindows": true
+}</code></pre>
 </details>
 <details>
 <summary><code>explorer.openAction.changeDirectory</code>: Change directory if node is a directory. type: <code>boolean</code></summary>
@@ -423,8 +436,8 @@ Default: <pre><code>"[selection | 1] [bufnr] [name][modified][readonly] [fullpat
 Default: <pre><code>"[name][bufname][fullpath][modified][readonly]"</code></pre>
 </details>
 <details>
-<summary><code>explorer.datetime.format</code>: Explorer datetime format, check out https://github.com/iamkun/dayjs/blob/dev/docs/en/API-reference.md#format-formatstringwithtokens-string. type: <code>string</code></summary>
-Default: <pre><code>"YY/MM/DD HH:mm:ss"</code></pre>
+<summary><code>explorer.datetime.format</code>: Explorer datetime format, check out https://date-fns.org/v2.9.0/docs/format. type: <code>string</code></summary>
+Default: <pre><code>"yy/MM/dd HH:mm:ss"</code></pre>
 </details>
 <details>
 <summary><code>explorer.file.autoReveal</code>: Explorer will automatically expand to the current buffer. type: <code>boolean</code></summary>
@@ -551,17 +564,19 @@ Default: <pre><code>false</code></pre>
     "<tab>": "actionMenu",
 
     "h": "collapse",
-    "l": "expand",
-    "J": ["toggleSelection", "normal:j"],
-    "K": ["toggleSelection", "normal:k"],
+    "l": ["expandable?", "expand", "open"],
+    "J": ["toggleSelection", "nodeNext"],
+    "K": ["toggleSelection", "nodePrev"],
     "gl": "expandRecursive",
     "gh": "collapseRecursive",
     "o": "expandOrCollapse",
     "<cr>": "open",
     "e": "open",
-    "E": "openInVsplit",
-    "t": "openInTab",
+    "s": "open:split",
+    "E": "open:vsplit",
+    "t": "open:tab",
     "<bs>": "gotoParent",
+    "gp": "preview:labeling",
 
     "y": "copyFilepath",
     "Y": "copyFilename",
@@ -580,6 +595,7 @@ Default: <pre><code>false</code></pre>
 
     "?": "help",
     "q": "quit",
+    "<esc>": "esc",
     "X": "systemExecute",
     "gd": "listDrive",
 
