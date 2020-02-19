@@ -341,9 +341,9 @@
           "default": "[name][bufname][fullpath][modified][readonly]"
         },
         "explorer.datetime.format": {
-          "description": "Explorer datetime format, check out https://github.com/iamkun/dayjs/blob/dev/docs/en/API-reference.md#format-formatstringwithtokens-string",
+          "description": "Explorer datetime format, check out https://date-fns.org/v2.9.0/docs/format",
           "type": "string",
-          "default": "YY/MM/DD HH:mm:ss"
+          "default": "yy/MM/dd HH:mm:ss"
         },
         "explorer.file.autoReveal": {
           "description": "Explorer will automatically expand to the current buffer",
@@ -524,7 +524,7 @@
     "@types/which": "^1.3.2",
     "coc.nvim": "^0.0.74",
     "command-exists": "^1.2.8",
-    "dayjs": "^1.8.20",
+    "date-fns": "^2.9.0",
     "jest": "^25.1.0",
     "lodash": "^4.17.15",
     "make-dir": "^3.0.0",
