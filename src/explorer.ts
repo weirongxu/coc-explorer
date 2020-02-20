@@ -24,6 +24,7 @@ import { BuffuerContextVars } from './context-variables';
 import { SourceViewBuilder, SourceRowBuilder } from './source/view-builder';
 import { FloatingPreview } from './floating/floating-preview';
 import { partition } from 'lodash';
+import { conditionActionRules } from './actions';
 
 const hl = hlGroupManager.linkGroup.bind(hlGroupManager);
 const helpHightlights = {
@@ -32,6 +33,7 @@ const helpHightlights = {
   action: hl('HelpAction', 'Identifier'),
   arg: hl('HelpArg', 'Identifier'),
   description: hl('HelpDescription', 'Comment'),
+  conditional: hl('HelpConditional', 'Conditional'),
 };
 
 export class Explorer {
@@ -593,20 +595,12 @@ export class Explorer {
   async doActions(actions: Action[], mode: ActionMode) {
     const nodesGroup = await this.getSelectedNodesGroup(mode);
 
-    const conditionActionRules: Record<
-      string,
-      (n: BaseTreeNode<any>, arg: string | undefined) => boolean | undefined
-    > = {
-      'expandable?': (n) => n.expandable,
-      'type?': (n, arg) => n.type === arg,
-    };
-
     for (const [source, nodes] of nodesGroup.entries()) {
       for (let i = 0; i < actions.length; i++) {
         const action = actions[i];
-        const conditionRule = conditionActionRules[action.name];
-        if (conditionRule) {
-          const [trueNodes, falseNodes] = partition(nodes, (n) => conditionRule(n, action.arg));
+        const rule = conditionActionRules[action.name];
+        if (rule) {
+          const [trueNodes, falseNodes] = partition(nodes, (n) => rule.filter(n, action.arg));
           const [trueAction, falseAction] = [actions[i + 1], actions[i + 2]];
           i += 2;
           await source.doAction(trueAction.name, trueNodes, trueAction.arg);
@@ -881,24 +875,34 @@ export class Explorer {
       row.add(registeredActions[action.name].description, { hl: helpHightlights.description });
     };
     for (const [key, actions] of Object.entries(mappings)) {
-      if (!actions.every((action) => action.name in registeredActions)) {
+      if (!actions.some((action) => action.name in registeredActions)) {
         continue;
       }
-      nodes.push(
-        await builder.drawRowForNode(createNode(), (row) => {
+      let row = new SourceRowBuilder(builder);
+      for (let i = 0; i < actions.length; i++) {
+        if (i === 0) {
           row.add(' ');
           row.add(key, { hl: helpHightlights.mappingKey });
           row.add(' - ');
-          drawAction(row, actions[0]);
-        }),
-      );
-      for (const action of actions.slice(1)) {
-        nodes.push(
-          await builder.drawRowForNode(createNode(), (row) => {
-            row.add(' '.repeat(key.length + 4));
-            drawAction(row, action);
-          }),
-        );
+        } else {
+          row.add(' '.repeat(key.length + 4));
+        }
+        const action = actions[i];
+        const rule = conditionActionRules[action.name];
+        if (rule) {
+          row.add(rule.getDescription(action.arg) + ' ', { hl: helpHightlights.conditional });
+          drawAction(row, actions[i + 1]);
+          nodes.push(await row.drawForNode(createNode()));
+          row = new SourceRowBuilder(builder);
+          row.add(' '.repeat(key.length + 4));
+          row.add('else ', { hl: helpHightlights.conditional });
+          drawAction(row, actions[i + 2]);
+          nodes.push(await row.drawForNode(createNode()));
+          i += 2;
+        } else {
+          drawAction(row, action);
+          nodes.push(await row.drawForNode(createNode()));
+        }
       }
     }
 

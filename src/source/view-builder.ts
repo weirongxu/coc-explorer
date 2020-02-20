@@ -107,11 +107,7 @@ export class SourceViewBuilder {
 
   async drawRowForNode(node: BaseTreeNode<any>, draw: DrawFn) {
     const row = await this.drawRow(draw);
-    const result = await row.draw();
-    node.highlightPositions = result.highlightPositions;
-    node.concealHighlightPositions = result.concealHighlightPositions;
-    node.drawnLine = result.content;
-    return node;
+    return await row.drawForNode(node);
   }
 
   async drawRow(draw: DrawFn): Promise<SourceRowBuilder> {
@@ -583,7 +579,15 @@ export class SourceRowBuilder {
     }
   }
 
-  private async drawTo(drawFn: () => any | Promise<any>) {
+  async drawForNode(node: BaseTreeNode<any>, { flexible = true } = {}) {
+    const result = await this.draw({ flexible });
+    node.highlightPositions = result.highlightPositions;
+    node.concealHighlightPositions = result.concealHighlightPositions;
+    node.drawnLine = result.content;
+    return node;
+  }
+
+  private async drawToList(drawFn: () => any | Promise<any>) {
     const storeList = this.drawableList;
     this.drawableList = [];
     await drawFn();
@@ -593,7 +597,7 @@ export class SourceRowBuilder {
   }
 
   async flexible(flexible: DrawFlexible | undefined, drawFn: () => any | Promise<any>) {
-    const list = await this.drawTo(drawFn);
+    const list = await this.drawToList(drawFn);
     this.drawableList.push(this.flexibleFor(flexible, list));
   }
 
@@ -633,7 +637,7 @@ export class SourceRowBuilder {
       });
     }
     this.drawableList.push(
-      ...(await this.drawTo(async () => {
+      ...(await this.drawToList(async () => {
         await column.draw(this, node, {
           nodeIndex,
           isLabeling,
@@ -654,7 +658,7 @@ export class SourceRowBuilder {
     column: number | ColumnRequired<TreeNode, any>,
     isLabeling = false,
   ) {
-    return await this.drawTo(async () => {
+    return await this.drawToList(async () => {
       await this.addColumn(node, nodeIndex, column, isLabeling);
     });
   }

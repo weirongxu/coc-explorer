@@ -12,12 +12,11 @@ type OriginalMappings = Record<string, false | string | string[]>;
 export const defaultMappings: Record<keyof typeof MappingMode, OriginalMappings> = {
   none: {},
   default: {
-    k: 'nodePrev',
-    j: 'nodeNext',
-
     '*': 'toggleSelection',
     '<tab>': 'actionMenu',
 
+    k: 'nodePrev',
+    j: 'nodeNext',
     h: 'collapse',
     l: ['expandable?', 'expand', 'open'],
     J: ['toggleSelection', 'nodeNext'],
