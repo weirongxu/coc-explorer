@@ -131,7 +131,7 @@ export class FileSource extends ExplorerSource<FileNode> {
                 return;
               }
               const bufinfo = await nvim.call('getbufinfo', [bufnr]);
-              if (!bufinfo[0] || bufinfo[0].name) {
+              if (!bufinfo[0] || !bufinfo[0].name) {
                 return;
               }
               await execNotifyBlock(async () => {
