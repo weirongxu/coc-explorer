@@ -20,7 +20,7 @@ const getIndentLine = () => {
  */
 function printIndentLine(node: FileNode) {
   let row = '';
-  if (!node.parent) {
+  if (node.parent?.isRoot) {
     return row;
   }
   if (node.nextSiblingNode === undefined) {
@@ -30,7 +30,7 @@ function printIndentLine(node: FileNode) {
   }
   let curNode = node.parent;
   while (curNode) {
-    if (!curNode.parent) {
+    if (curNode.parent?.isRoot) {
       break;
     }
     if (curNode.nextSiblingNode === undefined) {
@@ -48,7 +48,7 @@ fileColumnRegistrar.registerColumn('child', 'indent', () => ({
     if (getIndentLine()) {
       row.add(printIndentLine(node), { hl: fileHighlights.indentLine });
     } else {
-      row.add(getIndentChars().repeat(node.level));
+      row.add(getIndentChars().repeat(node.level - 1));
     }
   },
 }));
