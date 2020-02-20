@@ -709,13 +709,13 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>> {
       const { startIndex, endIndex } = range;
       if (this.expandStore.isExpanded(node) && node.children) {
         const flattenedNodes = this.flattenByNode(node);
+        if (await this.beforeDraw(flattenedNodes)) {
+          return this.render();
+        }
         this.flattenedNodes = this.flattenedNodes
           .slice(0, startIndex)
           .concat(flattenedNodes)
           .concat(this.flattenedNodes.slice(endIndex + 1));
-        if (await this.beforeDraw(flattenedNodes)) {
-          return this.render();
-        }
         this.offsetAfterLine(flattenedNodes.length - 1, startIndex);
         const highlights = await this.drawNodes(flattenedNodes);
         await this.setLines(
@@ -733,6 +733,7 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>> {
 
   private async expandNodeRecursive(node: TreeNode, recursive: boolean) {
     if (node.expandable) {
+      this.expandStore.expand(node);
       node.children = await this.loadChildren(node);
       if (
         recursive ||
@@ -746,7 +747,6 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>> {
           }),
         );
       }
-      this.expandStore.expand(node);
     }
   }
 
@@ -764,15 +764,15 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>> {
       if (!range) {
         return;
       }
+      if (await this.beforeDraw([node])) {
+        return this.render();
+      }
       const { startIndex, endIndex } = range;
       this.flattenedNodes.splice(startIndex + 1, endIndex - startIndex);
       this.explorer.indexesManager.removeLines(
         this.startLineIndex + startIndex + 1,
         this.startLineIndex + endIndex,
       );
-      if (await this.beforeDraw([node])) {
-        return this.render();
-      }
       this.offsetAfterLine(-(endIndex - startIndex), endIndex);
       const highlights = await this.drawNodes([node]);
       await this.setLines([node.drawnLine], startIndex, endIndex + 1, true);
@@ -784,6 +784,7 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>> {
 
   private async collapseNodeRecursive(node: TreeNode, recursive: boolean) {
     if (node.expandable) {
+      this.expandStore.collapse(node);
       if (recursive || config.get<boolean>('autoCollapseChildren')!) {
         if (node.children) {
           for (const child of node.children) {
@@ -791,7 +792,6 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>> {
           }
         }
       }
-      this.expandStore.collapse(node);
     }
   }
 

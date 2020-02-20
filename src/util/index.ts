@@ -17,7 +17,11 @@ export * from './function';
 
 export const outputChannel = workspace.createOutputChannel('explorer');
 
-export function prettyPrint(data: any) {
+export function prettyPrint(...data: any[]) {
+  let s = '';
+  for (const d of data) {
+    s += typeof d === 'string' ? d : util.inspect(d);
+  }
   // tslint:disable-next-line: ban
-  workspace.showMessage(util.inspect(data));
+  workspace.showMessage(s);
 }
