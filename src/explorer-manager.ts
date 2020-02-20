@@ -216,7 +216,7 @@ export class ExplorerManager {
       }
     }
 
-    const sourceWinid = (await this.nvim.eval('bufwinid(bufnr("%"))')) as number;
+    const sourceWinid = (await this.nvim.call('win_getid')) as number;
 
     let explorer = explorers[0];
 

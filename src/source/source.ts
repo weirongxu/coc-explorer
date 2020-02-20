@@ -386,9 +386,9 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>> {
         await this.explorer.quitOnOpen();
       },
       sourceWindow: async () => {
-        const prevWinnr = await this.explorer.sourceWinnr();
-        if (prevWinnr) {
-          await openByWinnr(prevWinnr);
+        const srcWinnr = await this.explorer.sourceWinnr();
+        if (srcWinnr) {
+          await openByWinnr(srcWinnr);
         } else {
           await actions.vsplit();
         }
