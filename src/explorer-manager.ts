@@ -54,10 +54,10 @@ export class ExplorerManager {
       this.registerMappings().catch(onError);
     });
 
-    this.updatePreviousBufnr(workspace.bufnr).catch(onError);
+    this.updatePrevCtxVars(workspace.bufnr).catch(onError);
     this.subscriptions.push(
       onBufEnter(async (bufnr) => {
-        await this.updatePreviousBufnr(bufnr);
+        await this.updatePrevCtxVars(bufnr);
       }),
     );
   }
@@ -70,7 +70,7 @@ export class ExplorerManager {
     return (await this.nvim.call('coc_explorer#tab_id_max')) as number;
   }
 
-  async updatePreviousBufnr(bufnr: number) {
+  private async updatePrevCtxVars(bufnr: number) {
     if (!this.bufnrs().includes(bufnr)) {
       const filetype = await this.nvim.getVar('&filetype');
       if (filetype !== this.filetype) {
