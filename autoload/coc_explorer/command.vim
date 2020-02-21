@@ -7,7 +7,7 @@ function! coc_explorer#command#generate(...)
       elseif value is v:false
         let cmd .= ' --no-' . key
       else
-        let cmd .= ' --' . key . '=' . escape(value, ' |')
+        let cmd .= ' --' . key . '=' . fnameescape(value)
       endif
     endfor
   endif
