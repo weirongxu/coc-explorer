@@ -75,7 +75,7 @@ export class ExplorerManager {
       const filetype = await this.nvim.getVar('&filetype');
       if (filetype !== this.filetype) {
         await this.previousBufnr.set(bufnr);
-        const winid = await this.nvim.call('bufwinid', [bufnr]);
+        const winid = (await this.nvim.call('win_getid')) as number;
         await this.previousWindowID.set(winid === -1 ? null : winid);
       }
     }
