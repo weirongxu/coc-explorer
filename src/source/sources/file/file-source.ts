@@ -174,7 +174,7 @@ export class FileSource extends ExplorerSource<FileNode> {
     );
 
     const args = this.explorer.args;
-    this.root = await args.rootPath();
+    this.root = await args.value(argOptions.rootUri);
   }
 
   async revealPath() {

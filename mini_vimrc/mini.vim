@@ -14,16 +14,43 @@ nmap <space>fl :CocCommand explorer --position=floating --floating-position=left
 nmap <space>fr :CocCommand explorer --position=floating --floating-position=right-center --floating-width=50 --floating-height=-10<CR>
 nmap <space>t :CocCommand explorer --position=tab<CR>
 
-let a = coc_explorer#command#generate({
-      \ 'file-child-template': '[git | 2] [selection | clip | 1] [indent][icon | 1] [filename growRight 1 omitCenter 1][modified]',
-      \ 'file-child-labeling-template': '[fullpath][size][modified][readonly]',
-      \ })
-let b = coc_explorer#command#generate({
-      \ 'file-child-template': '[git | 2] [selection | clip | 1] [indent][icon | 1] [filename growRight 1 omitCenter 1][size]',
-      \ 'file-child-labeling-template': '[fullpath][size][created][modified][accessed][readonly]',
-      \ })
-nmap <space>a :execute a<CR>
-nmap <space>b :execute b<CR>
+let g:coc_explorer_global_presets = {
+\   '.vim': {
+\     'root-uri': expand('~/.vim'),
+\   },
+\   'floating': {
+\     'position': "floating",
+\   },
+\   'floatingLeftside': {
+\     'floating-position': 'left-center',
+\     'floating-width': 50,
+\     'floating-height': -10,
+\   },
+\   'floatingRightside': {
+\     'floating-position': 'left-center',
+\     'floating-width': 50,
+\     'floating-height': -10,
+\   },
+\   'simplify': {
+\     'file-child-template': '[selection | clip | 1] [indent][icon | 1] [filename omitCenter 1]'
+\   },
+\   'a': {
+\     'file-child-template': '[git | 2] [selection | clip | 1] [indent][icon | 1] [filename growRight 1 omitCenter 1][modified]',
+\     'file-child-labeling-template': '[fullpath][size][modified][readonly]',
+\   },
+\   'b': {
+\     'file-child-template': '[git | 2] [selection | clip | 1] [indent][icon | 1] [filename growRight 1 omitCenter 1][size]',
+\     'file-child-labeling-template': '[fullpath][size][created][modified][accessed][readonly]',
+\   }
+\ }
+
+nmap <space>v  :CocCommand explorer --preset .vim<CR>
+nmap <space>ff :CocCommand explorer --preset floating<CR>
+nmap <space>fl :CocCommand explorer --preset floatingLeftside<CR>
+nmap <space>fr :CocCommand explorer --preset floatingRightside<CR>
+nmap <space>s  :CocCommand explorer --preset simplify<CR>
+nmap <space>a  :CocCommand explorer --preset a<CR>
+nmap <space>a  :CocCommand explorer --preset b<CR>
 
 set hidden
 set cmdheight=2

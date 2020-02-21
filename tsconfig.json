@@ -12,4 +12,5 @@
     "skipLibCheck": true
   },
   "include": ["src"],
+  "exclude": ["src/tests/**"]
 }

@@ -506,7 +506,7 @@ export class Explorer {
         .filter((source): source is ExplorerSource<any> => source !== null);
     }
 
-    this.explorerManager.rootPathRecords.add(await this.args.rootPath());
+    this.explorerManager.rootPathRecords.add(await this.args.value(argOptions.rootUri));
   }
 
   addGlobalAction(

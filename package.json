@@ -54,6 +54,72 @@
       "type": "object",
       "title": "Explorer",
       "properties": {
+        "explorer.presets": {
+          "description": "Explorer presets",
+          "type": "object",
+          "additionalProperties": {
+            "type": "object",
+            "properties": {
+              "root-uri": {
+                "type": "string"
+              },
+              "toggle": {
+                "$ref": "#/properties/explorer.toggle"
+              },
+              "reveal": {
+                "type": "string"
+              },
+              "sources": {
+                "$ref": "#/properties/explorer.sources"
+              },
+              "position": {
+                "$ref": "#/properties/explorer.position"
+              },
+              "width": {
+                "$ref": "#/properties/explorer.width"
+              },
+              "content-width": {
+                "$ref": "#/properties/explorer.contentWidth"
+              },
+              "content-width-type": {
+                "$ref": "#/properties/explorer.contentWidthType"
+              },
+              "floating-position": {
+                "$ref": "#/properties/explorer.floating.position"
+              },
+              "floating-width": {
+                "$ref": "#/properties/explorer.floating.width"
+              },
+              "floating-height": {
+                "$ref": "#/properties/explorer.floating.height"
+              },
+              "floating-content-width": {
+                "$ref": "#/properties/explorer.floating.contentWidth"
+              },
+              "buffer-root-template": {
+                "$ref": "#/properties/explorer.buffer.root.template"
+              },
+              "buffer-child-template": {
+                "$ref": "#/properties/explorer.buffer.child.template"
+              },
+              "buffer-child-labeling-template": {
+                "$ref": "#/properties/explorer.buffer.child.labelingTemplate"
+              },
+              "file-root-template": {
+                "$ref": "#/properties/explorer.file.root.template"
+              },
+              "file-root-labeling-template": {
+                "$ref": "#/properties/explorer.file.root.labelingTemplate"
+              },
+              "file-child-template": {
+                "$ref": "#/properties/explorer.file.child.template"
+              },
+              "file-child-labeling-template": {
+                "$ref": "#/properties/explorer.file.child.labelingTemplate"
+              }
+            }
+          }
+        },
         "explorer.keyMappingMode": {
           "description": "Keymapping mode",
           "enum": [
@@ -95,7 +161,8 @@
           "enum": [
             "left",
             "right",
-            "tab"
+            "tab",
+            "floating"
           ],
           "default": "left"
         },

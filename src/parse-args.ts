@@ -1,5 +1,6 @@
 import { config, normalizePath, splitCount } from './util';
 import { workspace } from 'coc.nvim';
+import { getPresets } from './presets';
 
 export interface ArgsSource {
   name: string;
@@ -8,11 +9,12 @@ export interface ArgsSource {
 
 export type ArgPosition = 'tab' | 'left' | 'right' | 'floating';
 
-type OptionType = 'boolean' | 'string';
+type OptionType = 'boolean' | 'string' | 'positional';
 
 type ArgOption<T> = {
   type: OptionType;
   name: string;
+  position?: number;
   handler?: (value: string) => Promise<T> | T;
   getDefault?: () => Promise<T> | T;
   description?: string;
@@ -21,6 +23,7 @@ type ArgOption<T> = {
 type ArgOptionRequired<T> = {
   type: OptionType;
   name: string;
+  position?: number;
   handler?: (value: string) => Promise<T> | T;
   getDefault: () => Promise<T> | T;
   description?: string;
@@ -32,53 +35,33 @@ export type ArgFloatingPositions = 'left-center' | 'right-center' | 'center';
 
 export class Args {
   private static registeredOptions: Map<string, ArgOption<any>> = new Map();
-  private static registeredPositional = {
-    name: 'rootPath',
-    handler: (path: string) => normalizePath(path),
-    getDefault: async () => {
-      let useGetcwd = false;
-      const buftype = await workspace.nvim.getVar('&buftype');
-      if (buftype === 'nofile') {
-        useGetcwd = true;
-      } else {
-        const bufname = await workspace.nvim.call('bufname', ['%']);
-        if (!bufname) {
-          useGetcwd = true;
-        }
-      }
-      const rootPath = useGetcwd
-        ? ((await workspace.nvim.call('getcwd', [])) as string)
-        : workspace.rootPath;
-      return normalizePath(rootPath);
-    },
-    description: 'Explorer root',
-  };
-
   private optionValues: Map<string, any> = new Map();
-  private rootPathValue?: string;
 
   static registerOption<T>(
     name: string,
     options: {
+      position?: number;
       handler?: (value: string) => T | Promise<T>;
       getDefault: () => T | Promise<T>;
     },
   ): ArgOptionRequired<T>;
   static registerOption<T>(
     name: string,
-    options: {
+    options?: {
+      position?: number;
       handler?: (value: string) => T | Promise<T>;
     },
   ): ArgOption<T>;
   static registerOption<T>(
     name: string,
     options: {
+      position?: number;
       handler?: (value: string) => T | Promise<T>;
       getDefault?: () => T | Promise<T>;
-    },
+    } = {},
   ): ArgOption<T> | ArgOptionRequired<T> {
     const option = {
-      type: 'string' as const,
+      type: options.position === undefined ? ('string' as const) : ('positional' as const),
       name,
       ...options,
     };
@@ -100,6 +83,7 @@ export class Args {
   static async parse(strArgs: string[]) {
     const self = new Args(strArgs);
     const args = [...strArgs];
+    let position = 1;
 
     while (args.length > 0) {
       const arg = args.shift()!;
@@ -133,7 +117,33 @@ export class Args {
         }
       }
 
-      self.rootPathValue = this.registeredPositional.handler(arg);
+      const positional = Array.from(this.registeredOptions.values()).find(
+        (option) => option.position === position,
+      );
+      if (positional) {
+        self.optionValues.set(
+          positional.name,
+          positional.handler ? await positional.handler(arg) : arg,
+        );
+      }
+      position += 1;
+    }
+
+    // presets
+    const preset = self.optionValues.get('preset') as string | undefined;
+    if (preset) {
+      const presets = await getPresets();
+      if (preset in presets) {
+        for (const [argName, argValue] of Object.entries(presets[preset])) {
+          if (self.optionValues.has(argName)) {
+            continue;
+          }
+          self.optionValues.set(argName, argValue);
+        }
+      } else {
+        // tslint:disable-next-line: ban
+        workspace.showMessage(`Preset(${preset}) not found`, 'warning');
+      }
     }
 
     return self;
@@ -158,18 +168,34 @@ export class Args {
       }
     }
   }
-
-  async rootPath() {
-    if (this.rootPathValue === undefined) {
-      return await Args.registeredPositional.getDefault();
-    } else {
-      return this.rootPathValue;
-    }
-  }
 }
 
 export const argOptions = {
+  rootUri: Args.registerOption('root-uri', {
+    position: 1,
+    handler: (path: string) => normalizePath(path),
+    getDefault: async () => {
+      let useGetcwd = false;
+      const buftype = await workspace.nvim.getVar('&buftype');
+      if (buftype === 'nofile') {
+        useGetcwd = true;
+      } else {
+        const bufname = await workspace.nvim.call('bufname', ['%']);
+        if (!bufname) {
+          useGetcwd = true;
+        }
+      }
+      const rootPath = useGetcwd
+        ? ((await workspace.nvim.call('getcwd', [])) as string)
+        : workspace.rootPath;
+      return normalizePath(rootPath);
+    },
+  }),
   toggle: Args.registerBoolOption('toggle', true),
+  reveal: Args.registerOption('reveal', {
+    handler: normalizePath,
+  }),
+  preset: Args.registerOption<string>('preset'),
   sources: Args.registerOption('sources', {
     handler: (sources) =>
       sources.split(',').map((source) => {
@@ -250,8 +276,5 @@ export const argOptions = {
   }),
   fileChildLabelingTemplate: Args.registerOption<string>('file-child-labeling-template', {
     getDefault: () => config.get<string>('file.child.labelingTemplate')!,
-  }),
-  reveal: Args.registerOption('reveal', {
-    handler: normalizePath,
   }),
 };

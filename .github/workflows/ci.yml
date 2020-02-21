@@ -40,7 +40,7 @@ jobs:
         uses: rhysd/action-setup-vim@v1
         with:
           neovim: true
-          version: nightly
+          version: v0.4.3
       - name: Run unit tests
         env:
           NODE_ENV: test
