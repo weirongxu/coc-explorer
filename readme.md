@@ -74,14 +74,6 @@ Explorer extension for [coc.nvim](https://github.com/neoclide/coc.nvim)
     \ --toggle
     \ --sources=buffer+,file+
     \ /root/path
-
-" or
-let a = coc_explorer#command#generate({
-    \ 'toggle': v:true,
-    \ 'file-child-template': '[git | 2] [selection | clip | 1] [indent][icon | 1] [filename growRight 1 omitCenter 1][modified]',
-    \ 'file-child-labeling-template': '[fullpath][size][modified][readonly]',
-    \ }, '/root/path')
-nmap <space>a :execute a<CR>
 ```
 
 ### Options
