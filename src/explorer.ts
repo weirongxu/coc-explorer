@@ -11,7 +11,7 @@ import {
   config,
   getEnableDebug,
   enableWrapscan,
-  avoidOnBufEnter as avoidOnBufEvents,
+  avoidOnBufEvents,
   onBufEnter,
   PreviewStrategy,
   queueAsyncFunction,

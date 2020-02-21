@@ -114,7 +114,7 @@ export async function skipOnEventsByWinnrs(winnrs: number[]) {
   skipOnEvents(bufnrs);
 }
 
-export async function avoidOnBufEnter<R>(block: () => Promise<R>) {
+export async function avoidOnBufEvents<R>(block: () => Promise<R>) {
   let result: R;
   try {
     stopBufEvent = true;
