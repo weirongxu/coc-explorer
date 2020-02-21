@@ -305,7 +305,7 @@ export class FileSource extends ExplorerSource<FileNode> {
           if (!this.showHidden && hidden) {
             return null;
           }
-          const fullpath = pathLib.join(parent.fullpath, filename);
+          const fullpath = normalizePath(pathLib.join(parent.fullpath, filename));
           const stat = await fsStat(fullpath).catch(() => {});
           const lstat = await fsLstat(fullpath).catch(() => {});
           const executable = await fsAccess(fullpath, fs.constants.X_OK);

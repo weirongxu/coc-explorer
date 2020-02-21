@@ -14,6 +14,7 @@ import {
   getPreviewStrategy,
   OpenStrategy,
   skipOnEventsByWinnrs,
+  isWindows,
 } from '../util';
 import { SourceViewBuilder } from './view-builder';
 import {
@@ -84,7 +85,12 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>> {
     },
   };
   readonly helper = {
-    generateUri: (path: string) => this.scheme + '://' + path,
+    generateUri: (path: string) => {
+      if (isWindows && /[A-Z]:/.test(path)) {
+        path = '/' + path;
+      }
+      return this.scheme + '://' + path;
+    },
   };
   templateRenderer?: TemplateRenderer<TreeNode>;
 
