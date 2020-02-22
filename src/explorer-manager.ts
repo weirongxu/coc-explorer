@@ -145,6 +145,10 @@ export class ExplorerManager {
   async registerMappings() {
     this.mappings = {};
     Object.entries(mappings).forEach(([key, actions]) => {
+      if (actions.length === 1 && actions[0].name === 'unmap') {
+        return;
+      }
+
       this.mappings[key] = {};
       (['n', 'v'] as const).forEach((mode) => {
         if (mode === 'v' && ['o', 'j', 'k'].includes(key)) {
