@@ -177,6 +177,22 @@ export class FileSource extends ExplorerSource<FileNode> {
     this.root = await args.value(argOptions.rootUri);
   }
 
+  async cd(fullpath: string) {
+    const { nvim } = this;
+    const escapePath = (await nvim.call('fnameescape', fullpath)) as string;
+    if (config.get<boolean>('file.tabCD')) {
+      if (workspace.isNvim || (await nvim.call('exists', [':tcd']))) {
+        await nvim.command('tcd ' + escapePath);
+        // tslint:disable-next-line: ban
+        workspace.showMessage(`Tab's CWD is: ${fullpath}`);
+      }
+    } else {
+      await nvim.command('cd ' + escapePath);
+      // tslint:disable-next-line: ban
+      workspace.showMessage(`CWD is: ${fullpath}`);
+    }
+  }
+
   async revealPath() {
     const revealPath = await this.explorer.args.value(argOptions.reveal);
     if (revealPath) {

@@ -27,6 +27,7 @@ export function initFileActions(file: FileSource) {
     'gotoParent',
     async () => {
       file.root = pathLib.dirname(file.root);
+      await file.cd(file.root);
       file.expandStore.expand(file.rootNode);
       await file.reload(file.rootNode);
     },
@@ -36,6 +37,7 @@ export function initFileActions(file: FileSource) {
     'cd',
     async (node) => {
       if (node.directory) {
+        await file.cd(node.fullpath);
         file.root = node.fullpath;
         file.expanded = true;
         await file.reload(file.rootNode);

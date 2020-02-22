@@ -584,6 +584,11 @@
           "description": "Whether to display the alignment line",
           "type": "boolean"
         },
+        "explorer.file.tabCD": {
+          "description": "Change tab directory when performing the cd action",
+          "type": "boolean",
+          "default": true
+        },
         "explorer.git.command": {
           "description": "Git command",
           "type": "string",
