@@ -16,7 +16,7 @@ type ArgOption<T> = {
   name: string;
   position?: number;
   parseArg?: (value: string) => Promise<T> | T;
-  handler?: (value: T) => Promise<T> | T;
+  handler?: (value: T | undefined) => Promise<T | undefined> | T | undefined;
   getDefault?: () => Promise<T> | T;
   description?: string;
 };
@@ -41,6 +41,14 @@ export class Args {
 
   static registerOption<T>(
     name: string,
+    options?: {
+      position?: number;
+      parseArg?: (value: string) => T | Promise<T>;
+      handler?: (value: T | undefined) => T | undefined | Promise<T | undefined>;
+    },
+  ): ArgOption<T>;
+  static registerOption<T>(
+    name: string,
     options: {
       position?: number;
       parseArg?: (value: string) => T | Promise<T>;
@@ -50,18 +58,10 @@ export class Args {
   ): ArgOptionRequired<T>;
   static registerOption<T>(
     name: string,
-    options?: {
-      position?: number;
-      parseArg?: (value: string) => T | Promise<T>;
-      handler?: (value: T) => T | Promise<T>;
-    },
-  ): ArgOption<T>;
-  static registerOption<T>(
-    name: string,
     options: {
       position?: number;
       parseArg?: (value: string) => T | Promise<T>;
-      handler?: (value: T) => T | Promise<T>;
+      handler?: (value: T | undefined) => T | undefined | Promise<T | undefined>;
       getDefault?: () => T | Promise<T>;
     } = {},
   ): ArgOption<T> | ArgOptionRequired<T> {
@@ -199,8 +199,8 @@ export const argOptions = {
     handler: (path: string) => normalizePath(path),
   }),
   toggle: Args.registerBoolOption('toggle', true),
-  reveal: Args.registerOption('reveal', {
-    handler: (path: string) => normalizePath(path),
+  reveal: Args.registerOption<string>('reveal', {
+    handler: (path) => path ? normalizePath(path) : path,
   }),
   preset: Args.registerOption<string>('preset'),
   sources: Args.registerOption('sources', {
