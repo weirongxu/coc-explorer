@@ -15,7 +15,8 @@ type ArgOption<T> = {
   type: OptionType;
   name: string;
   position?: number;
-  handler?: (value: string) => Promise<T> | T;
+  parseArg?: (value: string) => Promise<T> | T;
+  handler?: (value: T) => Promise<T> | T;
   getDefault?: () => Promise<T> | T;
   description?: string;
 };
@@ -24,7 +25,8 @@ type ArgOptionRequired<T> = {
   type: OptionType;
   name: string;
   position?: number;
-  handler?: (value: string) => Promise<T> | T;
+  parseArg?: (value: string) => Promise<T> | T;
+  handler?: (value: T) => Promise<T> | T;
   getDefault: () => Promise<T> | T;
   description?: string;
 };
@@ -41,7 +43,8 @@ export class Args {
     name: string,
     options: {
       position?: number;
-      handler?: (value: string) => T | Promise<T>;
+      parseArg?: (value: string) => T | Promise<T>;
+      handler?: (value: T) => T | Promise<T>;
       getDefault: () => T | Promise<T>;
     },
   ): ArgOptionRequired<T>;
@@ -49,14 +52,16 @@ export class Args {
     name: string,
     options?: {
       position?: number;
-      handler?: (value: string) => T | Promise<T>;
+      parseArg?: (value: string) => T | Promise<T>;
+      handler?: (value: T) => T | Promise<T>;
     },
   ): ArgOption<T>;
   static registerOption<T>(
     name: string,
     options: {
       position?: number;
-      handler?: (value: string) => T | Promise<T>;
+      parseArg?: (value: string) => T | Promise<T>;
+      handler?: (value: T) => T | Promise<T>;
       getDefault?: () => T | Promise<T>;
     } = {},
   ): ArgOption<T> | ArgOptionRequired<T> {
@@ -110,7 +115,7 @@ export class Args {
           if (value !== undefined) {
             self.optionValues.set(
               option.name,
-              option.handler ? await option.handler(value) : value,
+              option.parseArg ? await option.parseArg(value) : value,
             );
             continue;
           }
@@ -123,7 +128,7 @@ export class Args {
       if (positional) {
         self.optionValues.set(
           positional.name,
-          positional.handler ? await positional.handler(arg) : arg,
+          positional.parseArg ? await positional.parseArg(arg) : arg,
         );
       }
       position += 1;
@@ -158,22 +163,23 @@ export class Args {
   async value<T>(option: ArgOptionRequired<T>): Promise<T>;
   async value<T>(option: ArgOption<T>): Promise<T | undefined>;
   async value<T>(option: ArgOption<T>): Promise<T | undefined> {
+    let result: T;
     if (this.optionValues.has(option.name)) {
-      return this.optionValues.get(option.name);
+      result = this.optionValues.get(option.name);
     } else {
       if (!Args.registeredOptions.has(option.name)) {
         throw new Error(`Argument(${option.name}) not found`);
       } else {
-        return await Args.registeredOptions.get(option.name)?.getDefault?.();
+        result = await Args.registeredOptions.get(option.name)?.getDefault?.();
       }
     }
+    return Args.registeredOptions.get(option.name)?.handler?.(result) ?? result;
   }
 }
 
 export const argOptions = {
   rootUri: Args.registerOption('root-uri', {
     position: 1,
-    handler: (path: string) => normalizePath(path),
     getDefault: async () => {
       let useGetcwd = false;
       const buftype = await workspace.nvim.getVar('&buftype');
@@ -188,16 +194,17 @@ export const argOptions = {
       const rootPath = useGetcwd
         ? ((await workspace.nvim.call('getcwd', [])) as string)
         : workspace.rootPath;
-      return normalizePath(rootPath);
+      return rootPath;
     },
+    handler: (path: string) => normalizePath(path),
   }),
   toggle: Args.registerBoolOption('toggle', true),
   reveal: Args.registerOption('reveal', {
-    handler: normalizePath,
+    handler: (path: string) => normalizePath(path),
   }),
   preset: Args.registerOption<string>('preset'),
   sources: Args.registerOption('sources', {
-    handler: (sources) =>
+    parseArg: (sources) =>
       sources.split(',').map((source) => {
         let expand = false;
         let name: string;
@@ -221,11 +228,11 @@ export const argOptions = {
     getDefault: () => config.get<ArgPosition>('position')!,
   }),
   width: Args.registerOption('width', {
-    handler: (s) => parseInt(s, 10),
+    parseArg: (s) => parseInt(s, 10),
     getDefault: () => config.get<number>('width')!,
   }),
   contentWidth: Args.registerOption('content-width', {
-    handler: (s) => parseInt(s, 10),
+    parseArg: (s) => parseInt(s, 10),
     getDefault: () => config.get<number>('contentWidth')!,
   }),
   contentWidthType: Args.registerOption('content-width-type', {
@@ -234,7 +241,7 @@ export const argOptions = {
   floatingPosition: Args.registerOption<ArgFloatingPositions | [number, number]>(
     'floating-position',
     {
-      handler: (s) => {
+      parseArg: (s) => {
         if (['left-center', 'right-center', 'center'].includes(s)) {
           return s as ArgFloatingPositions;
         } else {
@@ -245,15 +252,15 @@ export const argOptions = {
     },
   ),
   floatingWidth: Args.registerOption('floating-width', {
-    handler: (s) => parseInt(s, 10),
+    parseArg: (s) => parseInt(s, 10),
     getDefault: () => config.get<number>('floating.width')!,
   }),
   floatingHeight: Args.registerOption('floating-height', {
-    handler: (s) => parseInt(s, 10),
+    parseArg: (s) => parseInt(s, 10),
     getDefault: () => config.get<number>('floating.height')!,
   }),
   floatingContentWidth: Args.registerOption('floating-content-width', {
-    handler: (s) => parseInt(s, 10),
+    parseArg: (s) => parseInt(s, 10),
     getDefault: () => config.get<number>('floating.contentWidth')!,
   }),
   bufferRootTemplate: Args.registerOption<string>('buffer-root-template', {

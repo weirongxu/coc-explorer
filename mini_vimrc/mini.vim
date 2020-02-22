@@ -16,17 +16,19 @@ nmap <space>t :CocCommand explorer --position=tab<CR>
 
 let g:coc_explorer_global_presets = {
 \   '.vim': {
-\     'root-uri': expand('~/.vim'),
+\     'root-uri': '~/.vim',
 \   },
 \   'floating': {
 \     'position': "floating",
 \   },
 \   'floatingLeftside': {
+\     'position': 'floating',
 \     'floating-position': 'left-center',
 \     'floating-width': 50,
 \     'floating-height': -10,
 \   },
 \   'floatingRightside': {
+\     'position': 'floating',
 \     'floating-position': 'left-center',
 \     'floating-width': 50,
 \     'floating-height': -10,

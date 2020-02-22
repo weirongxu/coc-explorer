@@ -84,13 +84,15 @@ let g:coc_explorer_global_presets = {
 \      'root-uri': '~/.vim',
 \   },
 \   'floating': {
-\      'position': "floating",
+\      'position': 'floating',
 \   },
 \   'floatingLeftside': {
+\      'position': 'floating',
 \      'floating-position': 'left-center',
 \      'floating-width': 50,
 \   },
 \   'floatingRightside': {
+\      'position': 'floating',
 \      'floating-position': 'left-center',
 \      'floating-width': 50,
 \   },
@@ -99,7 +101,7 @@ let g:coc_explorer_global_presets = {
 \   }
 \ }
 
-" Use preset argument open it
+" Use preset argument to open it
 nmap <space>ed :CocCommand explorer --preset .vim<CR>
 nmap <space>ef :CocCommand explorer --preset floating<CR>
 
