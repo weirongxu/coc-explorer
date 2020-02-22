@@ -17,6 +17,8 @@ export const defaultMappings: Record<keyof typeof MappingMode, OriginalMappings>
 
     k: 'nodePrev',
     j: 'nodeNext',
+    gk: 'expandablePrev',
+    gj: 'expandableNext',
     h: 'collapse',
     l: ['expandable?', 'expand', 'open'],
     J: ['toggleSelection', 'nodeNext'],

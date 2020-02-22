@@ -511,6 +511,9 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>> {
     return this.flattenedNodes[lineIndex];
   }
 
+  /**
+   * Get relative line index for source by node
+   */
   getLineByNode(node: TreeNode): number {
     if (node) {
       return this.flattenedNodes.findIndex((it) => it.uri === node.uri);
@@ -519,6 +522,9 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>> {
     }
   }
 
+  /**
+   * Relative line index for source
+   */
   async currentLineIndex() {
     const cursor = await this.explorer.currentCursor();
     if (cursor) {

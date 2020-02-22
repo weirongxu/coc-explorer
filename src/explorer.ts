@@ -176,6 +176,79 @@ export class Explorer {
       'next node',
     );
     this.addGlobalAction(
+      'expandablePrev',
+      async () => {
+        const getExpandableLine = async (
+          sourceIndex: number,
+          startIndex: number,
+          startSourceIndex = sourceIndex,
+        ) => {
+          const source = this.sources[sourceIndex];
+          for (let i = startIndex; i >= 0; i--) {
+            const node = source.flattenedNodes[i];
+            if (node.expandable) {
+              await this.gotoLineIndex(source.startLineIndex + source.getLineByNode(node));
+              return;
+            }
+          }
+
+          const nextSourceIndex = (sourceIndex - 1) % this.sources.length;
+
+          if (startSourceIndex === nextSourceIndex) {
+            return;
+          }
+
+          if (sourceIndex === 0 && !(await enableWrapscan())) {
+            return;
+          }
+
+          await getExpandableLine(nextSourceIndex, 0);
+        };
+
+        const sourceIndex = await this.currentSourceIndex();
+        const source = this.sources[sourceIndex];
+        const lineIndex = await this.currentLineIndex();
+        await getExpandableLine(sourceIndex, lineIndex - source.startLineIndex - 1);
+      },
+      'previous expandable node',
+    );
+    this.addGlobalAction(
+      'expandableNext',
+      async () => {
+        const getExpandableLine = async (
+          sourceIndex: number,
+          startIndex: number,
+          startSourceIndex = sourceIndex,
+        ) => {
+          const source = this.sources[sourceIndex];
+          for (let i = startIndex; i < source.height; i++) {
+            const node = source.flattenedNodes[i];
+            if (node.expandable) {
+              await this.gotoLineIndex(source.startLineIndex + source.getLineByNode(node));
+              return;
+            }
+          }
+
+          const nextSourceIndex = (sourceIndex + 1) % this.sources.length;
+          if (startSourceIndex === nextSourceIndex) {
+            return;
+          }
+
+          if (sourceIndex === 0 && !(await enableWrapscan())) {
+            return;
+          }
+
+          await getExpandableLine(nextSourceIndex, 0);
+        };
+
+        const sourceIndex = await this.currentSourceIndex();
+        const source = this.sources[sourceIndex];
+        const lineIndex = await this.currentLineIndex();
+        await getExpandableLine(sourceIndex, lineIndex - source.startLineIndex + 1);
+      },
+      'next expandable node',
+    );
+    this.addGlobalAction(
       'normal',
       async (_node, arg) => {
         if (arg) {
