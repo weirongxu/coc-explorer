@@ -15,6 +15,7 @@ import {
   OpenStrategy,
   skipOnEventsByWinnrs,
   isWindows,
+  prettyPrint,
 } from '../util';
 import { SourceViewBuilder } from './view-builder';
 import {
@@ -327,6 +328,9 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>> {
           await skipOnEventsByWinnrs([winnr]);
         }
         await nvim.command(`${winnr}wincmd w`);
+        if (workspace.isVim) {
+          await delay(100);
+        }
         await nvim.command(`edit ${await getURI()}`);
       });
     const actions: Record<OpenStrategy, () => void | Promise<void>> = {
