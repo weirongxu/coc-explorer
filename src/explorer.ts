@@ -1,5 +1,5 @@
 import { Buffer, ExtensionContext, Window, workspace, Disposable } from 'coc.nvim';
-import { Action, ActionMode, mappings } from './mappings';
+import { Action, ActionMode, getMappings } from './mappings';
 import { Args, argOptions, ArgContentWidthTypes } from './parse-args';
 import { IndexesManager } from './indexes-manager';
 import './source/load';
@@ -947,6 +947,7 @@ export class Explorer {
       row.add(' ');
       row.add(registeredActions[action.name].description, { hl: helpHightlights.description });
     };
+    const mappings = await getMappings();
     for (const [key, actions] of Object.entries(mappings)) {
       if (!actions.some((action) => action.name in registeredActions)) {
         continue;

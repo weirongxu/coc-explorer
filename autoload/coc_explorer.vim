@@ -59,7 +59,6 @@ endfunction
 
 function! coc_explorer#init_buf()
   silent setlocal colorcolumn=
-              \ filetype=coc-explorer
               \ buftype=nofile bufhidden=hide nobuflisted nolist
               \ nomodifiable nomodified
               \ noswapfile noundofile

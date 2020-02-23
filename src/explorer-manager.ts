@@ -2,7 +2,7 @@ import { workspace, ExtensionContext, Emitter, Disposable } from 'coc.nvim';
 import { Explorer } from './explorer';
 import { argOptions, Args } from './parse-args';
 import { onError } from './logger';
-import { mappings } from './mappings';
+import { getMappings } from './mappings';
 import { onBufEnter, supportedNvimFloating } from './util';
 import { GlobalContextVars } from './context-variables';
 
@@ -144,6 +144,7 @@ export class ExplorerManager {
 
   async registerMappings() {
     this.mappings = {};
+    const mappings = await getMappings();
     Object.entries(mappings).forEach(([key, actions]) => {
       if (actions.length === 1 && actions[0].name === 'unmap') {
         return;

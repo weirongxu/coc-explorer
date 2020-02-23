@@ -2,7 +2,7 @@ import { listManager, workspace, ExtensionContext, Disposable, IList, Uri } from
 import { explorerActionList } from '../lists/actions';
 import { Explorer } from '../explorer';
 import { onError } from '../logger';
-import { mappings, reverseMappings } from '../mappings';
+import { getMappings, getReverseMappings } from '../mappings';
 import {
   config,
   execNotifyBlock,
@@ -477,6 +477,9 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>> {
       ...this.explorer.globalActions,
       ...this.actions,
     };
+
+    const mappings = await getMappings();
+    const reverseMappings = await getReverseMappings();
 
     explorerActionList.setExplorerActions(
       Object.entries(actions)

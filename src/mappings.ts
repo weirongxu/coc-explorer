@@ -1,4 +1,5 @@
 import { config } from './util';
+import { workspace } from 'coc.nvim';
 
 enum MappingMode {
   none = 'none',
@@ -9,7 +10,7 @@ export const mappingMode = config.get<MappingMode>('keyMappingMode', MappingMode
 
 type OriginalMappings = Record<string, false | string | string[]>;
 
-export const defaultMappings: Record<keyof typeof MappingMode, OriginalMappings> = {
+const defaultMappingGroups: Record<keyof typeof MappingMode, OriginalMappings> = {
   none: {},
   default: {
     '*': 'toggleSelection',
@@ -83,7 +84,24 @@ export type ActionMode = 'n' | 'v';
 
 type Mappings = Record<string, Action[]>;
 
-export const mappings: Mappings = {};
+export async function getMappings(): Promise<Mappings> {
+  const mappings: Mappings = {};
+  const defaultMappings = defaultMappingGroups[mappingMode];
+  if (workspace.isVim && !(await workspace.nvim.call('has', ['gui_running']))) {
+    delete defaultMappings['<esc>'];
+  }
+  Object.entries({
+    ...(defaultMappings || {}),
+    ...config.get<OriginalMappings>('keyMappings', {}),
+  }).forEach(([key, actions]) => {
+    if (actions) {
+      mappings[key] = Array.isArray(actions)
+        ? actions.map((action) => parseAction(action))
+        : [parseAction(actions)];
+    }
+  });
+  return mappings;
+}
 
 /**
  * @example
@@ -98,21 +116,13 @@ function parseAction(originalAction: string): Action {
   };
 }
 
-Object.entries({
-  ...(defaultMappings[mappingMode] || {}),
-  ...config.get<OriginalMappings>('keyMappings', {}),
-}).forEach(([key, actions]) => {
-  if (actions) {
-    mappings[key] = Array.isArray(actions)
-      ? actions.map((action) => parseAction(action))
-      : [parseAction(actions)];
-  }
-});
-
-export const reverseMappings: Record<string, string> = {};
-
-Object.entries(mappings).find(([key, actions]) => {
-  if (actions.length === 1) {
-    reverseMappings[actions[0].name] = key;
-  }
-});
+export async function getReverseMappings() {
+  const mappings = getMappings();
+  const reverseMappings: Record<string, string> = {};
+  Object.entries(mappings).find(([key, actions]) => {
+    if (actions.length === 1) {
+      reverseMappings[actions[0].name] = key;
+    }
+  });
+  return reverseMappings;
+}
