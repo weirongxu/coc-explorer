@@ -26,6 +26,7 @@ const defaultMappingGroups: Record<keyof typeof MappingMode, OriginalMappings> =
     K: ['toggleSelection', 'nodePrev'],
     gl: 'expandRecursive',
     gh: 'collapseRecursive',
+    '<2-LeftMouse>': ['expandable?', 'expandOrCollapse', 'open'],
     o: 'expandOrCollapse',
     '<cr>': 'open',
     e: 'open',

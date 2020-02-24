@@ -15,7 +15,7 @@
   "explorer.presets": {
     "floating": {
       "position": "floating"
-   }
+    }
   },
   "explorer.icon.enableNerdfont": true,
   "explorer.debug": true
