@@ -71,10 +71,14 @@ export class FloatingPreview {
           return;
         }
         const nodeIndex = await source.currentLineIndex();
-        if (nodeIndex !== null) {
-          const node = source.flattenedNodes[nodeIndex];
-          await this.previewNode(getPreviewStrategy(), source, node, nodeIndex);
+        if (nodeIndex === null) {
+          return;
         }
+        const node = source.flattenedNodes[nodeIndex];
+        if (!node) {
+          return;
+        }
+        await this.previewNode(getPreviewStrategy(), source, node, nodeIndex);
       });
     }
     return this._hoverPreview();
