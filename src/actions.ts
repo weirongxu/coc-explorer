@@ -9,10 +9,10 @@ export const conditionActionRules: Record<
 > = {
   'expandable?': {
     filter: (n) => n.expandable,
-    getDescription: () => 'if expandable?',
+    getDescription: () => 'expandable?',
   },
   'type?': {
     filter: (n, arg) => n.type === arg,
-    getDescription: (arg) => `if type is ${arg}`,
+    getDescription: (arg) => `type is ${arg}`,
   },
 };

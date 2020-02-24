@@ -952,8 +952,8 @@ export class Explorer {
       if (!actions.some((action) => action.name in registeredActions)) {
         continue;
       }
-      let row = new SourceRowBuilder(builder);
       for (let i = 0; i < actions.length; i++) {
+        let row = new SourceRowBuilder(builder);
         if (i === 0) {
           row.add(' ');
           row.add(key, { hl: helpHightlights.mappingKey });
@@ -964,7 +964,7 @@ export class Explorer {
         const action = actions[i];
         const rule = conditionActionRules[action.name];
         if (rule) {
-          row.add(rule.getDescription(action.arg) + ' ', { hl: helpHightlights.conditional });
+          row.add('if ' + rule.getDescription(action.arg) + ' ', { hl: helpHightlights.conditional });
           drawAction(row, actions[i + 1]);
           nodes.push(await row.drawForNode(createNode()));
           row = new SourceRowBuilder(builder);
