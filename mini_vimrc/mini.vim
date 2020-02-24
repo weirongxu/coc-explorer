@@ -59,5 +59,6 @@ set cmdheight=2
 set termguicolors
 set wildmenu
 set ignorecase
+set mouse+=a
 filetype plugin indent on
 syntax on
