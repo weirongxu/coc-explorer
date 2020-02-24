@@ -329,6 +329,7 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>> {
         }
         await nvim.command(`${winnr}wincmd w`);
         if (workspace.isVim) {
+          // Avoid vim highlight not working, https://github.com/weirongxu/coc-explorer/issues/113
           await delay(100);
         }
         await nvim.command(`edit ${await getURI()}`);
