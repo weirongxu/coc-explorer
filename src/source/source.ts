@@ -15,13 +15,11 @@ import {
   OpenStrategy,
   skipOnEventsByWinnrs,
   isWindows,
-  prettyPrint,
 } from '../util';
 import { SourceViewBuilder } from './view-builder';
 import {
   HighlightPosition,
   HighlightPositionWithLine,
-  HighlightConcealablePosition,
 } from './highlight-manager';
 import { TemplateRenderer, DrawLabelingResult } from './template-renderer';
 import { argOptions } from '../parse-args';
@@ -50,7 +48,6 @@ export interface BaseTreeNode<
   level: number;
   drawnLine: string;
   highlightPositions?: HighlightPosition[];
-  concealHighlightPositions?: HighlightConcealablePosition[];
   expandable?: boolean;
   parent?: TreeNode;
   children?: TreeNode[];
@@ -155,7 +152,7 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>> {
             }
           }
           await this.executeHighlightsNotify(highlights);
-          await this.executeConcealableHighlight({ isNotify: true });
+          // await this.executeConcealableHighlight({ isNotify: true });
         });
       },
       'refresh',
@@ -668,10 +665,6 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>> {
     await this.explorer.executeHighlightsNotify(this.hlSrcId, highlights);
   }
 
-  async executeConcealableHighlight({ isNotify = false } = {}) {
-    await this.explorer.executeConcealableHighlight({ isNotify });
-  }
-
   currentSourceIndex() {
     return this.explorer.sources.indexOf(this as ExplorerSource<any>);
   }
@@ -745,7 +738,6 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>> {
           true,
         );
         await this.executeHighlightsNotify(highlights);
-        await this.executeConcealableHighlight({ isNotify: true });
         await this.gotoLineIndex(startIndex, 1);
       }
     }, notify);
@@ -797,7 +789,7 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>> {
       const highlights = await this.drawNodes([node]);
       await this.setLines([node.drawnLine], startIndex, endIndex + 1, true);
       await this.executeHighlightsNotify(highlights);
-      await this.executeConcealableHighlight({ isNotify: true });
+      // await this.executeConcealableHighlight({ isNotify: true });
       await this.gotoLineIndex(startIndex, 1);
     }, notify);
   }
@@ -853,7 +845,7 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>> {
         }),
       );
       await this.executeHighlightsNotify(highlights);
-      await this.executeConcealableHighlight({ isNotify: true });
+      // await this.executeConcealableHighlight({ isNotify: true });
     }, notify);
   }
 
@@ -906,7 +898,7 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>> {
         true,
       );
       await this.executeHighlightsNotify(highlights);
-      await this.executeConcealableHighlight();
+      // await this.executeConcealableHighlight();
 
       if (restore) {
         await restore(true);

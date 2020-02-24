@@ -1,7 +1,6 @@
 import { SourceRowBuilder } from './view-builder';
 import { ExplorerSource, BaseTreeNode } from './source';
 import { Disposable } from 'coc.nvim';
-import { HighlightConcealableCommand } from './highlight-manager';
 
 export interface Column<TreeNode extends BaseTreeNode<TreeNode>, Data = any> {
   label?: string;
@@ -13,8 +12,6 @@ export interface Column<TreeNode extends BaseTreeNode<TreeNode>, Data = any> {
   inited?: boolean;
 
   readonly data?: Data;
-
-  readonly concealable?: HighlightConcealableCommand;
 
   init?(): void | Promise<void>;
 
@@ -38,7 +35,6 @@ export interface ColumnRequired<TreeNode extends BaseTreeNode<TreeNode>, Data>
   extends Column<TreeNode, Data> {
   label: string;
   data: Data;
-  concealable: HighlightConcealableCommand;
 }
 
 type GetColumn<

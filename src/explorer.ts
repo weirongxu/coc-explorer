@@ -40,8 +40,6 @@ export class Explorer {
   nvim = workspace.nvim;
   isHelpUI: boolean = false;
   helpHlSrcId = workspace.createNameSpace('coc-explorer-help');
-  readonly concealMatchStartId = 10000;
-  concealMatchEndId = 10000;
   indexesManager = new IndexesManager(this);
   inited = new BuffuerContextVars<boolean>('inited', this);
   sourceWinid = new BuffuerContextVars<number>('sourceWinid', this);
@@ -128,12 +126,6 @@ export class Explorer {
     public bufnr: number,
   ) {
     this.context = explorerManager.context;
-
-    onCursorMoved(async (bufnr) => {
-      if (bufnr === this.bufnr) {
-        await this.executeConcealableHighlight();
-      }
-    });
 
     if (config.get<boolean>('previewAction.onHover')!) {
       onCursorMoved(async (bufnr) => {
@@ -436,10 +428,6 @@ export class Explorer {
 
   async executeHighlightsNotify(hlSrcId: number, highlights: HighlightPositionWithLine[]) {
     await hlGroupManager.executeHighlightsNotify(this, hlSrcId, highlights);
-  }
-
-  async executeConcealableHighlight({ isNotify = false } = {}) {
-    await hlGroupManager.executeConcealableHighlight(this, { isNotify });
   }
 
   async executeHighlightSyntax() {
@@ -822,21 +810,34 @@ export class Explorer {
     }, notify);
   }
 
+  private _setLines?: (
+    lines: string[],
+    start: number,
+    end: number,
+    notify?: boolean,
+  ) => Promise<void>;
   async setLines(lines: string[], start: number, end: number, notify = false) {
-    await execNotifyBlock(async () => {
-      this.buffer.setOption('modifiable', true, true);
+    if (!this._setLines) {
+      this._setLines = queueAsyncFunction(
+        async (lines: string[], start: number, end: number, notify = false) => {
+          await execNotifyBlock(async () => {
+            this.buffer.setOption('modifiable', true, true);
 
-      await this.buffer.setLines(
-        lines,
-        {
-          start,
-          end,
+            await this.buffer.setLines(
+              lines,
+              {
+                start,
+                end,
+              },
+              true,
+            );
+
+            this.buffer.setOption('modifiable', false, true);
+          }, notify);
         },
-        true,
       );
-
-      this.buffer.setOption('modifiable', false, true);
-    }, notify);
+    }
+    await this._setLines(lines, start, end, notify);
   }
 
   // private async clearContent() {
@@ -964,7 +965,9 @@ export class Explorer {
         const action = actions[i];
         const rule = conditionActionRules[action.name];
         if (rule) {
-          row.add('if ' + rule.getDescription(action.arg) + ' ', { hl: helpHightlights.conditional });
+          row.add('if ' + rule.getDescription(action.arg) + ' ', {
+            hl: helpHightlights.conditional,
+          });
           drawAction(row, actions[i + 1]);
           nodes.push(await row.drawForNode(createNode()));
           row = new SourceRowBuilder(builder);

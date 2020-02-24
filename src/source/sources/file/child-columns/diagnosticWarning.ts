@@ -1,15 +1,11 @@
 import { fileColumnRegistrar } from '../file-column-registrar';
-import { hlGroupManager } from '../../../highlight-manager';
 import { diagnosticManager } from '../../../../diagnostic-manager';
 import { config, debounce, onEvents } from '../../../../util';
 import { fileHighlights } from '../file-source';
 
-const concealable = hlGroupManager.concealable('FileDiagnosticWarning');
-
 fileColumnRegistrar.registerColumn<{
   warningMap: Record<string, string>;
 }>('child', 'diagnosticWarning', ({ source, column }) => ({
-  concealable: concealable(source),
   data: {
     warningMap: {},
   },
@@ -50,13 +46,6 @@ fileColumnRegistrar.registerColumn<{
   },
   reload() {
     diagnosticManager.warningReload(source.root);
-  },
-  beforeDraw() {
-    if (Object.keys(diagnosticManager.warningMixedCount).length) {
-      column.concealable.show();
-    } else {
-      column.concealable.hide();
-    }
   },
   draw(row, node, { nodeIndex }) {
     const warningMap = column.data.warningMap;

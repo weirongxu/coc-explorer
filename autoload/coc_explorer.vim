@@ -62,7 +62,6 @@ function! coc_explorer#init_buf()
               \ buftype=nofile bufhidden=hide nobuflisted nolist
               \ nomodifiable nomodified
               \ noswapfile noundofile
-              \ conceallevel=3 concealcursor=nvic
               \ nomodeline
               \ signcolumn=no
               \ nocursorcolumn cursorline

@@ -1,10 +1,4 @@
-import {
-  HighlightCommand,
-  HighlightConcealableCommand,
-  HighlightPosition,
-  HighlightConcealablePosition,
-  hlGroupManager,
-} from './highlight-manager';
+import { HighlightCommand, HighlightPosition, hlGroupManager } from './highlight-manager';
 import { byteLength, displayWidth, displaySlice } from '../util';
 import { BaseTreeNode } from './source';
 import { Explorer } from '../explorer';
@@ -38,35 +32,23 @@ type DrawContent = {
   group?: string;
 };
 
-type DrawConcealMark =
-  | {
-      type: 'conceal';
-      concealStart: HighlightConcealableCommand;
-    }
-  | {
-      type: 'conceal';
-      concealEnd: HighlightConcealableCommand;
-    };
-
 type DrawGroup = {
   type: 'group';
-  contents: (DrawContent | DrawConcealMark)[];
+  contents: DrawContent[];
   flexible?: DrawFlexible;
 };
 
-type Drawable = DrawContent | DrawGroup | DrawConcealMark;
+type Drawable = DrawContent | DrawGroup;
 
 interface DrawContentWithWidth extends DrawContent {
   width: number;
 }
 
 interface DrawGroupWithWidth extends DrawGroup {
-  contents: (DrawContentWithWidth | DrawConcealMark)[];
+  contents: DrawContentWithWidth[];
 }
 
-type DrawableWithWidth = DrawContentWithWidth | DrawGroupWithWidth | DrawConcealMark;
-
-type DrawableFlatWithWidth = DrawContentWithWidth | DrawConcealMark;
+type DrawableWithWidth = DrawContentWithWidth | DrawGroupWithWidth;
 
 const omitSymbolHighlight = hlGroupManager.linkGroup('OmitSymbol', 'SpecialComment');
 
@@ -219,7 +201,7 @@ export class SourceRowBuilder {
     fullwidth: number,
     usedWidth: number,
     drawableList: DrawableWithWidth[],
-  ): Promise<DrawableFlatWithWidth[]> {
+  ): Promise<DrawContentWithWidth[]> {
     const allSpaceWidth = fullwidth - usedWidth;
     const spaceWids = divideVolumeBy(
       allSpaceWidth,
@@ -234,10 +216,8 @@ export class SourceRowBuilder {
             async (
               item,
               idx,
-            ): Promise<DrawableFlatWithWidth | DrawableFlatWithWidth[] | undefined> => {
+            ): Promise<DrawContentWithWidth | DrawContentWithWidth[] | undefined> => {
               if (item.type === 'content') {
-                return item;
-              } else if (item.type === 'conceal') {
                 return item;
               } else if (item.type === 'group') {
                 if (!item.flexible?.grow) {
@@ -294,7 +274,7 @@ export class SourceRowBuilder {
     fullwidth: number,
     usedWidth: number,
     drawableList: DrawableWithWidth[],
-  ): Promise<DrawableFlatWithWidth[]> {
+  ): Promise<DrawContentWithWidth[]> {
     const allOmitWidth = usedWidth - fullwidth;
     const omitWids = divideVolumeBy(
       allOmitWidth,
@@ -318,10 +298,8 @@ export class SourceRowBuilder {
             async (
               item,
               idx,
-            ): Promise<DrawableFlatWithWidth | DrawableFlatWithWidth[] | undefined> => {
+            ): Promise<DrawContentWithWidth | DrawContentWithWidth[] | undefined> => {
               if (item.type === 'content') {
-                return item;
-              } else if (item.type === 'conceal') {
                 return item;
               } else if (item.type === 'group') {
                 if (!item.flexible?.omit) {
@@ -329,7 +307,7 @@ export class SourceRowBuilder {
                 }
 
                 const omitWid = omitWids[idx];
-                const contents: (DrawContentWithWidth | DrawConcealMark)[] = [];
+                const contents: DrawContentWithWidth[] = [];
 
                 if (item.flexible.omit === 'left') {
                   const cutWid = omitWid + 1;
@@ -403,7 +381,7 @@ export class SourceRowBuilder {
                   const rightCutPos = contentWid - (remainWid - leftCutPos);
                   let itemStartPos = 0;
                   let itemEndPos = 0;
-                  const contents: (DrawContentWithWidth | DrawConcealMark)[] = [];
+                  const contents: DrawContentWithWidth[] = [];
                   for (const c of item.contents) {
                     if (c.type !== 'content') {
                       contents.push(c);
@@ -475,7 +453,7 @@ export class SourceRowBuilder {
     const drawableList = await this.handlePadding(await this.fetchDisplayWidth(this.drawableList));
 
     // Draw flexible
-    let drawContents: DrawableFlatWithWidth[] = [];
+    let drawContents: DrawContentWithWidth[] = [];
     const fullwidth = this.view.width;
     const usedWidth = sum(
       drawableList.map((c) => {
@@ -490,7 +468,7 @@ export class SourceRowBuilder {
     );
     if (!flexible || usedWidth === fullwidth) {
       drawContents = flatten(
-        drawableList.map((item): DrawableFlatWithWidth | DrawableFlatWithWidth[] => {
+        drawableList.map((item): DrawContentWithWidth | DrawContentWithWidth[] => {
           if (item.type === 'group') {
             return item.contents;
           } else {
@@ -506,33 +484,9 @@ export class SourceRowBuilder {
 
     // Get content and highlight positions
     const highlightPositions: HighlightPosition[] = [];
-    const concealHighlightPositions: HighlightConcealablePosition[] = [];
     let content = '';
     let col = 0;
-    let curConceal:
-      | {
-          start: number;
-          concealable: HighlightConcealableCommand;
-        }
-      | undefined;
     for (const drawContent of drawContents) {
-      if (drawContent.type === 'conceal') {
-        if ('concealStart' in drawContent) {
-          curConceal = {
-            concealable: drawContent.concealStart,
-            start: col,
-          };
-        } else if ('concealEnd' in drawContent) {
-          if (curConceal && curConceal.concealable == drawContent.concealEnd) {
-            concealHighlightPositions.push({
-              concealable: curConceal.concealable,
-              start: curConceal.start,
-              size: col - curConceal.start,
-            });
-          }
-        }
-        continue;
-      }
       const size = byteLength(drawContent.content);
       if (drawContent.group) {
         highlightPositions.push({
@@ -547,7 +501,6 @@ export class SourceRowBuilder {
     return {
       content,
       highlightPositions,
-      concealHighlightPositions,
     };
   }
 
@@ -582,7 +535,6 @@ export class SourceRowBuilder {
   async drawForNode(node: BaseTreeNode<any>, { flexible = true } = {}) {
     const result = await this.draw({ flexible });
     node.highlightPositions = result.highlightPositions;
-    node.concealHighlightPositions = result.concealHighlightPositions;
     node.drawnLine = result.content;
     return node;
   }
@@ -630,12 +582,6 @@ export class SourceRowBuilder {
       return;
     }
 
-    if (column.concealable) {
-      this.drawableList.push({
-        type: 'conceal',
-        concealStart: column.concealable,
-      });
-    }
     this.drawableList.push(
       ...(await this.drawToList(async () => {
         await column.draw(this, node, {
@@ -644,12 +590,6 @@ export class SourceRowBuilder {
         });
       })),
     );
-    if (column.concealable) {
-      this.drawableList.push({
-        type: 'conceal',
-        concealEnd: column.concealable,
-      });
-    }
   }
 
   async addColumnTo<TreeNode extends BaseTreeNode<TreeNode>>(
