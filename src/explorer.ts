@@ -810,34 +810,21 @@ export class Explorer {
     }, notify);
   }
 
-  private _setLines?: (
-    lines: string[],
-    start: number,
-    end: number,
-    notify?: boolean,
-  ) => Promise<void>;
   async setLines(lines: string[], start: number, end: number, notify = false) {
-    if (!this._setLines) {
-      this._setLines = queueAsyncFunction(
-        async (lines: string[], start: number, end: number, notify = false) => {
-          await execNotifyBlock(async () => {
-            this.buffer.setOption('modifiable', true, true);
+    await execNotifyBlock(async () => {
+      this.buffer.setOption('modifiable', true, true);
 
-            await this.buffer.setLines(
-              lines,
-              {
-                start,
-                end,
-              },
-              true,
-            );
-
-            this.buffer.setOption('modifiable', false, true);
-          }, notify);
+      await this.buffer.setLines(
+        lines,
+        {
+          start,
+          end,
         },
+        true,
       );
-    }
-    await this._setLines(lines, start, end, notify);
+
+      this.buffer.setOption('modifiable', false, true);
+    }, notify);
   }
 
   // private async clearContent() {
