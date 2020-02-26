@@ -15,12 +15,10 @@ import {
   OpenStrategy,
   skipOnEventsByWinnrs,
   isWindows,
+  prettyPrint,
 } from '../util';
 import { SourceViewBuilder } from './view-builder';
-import {
-  HighlightPosition,
-  HighlightPositionWithLine,
-} from './highlight-manager';
+import { HighlightPosition, HighlightPositionWithLine } from './highlight-manager';
 import { TemplateRenderer, DrawLabelingResult } from './template-renderer';
 import { argOptions } from '../parse-args';
 
@@ -448,7 +446,7 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>> {
         }
       };
       const disposable = listManager.registerList(list);
-      await listManager.start(['--normal', '--number-select', list.name]);
+      await listManager.start([list.name]);
       disposable.dispose();
 
       listManager.ui.onDidClose(async () => {
