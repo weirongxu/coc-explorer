@@ -803,8 +803,8 @@ export class Explorer {
       const win = await this.win;
       if (win) {
         win.setCursor([lineIndex + 1, finalCol - 1], true);
-        if (!this.explorerManager.currentExplorer()) {
-          this.nvim.command('redraw!', true);
+        if (workspace.isVim) {
+          this.nvim.command('redraw', true);
         }
       }
     }, notify);
