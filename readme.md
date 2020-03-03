@@ -576,6 +576,10 @@ Default: <pre><code>"  "</code></pre>
 
 </details>
 <details>
+<summary><code>explorer.file.tabCD</code>: Change tab directory when performing the cd action. type: <code>boolean</code></summary>
+Default: <pre><code>true</code></pre>
+</details>
+<details>
 <summary><code>explorer.git.command</code>: Git command. type: <code>string</code></summary>
 Default: <pre><code>"git"</code></pre>
 </details>
