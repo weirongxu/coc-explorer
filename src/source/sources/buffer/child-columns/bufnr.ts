@@ -2,7 +2,9 @@ import { bufferColumnRegistrar } from '../buffer-column-registrar';
 import { max } from '../../../../util';
 import { bufferHighlights } from '../buffer-source';
 
-bufferColumnRegistrar.registerColumn('child', 'bufnr', ({ column }) => ({
+bufferColumnRegistrar.registerColumn<{
+  maxBufnrWidth: number;
+}>('child', 'bufnr', ({ column }) => ({
   data: {
     maxBufnrWidth: 0,
   },

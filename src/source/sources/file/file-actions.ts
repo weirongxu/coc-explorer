@@ -353,6 +353,7 @@ export function initFileActions(file: FileSource) {
     file.addNodeAction(
       'listDrive',
       async () => {
+        // TODO Use drives as root path
         const drives = await listDrive();
         driveList.setExplorerDrives(
           drives.map((drive) => ({

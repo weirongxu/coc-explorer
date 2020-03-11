@@ -15,7 +15,6 @@ import {
   OpenStrategy,
   skipOnEventsByWinnrs,
   isWindows,
-  prettyPrint,
 } from '../util';
 import { SourceViewBuilder } from './view-builder';
 import { HighlightPosition, HighlightPositionWithLine } from './highlight-manager';
@@ -615,6 +614,7 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>> {
 
   async drawNodes(nodes: TreeNode[]) {
     const highlightPositions: HighlightPositionWithLine[] = [];
+
     await Promise.all(
       nodes.map(async (node) => {
         if (node.isRoot) {
@@ -713,31 +713,32 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>> {
 
   private async expandNodeRender(node: TreeNode, notify = false) {
     await execNotifyBlock(async () => {
+      if (!this.expandStore.isExpanded(node) || !node.children) {
+        return;
+      }
       const range = this.nodeAndChildrenRange(node);
       if (!range) {
         return;
       }
       const { startIndex, endIndex } = range;
-      if (this.expandStore.isExpanded(node) && node.children) {
-        const flattenedNodes = this.flattenByNode(node);
-        if (await this.beforeDraw(flattenedNodes)) {
-          return this.render();
-        }
-        this.flattenedNodes = this.flattenedNodes
-          .slice(0, startIndex)
-          .concat(flattenedNodes)
-          .concat(this.flattenedNodes.slice(endIndex + 1));
-        this.offsetAfterLine(flattenedNodes.length - 1, startIndex);
-        const highlights = await this.drawNodes(flattenedNodes);
-        await this.setLines(
-          flattenedNodes.map((node) => node.drawnLine),
-          startIndex,
-          endIndex + 1,
-          true,
-        );
-        await this.executeHighlightsNotify(highlights);
-        await this.gotoLineIndex(startIndex, 1);
+      const needDrawNodes = this.flattenByNode(node);
+      if (await this.beforeDraw(needDrawNodes)) {
+        return this.render();
       }
+      this.flattenedNodes = this.flattenedNodes
+        .slice(0, startIndex)
+        .concat(needDrawNodes)
+        .concat(this.flattenedNodes.slice(endIndex + 1));
+      this.offsetAfterLine(needDrawNodes.length - 1, startIndex);
+      const highlights = await this.drawNodes(needDrawNodes);
+      await this.setLines(
+        needDrawNodes.map((node) => node.drawnLine),
+        startIndex,
+        endIndex + 1,
+        true,
+      );
+      await this.executeHighlightsNotify(highlights);
+      await this.gotoLineIndex(startIndex, 1);
     }, notify);
   }
 
@@ -761,35 +762,44 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>> {
   }
 
   async expandNode(node: TreeNode, { recursive = false, notify = false } = {}) {
-    await execNotifyBlock(async () => {
-      await this.expandNodeRecursive(node, recursive);
-      await this.expandNodeRender(node, true);
-      await this.gotoNode(node, { notify: true });
-    }, notify);
+    await execNotifyBlock(
+      async () => {
+        await this.expandNodeRecursive(node, recursive);
+        await this.expandNodeRender(node, true);
+        await this.gotoNode(node, { notify: true });
+      },
+      notify,
+    );
   }
 
   private async collapseNodeRender(node: TreeNode, notify = false) {
-    await execNotifyBlock(async () => {
-      const range = this.nodeAndChildrenRange(node);
-      if (!range) {
-        return;
-      }
-      if (await this.beforeDraw([node])) {
-        return this.render();
-      }
-      const { startIndex, endIndex } = range;
-      this.flattenedNodes.splice(startIndex + 1, endIndex - startIndex);
-      this.explorer.indexesManager.removeLines(
-        this.startLineIndex + startIndex + 1,
-        this.startLineIndex + endIndex,
-      );
-      this.offsetAfterLine(-(endIndex - startIndex), endIndex);
-      const highlights = await this.drawNodes([node]);
-      await this.setLines([node.drawnLine], startIndex, endIndex + 1, true);
-      await this.executeHighlightsNotify(highlights);
-      // await this.executeConcealableHighlight({ isNotify: true });
-      await this.gotoLineIndex(startIndex, 1);
-    }, notify);
+    await execNotifyBlock(
+      async () => {
+        if (this.expandStore.isExpanded(node)) {
+          return;
+        }
+        const range = this.nodeAndChildrenRange(node);
+        if (!range) {
+          return;
+        }
+        if (await this.beforeDraw([node])) {
+          return this.render();
+        }
+        const { startIndex, endIndex } = range;
+        this.flattenedNodes.splice(startIndex + 1, endIndex - startIndex);
+        this.explorer.indexesManager.removeLines(
+          this.startLineIndex + startIndex + 1,
+          this.startLineIndex + endIndex,
+        );
+        this.offsetAfterLine(-(endIndex - startIndex), endIndex);
+        const highlights = await this.drawNodes([node]);
+        await this.setLines([node.drawnLine], startIndex, endIndex + 1, true);
+        await this.executeHighlightsNotify(highlights);
+        // await this.executeConcealableHighlight({ isNotify: true });
+        await this.gotoLineIndex(startIndex, 1);
+      },
+      notify,
+    );
   }
 
   private async collapseNodeRecursive(node: TreeNode, recursive: boolean) {
@@ -806,11 +816,14 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>> {
   }
 
   async collapseNode(node: TreeNode, { recursive = false, notify = false } = {}) {
-    await execNotifyBlock(async () => {
-      await this.collapseNodeRecursive(node, recursive);
-      await this.collapseNodeRender(node, true);
-      await this.gotoNode(node, { notify: true });
-    }, notify);
+    await execNotifyBlock(
+      async () => {
+        await this.collapseNodeRecursive(node, recursive);
+        await this.collapseNodeRender(node, true);
+        await this.gotoNode(node, { notify: true });
+      },
+      notify,
+    );
   }
 
   requestRenderNodes(nodes: TreeNode[]) {
@@ -869,11 +882,11 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>> {
         ? range
         : { startIndex: 0, endIndex: this.flattenedNodes.length - 1 };
       const oldHeight = endIndex - nodeIndex + 1;
-      const flattenedNodes = this.flattenByNode(node);
-      const newHeight = flattenedNodes.length;
+      const needDrawNodes = this.flattenByNode(node);
+      const newHeight = needDrawNodes.length;
       this.flattenedNodes = this.flattenedNodes
         .slice(0, nodeIndex)
-        .concat(flattenedNodes)
+        .concat(needDrawNodes)
         .concat(this.flattenedNodes.slice(endIndex + 1));
 
       if (newHeight < oldHeight) {

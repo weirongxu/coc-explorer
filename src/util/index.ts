@@ -1,5 +1,6 @@
 import { workspace } from 'coc.nvim';
 import util from 'util';
+import { format } from 'date-fns';
 export * from './string';
 export * from './number';
 export * from './array';
@@ -18,7 +19,7 @@ export * from './function';
 export const outputChannel = workspace.createOutputChannel('explorer');
 
 export function prettyPrint(...data: any[]) {
-  let s = '';
+  let s = `[${format(new Date(), 'yy/MM/dd HH:mm:ss.SSS')}] `;
   for (const d of data) {
     s += typeof d === 'string' ? d : util.inspect(d);
   }

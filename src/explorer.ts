@@ -141,9 +141,9 @@ export class Explorer {
         }
       });
     }
-    onEvents('BufWinLeave', (bufnr) => {
+    onEvents('BufWinLeave', async (bufnr) => {
       if (bufnr === this.bufnr) {
-        this.floatingWindow.floatFactory.close();
+        await this.floatingWindow.floatFactory.close();
       }
     });
 
@@ -811,20 +811,24 @@ export class Explorer {
   }
 
   async setLines(lines: string[], start: number, end: number, notify = false) {
-    await execNotifyBlock(async () => {
-      this.buffer.setOption('modifiable', true, true);
+    await execNotifyBlock(
+      async () => {
+        this.buffer.setOption('modifiable', true, true);
 
-      await this.buffer.setLines(
-        lines,
-        {
-          start,
-          end,
-        },
-        true,
-      );
+        await this.buffer.setLines(
+          lines,
+          {
+            start,
+            end,
+            strictIndexing: false,
+          },
+          true,
+        );
 
-      this.buffer.setOption('modifiable', false, true);
-    }, notify);
+        this.buffer.setOption('modifiable', false, true);
+      },
+      notify,
+    );
   }
 
   // private async clearContent() {

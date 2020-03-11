@@ -16,7 +16,7 @@ import { distinct } from 'coc.nvim/lib/util/array';
 import { equals } from 'coc.nvim/lib/util/object';
 import { BufferHighlight } from '@chemzqm/neovim';
 import { log } from '../logger';
-import { debounce, onEvents, supportedFloat } from '../util';
+import { debounce, onEvents, supportedFloat, execNotifyBlock } from '../util';
 import { WindowConfig } from 'coc.nvim/lib/model/floatFactory';
 import { CancellationTokenSource } from 'vscode-languageserver-protocol';
 import createPopup, { Popup } from 'coc.nvim/lib/model/popup';
@@ -28,7 +28,7 @@ export class FloatingFactory2 implements Disposable {
   private disposables: Disposable[] = [];
   private tokenSource?: CancellationTokenSource;
 
-  private window!: Window;
+  private window?: Window;
   private floatBuffer!: FloatBuffer;
   private popup!: Popup;
 
@@ -51,28 +51,28 @@ export class FloatingFactory2 implements Disposable {
     }
     onEvents(
       'BufEnter',
-      (bufnr) => {
+      async (bufnr) => {
         if (this.buffer && bufnr == this.buffer.id) {
           return;
         }
         if (bufnr == this.targetBufnr) {
           return;
         }
-        this.close();
+        await this.close();
       },
       null,
       this.disposables,
     );
     onEvents(
       'InsertLeave',
-      (bufnr) => {
+      async (bufnr) => {
         if (this.buffer && bufnr == this.buffer.id) {
           return;
         }
         if (snippetManager.isActived(bufnr)) {
           return;
         }
-        this.close();
+        await this.close();
       },
       null,
       this.disposables,
@@ -82,7 +82,7 @@ export class FloatingFactory2 implements Disposable {
       async (ev, cursorline) => {
         const pumAlignTop = (this.pumAlignTop = cursorline > ev.row);
         if (pumAlignTop == this.alignTop) {
-          this.close();
+          await this.close();
         }
       },
       null,
@@ -90,11 +90,11 @@ export class FloatingFactory2 implements Disposable {
     );
     onEvents(
       'CursorMoved',
-      debounce(100, (bufnr, cursor) => {
+      debounce(100, async (bufnr, cursor) => {
         if (Date.now() - this.createTs < 100) {
           return;
         }
-        this.onCursorMoved(false, bufnr, cursor);
+        await this.onCursorMoved(false, bufnr, cursor);
       }),
       null,
       this.disposables,
@@ -102,7 +102,11 @@ export class FloatingFactory2 implements Disposable {
     onEvents('CursorMovedI', this.onCursorMoved.bind(this, true), null, this.disposables);
   }
 
-  private onCursorMoved(insertMode: boolean, bufnr: number, cursor: [number, number]): void {
+  private async onCursorMoved(
+    insertMode: boolean,
+    bufnr: number,
+    cursor: [number, number],
+  ): Promise<void> {
     if (!this.window || (this.buffer && bufnr == this.buffer.id)) {
       return;
     }
@@ -110,16 +114,16 @@ export class FloatingFactory2 implements Disposable {
       return;
     }
     if (this.autoHide) {
-      this.close();
+      await this.close();
       return;
     }
     if (!insertMode || bufnr != this.targetBufnr || (this.cursor && cursor[0] != this.cursor[0])) {
-      this.close();
+      await this.close();
       return;
     }
   }
 
-  private async checkFloatBuffer(): Promise<void> {
+  private async ensureFloatBuffer(): Promise<void> {
     const { floatBuffer, nvim } = this;
     let window: Window | undefined = this.window;
     if (this.env.textprop) {
@@ -260,7 +264,7 @@ export class FloatingFactory2 implements Disposable {
     }
     const shown = await this.createPopup(explorer, docs, highlights, allowSelection);
     if (!shown) {
-      this.close(false);
+      await this.close(false);
     }
   }
 
@@ -280,7 +284,7 @@ export class FloatingFactory2 implements Disposable {
     this.targetBufnr = workspace.bufnr;
     const tokenSource = (this.tokenSource = new CancellationTokenSource());
     const token = tokenSource.token;
-    await this.checkFloatBuffer();
+    await this.ensureFloatBuffer();
     const config = await this.getBoundings(explorer, docs);
     const [mode, line, col, visible] = (await this.nvim.eval(
       '[mode(),line("."),col("."),pumvisible()]',
@@ -303,9 +307,9 @@ export class FloatingFactory2 implements Disposable {
     if (workspace.isNvim && mode.startsWith('i')) {
       await nvim.eval('feedkeys("\\<C-g>u", "n")');
     }
-    let reuse = false;
+    let reuse: boolean | undefined = false;
     if (workspace.isNvim) {
-      reuse = this.window && (await this.window.valid);
+      reuse = await this.window?.valid;
       if (!reuse) {
         this.window = await nvim.openFloatWindow(this.buffer, false, config);
       }
@@ -313,58 +317,57 @@ export class FloatingFactory2 implements Disposable {
     if (token.isCancellationRequested) {
       return false;
     }
-    nvim.pauseNotification();
-    if (workspace.isNvim) {
-      if (!reuse) {
-        nvim.command(`noa call win_gotoid(${this.window.id})`, true);
-        this.window.setVar('float', 1, true);
-        nvim.command(`setl nospell nolist wrap linebreak foldcolumn=1`, true);
-        nvim.command(
-          `setl nonumber norelativenumber nocursorline nocursorcolumn colorcolumn=`,
-          true,
-        );
-        nvim.command(`setl signcolumn=no conceallevel=2 concealcursor=n`, true);
-        nvim.command(
-          `setl winhl=Normal:CocFloating,NormalNC:CocFloating,FoldColumn:CocFloating`,
-          true,
-        );
-        nvim.call('coc#util#do_autocmd', ['CocOpenFloat'], true);
+    await execNotifyBlock(async () => {
+      if (workspace.isNvim) {
+        if (!this.window) {
+          return;
+        }
+        if (!reuse) {
+          nvim.command(`noa call win_gotoid(${this.window.id})`, true);
+          this.window.setVar('float', 1, true);
+          nvim.command(`setl nospell nolist wrap linebreak foldcolumn=1`, true);
+          nvim.command(
+            `setl nonumber norelativenumber nocursorline nocursorcolumn colorcolumn=`,
+            true,
+          );
+          nvim.command(`setl signcolumn=no conceallevel=2 concealcursor=n`, true);
+          nvim.command(
+            `setl winhl=Normal:CocFloating,NormalNC:CocFloating,FoldColumn:CocFloating`,
+            true,
+          );
+          nvim.call('coc#util#do_autocmd', ['CocOpenFloat'], true);
+        } else {
+          this.window.setConfig(config, true);
+          nvim.command(`noa call win_gotoid(${this.window.id})`, true);
+        }
+        this.floatBuffer.setLines();
+        nvim.command(`normal! ${alignTop ? 'G' : 'gg'}0`, true);
+        for (const hl of highlights) {
+          await this.buffer.addHighlight(hl);
+        }
+        nvim.command('noa wincmd p', true);
       } else {
-        this.window.setConfig(config, true);
-        nvim.command(`noa call win_gotoid(${this.window.id})`, true);
+        const filetypes = distinct(docs.map((d) => d.filetype));
+        if (filetypes.length == 1) {
+          this.popup.setFiletype(filetypes[0]);
+        }
+        this.popup.move({
+          line: config.relative === 'cursor' ? cursorPostion(config.row) : config.row + 1,
+          col: config.relative === 'cursor' ? cursorPostion(config.col) : config.col + 1,
+          minwidth: config.width - 2,
+          minheight: config.height,
+          maxwidth: config.width - 2,
+          maxheight: config.height,
+          firstline: alignTop ? -1 : 1,
+        });
+        this.floatBuffer.setLines();
+        for (const hl of highlights) {
+          await this.buffer.addHighlight(hl);
+        }
+        nvim.command('redraw', true);
       }
-      this.floatBuffer.setLines();
-      nvim.command(`normal! ${alignTop ? 'G' : 'gg'}0`, true);
-      for (const hl of highlights) {
-        await this.buffer.addHighlight(hl);
-      }
-      nvim.command('noa wincmd p', true);
-    } else {
-      const filetypes = distinct(docs.map((d) => d.filetype));
-      if (filetypes.length == 1) {
-        this.popup.setFiletype(filetypes[0]);
-      }
-      this.popup.move({
-        line: config.relative === 'cursor' ? cursorPostion(config.row) : config.row + 1,
-        col: config.relative === 'cursor' ? cursorPostion(config.col) : config.col + 1,
-        minwidth: config.width - 2,
-        minheight: config.height,
-        maxwidth: config.width - 2,
-        maxheight: config.height,
-        firstline: alignTop ? -1 : 1,
-      });
-      this.floatBuffer.setLines();
-      for (const hl of highlights) {
-        await this.buffer.addHighlight(hl);
-      }
-      nvim.command('redraw', true);
-    }
-    const [, err] = (await nvim.resumeNotification()) ?? [];
-    if (err) {
-      // tslint:disable-next-line: ban
-      workspace.showMessage(`Error on ${err[0]}: ${err[1]} - ${err[2]}`, 'error');
-      return false;
-    }
+    });
+
     if (mode == 's') {
       await snippetManager.selectCurrentPlaceholder(false);
     }
@@ -381,7 +384,7 @@ export class FloatingFactory2 implements Disposable {
   /**
    * Close float window
    */
-  public close(cancel = true): void {
+  public async close(cancel = true): Promise<void> {
     if (cancel && this.tokenSource) {
       if (this.tokenSource) {
         this.tokenSource.cancel();
@@ -394,8 +397,8 @@ export class FloatingFactory2 implements Disposable {
       if (popup) {
         popup.dispose();
       }
-    } else if (window) {
-      window.close(true, true);
+    } else if (await window?.valid) {
+      await window?.close(true);
     }
   }
 
