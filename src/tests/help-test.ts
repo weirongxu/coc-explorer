@@ -11,7 +11,7 @@ import attach from 'coc.nvim/lib/attach';
 import Document from 'coc.nvim/lib/model/document';
 import Plugin from 'coc.nvim/lib/plugin';
 import workspace from 'coc.nvim/lib/workspace';
-import uuid = require('uuid/v4');
+import { v4 as uuid } from 'uuid';
 import { VimCompleteItem } from 'coc.nvim/lib/types';
 
 export interface CursorPosition {

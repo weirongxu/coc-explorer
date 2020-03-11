@@ -642,8 +642,8 @@
     "uuid": "^7.0.2",
     "vscode-languageserver-protocol": "^3.15.3",
     "vscode-uri": "^2.1.1",
-    "webpack": "^4.41.6",
-    "webpack-cli": "^3.3.10",
+    "webpack": "^4.42.0",
+    "webpack-cli": "^3.3.11",
     "which": "^2.0.2"
   }
 }
