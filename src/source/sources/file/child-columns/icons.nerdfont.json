@@ -212,6 +212,10 @@
       "code": "",
       "color": "#a074c4"
     },
+    "elm": {
+      "code": "",
+      "color": "#519aba"
+    },
     "mix": {
       "code": "",
       "color": "#cc3e44"
@@ -360,6 +364,7 @@
     "lock": "lock",
     "json": "json",
     "js": "javascript",
+    "mjs": "javascript",
     "es6": "javascript",
     "jsx": "javascriptreact",
     "rb": "ruby",
@@ -383,6 +388,7 @@
     "bmp": "image",
     "png": "image",
     "gif": "image",
+    "webp": "image",
     "ico": "ico",
     "twig": "twig",
     "cpp": "c",
@@ -392,6 +398,7 @@
     "cp": "c",
     "c": "c",
     "h": "h",
+    "hh": "h",
     "hpp": "h",
     "hxx": "h",
     "hs": "haskell",
@@ -442,6 +449,7 @@
     "erl": "erlang",
     "hrl": "erlang",
     "ex": "elixir",
+    "eex": "elixir",
     "exs": "elixir",
     "exx": "elixir",
     "leex": "elixir",
@@ -454,6 +462,7 @@
     "jl": "julia",
     "pp": "puppet",
     "vue": "vue",
+    "elm": "elm",
     "swift": "swift",
     "xcplayground": "swift",
     "svg": "svg",
