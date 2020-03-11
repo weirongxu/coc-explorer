@@ -46,4 +46,5 @@ module.exports = async () => {
   }
 
   process.env.NODE_ENV = 'test';
+  process.env.COC_DATA_HOME = testDir;
 };
