@@ -141,11 +141,6 @@ export class Explorer {
         }
       });
     }
-    onEvents('BufWinLeave', async (bufnr) => {
-      if (bufnr === this.bufnr) {
-        await this.floatingWindow.floatFactory.close();
-      }
-    });
 
     this.addGlobalAction(
       'nodePrev',
