@@ -1,5 +1,4 @@
 import { workspace } from 'coc.nvim';
-import { execNotifyBlock } from '../util';
 
 // Highlight types
 export interface HighlightPosition {
@@ -47,36 +46,35 @@ class HighlightManager {
     explorer.buffer.clearNamespace(hlSrcId, lineStart, lineEnd);
   }
 
-  async executeHighlightsNotify(
+  executeHighlightsNotify(
     explorer: Explorer,
     hlSrcId: number,
     highlights: HighlightPositionWithLine[],
   ) {
-    await execNotifyBlock(async () => {
-      for (const hl of highlights) {
-        await explorer.buffer.addHighlight({
+    for (const hl of highlights) {
+      explorer.buffer
+        .addHighlight({
           srcId: hlSrcId,
           hlGroup: hl.group,
           line: hl.line,
           colStart: hl.start,
           colEnd: hl.start + hl.size,
-        });
-      }
-    });
+        })
+        .catch(onError);
+    }
   }
 
-  async executeHighlightSyntax(notify = false) {
-    await execNotifyBlock(async () => {
-      const commands: string[] = [];
-      for (const highlight of this.highlights) {
-        this.nvim.command(`silent! syntax clear ${highlight.group}`, true);
-        commands.push(...highlight.commands);
-      }
-      this.nvim.call('coc_explorer#execute_commands', [commands], true);
-    }, notify);
+  executeHighlightSyntaxNotify() {
+    const commands: string[] = [];
+    for (const highlight of this.highlights) {
+      this.nvim.command(`silent! syntax clear ${highlight.group}`, true);
+      commands.push(...highlight.commands);
+    }
+    this.nvim.call('coc_explorer#execute_commands', [commands], true);
   }
 }
 
 export const hlGroupManager = new HighlightManager();
 
 import { Explorer } from '../explorer';
+import { onError } from '../logger';

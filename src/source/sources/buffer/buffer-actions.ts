@@ -1,5 +1,5 @@
 import { BufferSource } from './buffer-source';
-import { OpenStrategy, execNotifyBlock } from '../../../util';
+import { OpenStrategy } from '../../../util';
 
 export function initBufferActions(buffer: BufferSource) {
   const { nvim } = buffer;
@@ -19,10 +19,7 @@ export function initBufferActions(buffer: BufferSource) {
       if (node.expandable && buffer.expandStore.isExpanded(node)) {
         await buffer.collapseNode(node);
       } else if (node.parent) {
-        await execNotifyBlock(async () => {
-          await buffer.collapseNode(node.parent!, { notify: true });
-          await buffer.gotoNode(node.parent!, { notify: true });
-        });
+        await buffer.collapseNode(node.parent!);
       }
     },
     'collapse node',

@@ -6,7 +6,6 @@ import {
   getActiveMode,
   getAutoReveal,
   config,
-  execNotifyBlock,
   onBufEnter,
   fsAccess,
   fsReaddir,
@@ -14,6 +13,7 @@ import {
   fsStat,
   normalizePath,
   getExtensions,
+  Notifier,
 } from '../../../util';
 import { hlGroupManager } from '../../highlight-manager';
 import { ExplorerSource, BaseTreeNode } from '../../source';
@@ -134,15 +134,11 @@ export class FileSource extends ExplorerSource<FileNode> {
               if (!bufinfo[0] || !bufinfo[0].name) {
                 return;
               }
-              await execNotifyBlock(async () => {
-                const node = await this.revealNodeByPath(bufinfo[0].name, {
-                  render: true,
-                  notify: true,
-                });
-                if (node) {
-                  await this.gotoNode(node, { notify: true });
-                }
+              const [, notifier] = await this.revealNodeByPath(bufinfo[0].name, {
+                render: true,
+                goto: true,
               });
+              await Notifier.run(notifier);
             }, 200),
           );
         }
@@ -206,28 +202,28 @@ export class FileSource extends ExplorerSource<FileNode> {
     }
   }
 
-  async opened(isFirst: boolean, isNotify: boolean) {
-    await execNotifyBlock(async () => {
-      const args = this.explorer.args;
-      const revealPath = await this.revealPath();
-      if (!revealPath) {
-        if (isFirst) {
-          await this.gotoRoot({ col: 1, notify: true });
-        }
-        return;
+  async openedNotifier(isFirst: boolean) {
+    const args = this.explorer.args;
+    const revealPath = await this.revealPath();
+    if (!revealPath) {
+      if (isFirst) {
+        return this.gotoRootNotifier({ col: 1 });
       }
-      const hasRevealPath = args.has(argOptions.reveal);
-      if (getAutoReveal() || hasRevealPath) {
-        const revealNode = await this.revealNodeByPath(revealPath, { render: true, notify: true });
-        if (revealNode !== null) {
-          await this.gotoNode(revealNode, { col: 1, notify: true });
-        } else if (isFirst) {
-          await this.gotoRoot({ col: 1, notify: true });
-        }
+      return;
+    }
+
+    const hasRevealPath = args.has(argOptions.reveal);
+
+    if (getAutoReveal() || hasRevealPath) {
+      const [revealNode, notifier] = await this.revealNodeByPath(revealPath, { render: true });
+      if (revealNode !== null) {
+        return Notifier.combine([notifier, await this.gotoNodeNotifier(revealNode, { col: 1 })]);
       } else if (isFirst) {
-        await this.gotoRoot({ col: 1, notify: true });
+        return Notifier.combine([notifier, await this.gotoRootNotifier({ col: 1 })]);
       }
-    }, isNotify);
+    } else if (isFirst) {
+      return this.gotoRootNotifier({ col: 1 });
+    }
   }
 
   getPutTargetNode(node: FileNode) {
@@ -251,16 +247,16 @@ export class FileSource extends ExplorerSource<FileNode> {
     filesList.rootPath = path;
     filesList.recursive = recursive;
     filesList.revealCallback = async (loc) => {
-      await execNotifyBlock(async () => {
-        const node = await this.revealNodeByPath(Uri.parse(loc.uri).fsPath, {
-          render: true,
-          notify: true,
-        });
-        if (node) {
-          await task.resolve();
-          await this.gotoNode(node, { notify: true });
-        }
+      const [node, notifier] = await this.revealNodeByPath(Uri.parse(loc.uri).fsPath, {
+        render: true,
+        goto: true,
       });
+      if (node) {
+        await task.resolve();
+      }
+      this.nvim.pauseNotification();
+      notifier?.notify();
+      await this.nvim.resumeNotification();
     };
 
     const task = await this.startCocList(filesList);
@@ -269,35 +265,46 @@ export class FileSource extends ExplorerSource<FileNode> {
 
   async revealNodeByPath(
     path: string,
-    { node = this.rootNode, render = false, notify = false } = {},
-  ): Promise<FileNode | null> {
+    { node = this.rootNode, goto = false, render = false } = {},
+  ): Promise<[FileNode | null, Notifier | null]> {
     path = normalizePath(path);
     if (node.directory && path.startsWith(node.fullpath + pathLib.sep)) {
-      let result: FileNode | null = null;
+      let foundNode: FileNode | null = null;
+      const notifiers: Notifier[] = [];
       const isExpanded = this.expandStore.isExpanded(node);
-      const requestRender = !isExpanded;
+      const isRender = !isExpanded;
       if (!node.children) {
         node.children = await this.loadChildren(node);
       }
       for (const child of node.children) {
-        result = await this.revealNodeByPath(path, {
+        const [childFoundNode, childNotifier] = await this.revealNodeByPath(path, {
           node: child,
-          render: requestRender ? false : render,
-          notify,
+          render: isRender ? false : render,
         });
-        if (result) {
+        foundNode = childFoundNode;
+        if (childNotifier) {
+          notifiers.push(childNotifier);
+        }
+        if (foundNode) {
           this.expandStore.expand(node);
           break;
         }
       }
-      if (result && render && requestRender) {
-        await this.render({ node, notify, storeCursor: false });
+      if (foundNode && render && isRender) {
+        const renderNotifier = await this.renderNotifier({ node, storeCursor: false });
+        if (renderNotifier) {
+          notifiers.push(renderNotifier);
+        }
+        if (goto) {
+          const gotoNotifier = await this.gotoNodeNotifier(foundNode);
+          notifiers.push(gotoNotifier);
+        }
       }
-      return result;
+      return [foundNode, Notifier.combine(notifiers)];
     } else if (path === node.fullpath) {
-      return node;
+      return [node, null];
     }
-    return null;
+    return [null, null];
   }
 
   sortFiles(files: FileNode[]) {
@@ -367,12 +374,16 @@ export class FileSource extends ExplorerSource<FileNode> {
   }
 
   async renderPaths(paths: Set<string> | string[]) {
+    return (await this.renderPathsNotifier(paths))?.run();
+  }
+
+  async renderPathsNotifier(paths: Set<string> | string[]) {
     const nodes = Array.from(paths)
       .map((path) => {
         return this.flattenedNodes.find((node) => node.fullpath === path);
       })
       .filter((node): node is FileNode => !!node);
-    return await this.renderNodes(nodes);
+    return this.renderNodesNotifier(nodes);
   }
 
   async drawRootLabeling(node: FileNode) {

@@ -5,7 +5,6 @@ import { onError } from '../logger';
 import { getMappings, getReverseMappings } from '../mappings';
 import {
   config,
-  execNotifyBlock,
   getOpenStrategy,
   getEnableNerdfont,
   delay,
@@ -15,6 +14,7 @@ import {
   OpenStrategy,
   skipOnEventsByWinnrs,
   isWindows,
+  Notifier,
 } from '../util';
 import { SourceViewBuilder } from './view-builder';
 import { HighlightPosition, HighlightPositionWithLine } from './highlight-manager';
@@ -132,25 +132,26 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>> {
     this.addNodeAction(
       'refresh',
       async () => {
-        await this.reload(this.rootNode, { force: true });
+        const notifier = await this.reloadNotifier(this.rootNode, { force: true });
 
-        await execNotifyBlock(async () => {
-          this.clearHighlightsNotify();
-          const highlights: HighlightPositionWithLine[] = [];
-          for (let i = 0; i < this.flattenedNodes.length; i++) {
-            const node = this.flattenedNodes[i];
-            if (node.highlightPositions) {
-              for (const highlightPosition of node.highlightPositions) {
-                highlights.push({
-                  ...highlightPosition,
-                  line: this.startLineIndex + i,
-                });
-              }
+        const highlights: HighlightPositionWithLine[] = [];
+        for (let i = 0; i < this.flattenedNodes.length; i++) {
+          const node = this.flattenedNodes[i];
+          if (node.highlightPositions) {
+            for (const highlightPosition of node.highlightPositions) {
+              highlights.push({
+                ...highlightPosition,
+                line: this.startLineIndex + i,
+              });
             }
           }
-          await this.executeHighlightsNotify(highlights);
-          // await this.executeConcealableHighlight({ isNotify: true });
-        });
+        }
+
+        this.nvim.pauseNotification();
+        notifier?.notify();
+        this.clearHighlightsNotify();
+        this.executeHighlightsNotify(highlights);
+        await this.nvim.resumeNotification();
       },
       'refresh',
     );
@@ -223,9 +224,11 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>> {
 
   abstract init(): Promise<void>;
 
-  abstract open(isNotify: boolean): Promise<void>;
+  abstract open(): Promise<void>;
 
-  async opened(_isFirst: boolean, _isNotify: boolean) {}
+  async openedNotifier(_isFirst: boolean): Promise<Notifier | void> {
+    return Notifier.create(() => {});
+  }
 
   addNodesAction(
     name: string,
@@ -355,18 +358,18 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>> {
         await this.explorer.quitOnOpen();
       },
       vsplit: async () => {
-        await execNotifyBlock(async () => {
-          nvim.command(`vsplit ${await getURI()}`, true);
-          const position = await this.explorer.args.value(argOptions.position);
-          if (position === 'left') {
-            nvim.command('wincmd L', true);
-          } else if (position === 'right') {
-            nvim.command('wincmd H', true);
-          } else if (position === 'tab') {
-            nvim.command('wincmd L', true);
-          }
-          await this.explorer.quitOnOpen();
-        });
+        nvim.pauseNotification();
+        nvim.command(`vsplit ${await getURI()}`, true);
+        const position = await this.explorer.args.value(argOptions.position);
+        if (position === 'left') {
+          nvim.command('wincmd L', true);
+        } else if (position === 'right') {
+          nvim.command('wincmd H', true);
+        } else if (position === 'tab') {
+          nvim.command('wincmd L', true);
+        }
+        await nvim.resumeNotification();
+        await this.explorer.quitOnOpen();
       },
       tab: async () => {
         await this.explorer.quitOnOpen();
@@ -536,40 +539,50 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>> {
     }
   }
 
-  async gotoLineIndex(lineIndex: number, col?: number, notify = false) {
+  async gotoLineIndex(lineIndex: number, col?: number) {
+    return (await this.explorer.gotoLineIndexNotifier(this.startLineIndex + lineIndex, col)).run();
+  }
+
+  gotoLineIndexNotifier(lineIndex: number, col?: number) {
     if (lineIndex < 0) {
       lineIndex = 0;
     }
     if (lineIndex > this.height) {
       lineIndex = this.height - 1;
     }
-    await this.explorer.gotoLineIndex(this.startLineIndex + lineIndex, col, notify);
+    return this.explorer.gotoLineIndexNotifier(this.startLineIndex + lineIndex, col);
   }
 
-  async gotoRoot({ col, notify = false }: { col?: number; notify?: boolean } = {}) {
-    const finalCol = col === undefined ? await this.explorer.currentCol() : col;
-    await this.gotoLineIndex(0, finalCol, notify);
+  async gotoRoot({ col }: { col?: number } = {}) {
+    return (await this.gotoLineIndexNotifier(0, col)).run();
+  }
+
+  gotoRootNotifier({ col }: { col?: number } = {}) {
+    return this.gotoLineIndexNotifier(0, col);
   }
 
   /**
    * if node is null, move to root, otherwise move to node
    */
-  async gotoNode(
+  async gotoNode(node: TreeNode, options: { lineIndex?: number; col?: number } = {}) {
+    return (await this.gotoNodeNotifier(node, options)).run();
+  }
+
+  /**
+   * if node is null, move to root, otherwise move to node
+   */
+  async gotoNodeNotifier(
     node: TreeNode,
-    {
-      lineIndex: fallbackLineIndex,
-      col,
-      notify = false,
-    }: { lineIndex?: number; col?: number; notify?: boolean } = {},
+    { lineIndex: fallbackLineIndex, col }: { lineIndex?: number; col?: number } = {},
   ) {
     const finalCol = col === undefined ? await this.explorer.currentCol() : col;
     const lineIndex = this.flattenedNodes.findIndex((it) => it.uri === node.uri);
     if (lineIndex !== -1) {
-      await this.gotoLineIndex(lineIndex, finalCol, notify);
+      return this.gotoLineIndexNotifier(lineIndex, finalCol);
     } else if (fallbackLineIndex !== undefined) {
-      await this.gotoLineIndex(fallbackLineIndex, finalCol, notify);
+      return this.gotoLineIndexNotifier(fallbackLineIndex, finalCol);
     } else {
-      await this.gotoRoot({ col: finalCol, notify });
+      return this.gotoRootNotifier({ col: finalCol });
     }
   }
 
@@ -659,21 +672,25 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>> {
     this.explorer.clearHighlightsNotify(this.hlSrcId, lineStart, lineEnd);
   }
 
-  async executeHighlightsNotify(highlights: HighlightPositionWithLine[]) {
-    await this.explorer.executeHighlightsNotify(this.hlSrcId, highlights);
+  executeHighlightsNotify(highlights: HighlightPositionWithLine[]) {
+    this.explorer.executeHighlightsNotify(this.hlSrcId, highlights);
   }
 
   currentSourceIndex() {
     return this.explorer.sources.indexOf(this as ExplorerSource<any>);
   }
 
-  async reload(node: TreeNode, { render = true, notify = false, force = false } = {}) {
+  async reload(node: TreeNode, options?: { render?: boolean; force?: boolean }) {
+    return (await this.reloadNotifier(node, options))?.run();
+  }
+
+  async reloadNotifier(node: TreeNode, { render = true, force = false } = {}) {
     await this.explorer.refreshWidth();
     this.selectedNodes = new Set();
     node.children = this.expandStore.isExpanded(node) ? await this.loadChildren(node) : [];
     await this.loaded(node);
     if (render) {
-      await this.render({ node, notify, force });
+      return this.renderNotifier({ node, force });
     }
   }
 
@@ -686,12 +703,11 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>> {
     });
   }
 
-  setLines(lines: string[], startIndex: number, endIndex: number, notify = false) {
-    return this.explorer.setLines(
+  setLinesNotify(lines: string[], startIndex: number, endIndex: number) {
+    this.explorer.setLinesNotify(
       lines,
       this.startLineIndex + startIndex,
       this.startLineIndex + endIndex,
-      notify,
     );
   }
 
@@ -711,35 +727,37 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>> {
     return { startIndex, endIndex };
   }
 
-  private async expandNodeRender(node: TreeNode, notify = false) {
-    await execNotifyBlock(async () => {
-      if (!this.expandStore.isExpanded(node) || !node.children) {
-        return;
-      }
-      const range = this.nodeAndChildrenRange(node);
-      if (!range) {
-        return;
-      }
-      const { startIndex, endIndex } = range;
-      const needDrawNodes = this.flattenByNode(node);
-      if (await this.beforeDraw(needDrawNodes)) {
-        return this.render();
-      }
-      this.flattenedNodes = this.flattenedNodes
-        .slice(0, startIndex)
-        .concat(needDrawNodes)
-        .concat(this.flattenedNodes.slice(endIndex + 1));
-      this.offsetAfterLine(needDrawNodes.length - 1, startIndex);
-      const highlights = await this.drawNodes(needDrawNodes);
-      await this.setLines(
-        needDrawNodes.map((node) => node.drawnLine),
-        startIndex,
-        endIndex + 1,
-        true,
-      );
-      await this.executeHighlightsNotify(highlights);
-      await this.gotoLineIndex(startIndex, 1);
-    }, notify);
+  private async expandNodeRender(node: TreeNode) {
+    if (!this.expandStore.isExpanded(node) || !node.children) {
+      return;
+    }
+    const range = this.nodeAndChildrenRange(node);
+    if (!range) {
+      return;
+    }
+    const { startIndex, endIndex } = range;
+    const needDrawNodes = this.flattenByNode(node);
+    if (await this.beforeDraw(needDrawNodes)) {
+      await this.render();
+      return;
+    }
+    this.flattenedNodes = this.flattenedNodes
+      .slice(0, startIndex)
+      .concat(needDrawNodes)
+      .concat(this.flattenedNodes.slice(endIndex + 1));
+    this.offsetAfterLine(needDrawNodes.length - 1, startIndex);
+    const highlights = await this.drawNodes(needDrawNodes);
+    const gotoNotifier = await this.gotoLineIndexNotifier(startIndex, 1);
+
+    this.nvim.pauseNotification();
+    this.setLinesNotify(
+      needDrawNodes.map((node) => node.drawnLine),
+      startIndex,
+      endIndex + 1,
+    );
+    this.executeHighlightsNotify(highlights);
+    gotoNotifier.notify();
+    await this.nvim.resumeNotification();
   }
 
   private async expandNodeRecursive(node: TreeNode, recursive: boolean) {
@@ -761,45 +779,38 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>> {
     }
   }
 
-  async expandNode(node: TreeNode, { recursive = false, notify = false } = {}) {
-    await execNotifyBlock(
-      async () => {
-        await this.expandNodeRecursive(node, recursive);
-        await this.expandNodeRender(node, true);
-        await this.gotoNode(node, { notify: true });
-      },
-      notify,
-    );
+  async expandNode(node: TreeNode, { recursive = false } = {}) {
+    await this.expandNodeRecursive(node, recursive);
+    await this.expandNodeRender(node);
   }
 
-  private async collapseNodeRender(node: TreeNode, notify = false) {
-    await execNotifyBlock(
-      async () => {
-        if (this.expandStore.isExpanded(node)) {
-          return;
-        }
-        const range = this.nodeAndChildrenRange(node);
-        if (!range) {
-          return;
-        }
-        if (await this.beforeDraw([node])) {
-          return this.render();
-        }
-        const { startIndex, endIndex } = range;
-        this.flattenedNodes.splice(startIndex + 1, endIndex - startIndex);
-        this.explorer.indexesManager.removeLines(
-          this.startLineIndex + startIndex + 1,
-          this.startLineIndex + endIndex,
-        );
-        this.offsetAfterLine(-(endIndex - startIndex), endIndex);
-        const highlights = await this.drawNodes([node]);
-        await this.setLines([node.drawnLine], startIndex, endIndex + 1, true);
-        await this.executeHighlightsNotify(highlights);
-        // await this.executeConcealableHighlight({ isNotify: true });
-        await this.gotoLineIndex(startIndex, 1);
-      },
-      notify,
+  private async collapseNodeRender(node: TreeNode) {
+    if (this.expandStore.isExpanded(node)) {
+      return;
+    }
+    const range = this.nodeAndChildrenRange(node);
+    if (!range) {
+      return;
+    }
+    if (await this.beforeDraw([node])) {
+      await this.render();
+      return;
+    }
+    const { startIndex, endIndex } = range;
+    this.flattenedNodes.splice(startIndex + 1, endIndex - startIndex);
+    this.explorer.indexesManager.removeLines(
+      this.startLineIndex + startIndex + 1,
+      this.startLineIndex + endIndex,
     );
+    this.offsetAfterLine(-(endIndex - startIndex), endIndex);
+    const highlights = await this.drawNodes([node]);
+    const gotoNotifier = await this.gotoLineIndexNotifier(startIndex, 1);
+
+    this.nvim.pauseNotification();
+    this.setLinesNotify([node.drawnLine], startIndex, endIndex + 1);
+    this.executeHighlightsNotify(highlights);
+    gotoNotifier.notify();
+    await this.nvim.resumeNotification();
   }
 
   private async collapseNodeRecursive(node: TreeNode, recursive: boolean) {
@@ -815,15 +826,9 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>> {
     }
   }
 
-  async collapseNode(node: TreeNode, { recursive = false, notify = false } = {}) {
-    await execNotifyBlock(
-      async () => {
-        await this.collapseNodeRecursive(node, recursive);
-        await this.collapseNodeRender(node, true);
-        await this.gotoNode(node, { notify: true });
-      },
-      notify,
-    );
+  async collapseNode(node: TreeNode, { recursive = false } = {}) {
+    await this.collapseNodeRecursive(node, recursive);
+    await this.collapseNodeRender(node);
   }
 
   requestRenderNodes(nodes: TreeNode[]) {
@@ -832,92 +837,98 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>> {
     });
   }
 
-  async emitRequestRenderNodes(notify = false) {
-    if (this.requestedRenderNodes.size > 0) {
-      await this.renderNodes(Array.from(this.requestedRenderNodes), notify);
-      this.requestedRenderNodes.clear();
+  async emitRequestRenderNodesNotifier() {
+    if (this.requestedRenderNodes.size <= 0) {
+      return;
     }
+    const nodes = Array.from(this.requestedRenderNodes);
+    this.requestedRenderNodes.clear();
+    return this.renderNodesNotifier(nodes);
   }
 
-  async renderNodes(nodes: TreeNode[], notify = false) {
+  async renderNodesNotifier(nodes: TreeNode[]) {
     if (await this.beforeDraw(nodes)) {
-      return this.render();
+      return this.renderNotifier();
     }
     const highlights: HighlightPositionWithLine[] = [];
-    await execNotifyBlock(async () => {
-      await Promise.all(
-        nodes.map(async (node) => {
-          const nodeIndex = this.flattenedNodes.findIndex((it) => it.uri === node.uri);
-          if (nodeIndex === -1) {
-            return;
-          }
-          highlights.push(...(await this.drawNodes([node])));
-          await this.setLines([node.drawnLine], nodeIndex, nodeIndex + 1, true);
-        }),
-      );
-      await this.executeHighlightsNotify(highlights);
-      // await this.executeConcealableHighlight({ isNotify: true });
-    }, notify);
+    const drawNodes: [TreeNode, number][] = [];
+    await Promise.all(
+      nodes.map(async (node) => {
+        const nodeIndex = this.flattenedNodes.findIndex((it) => it.uri === node.uri);
+        if (nodeIndex === -1) {
+          return;
+        }
+        highlights.push(...(await this.drawNodes([node])));
+        drawNodes.push([node, nodeIndex]);
+      }),
+    );
+    return Notifier.create(() => {
+      for (const [node, nodeIndex] of drawNodes) {
+        this.setLinesNotify([node.drawnLine], nodeIndex, nodeIndex + 1);
+        this.executeHighlightsNotify(highlights);
+      }
+    });
   }
 
-  async render({ node = this.rootNode, notify = false, storeCursor = true, force = false } = {}) {
+  async render(options?: { node: TreeNode; storeCursor: boolean; force: boolean }) {
+    return (await this.renderNotifier(options))?.run();
+  }
+
+  async renderNotifier({ node = this.rootNode, storeCursor = true, force = false } = {}) {
     if (this.explorer.isHelpUI) {
       return;
     }
 
     const { nvim } = this;
 
-    let restore: ((notify: boolean) => Promise<void>) | null = null;
+    let restoreCursor: (() => Promise<Notifier>) | null = null;
     if (storeCursor) {
-      restore = await this.explorer.storeCursor();
+      restoreCursor = await this.explorer.storeCursor();
     }
 
-    await execNotifyBlock(async () => {
-      const range = this.nodeAndChildrenRange(node);
-      if (!range && node !== this.rootNode) {
-        return;
-      }
+    const range = this.nodeAndChildrenRange(node);
+    if (!range && node !== this.rootNode) {
+      return;
+    }
 
-      const { startIndex: nodeIndex, endIndex } = range
-        ? range
-        : { startIndex: 0, endIndex: this.flattenedNodes.length - 1 };
-      const oldHeight = endIndex - nodeIndex + 1;
-      const needDrawNodes = this.flattenByNode(node);
-      const newHeight = needDrawNodes.length;
-      this.flattenedNodes = this.flattenedNodes
-        .slice(0, nodeIndex)
-        .concat(needDrawNodes)
-        .concat(this.flattenedNodes.slice(endIndex + 1));
+    const { startIndex: nodeIndex, endIndex } = range
+      ? range
+      : { startIndex: 0, endIndex: this.flattenedNodes.length - 1 };
+    const oldHeight = endIndex - nodeIndex + 1;
+    const needDrawNodes = this.flattenByNode(node);
+    const newHeight = needDrawNodes.length;
+    this.flattenedNodes = this.flattenedNodes
+      .slice(0, nodeIndex)
+      .concat(needDrawNodes)
+      .concat(this.flattenedNodes.slice(endIndex + 1));
 
-      if (newHeight < oldHeight) {
-        this.explorer.indexesManager.removeLines(
-          this.startLineIndex + newHeight + 1,
-          this.startLineIndex + oldHeight + 1,
-        );
-      }
-      this.offsetAfterLine(newHeight - oldHeight, this.endLineIndex);
-      await this.beforeDraw(this.flattenedNodes, { force });
-      const highlights = await this.drawNodes(this.flattenedNodes);
+    if (newHeight < oldHeight) {
+      this.explorer.indexesManager.removeLines(
+        this.startLineIndex + newHeight + 1,
+        this.startLineIndex + oldHeight + 1,
+      );
+    }
+    this.offsetAfterLine(newHeight - oldHeight, this.endLineIndex);
+    await this.beforeDraw(this.flattenedNodes, { force });
+    const highlights = await this.drawNodes(this.flattenedNodes);
 
-      const sourceIndex = this.currentSourceIndex();
-      const isLastSource = this.explorer.sources.length - 1 == sourceIndex;
+    const sourceIndex = this.currentSourceIndex();
+    const isLastSource = this.explorer.sources.length - 1 == sourceIndex;
+    const restoreCursorNotifier = await restoreCursor?.();
 
-      await this.explorer.setLines(
+    return Notifier.create(() => {
+      this.explorer.setLinesNotify(
         this.flattenedNodes.map((node) => node.drawnLine),
         this.startLineIndex,
         isLastSource ? -1 : this.startLineIndex + oldHeight,
-        true,
       );
-      await this.executeHighlightsNotify(highlights);
-      // await this.executeConcealableHighlight();
+      this.executeHighlightsNotify(highlights);
 
-      if (restore) {
-        await restore(true);
-      }
+      restoreCursorNotifier?.notify();
 
       if (workspace.env.isVim) {
         nvim.command('redraw', true);
       }
-    }, notify);
+    });
   }
 }

@@ -7,7 +7,6 @@ import { BaseTreeNode, ExplorerSource, ActionOptions } from './source/source';
 import { sourceManager } from './source/source-manager';
 import { Range } from 'vscode-languageserver-protocol';
 import {
-  execNotifyBlock,
   config,
   getEnableDebug,
   enableWrapscan,
@@ -17,6 +16,7 @@ import {
   queueAsyncFunction,
   onCursorMoved,
   onEvents,
+  Notifier,
 } from './util';
 import { ExplorerManager } from './explorer-manager';
 import { hlGroupManager, HighlightPositionWithLine } from './source/highlight-manager';
@@ -297,7 +297,7 @@ export class Explorer {
         if (prevSource) {
           await prevSource.gotoLineIndex(0);
         } else if (await enableWrapscan()) {
-          await this.sources[this.sources.length - 1].gotoLineIndex(0);
+          await (this.sources[this.sources.length - 1].gotoLineIndex(0));
         }
       },
       'go to previous source',
@@ -426,23 +426,23 @@ export class Explorer {
     hlGroupManager.clearHighlights(this, hlSrcId, lineStart, lineEnd);
   }
 
-  async executeHighlightsNotify(hlSrcId: number, highlights: HighlightPositionWithLine[]) {
-    await hlGroupManager.executeHighlightsNotify(this, hlSrcId, highlights);
+  executeHighlightsNotify(hlSrcId: number, highlights: HighlightPositionWithLine[]) {
+    hlGroupManager.executeHighlightsNotify(this, hlSrcId, highlights);
   }
 
   async executeHighlightSyntax() {
     const winnr = await this.winnr;
     const curWinnr = await this.nvim.call('winnr');
     if (winnr) {
-      await execNotifyBlock(async () => {
-        if (winnr !== curWinnr) {
-          this.nvim.command(`${winnr}wincmd w`, true);
-        }
-        await hlGroupManager.executeHighlightSyntax(true);
-        if (winnr !== curWinnr) {
-          this.nvim.command(`${curWinnr}wincmd w`, true);
-        }
-      });
+      this.nvim.pauseNotification();
+      if (winnr !== curWinnr) {
+        this.nvim.command(`${winnr}wincmd w`, true);
+      }
+      hlGroupManager.executeHighlightSyntaxNotify();
+      if (winnr !== curWinnr) {
+        this.nvim.command(`${curWinnr}wincmd w`, true);
+      }
+      await this.nvim.resumeNotification();
     }
   }
 
@@ -468,18 +468,14 @@ export class Explorer {
 
     await this.initArgs(args);
 
-    await execNotifyBlock(async () => {
-      for (const source of this.sources) {
-        await source.open(true);
-      }
+    for (const source of this.sources) {
+      await source.open();
+    }
 
-      await this.reloadAll({ render: false, notify: true });
-      await this.renderAll({ notify: true, storeCursor: false });
-
-      for (const source of this.sources) {
-        await source.opened(isFirst, true);
-      }
-    });
+    const notifiers = await Promise.all(this.sources.map((s) => s.openedNotifier(isFirst)));
+    notifiers.push(await this.reloadAllNotifier({ render: false }));
+    notifiers.push(await this.renderAllNotifier({ storeCursor: false }));
+    await Notifier.runAll(notifiers);
   }
 
   async refreshWidth() {
@@ -597,13 +593,10 @@ export class Explorer {
           for (let c = 0; c < count; c++) {
             await this.doActions(actions, mode);
           }
-          await execNotifyBlock(async () => {
-            await Promise.all(
-              this.sources.map(async (source) => {
-                return source.emitRequestRenderNodes(true);
-              }),
-            );
-          });
+          const notifiers = await Promise.all(
+            this.sources.map((source) => source.emitRequestRenderNodesNotifier()),
+          );
+          await Notifier.runAll(notifiers);
 
           if (getEnableDebug()) {
             const actionDisplay = actions.map((a) => (a.arg ? a.name + ':' + a.arg : a.name));
@@ -762,11 +755,15 @@ export class Explorer {
     let storeView = await this.nvim.call('winsaveview');
     storeView = { topline: storeView.topline };
     if (storeCursor) {
-      const defaultRestore = async (notify = false) => {
-        await execNotifyBlock(async () => {
+      const defaultRestore = async () => {
+        const gotoLineNotifier = await this.gotoLineIndexNotifier(
+          storeCursor.lineIndex,
+          storeCursor.col,
+        );
+        return Notifier.create(() => {
           this.nvim.call('winrestview', [storeView], true);
-          await this.gotoLineIndex(storeCursor.lineIndex, storeCursor.col, true);
-        }, notify);
+          gotoLineNotifier.notify();
+        });
       };
 
       const [, sourceIndex] = this.findSourceByLineIndex(storeCursor.lineIndex);
@@ -783,91 +780,73 @@ export class Explorer {
         return defaultRestore;
       }
 
-      return async (notify = false) => {
-        await execNotifyBlock(async () => {
+      return async () => {
+        const gotoNodeNotifier = await source.gotoNodeNotifier(storeNode, {
+          lineIndex: relativeLineIndex,
+          col: storeCursor.col,
+        });
+        return Notifier.create(() => {
           this.nvim.call('winrestview', [storeView], true);
-          await source.gotoNode(storeNode, {
-            lineIndex: relativeLineIndex,
-            col: storeCursor.col,
-            notify: true,
-          });
-        }, notify);
+          gotoNodeNotifier.notify();
+        });
       };
     }
     return null;
   }
 
-  async gotoLineIndex(lineIndex: number, col?: number, notify = false) {
-    await execNotifyBlock(async () => {
-      const finalCol = col === undefined ? await this.currentCol() : col;
-      const win = await this.win;
+  async gotoLineIndex(lineIndex: number, col?: number) {
+    return (await this.gotoLineIndexNotifier(lineIndex, col)).run();
+  }
+
+  async gotoLineIndexNotifier(lineIndex: number, col?: number) {
+    const finalCol = col === undefined ? await this.currentCol() : col;
+    const win = await this.win;
+    return Notifier.create(() => {
       if (win) {
         win.setCursor([lineIndex + 1, finalCol - 1], true);
         if (workspace.isVim) {
           this.nvim.command('redraw', true);
         }
       }
-    }, notify);
+    });
   }
 
-  async setLines(lines: string[], start: number, end: number, notify = false) {
-    await execNotifyBlock(
-      async () => {
-        this.buffer.setOption('modifiable', true, true);
+  setLinesNotify(lines: string[], start: number, end: number) {
+    this.buffer.setOption('modifiable', true, true);
 
-        await this.buffer.setLines(
-          lines,
-          {
-            start,
-            end,
-            strictIndexing: false,
-          },
-          true,
-        );
-
-        this.buffer.setOption('modifiable', false, true);
+    this.buffer.setLines(
+      lines,
+      {
+        start,
+        end,
+        strictIndexing: false,
       },
-      notify,
+      true,
     );
+
+    this.buffer.setOption('modifiable', false, true);
   }
 
-  // private async clearContent() {
-  //   await this.setLines([], 0, -1, true);
-  //
-  //   this.sources.forEach((source) => {
-  //     source.lines = [];
-  //     source.startIndex = 0;
-  //     source.endIndex = 0;
-  //   });
-  // }
-
-  async reloadAll({ render = true, notify = false } = {}) {
-    await execNotifyBlock(async () => {
-      await Promise.all(
-        this.sources.map((source) =>
-          source.reload(source.rootNode, { render: false, notify: true }),
-        ),
-      );
-
-      if (render) {
-        await this.renderAll({ notify: true, storeCursor: false });
-      }
-    }, notify);
+  async reloadAllNotifier({ render = true } = {}) {
+    const notifiers = await Promise.all(
+      this.sources.map((source) => source.reloadNotifier(source.rootNode, { render: false })),
+    );
+    if (render) {
+      notifiers.push(await this.renderAllNotifier({ storeCursor: false }));
+    }
+    return Notifier.combine(notifiers);
   }
 
-  async renderAll({ notify = false, storeCursor = true } = {}) {
-    await execNotifyBlock(async () => {
-      const store = storeCursor ? await this.storeCursor() : null;
+  async renderAllNotifier({ storeCursor = true } = {}) {
+    const restoreCursor = storeCursor ? await this.storeCursor() : null;
+    const notifiers = await Promise.all(
+      this.sources.map((s) => s.renderNotifier({ storeCursor: false, force: true })),
+    );
+    if (restoreCursor) {
+      notifiers.push(await restoreCursor());
+    }
 
-      // await this.clearContent();
-      for (const source of this.sources) {
-        await source.render({ notify: true, storeCursor: false, force: true });
-      }
-
-      if (store) {
-        await store(true);
-      }
-    }, notify);
+    return Notifier.combine(notifiers);
   }
 
   /**
@@ -902,7 +881,7 @@ export class Explorer {
     this.isHelpUI = true;
     const builder = new SourceViewBuilder(this);
     const width = await this.nvim.call('winwidth', '%');
-    const storeCursor = await this.storeCursor();
+    const restoreCursor = await this.storeCursor();
     const nodes: BaseTreeNode<any>[] = [];
 
     let curUid = 0;
@@ -974,27 +953,26 @@ export class Explorer {
       }
     }
 
-    await execNotifyBlock(async () => {
-      await this.setLines(
-        nodes.map((n) => n.drawnLine),
-        0,
-        -1,
-        true,
-      );
-      const highlightPositions: HighlightPositionWithLine[] = [];
-      for (let i = 0; i < nodes.length; i++) {
-        const node = nodes[i];
-        if (node.highlightPositions) {
-          highlightPositions.push(
-            ...node.highlightPositions.map((hl) => ({
-              line: i,
-              ...hl,
-            })),
-          );
-        }
+    this.nvim.pauseNotification();
+    this.setLinesNotify(
+      nodes.map((n) => n.drawnLine),
+      0,
+      -1,
+    );
+    const highlightPositions: HighlightPositionWithLine[] = [];
+    for (let i = 0; i < nodes.length; i++) {
+      const node = nodes[i];
+      if (node.highlightPositions) {
+        highlightPositions.push(
+          ...node.highlightPositions.map((hl) => ({
+            line: i,
+            ...hl,
+          })),
+        );
       }
-      await this.executeHighlightsNotify(this.helpHlSrcId, highlightPositions);
-    });
+    }
+    this.executeHighlightsNotify(this.helpHlSrcId, highlightPositions);
+    await this.nvim.resumeNotification();
 
     await this.explorerManager.clearMappings();
 
@@ -1007,10 +985,11 @@ export class Explorer {
           async () => {
             disposables.forEach((d) => d.dispose());
             await this.quitHelp();
-            await this.renderAll({ storeCursor: false });
-            if (storeCursor) {
-              await storeCursor();
+            const notifiers = [await this.renderAllNotifier({ storeCursor: false })];
+            if (restoreCursor) {
+              notifiers.push(await restoreCursor());
             }
+            await Notifier.runAll(notifiers);
           },
           true,
         ),

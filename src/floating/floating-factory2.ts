@@ -15,8 +15,8 @@ import {
 import { distinct } from 'coc.nvim/lib/util/array';
 import { equals } from 'coc.nvim/lib/util/object';
 import { BufferHighlight } from '@chemzqm/neovim';
-import { log } from '../logger';
-import { debounce, onEvents, supportedFloat, execNotifyBlock } from '../util';
+import { log, onError } from '../logger';
+import { debounce, onEvents, supportedFloat } from '../util';
 import { WindowConfig } from 'coc.nvim/lib/model/floatFactory';
 import { CancellationTokenSource } from 'vscode-languageserver-protocol';
 import createPopup, { Popup } from 'coc.nvim/lib/model/popup';
@@ -317,56 +317,56 @@ export class FloatingFactory2 implements Disposable {
     if (token.isCancellationRequested) {
       return false;
     }
-    await execNotifyBlock(async () => {
-      if (workspace.isNvim) {
-        if (!this.window) {
-          return;
-        }
-        if (!reuse) {
-          nvim.command(`noa call win_gotoid(${this.window.id})`, true);
-          this.window.setVar('float', 1, true);
-          nvim.command(`setl nospell nolist wrap linebreak foldcolumn=1`, true);
-          nvim.command(
-            `setl nonumber norelativenumber nocursorline nocursorcolumn colorcolumn=`,
-            true,
-          );
-          nvim.command(`setl signcolumn=no conceallevel=2 concealcursor=n`, true);
-          nvim.command(
-            `setl winhl=Normal:CocFloating,NormalNC:CocFloating,FoldColumn:CocFloating`,
-            true,
-          );
-          nvim.call('coc#util#do_autocmd', ['CocOpenFloat'], true);
-        } else {
-          this.window.setConfig(config, true);
-          nvim.command(`noa call win_gotoid(${this.window.id})`, true);
-        }
-        this.floatBuffer.setLines();
-        nvim.command(`normal! ${alignTop ? 'G' : 'gg'}0`, true);
-        for (const hl of highlights) {
-          await this.buffer.addHighlight(hl);
-        }
-        nvim.command('noa wincmd p', true);
-      } else {
-        const filetypes = distinct(docs.map((d) => d.filetype));
-        if (filetypes.length == 1) {
-          this.popup.setFiletype(filetypes[0]);
-        }
-        this.popup.move({
-          line: config.relative === 'cursor' ? cursorPostion(config.row) : config.row + 1,
-          col: config.relative === 'cursor' ? cursorPostion(config.col) : config.col + 1,
-          minwidth: config.width - 2,
-          minheight: config.height,
-          maxwidth: config.width - 2,
-          maxheight: config.height,
-          firstline: alignTop ? -1 : 1,
-        });
-        this.floatBuffer.setLines();
-        for (const hl of highlights) {
-          await this.buffer.addHighlight(hl);
-        }
-        nvim.command('redraw', true);
+    nvim.pauseNotification();
+    if (workspace.isNvim) {
+      if (!this.window) {
+        return false;
       }
-    });
+      if (!reuse) {
+        nvim.command(`noa call win_gotoid(${this.window.id})`, true);
+        this.window.setVar('float', 1, true);
+        nvim.command(`setl nospell nolist wrap linebreak foldcolumn=1`, true);
+        nvim.command(
+          `setl nonumber norelativenumber nocursorline nocursorcolumn colorcolumn=`,
+          true,
+        );
+        nvim.command(`setl signcolumn=no conceallevel=2 concealcursor=n`, true);
+        nvim.command(
+          `setl winhl=Normal:CocFloating,NormalNC:CocFloating,FoldColumn:CocFloating`,
+          true,
+        );
+        nvim.call('coc#util#do_autocmd', ['CocOpenFloat'], true);
+      } else {
+        this.window.setConfig(config, true);
+        nvim.command(`noa call win_gotoid(${this.window.id})`, true);
+      }
+      this.floatBuffer.setLines();
+      nvim.command(`normal! ${alignTop ? 'G' : 'gg'}0`, true);
+      for (const hl of highlights) {
+        this.buffer.addHighlight(hl).catch(onError);
+      }
+      nvim.command('noa wincmd p', true);
+    } else {
+      const filetypes = distinct(docs.map((d) => d.filetype));
+      if (filetypes.length == 1) {
+        this.popup.setFiletype(filetypes[0]);
+      }
+      this.popup.move({
+        line: config.relative === 'cursor' ? cursorPostion(config.row) : config.row + 1,
+        col: config.relative === 'cursor' ? cursorPostion(config.col) : config.col + 1,
+        minwidth: config.width - 2,
+        minheight: config.height,
+        maxwidth: config.width - 2,
+        maxheight: config.height,
+        firstline: alignTop ? -1 : 1,
+      });
+      this.floatBuffer.setLines();
+      for (const hl of highlights) {
+        this.buffer.addHighlight(hl).catch(onError);
+      }
+      nvim.command('redraw', true);
+    }
+    await nvim.resumeNotification();
 
     if (mode == 's') {
       await snippetManager.selectCurrentPlaceholder(false);

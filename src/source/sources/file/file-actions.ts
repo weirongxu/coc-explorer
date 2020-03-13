@@ -1,7 +1,6 @@
 import { FileSource } from './file-source';
 import pathLib from 'path';
 import {
-  execNotifyBlock,
   fsCopyFileRecursive,
   fsRename,
   fsTrash,
@@ -14,6 +13,7 @@ import {
   prompt,
   overwritePrompt,
   OpenStrategy,
+  Notifier,
 } from '../../../util';
 import { workspace, listManager } from 'coc.nvim';
 import open from 'open';
@@ -100,10 +100,7 @@ export function initFileActions(file: FileSource) {
       if (node.directory && file.expandStore.isExpanded(node)) {
         await file.collapseNode(node);
       } else if (node.parent) {
-        await execNotifyBlock(async () => {
-          await file.collapseNode(node.parent!, { notify: true });
-          await file.gotoNode(node.parent!, { notify: true });
-        });
+        await file.collapseNode(node.parent!);
       }
     },
     'collapse directory',
@@ -115,10 +112,7 @@ export function initFileActions(file: FileSource) {
       if (node.directory && file.expandStore.isExpanded(node)) {
         await file.collapseNode(node, { recursive: true });
       } else if (node.parent) {
-        await execNotifyBlock(async () => {
-          await file.collapseNode(node.parent!, { notify: true, recursive: true });
-          await file.gotoNode(node.parent!, { notify: true });
-        });
+        await file.collapseNode(node.parent!, { recursive: true });
       }
     },
     'collapse directory recursively',
@@ -269,13 +263,12 @@ export function initFileActions(file: FileSource) {
         },
       );
       await file.reload(putTargetNode);
-      const addedNode = await file.revealNodeByPath(targetPath, {
+      const [, notifier] = await file.revealNodeByPath(targetPath, {
         node: putTargetNode,
         render: true,
+        goto: true,
       });
-      if (addedNode) {
-        await file.gotoNode(addedNode);
-      }
+      await Notifier.run(notifier);
     },
     'add a new file',
   );
@@ -301,14 +294,13 @@ export function initFileActions(file: FileSource) {
           await fsMkdirp(target);
         },
       );
-      await file.reload(putTargetNode);
-      const addedNode = await file.revealNodeByPath(targetPath, {
+      const reloadNotifier = await file.reloadNotifier(putTargetNode);
+      const [, revealNotifier] = await file.revealNodeByPath(targetPath, {
         node: putTargetNode,
         render: true,
+        goto: true,
       });
-      if (addedNode) {
-        await file.gotoNode(addedNode);
-      }
+      await Notifier.runAll([reloadNotifier, revealNotifier]);
     },
     'add a new directory',
   );
