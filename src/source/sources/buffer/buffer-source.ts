@@ -84,7 +84,7 @@ export class BufferSource extends ExplorerSource<BufferNode> {
 
   async init() {
     if (getActiveMode()) {
-      if (!workspace.env.isVim) {
+      if (workspace.isNvim) {
         this.subscriptions.push(
           onEvents(
             ['BufCreate', 'BufHidden', 'BufUnload', 'BufWritePost', 'InsertLeave'],

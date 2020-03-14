@@ -107,9 +107,9 @@ export function skipOnEvents(bufnrs: number[]) {
   skipOnBufEnterBufnrs.push(...bufnrs);
 }
 
-export async function skipOnEventsByWinnrs(winnrs: number[]) {
+export async function skipOnEventsByWins(winnrsOrWinids: number[]) {
   const bufnrs = (await workspace.nvim.eval(
-    `map([${winnrs.join(',')}], {idx, winnr -> winbufnr(winnr)})`,
+    `map([${winnrsOrWinids.join(',')}], {idx, winnr -> winbufnr(winnr)})`,
   )) as number[];
   skipOnEvents(bufnrs);
 }

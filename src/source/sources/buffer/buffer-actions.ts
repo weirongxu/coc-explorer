@@ -27,7 +27,7 @@ export function initBufferActions(buffer: BufferSource) {
   );
   buffer.addNodeAction(
     'open',
-    async (node, arg) => {
+    async (node, [arg]) => {
       await buffer.openAction(node, {
         async getURI() {
           return (await nvim.call('fnameescape', node.bufname)) as string;
@@ -46,12 +46,12 @@ export function initBufferActions(buffer: BufferSource) {
         if (info.length && info[0].windows.length) {
           const winid = info[0].windows[0];
           await nvim.call('win_gotoid', winid);
-          await buffer.explorer.quitOnOpen();
+          await buffer.explorer.tryQuitOnOpen();
           return;
         }
       }
       await nvim.command(`buffer ${node.bufnr}`);
-      await buffer.explorer.quitOnOpen();
+      await buffer.explorer.tryQuitOnOpen();
     },
     'open buffer via drop command',
     { multi: true },

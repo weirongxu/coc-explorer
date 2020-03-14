@@ -47,7 +47,7 @@ export function initFileActions(file: FileSource) {
   );
   file.addNodeAction(
     'open',
-    async (node, arg) => {
+    async (node, [arg]) => {
       if (node.directory) {
         if (config.get<boolean>('openAction.changeDirectory')!) {
           await file.doAction('cd', node);
@@ -68,7 +68,7 @@ export function initFileActions(file: FileSource) {
     async (node) => {
       if (!node.directory) {
         await nvim.command(`drop ${node.fullpath}`);
-        await file.explorer.quitOnOpen();
+        await file.explorer.tryQuitOnOpen();
       }
     },
     'open file via drop command',
@@ -238,7 +238,7 @@ export function initFileActions(file: FileSource) {
 
   file.addNodeAction(
     'addFile',
-    async (node, arg) => {
+    async (node, [arg]) => {
       let filename =
         arg ?? ((await nvim.call('input', ['Input a new filename: ', '', 'file'])) as string);
       filename = filename.trim();
@@ -246,7 +246,7 @@ export function initFileActions(file: FileSource) {
         return;
       }
       if (filename.endsWith('/') || filename.endsWith('\\')) {
-        await file.doAction('addDirectory', node, filename);
+        await file.doAction('addDirectory', node, [filename]);
         return;
       }
       const putTargetNode = file.getPutTargetNode(node);
@@ -263,18 +263,18 @@ export function initFileActions(file: FileSource) {
         },
       );
       await file.reload(putTargetNode);
-      const [, notifier] = await file.revealNodeByPath(targetPath, {
+      const [, notifiers] = await file.revealNodeByPathNotifier(targetPath, {
         node: putTargetNode,
         render: true,
         goto: true,
       });
-      await Notifier.run(notifier);
+      await Notifier.runAll(notifiers);
     },
     'add a new file',
   );
   file.addNodeAction(
     'addDirectory',
-    async (node, arg) => {
+    async (node, [arg]) => {
       let directoryName =
         arg ?? ((await nvim.call('input', ['Input a new directory name: ', '', 'file'])) as string);
       directoryName = directoryName.trim().replace(/(\/|\\)*$/g, '');
@@ -295,12 +295,12 @@ export function initFileActions(file: FileSource) {
         },
       );
       const reloadNotifier = await file.reloadNotifier(putTargetNode);
-      const [, revealNotifier] = await file.revealNodeByPath(targetPath, {
+      const [, revealNotifiers] = await file.revealNodeByPathNotifier(targetPath, {
         node: putTargetNode,
         render: true,
         goto: true,
       });
-      await Notifier.runAll([reloadNotifier, revealNotifier]);
+      await Notifier.runAll([reloadNotifier, ...revealNotifiers]);
     },
     'add a new directory',
   );

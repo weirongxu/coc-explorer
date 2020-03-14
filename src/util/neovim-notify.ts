@@ -41,7 +41,10 @@ export class Notifier {
     if (safeNotifiers.length === 1) {
       return safeNotifiers[0];
     }
-    return safeNotifiers.slice(1).reduce((ret, cur) => ret.concat(cur), safeNotifiers[0]);
+    return safeNotifiers.reduce(
+      (ret, cur) => ret.concat(cur),
+      Notifier.create(() => {}),
+    );
   }
 
   static create(notify: () => void) {

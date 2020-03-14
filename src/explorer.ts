@@ -15,7 +15,6 @@ import {
   PreviewStrategy,
   queueAsyncFunction,
   onCursorMoved,
-  onEvents,
   Notifier,
 } from './util';
 import { ExplorerManager } from './explorer-manager';
@@ -48,7 +47,7 @@ export class Explorer {
     {
       description: string;
       options: Partial<ActionOptions>;
-      callback: (nodes: BaseTreeNode<any>[], arg?: string) => void | Promise<void>;
+      callback: (nodes: BaseTreeNode<any>[], args: string[]) => void | Promise<void>;
     }
   > = {};
   context: ExtensionContext;
@@ -237,7 +236,7 @@ export class Explorer {
     );
     this.addGlobalAction(
       'normal',
-      async (_node, arg) => {
+      async (_node, [arg]) => {
         if (arg) {
           await this.nvim.command('normal ' + arg);
         }
@@ -253,7 +252,7 @@ export class Explorer {
     );
     this.addGlobalAction(
       'preview',
-      async (nodes, arg) => {
+      async (nodes, [arg]) => {
         const source = await this.currentSource();
         if (nodes && nodes[0] && source) {
           const node = nodes[0];
@@ -265,7 +264,7 @@ export class Explorer {
 
     this.addGlobalAction(
       'gotoSource',
-      async (_nodes, arg) => {
+      async (_nodes, [arg]) => {
         const source = this.sources.find((s) => s.sourceName === arg);
         if (source) {
           await source.gotoLineIndex(0);
@@ -292,7 +291,7 @@ export class Explorer {
         if (prevSource) {
           await prevSource.gotoLineIndex(0);
         } else if (await enableWrapscan()) {
-          await (this.sources[this.sources.length - 1].gotoLineIndex(0));
+          await this.sources[this.sources.length - 1].gotoLineIndex(0);
         }
       },
       'go to previous source',
@@ -466,10 +465,10 @@ export class Explorer {
     for (const source of this.sources) {
       await source.open();
     }
-
-    const notifiers = await Promise.all(this.sources.map((s) => s.openedNotifier(isFirst)));
+    const notifiers = [];
     notifiers.push(await this.reloadAllNotifier({ render: false }));
     notifiers.push(await this.renderAllNotifier({ storeCursor: false }));
+    notifiers.push(...(await Promise.all(this.sources.map((s) => s.openedNotifier(isFirst)))));
     await Notifier.runAll(notifiers);
   }
 
@@ -514,7 +513,7 @@ export class Explorer {
     }
   }
 
-  async quitOnOpen() {
+  async tryQuitOnOpen() {
     if (
       config.get<boolean>('quitOnOpen') ||
       (await this.args.value(argOptions.position)) === 'floating'
@@ -563,7 +562,7 @@ export class Explorer {
 
   addGlobalAction(
     name: string,
-    callback: (nodes: BaseTreeNode<any>[], arg: string | undefined) => void | Promise<void>,
+    callback: (nodes: BaseTreeNode<any>[], args: string[]) => void | Promise<void>,
     description: string,
     options: Partial<ActionOptions> = {},
   ) {
@@ -594,7 +593,7 @@ export class Explorer {
           await Notifier.runAll(notifiers);
 
           if (getEnableDebug()) {
-            const actionDisplay = actions.map((a) => (a.arg ? a.name + ':' + a.arg : a.name));
+            const actionDisplay = actions.map((a) => [a.name, ...a.args].join(':'));
             // tslint:disable-next-line: ban
             workspace.showMessage(`action(${actionDisplay}): ${Date.now() - now}ms`, 'more');
           }
@@ -649,13 +648,13 @@ export class Explorer {
         const action = actions[i];
         const rule = conditionActionRules[action.name];
         if (rule) {
-          const [trueNodes, falseNodes] = partition(nodes, (n) => rule.filter(n, action.arg));
+          const [trueNodes, falseNodes] = partition(nodes, (n) => rule.filter(n, action.args));
           const [trueAction, falseAction] = [actions[i + 1], actions[i + 2]];
           i += 2;
-          await source.doAction(trueAction.name, trueNodes, trueAction.arg);
-          await source.doAction(falseAction.name, falseNodes, falseAction.arg);
+          await source.doAction(trueAction.name, trueNodes, trueAction.args);
+          await source.doAction(falseAction.name, falseNodes, falseAction.args);
         } else {
-          await source.doAction(action.name, nodes, action.arg);
+          await source.doAction(action.name, nodes, action.args);
         }
       }
     }
@@ -801,6 +800,8 @@ export class Explorer {
         win.setCursor([lineIndex + 1, finalCol - 1], true);
         if (workspace.isVim) {
           this.nvim.command('redraw', true);
+        } else {
+          this.nvim.command('redraw!', true);
         }
       }
     });
@@ -907,8 +908,8 @@ export class Explorer {
     };
     const drawAction = (row: SourceRowBuilder, action: Action) => {
       row.add(action.name, { hl: helpHightlights.action });
-      if (action.arg) {
-        row.add(`(${action.arg})`, { hl: helpHightlights.arg });
+      if (action.args) {
+        row.add(`(${action.args.join(',')})`, { hl: helpHightlights.arg });
       }
       row.add(' ');
       row.add(registeredActions[action.name].description, { hl: helpHightlights.description });
@@ -930,7 +931,7 @@ export class Explorer {
         const action = actions[i];
         const rule = conditionActionRules[action.name];
         if (rule) {
-          row.add('if ' + rule.getDescription(action.arg) + ' ', {
+          row.add('if ' + rule.getDescription(action.args) + ' ', {
             hl: helpHightlights.conditional,
           });
           drawAction(row, actions[i + 1]);

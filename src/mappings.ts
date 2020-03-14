@@ -78,7 +78,7 @@ const defaultMappingGroups: Record<keyof typeof MappingMode, OriginalMappings> =
 
 export type Action = {
   name: string;
-  arg?: string;
+  args: string[];
 };
 
 export type ActionMode = 'n' | 'v';
@@ -106,14 +106,14 @@ export async function getMappings(): Promise<Mappings> {
 
 /**
  * @example
- * parseAction('normal:j')
- * // return { name: 'normal', arg: 'j' }
+ * parseAction('open:split:plain')
+ * // return { name: 'open', args: ['split', 'plain'] }
  */
 function parseAction(originalAction: string): Action {
-  const [name, arg] = originalAction.split(/:(.+)/, 2) as [string, string | undefined];
+  const [name, ...args] = originalAction.split(/:(.+)/, 2);
   return {
     name,
-    arg,
+    args,
   };
 }
 
