@@ -614,6 +614,7 @@ Default: <pre><code>false</code></pre>
     "<cr>": "open",
     "e": "open",
     "s": "open:split",
+    "S": "open:split:plain",
     "E": "open:vsplit",
     "t": "open:tab",
     "<bs>": "gotoParent",
@@ -665,4 +666,4 @@ Default: <pre><code>false</code></pre>
 - VSCode Explorer
 - [Shougo/vimfiler.vim](https://github.com/Shougo/vimfiler.vim)
 - [Shougo/defx.nvim](https://github.com/Shougo/defx.nvim)
-- [lambdalisue/fila.vim](https://github.com/lambdalisue/fila.vim)
+- [lambdalisue/fern.vim](https://github.com/lambdalisue/fern.vim)
