@@ -51,7 +51,7 @@ export class Explorer {
     }
   > = {};
   context: ExtensionContext;
-  floatingWindow = new FloatingPreview(this);
+  floatingWindow: FloatingPreview;
   contentWidth = 0;
 
   private _buffer?: Buffer;
@@ -125,6 +125,7 @@ export class Explorer {
     public bufnr: number,
   ) {
     this.context = explorerManager.context;
+    this.floatingWindow = new FloatingPreview(this);
 
     if (config.get<boolean>('previewAction.onHover')!) {
       onCursorMoved(async (bufnr) => {

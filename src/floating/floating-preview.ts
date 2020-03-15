@@ -13,10 +13,12 @@ import { FloatingFactory2 } from './floating-factory2';
 
 export class FloatingPreview {
   nvim = workspace.nvim;
-  floatFactory = new FloatingFactory2(this.explorer, this.nvim, workspace.env, false);
+  floatFactory: FloatingFactory2;
   shown: boolean = false;
 
-  constructor(public explorer: Explorer) {}
+  constructor(public explorer: Explorer) {
+    this.floatFactory = new FloatingFactory2(this.explorer, this.nvim, workspace.env, false);
+  }
 
   async previewNode(
     previewStrategy: PreviewStrategy,
