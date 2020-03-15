@@ -808,20 +808,27 @@ export class Explorer {
     });
   }
 
-  setLinesNotify(lines: string[], start: number, end: number) {
-    this.buffer.setOption('modifiable', true, true);
+  async setLinesNotifier(lines: string[], start: number, end: number) {
+    const restoreCursor = workspace.isVim ? await this.storeCursor() : null;
+    const notifier = await restoreCursor?.();
 
-    this.buffer.setLines(
-      lines,
-      {
-        start,
-        end,
-        strictIndexing: false,
-      },
-      true,
-    );
+    return Notifier.create(() => {
+      this.buffer.setOption('modifiable', true, true);
 
-    this.buffer.setOption('modifiable', false, true);
+      this.buffer.setLines(
+        lines,
+        {
+          start,
+          end,
+          strictIndexing: false,
+        },
+        true,
+      );
+
+      this.buffer.setOption('modifiable', false, true);
+
+      notifier?.notify();
+    });
   }
 
   async reloadAllNotifier({ render = true } = {}) {
@@ -950,12 +957,14 @@ export class Explorer {
       }
     }
 
-    this.nvim.pauseNotification();
-    this.setLinesNotify(
+    const notifier = await this.setLinesNotifier(
       nodes.map((n) => n.drawnLine),
       0,
       -1,
     );
+
+    this.nvim.pauseNotification();
+    notifier.notify();
     const highlightPositions: HighlightPositionWithLine[] = [];
     for (let i = 0; i < nodes.length; i++) {
       const node = nodes[i];

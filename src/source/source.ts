@@ -774,8 +774,8 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>> {
     });
   }
 
-  setLinesNotify(lines: string[], startIndex: number, endIndex: number) {
-    this.explorer.setLinesNotify(
+  setLinesNotifier(lines: string[], startIndex: number, endIndex: number) {
+    return this.explorer.setLinesNotifier(
       lines,
       this.startLineIndex + startIndex,
       this.startLineIndex + endIndex,
@@ -819,13 +819,14 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>> {
     this.offsetAfterLine(needDrawNodes.length - 1, startIndex);
     const highlights = await this.drawNodes(needDrawNodes);
     const gotoNotifier = await this.gotoLineIndexNotifier(startIndex, 1);
-
-    this.nvim.pauseNotification();
-    this.setLinesNotify(
+    const setLinesNotifier = await this.setLinesNotifier(
       needDrawNodes.map((node) => node.drawnLine),
       startIndex,
       endIndex + 1,
     );
+
+    this.nvim.pauseNotification();
+    setLinesNotifier.notify();
     this.executeHighlightsNotify(highlights);
     gotoNotifier.notify();
     await this.nvim.resumeNotification();
@@ -876,9 +877,14 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>> {
     this.offsetAfterLine(-(endIndex - startIndex), endIndex);
     const highlights = await this.drawNodes([node]);
     const gotoNotifier = await this.gotoLineIndexNotifier(startIndex, 1);
+    const setLinesNotifier = await this.setLinesNotifier(
+      [node.drawnLine],
+      startIndex,
+      endIndex + 1,
+    );
 
     this.nvim.pauseNotification();
-    this.setLinesNotify([node.drawnLine], startIndex, endIndex + 1);
+    setLinesNotifier.notify();
     this.executeHighlightsNotify(highlights);
     gotoNotifier.notify();
     await this.nvim.resumeNotification();
@@ -933,11 +939,14 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>> {
         needDrawNodes.push([node, nodeIndex]);
       }),
     );
+    const notifiers = await Promise.all(
+      needDrawNodes.map(([node, nodeIndex]) =>
+        this.setLinesNotifier([node.drawnLine], nodeIndex, nodeIndex + 1),
+      ),
+    );
     return Notifier.create(() => {
-      for (const [node, nodeIndex] of needDrawNodes) {
-        this.setLinesNotify([node.drawnLine], nodeIndex, nodeIndex + 1);
-        this.executeHighlightsNotify(highlights);
-      }
+      Notifier.notifyAll(notifiers);
+      this.executeHighlightsNotify(highlights);
     });
   }
 
@@ -987,12 +996,13 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>> {
     const isLastSource = this.explorer.sources.length - 1 == sourceIndex;
     const restoreCursorNotifier = await restoreCursor?.();
 
+    const notifier = await this.explorer.setLinesNotifier(
+      needDrawNodes.map((node) => node.drawnLine),
+      this.startLineIndex + nodeIndex,
+      isLastSource && node.isRoot ? -1 : this.startLineIndex + nodeIndex + oldHeight,
+    );
     return Notifier.create(() => {
-      this.explorer.setLinesNotify(
-        needDrawNodes.map((node) => node.drawnLine),
-        this.startLineIndex + nodeIndex,
-        isLastSource && node.isRoot ? -1 : this.startLineIndex + nodeIndex + oldHeight,
-      );
+      notifier.notify();
       this.executeHighlightsNotify(highlights);
 
       restoreCursorNotifier?.notify();
