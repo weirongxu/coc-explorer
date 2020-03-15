@@ -25,7 +25,7 @@ export class DriveList extends BasicList {
 
   async loadItems() {
     return this.explorerDrives.map((drive) => ({
-      label: `${drive.name} - go to ${drive.name}/`,
+      label: drive.name,
       data: {
         drive: drive.name,
         callback: drive.callback,
@@ -37,9 +37,7 @@ export class DriveList extends BasicList {
     const { nvim } = this;
     nvim.pauseNotification();
     nvim.command('syntax match CocExplorerDriveName /\\v^[\\w:]+/', true);
-    nvim.command('syntax match CocExplorerDriveDescription /\\v - .+/', true);
     nvim.command('highlight default link CocExplorerDriveName PreProc', true);
-    nvim.command('highlight default link CocExplorerDriveDescription Comment', true);
     nvim.resumeNotification().catch(onError);
   }
 }

@@ -26,8 +26,12 @@ export function initFileActions(file: FileSource) {
   file.addNodeAction(
     'gotoParent',
     async () => {
-      file.root = pathLib.dirname(file.root);
-      await file.cd(file.root);
+      if (/^[A-Za-z]:[\\\/]$/.test(file.root)) {
+        file.root = '';
+      } else {
+        file.root = pathLib.dirname(file.root);
+        await file.cd(file.root);
+      }
       file.expandStore.expand(file.rootNode);
       await file.reload(file.rootNode);
     },
@@ -345,13 +349,12 @@ export function initFileActions(file: FileSource) {
     file.addNodeAction(
       'listDrive',
       async () => {
-        // TODO Use drives as root path
         const drives = await listDrive();
         driveList.setExplorerDrives(
           drives.map((drive) => ({
             name: drive,
             callback: async (drive) => {
-              file.root = drive + '\\';
+              file.root = drive;
               file.expanded = true;
               await file.reload(file.rootNode);
             },

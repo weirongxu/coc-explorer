@@ -14,6 +14,8 @@ import {
   normalizePath,
   getExtensions,
   Notifier,
+  listDrive,
+  isWindows,
 } from '../../../util';
 import { hlGroupManager } from '../../highlight-manager';
 import { ExplorerSource, BaseTreeNode } from '../../source';
@@ -321,7 +323,12 @@ export class FileSource extends ExplorerSource<FileNode> {
   }
 
   async loadChildren(parent: FileNode): Promise<FileNode[]> {
-    const filenames = await fsReaddir(parent.fullpath);
+    let filenames: string[];
+    if (isWindows && parent.fullpath === '') {
+      filenames = await listDrive();
+    } else {
+      filenames = await fsReaddir(parent.fullpath);
+    }
     const files = await Promise.all(
       filenames.map(async (filename) => {
         try {
@@ -335,7 +342,12 @@ export class FileSource extends ExplorerSource<FileNode> {
           const executable = await fsAccess(fullpath, fs.constants.X_OK);
           const writable = await fsAccess(fullpath, fs.constants.W_OK);
           const readable = await fsAccess(fullpath, fs.constants.R_OK);
-          const directory = stat ? stat.isDirectory() : false;
+          const directory =
+            isWindows && /^[A-Za-z]:[\\\/]$/.test(fullpath)
+              ? true
+              : stat
+              ? stat.isDirectory()
+              : false;
           const child: FileNode = {
             type: 'child',
             uri: this.helper.generateUri(fullpath),

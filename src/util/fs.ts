@@ -150,7 +150,8 @@ export async function listDrive(): Promise<string[]> {
     const list = content
       .split('\n')
       .map((d) => d.trim())
-      .filter((d) => d.endsWith(':'));
+      .filter((d) => d.endsWith(':'))
+      .map((d) => d + '/');
     return list;
   } else {
     throw new Error('not support listDrive in ' + process.platform);

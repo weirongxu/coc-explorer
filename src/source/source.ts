@@ -81,7 +81,7 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>> {
   };
   readonly helper = {
     generateUri: (path: string) => {
-      if (isWindows && /[A-Z]:/.test(path)) {
+      if (isWindows && /^[A-Za-z]:/.test(path)) {
         path = '/' + path;
       }
       return this.scheme + '://' + path;
