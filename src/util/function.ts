@@ -2,7 +2,7 @@ import { setImmediate } from 'timers';
 import { onError } from '../logger';
 
 export function asyncCatchError<R extends any, ARGS extends any[]>(
-  fn: (...args: ARGS) => Promise<R>,
+  fn: (...args: ARGS) => R | Promise<R>,
 ) {
   return async (...args: ARGS) => {
     try {

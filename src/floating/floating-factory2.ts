@@ -40,6 +40,7 @@ export class FloatingFactory2 implements Disposable {
   initedBuffer: any;
 
   constructor(
+    private explorer: Explorer,
     private nvim: Neovim,
     private env: Env,
     private preferTop = false,
@@ -49,56 +50,58 @@ export class FloatingFactory2 implements Disposable {
     if (!supportedFloat()) {
       return;
     }
-    onBufEnter(
-      async (bufnr) => {
-        if (this.buffer && bufnr == this.buffer.id) {
-          return;
-        }
-        if (bufnr == this.targetBufnr) {
-          return;
-        }
-        await this.close();
-      },
-      undefined,
-      this.disposables,
-    );
-    onEvents(
-      'InsertLeave',
-      async (bufnr) => {
-        if (this.buffer && bufnr == this.buffer.id) {
-          return;
-        }
-        if (snippetManager.isActived(bufnr)) {
-          return;
-        }
-        await this.close();
-      },
-      null,
-      this.disposables,
-    );
-    onEvents(
-      'MenuPopupChanged',
-      async (ev, cursorline) => {
-        const pumAlignTop = (this.pumAlignTop = cursorline > ev.row);
-        if (pumAlignTop == this.alignTop) {
+    this.explorer.context.subscriptions.push(
+      onBufEnter(
+        async (bufnr) => {
+          if (this.buffer && bufnr == this.buffer.id) {
+            return;
+          }
+          if (bufnr == this.targetBufnr) {
+            return;
+          }
           await this.close();
-        }
-      },
-      null,
-      this.disposables,
+        },
+        undefined,
+        this.disposables,
+      ),
+      onEvents(
+        'InsertLeave',
+        async (bufnr) => {
+          if (this.buffer && bufnr == this.buffer.id) {
+            return;
+          }
+          if (snippetManager.isActived(bufnr)) {
+            return;
+          }
+          await this.close();
+        },
+        null,
+        this.disposables,
+      ),
+      onEvents(
+        'MenuPopupChanged',
+        async (ev, cursorline) => {
+          const pumAlignTop = (this.pumAlignTop = cursorline > ev.row);
+          if (pumAlignTop == this.alignTop) {
+            await this.close();
+          }
+        },
+        null,
+        this.disposables,
+      ),
+      onEvents(
+        'CursorMoved',
+        debounce(100, async (bufnr, cursor) => {
+          if (Date.now() - this.createTs < 100) {
+            return;
+          }
+          await this.onCursorMoved(false, bufnr, cursor);
+        }),
+        null,
+        this.disposables,
+      ),
+      onEvents('CursorMovedI', this.onCursorMoved.bind(this, true), null, this.disposables),
     );
-    onEvents(
-      'CursorMoved',
-      debounce(100, async (bufnr, cursor) => {
-        if (Date.now() - this.createTs < 100) {
-          return;
-        }
-        await this.onCursorMoved(false, bufnr, cursor);
-      }),
-      null,
-      this.disposables,
-    );
-    onEvents('CursorMovedI', this.onCursorMoved.bind(this, true), null, this.disposables);
   }
 
   private async onCursorMoved(

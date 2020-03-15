@@ -13,7 +13,7 @@ import { FloatingFactory2 } from './floating-factory2';
 
 export class FloatingPreview {
   nvim = workspace.nvim;
-  floatFactory = new FloatingFactory2(this.nvim, workspace.env, false);
+  floatFactory = new FloatingFactory2(this.explorer, this.nvim, workspace.env, false);
   shown: boolean = false;
 
   constructor(public explorer: Explorer) {}
