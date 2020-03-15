@@ -52,17 +52,9 @@ export function initFileActions(file: FileSource) {
   file.addNodeAction(
     'open',
     async (node, [arg]) => {
-      if (node.directory) {
-        if (config.get<boolean>('openAction.changeDirectory')!) {
-          await file.doAction('cd', node);
-        } else {
-          await file.doAction('expandOrCollapse', node);
-        }
-      } else {
-        await file.openAction(node, {
-          openStrategy: arg as OpenStrategy,
-        });
-      }
+      await file.openAction(node, {
+        openStrategy: arg as OpenStrategy,
+      });
     },
     'open file or directory',
     { multi: true },

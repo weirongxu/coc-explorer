@@ -403,10 +403,6 @@ Default: <pre><code>{
 }</code></pre>
 </details>
 <details>
-<summary><code>explorer.openAction.changeDirectory</code>: Change directory if node is a directory. type: <code>boolean</code></summary>
-Default: <pre><code>true</code></pre>
-</details>
-<details>
 <summary><code>explorer.sources</code>: Explorer sources. type: <code>array</code></summary>
 Default: <pre><code>[
   {
