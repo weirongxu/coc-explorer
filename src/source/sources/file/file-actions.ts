@@ -14,6 +14,7 @@ import {
   overwritePrompt,
   OpenStrategy,
   Notifier,
+  getOpenActionForDirectory,
 } from '../../../util';
 import { workspace, listManager } from 'coc.nvim';
 import open from 'open';
@@ -52,9 +53,16 @@ export function initFileActions(file: FileSource) {
   file.addNodeAction(
     'open',
     async (node, [arg]) => {
-      await file.openAction(node, {
-        openStrategy: arg as OpenStrategy,
-      });
+      if (node.directory) {
+        const directoryAction = getOpenActionForDirectory();
+        if (directoryAction) {
+          await file.doAction(directoryAction, node);
+        }
+      } else {
+        await file.openAction(node, {
+          openStrategy: arg as OpenStrategy,
+        });
+      }
     },
     'open file or directory',
     { multi: true },

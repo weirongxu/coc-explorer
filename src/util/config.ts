@@ -18,6 +18,8 @@ export type OpenStrategy =
   | 'sourceWindow';
 export const getOpenStrategy = () => config.get<OpenStrategy>('openAction.strategy')!;
 
+export const getOpenActionForDirectory = () => config.get<string>('openAction.for.directory')!;
+
 export type PreviewStrategy = 'labeling';
 export const getPreviewStrategy = () => config.get<PreviewStrategy>('previewAction.strategy')!;
 

@@ -256,14 +256,23 @@
           "description": "Strategy for open action",
           "enum": [
             "select",
-            "split",
             "vsplit",
+            "split",
             "tab",
             "previousBuffer",
             "previousWindow",
             "sourceWindow"
           ],
-          "default": "select"
+          "default": "select",
+          "enumDescriptions": [
+            "Open action use selection UI",
+            "Open action use vsplit",
+            "Open action use split",
+            "Open action use tab",
+            "Open action use last used buffer",
+            "Open action use last used window",
+            "Open action use the window when opening explorer"
+          ]
         },
         "explorer.openAction.select.filterFloatWindows": {
           "description": "Filter floating windows in select strategy",
@@ -300,6 +309,11 @@
             ],
             "floatingWindows": true
           }
+        },
+        "explorer.openAction.for.directory": {
+          "description": "The action when you open a directory of file source",
+          "type": "string",
+          "default": "cd"
         },
         "explorer.sources": {
           "description": "Explorer sources",

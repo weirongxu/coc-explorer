@@ -39,7 +39,9 @@ Explorer extension for [coc.nvim](https://github.com/neoclide/coc.nvim)
     - [x] Open file in select / vsplit / tab  
            `explorer.openAction.strategy` options:
       - select: Open action use selection UI
-      - vsplit: Open action with vsplit
+      - vsplit: Open action use vsplit
+      - split: Open action use split
+      - tab: Open action use tab
       - previousBuffer: Open action use last used buffer
       - previousWindow: Open action use last used window
       - sourceWindow: Open action use the window when opening explorer
@@ -382,7 +384,7 @@ Default: <pre><code>"labeling"</code></pre>
 Default: <pre><code>true</code></pre>
 </details>
 <details>
-<summary><code>explorer.openAction.strategy</code>: Strategy for open action. type: <code>select | split | vsplit | tab | previousBuffer | previousWindow | sourceWindow</code></summary>
+<summary><code>explorer.openAction.strategy</code>: Strategy for open action. type: <code>select | vsplit | split | tab | previousBuffer | previousWindow | sourceWindow</code></summary>
 Default: <pre><code>"select"</code></pre>
 </details>
 <details>
@@ -401,6 +403,10 @@ Default: <pre><code>{
   ],
   "floatingWindows": true
 }</code></pre>
+</details>
+<details>
+<summary><code>explorer.openAction.for.directory</code>: The action when you open a directory of file source. type: <code>string</code></summary>
+Default: <pre><code>"cd"</code></pre>
 </details>
 <details>
 <summary><code>explorer.sources</code>: Explorer sources. type: <code>array</code></summary>
