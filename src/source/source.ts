@@ -327,9 +327,13 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>> {
         await nvim.command(`${winnr}wincmd w`);
         if (workspace.isVim) {
           // Avoid vim highlight not working, https://github.com/weirongxu/coc-explorer/issues/113
-          await delay(100);
+          nvim.pauseNotification();
+          nvim.command(`edit ${await getURI()}`, true);
+          nvim.command('redraw', true);
+          await nvim.resumeNotification();
+        } else {
+          await nvim.command(`edit ${await getURI()}`);
         }
-        await nvim.command(`edit ${await getURI()}`);
       });
     const actions: Record<OpenStrategy, (args?: string[]) => void | Promise<void>> = {
       select: async () => {
