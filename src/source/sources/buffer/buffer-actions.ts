@@ -26,6 +26,20 @@ export function initBufferActions(buffer: BufferSource) {
     { multi: true },
   );
   buffer.addNodeAction(
+    'expandOrCollapse',
+    async (node) => {
+      if (node.expandable) {
+        if (buffer.expandStore.isExpanded(node)) {
+          await buffer.doAction('collapse', node);
+        } else {
+          await buffer.doAction('expand', node);
+        }
+      }
+    },
+    'expand or collapse root',
+    { multi: true },
+  );
+  buffer.addNodeAction(
     'open',
     async (node, [arg]) => {
       await buffer.openAction(node, {

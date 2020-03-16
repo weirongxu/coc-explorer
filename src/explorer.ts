@@ -16,6 +16,7 @@ import {
   queueAsyncFunction,
   onCursorMoved,
   Notifier,
+  prettyPrint,
 } from './util';
 import { ExplorerManager } from './explorer-manager';
 import { hlGroupManager, HighlightPositionWithLine } from './source/highlight-manager';
@@ -920,7 +921,9 @@ export class Explorer {
         row.add(`(${action.args.join(',')})`, { hl: helpHightlights.arg });
       }
       row.add(' ');
-      row.add(registeredActions[action.name].description, { hl: helpHightlights.description });
+      if (action.name in registeredActions) {
+        row.add(registeredActions[action.name].description, { hl: helpHightlights.description });
+      }
     };
     const mappings = await getMappings();
     for (const [key, actions] of Object.entries(mappings)) {
