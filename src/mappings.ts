@@ -28,7 +28,7 @@ const defaultMappingGroups: Record<keyof typeof MappingMode, OriginalMappings> =
     gh: 'collapseRecursive',
     '<2-LeftMouse>': ['expandable?', 'expandOrCollapse', 'open'],
     o: 'expandOrCollapse',
-    '<cr>': 'open',
+    '<cr>': ['expandable?', 'cd', 'open'],
     e: 'open',
     s: 'open:split',
     E: 'open:vsplit',

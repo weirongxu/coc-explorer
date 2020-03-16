@@ -607,7 +607,7 @@ Default: <pre><code>false</code></pre>
     "gl": "expandRecursive",
     "gh": "collapseRecursive",
     "o": "expandOrCollapse",
-    "<cr>": "open",
+    "<cr>": ["expandable?", "cd", "open"],
     "e": "open",
     "s": "open:split",
     "S": "open:split:plain",
