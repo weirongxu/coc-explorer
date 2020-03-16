@@ -653,8 +653,12 @@ export class Explorer {
           const [trueNodes, falseNodes] = partition(nodes, (n) => rule.filter(n, action.args));
           const [trueAction, falseAction] = [actions[i + 1], actions[i + 2]];
           i += 2;
-          await source.doAction(trueAction.name, trueNodes, trueAction.args);
-          await source.doAction(falseAction.name, falseNodes, falseAction.args);
+          if (trueNodes.length) {
+            await source.doAction(trueAction.name, trueNodes, trueAction.args);
+          }
+          if (falseNodes.length) {
+            await source.doAction(falseAction.name, falseNodes, falseAction.args);
+          }
         } else {
           await source.doAction(action.name, nodes, action.args);
         }
