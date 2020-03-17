@@ -16,7 +16,6 @@ import {
   queueAsyncFunction,
   onCursorMoved,
   Notifier,
-  prettyPrint,
 } from './util';
 import { ExplorerManager } from './explorer-manager';
 import { hlGroupManager, HighlightPositionWithLine } from './source/highlight-manager';

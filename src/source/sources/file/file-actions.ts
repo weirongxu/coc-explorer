@@ -9,7 +9,6 @@ import {
   fsTouch,
   isWindows,
   listDrive,
-  config,
   prompt,
   overwritePrompt,
   OpenStrategy,
@@ -27,6 +26,9 @@ export function initFileActions(file: FileSource) {
   file.addNodeAction(
     'gotoParent',
     async () => {
+      if (file.root === '') {
+        return;
+      }
       if (/^[A-Za-z]:[\\\/]$/.test(file.root)) {
         file.root = '';
       } else {
