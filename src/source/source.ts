@@ -1,25 +1,26 @@
-import { listManager, workspace, ExtensionContext, Disposable, IList, Uri } from 'coc.nvim';
-import { explorerActionList } from '../lists/actions';
+import { Disposable, ExtensionContext, IList, listManager, Uri, workspace } from 'coc.nvim';
 import { Explorer } from '../explorer';
+import { explorerActionList } from '../lists/actions';
 import { onError } from '../logger';
 import { getMappings, getReverseMappings } from '../mappings';
+import { argOptions } from '../parse-args';
 import {
   config,
-  getOpenStrategy,
-  getEnableNerdfont,
   delay,
-  onEvents,
-  PreviewStrategy,
+  generateUri,
+  getEnableNerdfont,
+  getOpenStrategy,
   getPreviewStrategy,
-  OpenStrategy,
-  skipOnEventsByWins,
   isWindows,
   Notifier,
+  onEvents,
+  OpenStrategy,
+  PreviewStrategy,
+  skipOnEventsByWins,
 } from '../util';
-import { SourceViewBuilder } from './view-builder';
 import { HighlightPosition, HighlightPositionWithLine } from './highlight-manager';
-import { TemplateRenderer, DrawLabelingResult } from './template-renderer';
-import { argOptions } from '../parse-args';
+import { DrawLabelingResult, TemplateRenderer } from './template-renderer';
+import { SourceViewBuilder } from './view-builder';
 
 export type ActionOptions = {
   multi: boolean;
@@ -80,12 +81,7 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>> {
     },
   };
   readonly helper = {
-    generateUri: (path: string) => {
-      if (isWindows && /^[A-Za-z]:/.test(path)) {
-        path = '/' + path;
-      }
-      return this.scheme + '://' + path;
-    },
+    generateUri: (path: string) => generateUri(path, this.scheme),
   };
   templateRenderer?: TemplateRenderer<TreeNode>;
 

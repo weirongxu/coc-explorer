@@ -1,29 +1,29 @@
-import { Buffer, ExtensionContext, Window, workspace, Disposable } from 'coc.nvim';
-import { Action, ActionMode, getMappings } from './mappings';
-import { Args, argOptions, ArgContentWidthTypes } from './parse-args';
-import { IndexesManager } from './indexes-manager';
-import './source/load';
-import { BaseTreeNode, ExplorerSource, ActionOptions } from './source/source';
-import { sourceManager } from './source/source-manager';
+import { Buffer, Disposable, ExtensionContext, Window, workspace } from 'coc.nvim';
+import { partition } from 'lodash';
 import { Range } from 'vscode-languageserver-protocol';
+import { conditionActionRules } from './actions';
+import { BuffuerContextVars } from './context-variables';
+import { ExplorerManager } from './explorer-manager';
+import { FloatingPreview } from './floating/floating-preview';
+import { IndexesManager } from './indexes-manager';
+import { Action, ActionMode, getMappings } from './mappings';
+import { ArgContentWidthTypes, argOptions, Args } from './parse-args';
+import { HighlightPositionWithLine, hlGroupManager } from './source/highlight-manager';
+import './source/load';
+import { ActionOptions, BaseTreeNode, ExplorerSource } from './source/source';
+import { sourceManager } from './source/source-manager';
+import { SourceRowBuilder, SourceViewBuilder } from './source/view-builder';
 import {
-  config,
-  getEnableDebug,
-  enableWrapscan,
   avoidOnBufEvents,
+  config,
+  enableWrapscan,
+  getEnableDebug,
+  Notifier,
   onBufEnter,
+  onCursorMoved,
   PreviewStrategy,
   queueAsyncFunction,
-  onCursorMoved,
-  Notifier,
 } from './util';
-import { ExplorerManager } from './explorer-manager';
-import { hlGroupManager, HighlightPositionWithLine } from './source/highlight-manager';
-import { BuffuerContextVars } from './context-variables';
-import { SourceViewBuilder, SourceRowBuilder } from './source/view-builder';
-import { FloatingPreview } from './floating/floating-preview';
-import { partition } from 'lodash';
-import { conditionActionRules } from './actions';
 
 const hl = hlGroupManager.linkGroup.bind(hlGroupManager);
 const helpHightlights = {

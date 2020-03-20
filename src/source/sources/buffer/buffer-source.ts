@@ -50,8 +50,10 @@ export const bufferHighlights = {
   fullpath: hl('BufferFullpath', 'Comment'),
 };
 
+export const bufferScheme = 'buf';
+
 export class BufferSource extends ExplorerSource<BufferNode> {
-  scheme = 'buf';
+  scheme = bufferScheme;
   hlSrcId = workspace.createNameSpace('coc-explorer-buffer');
   showHidden: boolean = config.get<boolean>('file.showHiddenBuffers')!;
   rootNode: BufferNode = {

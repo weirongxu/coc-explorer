@@ -15,6 +15,7 @@ export * from './vim';
 export * from './platform';
 export * from './cli';
 export * from './function';
+export * from './uri';
 
 export const outputChannel = workspace.createOutputChannel('explorer');
 

@@ -66,11 +66,7 @@ export function debouncePromise<A extends Array<any>, R>(
   let timer: NodeJS.Timeout | null = null;
   let lastResolve: null | ((value: R | undefined) => void) = null;
   const wrap = async (...args: A) => {
-    if (timer) {
-      clearTimeout(timer);
-      timer = null;
-      lastResolve!(undefined);
-    }
+    wrap.cancel();
     return await new Promise<R | undefined>((resolve, reject) => {
       lastResolve = resolve;
       timer = setTimeout(async () => {

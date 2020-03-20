@@ -16,7 +16,7 @@ import { distinct } from 'coc.nvim/lib/util/array';
 import { equals } from 'coc.nvim/lib/util/object';
 import { BufferHighlight } from '@chemzqm/neovim';
 import { log, onError } from '../logger';
-import { debounce, onEvents, supportedFloat, onBufEnter } from '../util';
+import { debounce, onEvents, supportedFloat, onBufEnter, outputChannel } from '../util';
 import { WindowConfig } from 'coc.nvim/lib/model/floatFactory';
 import { CancellationTokenSource } from 'vscode-languageserver-protocol';
 import createPopup, { Popup } from 'coc.nvim/lib/model/popup';
@@ -400,7 +400,9 @@ export class FloatingFactory2 implements Disposable {
         popup.dispose();
       }
     } else if (await window?.valid) {
-      await window?.close(true);
+      await window?.close(true).catch((error) => {
+        outputChannel.appendLine(error.stack ?? error.toString());
+      });
     }
   }
 
