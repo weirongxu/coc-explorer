@@ -113,7 +113,6 @@ export async function input(
   prompt: string,
   defaultInput = '',
   completion: InputCompletion = undefined,
-) {
-  const result = (await nvim().call('input', [prompt, defaultInput, completion])) as string;
-  return result || null;
+): Promise<string> {
+  return nvim().callAsync('coc#util#with_callback', ['input', [prompt, defaultInput, completion]]);
 }

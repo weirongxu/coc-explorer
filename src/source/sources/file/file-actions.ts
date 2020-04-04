@@ -14,6 +14,7 @@ import {
   OpenStrategy,
   Notifier,
   getOpenActionForDirectory,
+  input,
 } from '../../../util';
 import { workspace, listManager } from 'coc.nvim';
 import open from 'open';
@@ -245,8 +246,7 @@ export function initFileActions(file: FileSource) {
   file.addNodeAction(
     'addFile',
     async (node, [arg]) => {
-      let filename =
-        arg ?? ((await nvim.call('input', ['Input a new filename: ', '', 'file'])) as string);
+      let filename = arg ?? (await input('Input a new filename: ', '', 'file'));
       filename = filename.trim();
       if (!filename) {
         return;
@@ -281,8 +281,7 @@ export function initFileActions(file: FileSource) {
   file.addNodeAction(
     'addDirectory',
     async (node, [arg]) => {
-      let directoryName =
-        arg ?? ((await nvim.call('input', ['Input a new directory name: ', '', 'file'])) as string);
+      let directoryName = arg ?? (await input('Input a new directory name: ', '', 'file'));
       directoryName = directoryName.trim().replace(/(\/|\\)*$/g, '');
       if (!directoryName) {
         return;
@@ -313,11 +312,7 @@ export function initFileActions(file: FileSource) {
   file.addNodeAction(
     'rename',
     async (node) => {
-      const targetPath = (await nvim.call('input', [
-        `Rename: ${node.fullpath} ->`,
-        node.fullpath,
-        'file',
-      ])) as string;
+      const targetPath = await input(`Rename: ${node.fullpath} -> `, node.fullpath, 'file');
       if (targetPath.length == 0) {
         return;
       }
