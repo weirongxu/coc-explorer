@@ -12,6 +12,10 @@
       "code": "",
       "color": "#00afaf"
     },
+    "folderNpm": {
+      "code": "䮎",
+      "color": "#00afaf"
+    },
     "file": {
       "code": "",
       "color": "#999999"
@@ -260,8 +264,8 @@
       "code": "",
       "color": "#e37933"
     },
-    "gitconfig": {
-      "code": "",
+    "git": {
+      "code": "",
       "color": "#41535b"
     },
     "bashrc": {
@@ -507,8 +511,8 @@
     "procfile": "procfile",
     "Vagrantfile": "vagrant",
     "docker-compose.yml": "docker",
-    ".gitconfig": "gitconfig",
-    ".gitignore": "gitconfig",
+    ".gitconfig": "git",
+    ".gitignore": "git",
     "webpack": "webpack",
     ".bashrc": "bashrc",
     ".zshrc": "bashrc",
@@ -524,5 +528,10 @@
     ".*materialize.*.js$": "materialize",
     ".*materialize.*.css$": "materialize",
     ".*mootools.*.js$": "mootools"
-  }
+  },
+  "dirnames": {
+    ".git": "git",
+    "node_modules": "javascript"
+  },
+  "dirPatternMatches": {}
 }

@@ -390,7 +390,15 @@
               "type": "object",
               "description": "Filename to icon group"
             },
+            "dirnames": {
+              "type": "object",
+              "description": "Filename to icon group"
+            },
             "patternMatches": {
+              "type": "object",
+              "description": "Pattern to icon group"
+            },
+            "dirPatternMatches": {
               "type": "object",
               "description": "Pattern to icon group"
             }
@@ -399,7 +407,9 @@
             "icons": {},
             "extensions": {},
             "filenames": {},
-            "patternMatches": {}
+            "dirnames": {},
+            "patternMatches": {},
+            "dirPatternMatches": {}
           }
         },
         "explorer.icon.enableVimDevicons": {

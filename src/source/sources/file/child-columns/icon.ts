@@ -1,8 +1,5 @@
 import { fileColumnRegistrar } from '../file-column-registrar';
 import { sourceIcons } from '../../../source';
-// modified from:
-//   icon code from https://github.com/ryanoasis/vim-devicons/blob/830f0fe48a337ed26384c43929032786f05c8d24/plugin/webdevicons.vim#L129
-//   icon color from https://github.com/microsoft/vscode/blob/e75e71f41911633be838344377df26842f2b8c7c/extensions/theme-seti/icons/vs-seti-icon-theme.json
 import nerdfontJson from './icons.nerdfont.json';
 import { hlGroupManager, HighlightCommand } from '../../../highlight-manager';
 import { config, getExtensions, getEnableNerdfont } from '../../../../util';
@@ -22,7 +19,9 @@ interface NerdFontOption {
   >;
   extensions?: Record<string, string>;
   filenames?: Record<string, string>;
+  dirnames?: Record<string, string>;
   patternMatches?: Record<string, string>;
+  dirPatternMatches?: Record<string, string>;
 }
 type NerdFont = Required<NerdFontOption>;
 
@@ -31,7 +30,9 @@ const customIcon = config.get<NerdFontOption>('icon.customIcons', {})!;
 Object.assign(nerdfont.icons, customIcon.icons);
 Object.assign(nerdfont.extensions, customIcon.extensions);
 Object.assign(nerdfont.filenames, customIcon.filenames);
+Object.assign(nerdfont.dirnames, customIcon.dirnames);
 Object.assign(nerdfont.patternMatches, customIcon.patternMatches);
+Object.assign(nerdfont.dirPatternMatches, customIcon.dirPatternMatches);
 
 export const nerdfontHighlights: Record<string, HighlightCommand> = {};
 Object.entries(nerdfont.icons).forEach(([name, icon]) => {
@@ -41,7 +42,8 @@ Object.entries(nerdfont.icons).forEach(([name, icon]) => {
   );
 });
 
-function getIcon(filename: string): undefined | { name: string; code: string; color: string } {
+function getFileIcon(node: FileNode): undefined | { name: string; code: string; color: string } {
+  const filename = node.name.toLowerCase();
   const { extensions, basename } = getExtensions(filename);
   const extname = extensions[extensions.length - 1];
 
@@ -81,6 +83,38 @@ function getIcon(filename: string): undefined | { name: string; code: string; co
   }
 }
 
+function getDirIcon(node: FileNode): undefined | { name: string; code: string; color: string } {
+  const dirname = node.name.toLowerCase();
+  const { basename } = getExtensions(dirname);
+
+  if (nerdfont.dirnames.hasOwnProperty(basename)) {
+    const name = nerdfont.dirnames[basename];
+    return {
+      name,
+      ...nerdfont.icons[name],
+    };
+  }
+
+  if (nerdfont.dirnames.hasOwnProperty(dirname)) {
+    const name = nerdfont.dirnames[dirname];
+    return {
+      name,
+      ...nerdfont.icons[name],
+    };
+  }
+
+  const matched = Object.entries(nerdfont.dirPatternMatches).find(([pattern]: [string, string]) =>
+    new RegExp(pattern).test(dirname),
+  );
+  if (matched) {
+    const name = matched[1];
+    return {
+      name,
+      ...nerdfont.icons[name],
+    };
+  }
+}
+
 const attrSymbol = Symbol('icon-column');
 
 function getAttr(node: FileNode) {
@@ -96,7 +130,7 @@ fileColumnRegistrar.registerColumn('child', 'icon', ({ source }) => ({
         nodes.map(async (node) => {
           getAttr(node).devicons = await workspace.nvim.call('WebDevIconsGetFileTypeSymbol', [
             node.name,
-            false,
+            node.directory,
           ]);
         }),
       );
@@ -104,13 +138,25 @@ fileColumnRegistrar.registerColumn('child', 'icon', ({ source }) => ({
   },
   async draw(row, node) {
     if (node.directory) {
+      const hl = source.expandStore.isExpanded(node)
+        ? fileHighlights.directoryExpanded
+        : fileHighlights.directoryCollapsed;
       if (getEnableNerdfont()) {
-        row.add(
-          source.expandStore.isExpanded(node)
-            ? nerdfont.icons.folderOpened.code
-            : nerdfont.icons.folderClosed.code,
-          { hl: fileHighlights.directory },
-        );
+        if (enableVimDevicons) {
+          row.add(getAttr(node).devicons, { hl });
+        } else {
+          const icon = getDirIcon(node);
+          if (icon) {
+            row.add(icon.code, { hl });
+          } else {
+            row.add(
+              source.expandStore.isExpanded(node)
+                ? nerdfont.icons.folderOpened.code
+                : nerdfont.icons.folderClosed.code,
+              { hl },
+            );
+          }
+        }
       } else {
         row.add(
           source.expandStore.isExpanded(node)
@@ -121,7 +167,7 @@ fileColumnRegistrar.registerColumn('child', 'icon', ({ source }) => ({
       }
     } else {
       if (getEnableNerdfont()) {
-        const icon = getIcon(node.name.toLowerCase());
+        const icon = getFileIcon(node);
         if (icon && enableVimDevicons) {
           icon.code = getAttr(node).devicons;
         }

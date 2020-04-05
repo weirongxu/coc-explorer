@@ -431,7 +431,9 @@ Default: <pre><code>{
   "icons": {},
   "extensions": {},
   "filenames": {},
-  "patternMatches": {}
+  "dirnames": {},
+  "patternMatches": {},
+  "dirPatternMatches": {}
 }</code></pre>
 </details>
 <details>

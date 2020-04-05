@@ -69,6 +69,8 @@ export const fileHighlights = {
   fullpath: hl('FileFullpath', 'Comment'),
   filename: hl('FileFilename', 'Ignore'),
   directory: hl('FileDirectory', 'Directory'),
+  directoryExpanded: hl('FileDirectoryExpanded', 'Directory'),
+  directoryCollapsed: hl('FileDirectoryCollapsed', 'Directory'),
   linkTarget: hl('FileLinkTarget', 'Comment'),
   gitStage: hl('FileGitStage', 'Comment'),
   gitUnstage: hl('FileGitUnstage', 'Operator'),
