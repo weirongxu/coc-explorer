@@ -98,13 +98,16 @@ async function drawColumn(names: string[], width: number) {
         logger: null as any,
       }),
       0,
+      null,
     );
   }
   const view = new SourceViewBuilder(explorer);
   const r = new SourceRowBuilder(view);
   r.add('||');
   const columns = await Promise.all(
-    names.map((name) => testColumnRegistrar.getInitedColumn('child', null as any, name)),
+    names.map((name) =>
+      testColumnRegistrar.getInitedColumn('child', null as any, name),
+    ),
   );
   for (const column of columns) {
     await r.addTemplatePart<TestNode>(
