@@ -41,6 +41,7 @@ let g:coc_explorer_global_presets = {
 \     'file-child-template': '[selection | clip | 1] [indent][icon | 1] [filename omitCenter 1]'
 \   },
 \   'a': {
+\     'quit-on-open': v:true,
 \     'file-child-template': '[git | 2] [selection | clip | 1] [indent][icon | 1] [filename growRight 1 omitCenter 1][modified]',
 \     'file-child-labeling-template': '[fullpath][size][modified][readonly]',
 \   },
@@ -56,7 +57,7 @@ nmap <space>fl :CocCommand explorer --preset floatingLeftside<CR>
 nmap <space>fr :CocCommand explorer --preset floatingRightside<CR>
 nmap <space>s  :CocCommand explorer --preset simplify<CR>
 nmap <space>a  :CocCommand explorer --preset a<CR>
-nmap <space>a  :CocCommand explorer --preset b<CR>
+nmap <space>b  :CocCommand explorer --preset b<CR>
 
 set hidden
 set cmdheight=2

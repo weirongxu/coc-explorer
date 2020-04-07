@@ -44,7 +44,9 @@ export class Args {
     options?: {
       position?: number;
       parseArg?: (value: string) => T | Promise<T>;
-      handler?: (value: T | undefined) => T | undefined | Promise<T | undefined>;
+      handler?: (
+        value: T | undefined,
+      ) => T | undefined | Promise<T | undefined>;
     },
   ): ArgOption<T>;
   static registerOption<T>(
@@ -61,12 +63,17 @@ export class Args {
     options: {
       position?: number;
       parseArg?: (value: string) => T | Promise<T>;
-      handler?: (value: T | undefined) => T | undefined | Promise<T | undefined>;
+      handler?: (
+        value: T | undefined,
+      ) => T | undefined | Promise<T | undefined>;
       getDefault?: () => T | Promise<T>;
     } = {},
   ): ArgOption<T> | ArgOptionRequired<T> {
     const option = {
-      type: options.position === undefined ? ('string' as const) : ('positional' as const),
+      type:
+        options.position === undefined
+          ? ('string' as const)
+          : ('positional' as const),
       name,
       ...options,
     };
@@ -74,11 +81,15 @@ export class Args {
     return option;
   }
 
-  static registerBoolOption(name: string, defaultValue: boolean): ArgOptionRequired<boolean> {
+  static registerBoolOption(
+    name: string,
+    defaultValue: boolean | (() => boolean | Promise<boolean>),
+  ): ArgOptionRequired<boolean> {
     const option = {
       type: 'boolean' as const,
       name,
-      getDefault: () => defaultValue,
+      getDefault:
+        typeof defaultValue === 'boolean' ? () => defaultValue : defaultValue,
     };
     this.registeredOptions.set(name, option);
     this.registeredOptions.set('no-' + name, option);
@@ -199,8 +210,12 @@ export const argOptions = {
     handler: (path: string) => normalizePath(path),
   }),
   toggle: Args.registerBoolOption('toggle', true),
+  quitOnOpen: Args.registerBoolOption(
+    'quit-on-open',
+    () => config.get<boolean>('quitOnOpen')!,
+  ),
   reveal: Args.registerOption<string>('reveal', {
-    handler: (path) => path ? normalizePath(path) : path,
+    handler: (path) => (path ? normalizePath(path) : path),
   }),
   preset: Args.registerOption<string>('preset'),
   sources: Args.registerOption('sources', {
@@ -238,19 +253,19 @@ export const argOptions = {
   contentWidthType: Args.registerOption('content-width-type', {
     getDefault: () => config.get<ArgContentWidthTypes>('contentWidthType')!,
   }),
-  floatingPosition: Args.registerOption<ArgFloatingPositions | [number, number]>(
-    'floating-position',
-    {
-      parseArg: (s) => {
-        if (['left-center', 'right-center', 'center'].includes(s)) {
-          return s as ArgFloatingPositions;
-        } else {
-          return s.split(',').map((i) => parseInt(i, 10)) as [number, number];
-        }
-      },
-      getDefault: () => config.get<ArgFloatingPositions | [number, number]>('floating.position')!,
+  floatingPosition: Args.registerOption<
+    ArgFloatingPositions | [number, number]
+  >('floating-position', {
+    parseArg: (s) => {
+      if (['left-center', 'right-center', 'center'].includes(s)) {
+        return s as ArgFloatingPositions;
+      } else {
+        return s.split(',').map((i) => parseInt(i, 10)) as [number, number];
+      }
     },
-  ),
+    getDefault: () =>
+      config.get<ArgFloatingPositions | [number, number]>('floating.position')!,
+  }),
   floatingWidth: Args.registerOption('floating-width', {
     parseArg: (s) => parseInt(s, 10),
     getDefault: () => config.get<number>('floating.width')!,
@@ -269,19 +284,28 @@ export const argOptions = {
   bufferChildTemplate: Args.registerOption<string>('buffer-child-template', {
     getDefault: () => config.get<string>('buffer.child.template')!,
   }),
-  bufferChildLabelingTemplate: Args.registerOption<string>('buffer-child-labeling-template', {
-    getDefault: () => config.get<string>('buffer.child.labelingTemplate')!,
-  }),
+  bufferChildLabelingTemplate: Args.registerOption<string>(
+    'buffer-child-labeling-template',
+    {
+      getDefault: () => config.get<string>('buffer.child.labelingTemplate')!,
+    },
+  ),
   fileRootTemplate: Args.registerOption<string>('file-root-template', {
     getDefault: () => config.get<string>('file.root.template')!,
   }),
-  fileRootLabelingTemplate: Args.registerOption<string>('file-root-labeling-template', {
-    getDefault: () => config.get<string>('file.root.labelingTemplate')!,
-  }),
+  fileRootLabelingTemplate: Args.registerOption<string>(
+    'file-root-labeling-template',
+    {
+      getDefault: () => config.get<string>('file.root.labelingTemplate')!,
+    },
+  ),
   fileChildTemplate: Args.registerOption<string>('file-child-template', {
     getDefault: () => config.get<string>('file.child.template')!,
   }),
-  fileChildLabelingTemplate: Args.registerOption<string>('file-child-labeling-template', {
-    getDefault: () => config.get<string>('file.child.labelingTemplate')!,
-  }),
+  fileChildLabelingTemplate: Args.registerOption<string>(
+    'file-child-labeling-template',
+    {
+      getDefault: () => config.get<string>('file.child.labelingTemplate')!,
+    },
+  ),
 };

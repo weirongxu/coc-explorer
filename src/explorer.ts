@@ -1,4 +1,10 @@
-import { Buffer, Disposable, ExtensionContext, Window, workspace } from 'coc.nvim';
+import {
+  Buffer,
+  Disposable,
+  ExtensionContext,
+  Window,
+  workspace,
+} from 'coc.nvim';
 import { partition } from 'lodash';
 import { Range } from 'vscode-languageserver-protocol';
 import { conditionActionRules } from './actions';
@@ -8,7 +14,10 @@ import { FloatingPreview } from './floating/floating-preview';
 import { IndexesManager } from './indexes-manager';
 import { Action, ActionMode, getMappings } from './mappings';
 import { ArgContentWidthTypes, argOptions, Args } from './parse-args';
-import { HighlightPositionWithLine, hlGroupManager } from './source/highlight-manager';
+import {
+  HighlightPositionWithLine,
+  hlGroupManager,
+} from './source/highlight-manager';
 import './source/load';
 import { ActionOptions, BaseTreeNode, ExplorerSource } from './source/source';
 import { sourceManager } from './source/source-manager';
@@ -51,7 +60,10 @@ export class Explorer {
     {
       description: string;
       options: Partial<ActionOptions>;
-      callback: (nodes: BaseTreeNode<any>[], args: string[]) => void | Promise<void>;
+      callback: (
+        nodes: BaseTreeNode<any>[],
+        args: string[],
+      ) => void | Promise<void>;
     }
   > = {};
   context: ExtensionContext;
@@ -200,7 +212,9 @@ export class Explorer {
           for (let i = startIndex; i >= 0; i--) {
             const node = source.flattenedNodes[i];
             if (node.expandable) {
-              await this.gotoLineIndex(source.startLineIndex + source.getLineByNode(node));
+              await this.gotoLineIndex(
+                source.startLineIndex + source.getLineByNode(node),
+              );
               return;
             }
           }
@@ -221,7 +235,10 @@ export class Explorer {
         const sourceIndex = await this.currentSourceIndex();
         const source = this.sources[sourceIndex];
         const lineIndex = await this.currentLineIndex();
-        await getExpandableLine(sourceIndex, lineIndex - source.startLineIndex - 1);
+        await getExpandableLine(
+          sourceIndex,
+          lineIndex - source.startLineIndex - 1,
+        );
       },
       'previous expandable node',
     );
@@ -237,7 +254,9 @@ export class Explorer {
           for (let i = startIndex; i < source.height; i++) {
             const node = source.flattenedNodes[i];
             if (node.expandable) {
-              await this.gotoLineIndex(source.startLineIndex + source.getLineByNode(node));
+              await this.gotoLineIndex(
+                source.startLineIndex + source.getLineByNode(node),
+              );
               return;
             }
           }
@@ -257,7 +276,10 @@ export class Explorer {
         const sourceIndex = await this.currentSourceIndex();
         const source = this.sources[sourceIndex];
         const lineIndex = await this.currentLineIndex();
-        await getExpandableLine(sourceIndex, lineIndex - source.startLineIndex + 1);
+        await getExpandableLine(
+          sourceIndex,
+          lineIndex - source.startLineIndex + 1,
+        );
       },
       'next expandable node',
     );
@@ -436,7 +458,10 @@ export class Explorer {
     hlGroupManager.clearHighlights(this, hlSrcId, lineStart, lineEnd);
   }
 
-  executeHighlightsNotify(hlSrcId: number, highlights: HighlightPositionWithLine[]) {
+  executeHighlightsNotify(
+    hlSrcId: number,
+    highlights: HighlightPositionWithLine[],
+  ) {
     hlGroupManager.executeHighlightsNotify(this, hlSrcId, highlights);
   }
 
@@ -464,7 +489,9 @@ export class Explorer {
     } else {
       // resume the explorer window
       const position = await args.value(argOptions.position);
-      const { width, height, top, left } = await Explorer.getExplorerPosition(args);
+      const { width, height, top, left } = await Explorer.getExplorerPosition(
+        args,
+      );
       await this.nvim.call('coc_explorer#resume', [
         this.bufnr,
         this.floatingBorderBufnr,
@@ -492,7 +519,11 @@ export class Explorer {
     const notifiers = [];
     notifiers.push(await this.reloadAllNotifier({ render: false }));
     notifiers.push(await this.renderAllNotifier({ storeCursor: false }));
-    notifiers.push(...(await Promise.all(this.sources.map((s) => s.openedNotifier(isFirst)))));
+    notifiers.push(
+      ...(await Promise.all(
+        this.sources.map((s) => s.openedNotifier(isFirst)),
+      )),
+    );
     await Notifier.runAll(notifiers);
   }
 
@@ -502,7 +533,10 @@ export class Explorer {
       return;
     }
 
-    const setWidth = async (contentWidthType: ArgContentWidthTypes, contentWidth: number) => {
+    const setWidth = async (
+      contentWidthType: ArgContentWidthTypes,
+      contentWidth: number,
+    ) => {
       if (contentWidth <= 0) {
         let contentBaseWidth: number | undefined;
         if (contentWidthType === 'win-width') {
@@ -522,7 +556,12 @@ export class Explorer {
 
     const position = await this.args.value(argOptions.position);
     if (position === 'floating') {
-      if (await setWidth('win-width', await this.args.value(argOptions.floatingContentWidth))) {
+      if (
+        await setWidth(
+          'win-width',
+          await this.args.value(argOptions.floatingContentWidth),
+        )
+      ) {
         return;
       }
     }
@@ -538,8 +577,9 @@ export class Explorer {
   }
 
   async tryQuitOnOpen() {
+    const quitonOpen = await this.args.value(argOptions.quitOnOpen);
     if (
-      config.get<boolean>('quitOnOpen') ||
+      quitonOpen ||
       (await this.args.value(argOptions.position)) === 'floating'
     ) {
       await this.quit();
@@ -584,16 +624,23 @@ export class Explorer {
       this.lastArgSources = sources.toString();
 
       this._sources = sources
-        .map((sourceArg) => sourceManager.createSource(sourceArg.name, this, sourceArg.expand))
+        .map((sourceArg) =>
+          sourceManager.createSource(sourceArg.name, this, sourceArg.expand),
+        )
         .filter((source): source is ExplorerSource<any> => source !== null);
     }
 
-    this.explorerManager.rootPathRecords.add(await this.args.value(argOptions.rootUri));
+    this.explorerManager.rootPathRecords.add(
+      await this.args.value(argOptions.rootUri),
+    );
   }
 
   addGlobalAction(
     name: string,
-    callback: (nodes: BaseTreeNode<any>[], args: string[]) => void | Promise<void>,
+    callback: (
+      nodes: BaseTreeNode<any>[],
+      args: string[],
+    ) => void | Promise<void>,
     description: string,
     options: Partial<ActionOptions> = {},
   ) {
@@ -609,7 +656,11 @@ export class Explorer {
     mode: ActionMode,
     count?: number,
   ) => Promise<void>;
-  async doActionsWithCount(actions: Action[], mode: ActionMode, count: number = 1) {
+  async doActionsWithCount(
+    actions: Action[],
+    mode: ActionMode,
+    count: number = 1,
+  ) {
     if (!this._doActionsWithCount) {
       this._doActionsWithCount = queueAsyncFunction(
         async (actions: Action[], mode: ActionMode, count: number = 1) => {
@@ -619,14 +670,21 @@ export class Explorer {
             await this.doActions(actions, mode);
           }
           const notifiers = await Promise.all(
-            this.sources.map((source) => source.emitRequestRenderNodesNotifier()),
+            this.sources.map((source) =>
+              source.emitRequestRenderNodesNotifier(),
+            ),
           );
           await Notifier.runAll(notifiers);
 
           if (getEnableDebug()) {
-            const actionDisplay = actions.map((a) => [a.name, ...a.args].join(':'));
+            const actionDisplay = actions.map((a) =>
+              [a.name, ...a.args].join(':'),
+            );
             // tslint:disable-next-line: ban
-            workspace.showMessage(`action(${actionDisplay}): ${Date.now() - now}ms`, 'more');
+            workspace.showMessage(
+              `action(${actionDisplay}): ${Date.now() - now}ms`,
+              'more',
+            );
           }
         },
       );
@@ -679,14 +737,20 @@ export class Explorer {
         const action = actions[i];
         const rule = conditionActionRules[action.name];
         if (rule) {
-          const [trueNodes, falseNodes] = partition(nodes, (n) => rule.filter(n, action.args));
+          const [trueNodes, falseNodes] = partition(nodes, (n) =>
+            rule.filter(n, action.args),
+          );
           const [trueAction, falseAction] = [actions[i + 1], actions[i + 2]];
           i += 2;
           if (trueNodes.length) {
             await source.doAction(trueAction.name, trueNodes, trueAction.args);
           }
           if (falseNodes.length) {
-            await source.doAction(falseAction.name, falseNodes, falseAction.args);
+            await source.doAction(
+              falseAction.name,
+              falseNodes,
+              falseAction.args,
+            );
           }
         } else {
           await source.doAction(action.name, nodes, action.args);
@@ -722,7 +786,9 @@ export class Explorer {
   }
 
   private findSourceByLineIndex(lineIndex: number) {
-    const sourceIndex = this.sources.findIndex((source) => lineIndex < source.endLineIndex);
+    const sourceIndex = this.sources.findIndex(
+      (source) => lineIndex < source.endLineIndex,
+    );
     if (sourceIndex === -1) {
       const index = this.sources.length - 1;
       return [this.sources[index], index] as const;
@@ -731,14 +797,17 @@ export class Explorer {
     }
   }
 
-  async currentSource(): Promise<ExplorerSource<BaseTreeNode<any>> | undefined> {
+  async currentSource(): Promise<
+    ExplorerSource<BaseTreeNode<any>> | undefined
+  > {
     return this.sources[await this.currentSourceIndex()];
   }
 
   async currentSourceIndex() {
     const lineIndex = await this.currentLineIndex();
     return this.sources.findIndex(
-      (source) => lineIndex >= source.startLineIndex && lineIndex < source.endLineIndex,
+      (source) =>
+        lineIndex >= source.startLineIndex && lineIndex < source.endLineIndex,
     );
   }
 
@@ -867,7 +936,9 @@ export class Explorer {
 
   async reloadAllNotifier({ render = true } = {}) {
     const notifiers = await Promise.all(
-      this.sources.map((source) => source.reloadNotifier(source.rootNode, { render: false })),
+      this.sources.map((source) =>
+        source.reloadNotifier(source.rootNode, { render: false }),
+      ),
     );
     if (render) {
       notifiers.push(await this.renderAllNotifier({ storeCursor: false }));
@@ -878,7 +949,9 @@ export class Explorer {
   async renderAllNotifier({ storeCursor = true } = {}) {
     const restoreCursor = storeCursor ? await this.storeCursor() : null;
     const notifiers = await Promise.all(
-      this.sources.map((s) => s.renderNotifier({ storeCursor: false, force: true })),
+      this.sources.map((s) =>
+        s.renderNotifier({ storeCursor: false, force: true }),
+      ),
     );
     if (restoreCursor) {
       notifiers.push(await restoreCursor());
@@ -935,7 +1008,9 @@ export class Explorer {
 
     nodes.push(
       await builder.drawRowForNode(createNode(), (row) => {
-        row.add(`Help for [${source.sourceName}], (use q or <esc> return to explorer)`);
+        row.add(
+          `Help for [${source.sourceName}], (use q or <esc> return to explorer)`,
+        );
       }),
     );
     nodes.push(
@@ -955,7 +1030,9 @@ export class Explorer {
       }
       row.add(' ');
       if (action.name in registeredActions) {
-        row.add(registeredActions[action.name].description, { hl: helpHightlights.description });
+        row.add(registeredActions[action.name].description, {
+          hl: helpHightlights.description,
+        });
       }
     };
     const mappings = await getMappings();
@@ -1027,7 +1104,9 @@ export class Explorer {
           async () => {
             disposables.forEach((d) => d.dispose());
             await this.quitHelp();
-            const notifiers = [await this.renderAllNotifier({ storeCursor: false })];
+            const notifiers = [
+              await this.renderAllNotifier({ storeCursor: false }),
+            ];
             if (restoreCursor) {
               notifiers.push(await restoreCursor());
             }

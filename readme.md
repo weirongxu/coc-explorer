@@ -128,6 +128,10 @@ Open explorer use presets
 
 Close the explorer if it exists, default: `--toggle`
 
+#### `--quit-on-open | --no-quit-on-open`
+
+quit explorer when open action, default: `--no-quit-on-open`
+
 #### `--sources <sources>`
 
 Explorer sources, example: `buffer+,file+`, default: `buffer-,file+`

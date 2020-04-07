@@ -66,6 +66,9 @@
               "toggle": {
                 "$ref": "#/properties/explorer.toggle"
               },
+              "quit-on-open": {
+                "$ref": "#/properties/explorer.quitOnOpen"
+              },
               "reveal": {
                 "type": "string"
               },
