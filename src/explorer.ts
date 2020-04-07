@@ -159,15 +159,14 @@ export class Explorer {
       );
     }
 
-    if (floatingBorderBufnr) {
-      this.context.subscriptions.push(
-        onEvents('BufWinLeave', async (bufnr) => {
-          if (bufnr === this.bufnr) {
-            await this.quitFloatingBorderWin();
-          }
-        }),
-      );
-    }
+    this.context.subscriptions.push(
+      onEvents('BufWinLeave', async (bufnr) => {
+        if (bufnr === this.bufnr) {
+          await this.quitFloatingBorderWin();
+          await this.floatingWindow.floatFactory.close();
+        }
+      }),
+    );
 
     this.addGlobalAction(
       'nodePrev',
