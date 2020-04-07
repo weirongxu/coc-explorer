@@ -10,7 +10,7 @@ export const activate = async (context: ExtensionContext) => {
   registerLogger(logger);
 
   hlGroupManager.group('SelectUI', 'ctermbg=27 ctermfg=0 guibg=#1593e5 guifg=#ffffff');
-  const normalFloat = hlGroupManager.linkGroup('NormalFloat', 'hl-NormalFloat');
+  const normalFloat = hlGroupManager.linkGroup('NormalFloat', 'NormalFloat');
   hlGroupManager.linkGroup('NormalFloatBorder', normalFloat.group);
 
   listManager.registerList(new PresetsList(nvim));

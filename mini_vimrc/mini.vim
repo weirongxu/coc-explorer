@@ -7,6 +7,9 @@ let g:coc_config_home = expand('<sfile>:h')
 let g:coc_data_home = expand('<sfile>:h') . '/data_home'
 let &runtimepath .= ',' . expand('<sfile>:h:h')
 
+hi CocExplorerNormalFloatBorder guifg=#414347 guibg=#272B34
+hi CocExplorerNormalFloat guibg=#272B34
+
 nmap ge :CocCommand explorer<CR>
 nmap gE :CocCommand explorer --position=right<CR>
 execute "nmap <space>r :CocCommand explorer --reveal=".expand('<sfile>:h')."/package.json<CR>"
@@ -30,7 +33,7 @@ let g:coc_explorer_global_presets = {
 \   },
 \   'floatingRightside': {
 \     'position': 'floating',
-\     'floating-position': 'left-center',
+\     'floating-position': 'right-center',
 \     'floating-width': 50,
 \     'floating-height': -10,
 \   },

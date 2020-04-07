@@ -26,6 +26,7 @@ import {
   winByWinid,
   winnrByBufnr,
   winidByWinnr,
+  onEvents,
 } from './util';
 
 const hl = hlGroupManager.linkGroup.bind(hlGroupManager);
@@ -142,18 +143,30 @@ export class Explorer {
     this.floatingWindow = new FloatingPreview(this);
 
     if (config.get<boolean>('previewAction.onHover')!) {
-      onCursorMoved(async (bufnr) => {
-        if (bufnr === this.bufnr) {
-          await this.floatingWindow.hoverPreview();
-        }
-      });
-      onBufEnter(async (bufnr) => {
-        if (bufnr === this.bufnr) {
-          await this.floatingWindow.hoverPreview();
-        } else {
-          this.floatingWindow.hoverPreviewCancel();
-        }
-      });
+      this.context.subscriptions.push(
+        onCursorMoved(async (bufnr) => {
+          if (bufnr === this.bufnr) {
+            await this.floatingWindow.hoverPreview();
+          }
+        }),
+        onBufEnter(async (bufnr) => {
+          if (bufnr === this.bufnr) {
+            await this.floatingWindow.hoverPreview();
+          } else {
+            this.floatingWindow.hoverPreviewCancel();
+          }
+        }),
+      );
+    }
+
+    if (floatingBorderBufnr) {
+      this.context.subscriptions.push(
+        onEvents('BufWinLeave', async (bufnr) => {
+          if (bufnr === this.bufnr) {
+            await this.quitFloatingBorderWin();
+          }
+        }),
+      );
     }
 
     this.addGlobalAction(
@@ -553,6 +566,9 @@ export class Explorer {
       // win.close() not work in nvim 3.8
       // await win.close(true);
     }
+  }
+
+  async quitFloatingBorderWin() {
     const borderWin = await this.floatingBorderWin;
     if (borderWin) {
       await this.nvim.command(`${await borderWin.number}wincmd q`);
