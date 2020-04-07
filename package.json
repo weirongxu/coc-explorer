@@ -220,6 +220,27 @@
           "type": "integer",
           "default": 0
         },
+        "explorer.floating.border.enable": {
+          "type": "boolean",
+          "default": true
+        },
+        "explorer.floating.border.chars": {
+          "description": "Border chars for floating window, Their order is left-top, top, right-top, right, right-bottom, bottom, left-bottom, left",
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": [
+            "┌",
+            "─",
+            "┐",
+            "│",
+            "┘",
+            "─",
+            "└",
+            "│"
+          ]
+        },
         "explorer.autoExpandSingleNode": {
           "description": "Automatically expand next node when it's a single node",
           "type": "boolean",

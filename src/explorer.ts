@@ -23,6 +23,9 @@ import {
   onCursorMoved,
   PreviewStrategy,
   queueAsyncFunction,
+  winByWinid,
+  winnrByBufnr,
+  winidByWinnr,
 } from './util';
 
 const hl = hlGroupManager.linkGroup.bind(hlGroupManager);
@@ -104,7 +107,10 @@ export class Explorer {
     const explorer = await avoidOnBufEvents(async () => {
       const position = await args.value(argOptions.position);
       const { width, height, top, left } = await this.getExplorerPosition(args);
-      const bufnr = (await workspace.nvim.call('coc_explorer#create', [
+      const [bufnr, floatingBorderBufnr]: [
+        number,
+        number | null,
+      ] = await workspace.nvim.call('coc_explorer#create', [
         explorerManager.bufferName,
         explorerManager.maxExplorerID,
         position,
@@ -112,8 +118,15 @@ export class Explorer {
         height,
         left,
         top,
-      ])) as number;
-      return new Explorer(explorerManager.maxExplorerID, explorerManager, bufnr);
+        config.get<boolean>('floating.border.enable')!,
+        config.get<string[]>('floating.border.chars')!,
+      ]);
+      return new Explorer(
+        explorerManager.maxExplorerID,
+        explorerManager,
+        bufnr,
+        floatingBorderBufnr,
+      );
     });
     await explorer.inited.set(true);
     return explorer;
@@ -123,6 +136,7 @@ export class Explorer {
     public explorerID: number,
     public explorerManager: ExplorerManager,
     public bufnr: number,
+    public floatingBorderBufnr: number | null,
   ) {
     this.context = explorerManager.context;
     this.floatingWindow = new FloatingPreview(this);
@@ -353,44 +367,33 @@ export class Explorer {
   }
 
   get win(): Promise<Window | null> {
-    return this.winid.then((winid) => {
-      if (winid) {
-        return this.nvim.createWindow(winid);
-      } else {
-        return null;
-      }
-    });
+    return this.winid.then(winByWinid);
   }
 
   /**
    * vim winnr of explorer
    */
   get winnr(): Promise<number | null> {
-    return this.nvim.call('bufwinnr', this.bufnr).then((winnr: number) => {
-      if (winnr > 0) {
-        return winnr;
-      } else {
-        return null;
-      }
-    });
+    return winnrByBufnr(this.bufnr);
   }
 
   /**
    * vim winid of explorer
    */
   get winid(): Promise<number | null> {
-    return this.winnr.then(async (winnr) => {
-      if (winnr) {
-        const winid = (await this.nvim.call('win_getid', winnr)) as number;
-        if (winid >= 0) {
-          return winid;
-        } else {
-          return null;
-        }
-      } else {
-        return null;
-      }
-    });
+    return this.winnr.then(winidByWinnr);
+  }
+
+  get floatingBorderWin(): Promise<Window | null> {
+    return this.floatingBorderWinid.then(winByWinid);
+  }
+
+  get floatingBorderWinnr() {
+    return winnrByBufnr(this.floatingBorderBufnr);
+  }
+
+  get floatingBorderWinid() {
+    return this.floatingBorderWinnr.then(winidByWinnr);
   }
 
   async sourceWinnr() {
@@ -450,7 +453,15 @@ export class Explorer {
       // resume the explorer window
       const position = await args.value(argOptions.position);
       const { width, height, top, left } = await Explorer.getExplorerPosition(args);
-      await this.nvim.call('coc_explorer#resume', [this.bufnr, position, width, height, left, top]);
+      await this.nvim.call('coc_explorer#resume', [
+        this.bufnr,
+        this.floatingBorderBufnr,
+        position,
+        width,
+        height,
+        left,
+        top,
+      ]);
     }
   }
 
@@ -541,6 +552,10 @@ export class Explorer {
       await this.nvim.command(`${await win.number}wincmd q`);
       // win.close() not work in nvim 3.8
       // await win.close(true);
+    }
+    const borderWin = await this.floatingBorderWin;
+    if (borderWin) {
+      await this.nvim.command(`${await borderWin.number}wincmd q`);
     }
   }
 

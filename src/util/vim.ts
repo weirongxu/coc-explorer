@@ -35,6 +35,51 @@ export async function displaySlice(str: string, start: number, end?: number) {
   return (await nvim().call('coc_explorer#strdisplayslice', [str, start, end ?? null])) as string;
 }
 
+export async function winnrByBufnr(bufnr: number | null) {
+  if (!bufnr) {
+    return null;
+  }
+  return nvim()
+    .call('bufwinnr', bufnr)
+    .then((winnr: number) => {
+      if (winnr > 0) {
+        return winnr;
+      } else {
+        return null;
+      }
+    });
+}
+
+export async function winidByWinnr(winnr: number | null) {
+  if (!winnr) {
+    return null;
+  }
+  const winid = (await nvim().call('win_getid', winnr)) as number;
+  if (winid >= 0) {
+    return winid;
+  } else {
+    return null;
+  }
+}
+
+export async function winidByBufnr(bufnr: number | null) {
+  return winnrByBufnr(bufnr).then(async (winnr) => {
+    if (winnr) {
+      return winidByWinnr(winnr);
+    } else {
+      return null;
+    }
+  });
+}
+
+export async function winByWinid(winid: number | null) {
+  if (winid) {
+    return nvim().createWindow(winid);
+  } else {
+    return null;
+  }
+}
+
 export async function prompt(msg: string): Promise<'yes' | 'no' | null>;
 export async function prompt<T extends string>(
   msg: string,

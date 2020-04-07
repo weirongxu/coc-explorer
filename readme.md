@@ -360,6 +360,23 @@ Default: <pre><code>-10</code></pre>
 Default: <pre><code>0</code></pre>
 </details>
 <details>
+<summary><code>explorer.floating.border.enable</code>: . type: <code>boolean</code></summary>
+Default: <pre><code>true</code></pre>
+</details>
+<details>
+<summary><code>explorer.floating.border.chars</code>: Border chars for floating window, Their order is left-top, top, right-top, right, right-bottom, bottom, left-bottom, left. type: <code>array</code></summary>
+Default: <pre><code>[
+  "┌",
+  "─",
+  "┐",
+  "│",
+  "┘",
+  "─",
+  "└",
+  "│"
+]</code></pre>
+</details>
+<details>
 <summary><code>explorer.autoExpandSingleNode</code>: Automatically expand next node when it's a single node. type: <code>boolean</code></summary>
 Default: <pre><code>true</code></pre>
 </details>

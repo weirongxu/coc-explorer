@@ -1,8 +1,9 @@
 let s:explorer_root = expand('<sfile>:p:h:h')
 
 " Buffer & window manage
-function! coc_explorer#create(name, explorer_id, position, width, height, left, top)
+function! coc_explorer#create(name, explorer_id, position, width, height, left, top, floating_border_enable, floating_border_chars)
   let name = a:name.'-'.a:explorer_id
+  let floating_border_bufnr = v:null
   if a:position ==# 'tab'
     execute 'silent keepalt tabnew '.name
   elseif a:position ==# 'left'
@@ -14,15 +15,33 @@ function! coc_explorer#create(name, explorer_id, position, width, height, left, 
     execute 'silent keepalt rightbelow vsplit '.name
     call coc_explorer#resize_win(a:position, a:width)
   elseif a:position ==# 'floating'
-    call nvim_open_win(nvim_create_buf(v:false, v:true), v:true, s:floating_win_config(a:width, a:height, a:left, a:top))
+    let floating_winid = v:null
+    if a:floating_border_enable
+      let floating_border_bufnr = nvim_create_buf(v:false, v:true)
+      let floating_border_winid = nvim_open_win(floating_border_bufnr, v:true, s:floating_win_config(a:width, a:height, a:left, a:top))
+      let ch = a:floating_border_chars
+      let repeat_width = a:width - 2
+      let border_content = [ch[0] . repeat(ch[1], repeat_width) . ch[2]]
+      let border_content += repeat([ch[7] . repeat(' ', repeat_width) . ch[3]], a:height - 2)
+      let border_content += [ch[6] . repeat(ch[5], repeat_width) . ch[4]]
+      call nvim_buf_set_lines(floating_border_bufnr, 0, -1, v:false, border_content)
+      call coc_explorer#init_buf()
+      set nocursorline
+      call nvim_win_set_option(floating_border_winid, 'winhl', 'Normal:CocExplorerNormalFloatBorder')
+
+      let floating_winid = nvim_open_win(nvim_create_buf(v:false, v:true), v:true, s:floating_win_config(a:width-2, a:height-2, a:left+1, a:top+1))
+    else
+      let floating_winid = nvim_open_win(nvim_create_buf(v:false, v:true), v:true, s:floating_win_config(a:width, a:height, a:left, a:top))
+    endif
+    call nvim_win_set_option(floating_winid, 'winhl', 'Normal:CocExplorerNormalFloat')
   else
     throw 'No support position '.a:position
   endif
   call coc_explorer#init_buf()
-  return bufnr('%')
+  return [bufnr('%'), floating_border_bufnr]
 endfunction
 
-function! coc_explorer#resume(bufnr, position, width, height, left, top)
+function! coc_explorer#resume(bufnr, floating_border_bufnr, position, width, height, left, top)
   if a:position ==# 'left'
     wincmd t
     execute 'silent keepalt leftabove vertical sb '.a:bufnr
@@ -32,7 +51,12 @@ function! coc_explorer#resume(bufnr, position, width, height, left, top)
     execute 'silent keepalt rightbelow vertical sb '.a:bufnr
     call coc_explorer#resize_win(a:position, a:width)
   elseif a:position ==# 'floating'
-    call nvim_open_win(a:bufnr, v:true, s:floating_win_config(a:width, a:height, a:left, a:top))
+    if a:floating_border_bufnr isnot v:null
+      call nvim_open_win(a:floating_border_bufnr, v:true, s:floating_win_config(a:width, a:height, a:left, a:top))
+      call nvim_open_win(a:bufnr, v:true, s:floating_win_config(a:width-2, a:height-2, a:left+1, a:top+1))
+    else
+      call nvim_open_win(a:bufnr, v:true, s:floating_win_config(a:width, a:height, a:left, a:top))
+    endif
   else
     throw 'No support position '.a:position
   endif
