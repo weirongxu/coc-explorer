@@ -859,8 +859,8 @@ export class Explorer {
           storeCursor.col,
         );
         return Notifier.create(() => {
-          this.nvim.call('winrestview', [storeView], true);
           gotoLineNotifier.notify();
+          this.nvim.call('winrestview', [storeView], true);
         });
       };
 
@@ -884,8 +884,8 @@ export class Explorer {
           col: storeCursor.col,
         });
         return Notifier.create(() => {
-          this.nvim.call('winrestview', [storeView], true);
           gotoNodeNotifier.notify();
+          this.nvim.call('winrestview', [storeView], true);
         });
       };
     }
