@@ -1,4 +1,12 @@
-import { Disposable, ExtensionContext, IList, listManager, Uri, workspace } from 'coc.nvim';
+import {
+  Disposable,
+  ExtensionContext,
+  IList,
+  listManager,
+  Uri,
+  workspace,
+  Emitter,
+} from 'coc.nvim';
 import { Explorer } from '../explorer';
 import { explorerActionList } from '../lists/actions';
 import { onError } from '../logger';
@@ -6,19 +14,20 @@ import { getMappings, getReverseMappings } from '../mappings';
 import { argOptions } from '../parse-args';
 import {
   config,
-  delay,
   generateUri,
   getEnableNerdfont,
   getOpenStrategy,
   getPreviewStrategy,
-  isWindows,
   Notifier,
   onEvents,
   OpenStrategy,
   PreviewStrategy,
   skipOnEventsByWins,
 } from '../util';
-import { HighlightPosition, HighlightPositionWithLine } from './highlight-manager';
+import {
+  HighlightPosition,
+  HighlightPositionWithLine,
+} from './highlight-manager';
 import { DrawLabelingResult, TemplateRenderer } from './template-renderer';
 import { SourceViewBuilder } from './view-builder';
 
@@ -30,8 +39,10 @@ export type ActionOptions = {
 };
 
 export const sourceIcons = {
-  getExpanded: () => config.get<string>('icon.expanded') || (getEnableNerdfont() ? '' : '-'),
-  getCollapsed: () => config.get<string>('icon.collapsed') || (getEnableNerdfont() ? '' : '+'),
+  getExpanded: () =>
+    config.get<string>('icon.expanded') || (getEnableNerdfont() ? '' : '-'),
+  getCollapsed: () =>
+    config.get<string>('icon.collapsed') || (getEnableNerdfont() ? '' : '+'),
   getSelected: () => config.get<string>('icon.selected')!,
   getHidden: () => config.get<string>('icon.hidden')!,
 };
@@ -128,7 +139,9 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>> {
     this.addNodeAction(
       'refresh',
       async () => {
-        const notifier = await this.reloadNotifier(this.rootNode, { force: true });
+        const notifier = await this.reloadNotifier(this.rootNode, {
+          force: true,
+        });
 
         const highlights: HighlightPositionWithLine[] = [];
         for (let i = 0; i < this.flattenedNodes.length; i++) {
@@ -259,13 +272,22 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>> {
     };
   }
 
-  async doAction(name: string, nodes: TreeNode | TreeNode[], args: string[] = []) {
+  async doAction(
+    name: string,
+    nodes: TreeNode | TreeNode[],
+    args: string[] = [],
+  ) {
     const action = this.actions[name] || this.explorer.globalActions[name];
     if (!action) {
       return;
     }
 
-    const { multi = false, render = false, reload = false, select = false } = action.options;
+    const {
+      multi = false,
+      render = false,
+      reload = false,
+      select = false,
+    } = action.options;
 
     const finalNodes = Array.isArray(nodes) ? nodes : [nodes];
     if (select) {
@@ -331,7 +353,10 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>> {
           await nvim.command(`edit ${await getURI()}`);
         }
       });
-    const actions: Record<OpenStrategy, (args?: string[]) => void | Promise<void>> = {
+    const actions: Record<
+      OpenStrategy,
+      (args?: string[]) => void | Promise<void>
+    > = {
       select: async () => {
         const position = await this.explorer.args.value(argOptions.position);
         if (position === 'floating') {
@@ -393,7 +418,8 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>> {
                 if (parent === null) {
                   return 'vsplit';
                 }
-                const target = parent[1][indexInParent + (position === 'left' ? 1 : -1)];
+                const target =
+                  parent[1][indexInParent + (position === 'left' ? 1 : -1)];
                 return target ? getFirstLeafWinid(target) : 'vsplit';
               } else {
                 return null;
@@ -501,46 +527,43 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>> {
   }
 
   async startCocList(list: IList) {
-    const isFloating = (await this.explorer.args.value(argOptions.position)) === 'floating';
+    const isFloating =
+      (await this.explorer.args.value(argOptions.position)) === 'floating';
     if (isFloating) {
       await this.explorer.hide();
     }
 
-    let isResolve = false;
-    let showExplorer = async () => {};
-    const promise = new Promise(async (resolve) => {
-      showExplorer = async () => {
-        if (isFloating && !isResolve) {
-          isResolve = true;
-          // TODO FIXME remove delay
-          await delay(200);
-          await this.explorer.show();
-          resolve();
-        }
-      };
-      const disposable = listManager.registerList(list);
-      await listManager.start([list.name]);
-      disposable.dispose();
+    let isShown = isFloating ? false : true;
+    const shownExplorerEmitter = new Emitter<void>();
+    const disposable = listManager.registerList(list);
+    await listManager.start([list.name]);
+    disposable.dispose();
 
-      listManager.ui.onDidClose(async () => {
-        await new Promise((resolve) => {
-          const disposable = onEvents('BufEnter', () => {
-            if (listManager.ui.window?.id === undefined) {
-              disposable.dispose();
-              resolve();
-            }
-          });
+    listManager.ui.onDidClose(async () => {
+      await new Promise((resolve) => {
+        const disposable = onEvents('BufEnter', () => {
+          if (listManager.ui.window?.id === undefined) {
+            disposable.dispose();
+            resolve();
+          }
         });
-        if (isFloating && !isResolve) {
-          await showExplorer();
-        }
-        resolve();
       });
+      if (isFloating && !isShown) {
+        await this.explorer.show();
+        shownExplorerEmitter.fire();
+      }
     });
     return {
-      resolve: showExplorer,
-      done() {
-        return promise;
+      waitShow() {
+        if (isShown) {
+          return;
+        }
+        return new Promise((resolve) => {
+          shownExplorerEmitter.event(() => {
+            isShown = true;
+            resolve();
+          });
+        });
       },
     };
   }
@@ -565,14 +588,14 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>> {
           key: reverseMappings[actionName],
           description,
           async callback() {
+            await task.waitShow();
             callback(nodes, []);
-            await task.resolve();
           },
         }))
         .filter((a) => a.name !== 'actionMenu'),
     );
     const task = await this.startCocList(explorerActionList);
-    await task.done();
+    await task.waitShow();
   }
 
   isSelectedAny() {
@@ -611,7 +634,12 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>> {
   }
 
   async gotoLineIndex(lineIndex: number, col?: number) {
-    return (await this.explorer.gotoLineIndexNotifier(this.startLineIndex + lineIndex, col)).run();
+    return (
+      await this.explorer.gotoLineIndexNotifier(
+        this.startLineIndex + lineIndex,
+        col,
+      )
+    ).run();
   }
 
   gotoLineIndexNotifier(lineIndex: number, col?: number) {
@@ -621,7 +649,10 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>> {
     if (lineIndex > this.height) {
       lineIndex = this.height - 1;
     }
-    return this.explorer.gotoLineIndexNotifier(this.startLineIndex + lineIndex, col);
+    return this.explorer.gotoLineIndexNotifier(
+      this.startLineIndex + lineIndex,
+      col,
+    );
   }
 
   async gotoRoot({ col }: { col?: number } = {}) {
@@ -635,7 +666,10 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>> {
   /**
    * if node is null, move to root, otherwise move to node
    */
-  async gotoNode(node: TreeNode, options: { lineIndex?: number; col?: number } = {}) {
+  async gotoNode(
+    node: TreeNode,
+    options: { lineIndex?: number; col?: number } = {},
+  ) {
     return (await this.gotoNodeNotifier(node, options)).run();
   }
 
@@ -644,10 +678,15 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>> {
    */
   async gotoNodeNotifier(
     node: TreeNode,
-    { lineIndex: fallbackLineIndex, col }: { lineIndex?: number; col?: number } = {},
+    {
+      lineIndex: fallbackLineIndex,
+      col,
+    }: { lineIndex?: number; col?: number } = {},
   ) {
     const finalCol = col === undefined ? await this.explorer.currentCol() : col;
-    const lineIndex = this.flattenedNodes.findIndex((it) => it.uri === node.uri);
+    const lineIndex = this.flattenedNodes.findIndex(
+      (it) => it.uri === node.uri,
+    );
     if (lineIndex !== -1) {
       return this.gotoLineIndexNotifier(lineIndex, finalCol);
     } else if (fallbackLineIndex !== undefined) {
@@ -671,7 +710,9 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>> {
     return !!renderAll;
   }
 
-  drawRootLabeling(_node: TreeNode): undefined | DrawLabelingResult | Promise<DrawLabelingResult> {
+  drawRootLabeling(
+    _node: TreeNode,
+  ): undefined | DrawLabelingResult | Promise<DrawLabelingResult> {
     return;
   }
 
@@ -687,7 +728,11 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>> {
     while (stack.length) {
       const node = stack.shift()!;
       res.push(node);
-      if (node.children && Array.isArray(node.children) && this.expandStore.isExpanded(node)) {
+      if (
+        node.children &&
+        Array.isArray(node.children) &&
+        this.expandStore.isExpanded(node)
+      ) {
         for (let i = node.children.length - 1; i >= 0; i--) {
           stack.unshift(node.children[i]);
         }
@@ -714,7 +759,9 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>> {
           return;
         }
 
-        const nodeIndex = this.flattenedNodes.findIndex((it) => it.uri === node.uri);
+        const nodeIndex = this.flattenedNodes.findIndex(
+          (it) => it.uri === node.uri,
+        );
         if (nodeIndex > -1) {
           if (node.parent?.children) {
             const siblingIndex = node.parent.children.indexOf(node);
@@ -751,14 +798,19 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>> {
     return this.explorer.sources.indexOf(this as ExplorerSource<any>);
   }
 
-  async reload(node: TreeNode, options?: { render?: boolean; force?: boolean }) {
+  async reload(
+    node: TreeNode,
+    options?: { render?: boolean; force?: boolean },
+  ) {
     return (await this.reloadNotifier(node, options))?.run();
   }
 
   async reloadNotifier(node: TreeNode, { render = true, force = false } = {}) {
     await this.explorer.refreshWidth();
     this.selectedNodes = new Set();
-    node.children = this.expandStore.isExpanded(node) ? await this.loadChildren(node) : [];
+    node.children = this.expandStore.isExpanded(node)
+      ? await this.loadChildren(node)
+      : [];
     await this.loaded(node);
     if (render) {
       return this.renderNotifier({ node, force });
@@ -766,12 +818,17 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>> {
   }
 
   private offsetAfterLine(offset: number, afterLine: number) {
-    this.explorer.indexesManager.offsetLines(offset, this.startLineIndex + afterLine + 1);
+    this.explorer.indexesManager.offsetLines(
+      offset,
+      this.startLineIndex + afterLine + 1,
+    );
     this.endLineIndex += offset;
-    this.explorer.sources.slice(this.currentSourceIndex() + 1).forEach((source) => {
-      source.startLineIndex += offset;
-      source.offsetAfterLine(offset, source.startLineIndex);
-    });
+    this.explorer.sources
+      .slice(this.currentSourceIndex() + 1)
+      .forEach((source) => {
+        source.startLineIndex += offset;
+        source.offsetAfterLine(offset, source.startLineIndex);
+      });
   }
 
   setLinesNotifier(lines: string[], startIndex: number, endIndex: number) {
@@ -782,14 +839,22 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>> {
     );
   }
 
-  private nodeAndChildrenRange(node: TreeNode): { startIndex: number; endIndex: number } | null {
-    const startIndex = this.flattenedNodes.findIndex((it) => it.uri === node.uri);
+  private nodeAndChildrenRange(
+    node: TreeNode,
+  ): { startIndex: number; endIndex: number } | null {
+    const startIndex = this.flattenedNodes.findIndex(
+      (it) => it.uri === node.uri,
+    );
     if (startIndex === -1) {
       return null;
     }
     const parentLevel = node.level;
     let endIndex = this.flattenedNodes.length - 1;
-    for (let i = startIndex + 1, len = this.flattenedNodes.length; i < len; i++) {
+    for (
+      let i = startIndex + 1, len = this.flattenedNodes.length;
+      i < len;
+      i++
+    ) {
       if (this.flattenedNodes[i].level <= parentLevel) {
         endIndex = i - 1;
         break;
@@ -931,7 +996,9 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>> {
     const needDrawNodes: [TreeNode, number][] = [];
     await Promise.all(
       nodes.map(async (node) => {
-        const nodeIndex = this.flattenedNodes.findIndex((it) => it.uri === node.uri);
+        const nodeIndex = this.flattenedNodes.findIndex(
+          (it) => it.uri === node.uri,
+        );
         if (nodeIndex === -1) {
           return;
         }
@@ -950,11 +1017,19 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>> {
     });
   }
 
-  async render(options?: { node: TreeNode; storeCursor: boolean; force: boolean }) {
+  async render(options?: {
+    node: TreeNode;
+    storeCursor: boolean;
+    force: boolean;
+  }) {
     return (await this.renderNotifier(options))?.run();
   }
 
-  async renderNotifier({ node = this.rootNode, storeCursor = true, force = false } = {}) {
+  async renderNotifier({
+    node = this.rootNode,
+    storeCursor = true,
+    force = false,
+  } = {}) {
     if (this.explorer.isHelpUI) {
       return;
     }
@@ -999,7 +1074,9 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>> {
     const notifier = await this.explorer.setLinesNotifier(
       needDrawNodes.map((node) => node.drawnLine),
       this.startLineIndex + nodeIndex,
-      isLastSource && node.isRoot ? -1 : this.startLineIndex + nodeIndex + oldHeight,
+      isLastSource && node.isRoot
+        ? -1
+        : this.startLineIndex + nodeIndex + oldHeight,
     );
     return Notifier.create(() => {
       notifier.notify();

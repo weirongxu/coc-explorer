@@ -36,6 +36,7 @@ import {
   winnrByBufnr,
   winidByWinnr,
   onEvents,
+  getEnableFloatingBorder,
 } from './util';
 
 const hl = hlGroupManager.linkGroup.bind(hlGroupManager);
@@ -131,7 +132,7 @@ export class Explorer {
         height,
         left,
         top,
-        config.get<boolean>('floating.border.enable')!,
+        getEnableFloatingBorder(),
         config.get<string[]>('floating.border.chars')!,
       ]);
       return new Explorer(

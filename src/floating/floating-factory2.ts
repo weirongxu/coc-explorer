@@ -16,7 +16,14 @@ import { distinct } from 'coc.nvim/lib/util/array';
 import { equals } from 'coc.nvim/lib/util/object';
 import { BufferHighlight } from '@chemzqm/neovim';
 import { log, onError } from '../logger';
-import { debounce, onEvents, supportedFloat, onBufEnter, outputChannel } from '../util';
+import {
+  debounce,
+  onEvents,
+  supportedFloat,
+  onBufEnter,
+  outputChannel,
+  getEnableFloatingBorder,
+} from '../util';
 import { WindowConfig } from 'coc.nvim/lib/model/floatFactory';
 import { CancellationTokenSource } from 'vscode-languageserver-protocol';
 import createPopup, { Popup } from 'coc.nvim/lib/model/popup';
@@ -100,7 +107,12 @@ export class FloatingFactory2 implements Disposable {
         null,
         this.disposables,
       ),
-      onEvents('CursorMovedI', this.onCursorMoved.bind(this, true), null, this.disposables),
+      onEvents(
+        'CursorMovedI',
+        this.onCursorMoved.bind(this, true),
+        null,
+        this.disposables,
+      ),
     );
   }
 
@@ -119,7 +131,11 @@ export class FloatingFactory2 implements Disposable {
       await this.close();
       return;
     }
-    if (!insertMode || bufnr != this.targetBufnr || (this.cursor && cursor[0] != this.cursor[0])) {
+    if (
+      !insertMode ||
+      bufnr != this.targetBufnr ||
+      (this.cursor && cursor[0] != this.cursor[0])
+    ) {
       await this.close();
       return;
     }
@@ -148,7 +164,11 @@ export class FloatingFactory2 implements Disposable {
         await nvim.resumeNotification();
       }
       const buffer = this.nvim.createBuffer(this.popup!.bufferId);
-      this.floatBuffer = new FloatBuffer(nvim, buffer, nvim.createWindow(this.popup!.id));
+      this.floatBuffer = new FloatBuffer(
+        nvim,
+        buffer,
+        nvim.createWindow(this.popup!.id),
+      );
     } else {
       if (floatBuffer) {
         const valid = await floatBuffer.valid;
@@ -178,26 +198,44 @@ export class FloatingFactory2 implements Disposable {
     const { nvim, preferTop } = this;
     const { columns, lines } = this;
     let alignTop = false;
-    const [winBottomRow] = (await nvim.call('coc#util#win_position')) as [number, number];
-    const explorerWin = await explorer.win;
-    if (!explorerWin) {
+    const [winBottomRow] = (await nvim.call('coc#util#win_position')) as [
+      number,
+      number,
+    ];
+    const position = await explorer.args.value(argOptions.position);
+    const isFloating = position === 'floating';
+    const enabledFloatingBorder = getEnableFloatingBorder();
+    const containerWin =
+      isFloating && enabledFloatingBorder
+        ? await explorer.floatingBorderWin
+        : await explorer.win;
+    if (!containerWin) {
       return;
     }
-    const explorerWidth = await explorerWin.width;
-    const maxWidth = columns - explorerWidth - 1;
+    const containerWidth = await containerWin.width;
+    const maxWidth = columns - containerWidth - 1;
     if (maxWidth <= 0) {
       return;
     }
     if (!this.floatBuffer) {
       throw Error('floatBuffer not initialize yet');
     }
-    const previewHeight = Math.min(this.floatBuffer.getHeight(docs, maxWidth), this.maxHeight);
+    const previewHeight = Math.min(
+      this.floatBuffer.getHeight(docs, maxWidth),
+      this.maxHeight,
+    );
     if (!preferTop) {
-      if (lines - winBottomRow < previewHeight && winBottomRow > previewHeight) {
+      if (
+        lines - winBottomRow < previewHeight &&
+        winBottomRow > previewHeight
+      ) {
         alignTop = true;
       }
     } else {
-      if (winBottomRow >= previewHeight || winBottomRow >= lines - winBottomRow) {
+      if (
+        winBottomRow >= previewHeight ||
+        winBottomRow >= lines - winBottomRow
+      ) {
         alignTop = true;
       }
     }
@@ -219,24 +257,28 @@ export class FloatingFactory2 implements Disposable {
       col: number;
     } = await nvim.call('winsaveview', []);
     let col = 0;
-    let row = explorerCursor.lineIndex - view.topline + 1 + (alignTop ? -previewHeight + 1 : 0);
-    const position = await explorer.args.value(argOptions.position);
+    let row =
+      explorerCursor.lineIndex -
+      view.topline +
+      1 +
+      (alignTop ? -previewHeight + 1 : 0);
     if (position === 'left') {
-      col = explorerWidth;
+      col = containerWidth;
     } else if (position === 'right') {
-      col = columns - previewWidth - explorerWidth;
+      col = columns - previewWidth - containerWidth;
     } else if (position === 'floating') {
-      const winid = await explorer.winid;
-      if (!winid) {
-        return;
-      }
-      const { row: floatingRow, col: floatingCol } = (await nvim.call('nvim_win_get_config', [
-        winid,
+      const {
+        row: floatingRow,
+        col: floatingCol,
+      } = (await nvim.call('nvim_win_get_config', [
+        containerWin.id,
       ])) as WindowConfig;
-      const floatingPosition = await explorer.args.value(argOptions.floatingPosition);
+      const floatingPosition = await explorer.args.value(
+        argOptions.floatingPosition,
+      );
       row += floatingRow;
       if (floatingPosition === 'left-center') {
-        col = floatingCol + explorerWidth;
+        col = floatingCol + containerWidth;
       } else if (floatingPosition === 'right-center') {
         col = floatingCol - previewWidth;
       } else {
@@ -264,7 +306,12 @@ export class FloatingFactory2 implements Disposable {
       log('error', 'Floating window & textprop not supported!');
       return;
     }
-    const shown = await this.createPopup(explorer, docs, highlights, allowSelection);
+    const shown = await this.createPopup(
+      explorer,
+      docs,
+      highlights,
+      allowSelection,
+    );
     if (!shown) {
       await this.close(false);
     }
@@ -354,8 +401,14 @@ export class FloatingFactory2 implements Disposable {
         this.popup.setFiletype(filetypes[0]);
       }
       this.popup.move({
-        line: config.relative === 'cursor' ? cursorPostion(config.row) : config.row + 1,
-        col: config.relative === 'cursor' ? cursorPostion(config.col) : config.col + 1,
+        line:
+          config.relative === 'cursor'
+            ? cursorPostion(config.row)
+            : config.row + 1,
+        col:
+          config.relative === 'cursor'
+            ? cursorPostion(config.col)
+            : config.col + 1,
         minwidth: config.width - 2,
         minheight: config.height,
         maxwidth: config.width - 2,

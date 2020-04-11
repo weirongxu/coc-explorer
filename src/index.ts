@@ -9,7 +9,10 @@ export const activate = async (context: ExtensionContext) => {
   const { nvim } = workspace;
   registerLogger(logger);
 
-  hlGroupManager.group('SelectUI', 'ctermbg=27 ctermfg=0 guibg=#1593e5 guifg=#ffffff');
+  hlGroupManager.group(
+    'SelectUI',
+    'ctermbg=27 ctermfg=0 guibg=#1593e5 guifg=#ffffff',
+  );
   const normalFloat = hlGroupManager.linkGroup('NormalFloat', 'NormalFloat');
   hlGroupManager.linkGroup('NormalFloatBorder', normalFloat.group);
 
@@ -29,7 +32,10 @@ export const activate = async (context: ExtensionContext) => {
       const paths = (rtp as string).split(',');
       if (!paths.includes(context.extensionPath)) {
         await nvim.command(
-          `execute 'noa set rtp^='.fnameescape('${context.extensionPath.replace(/'/g, "''")}')`,
+          `execute 'noa set rtp^='.fnameescape('${context.extensionPath.replace(
+            /'/g,
+            "''",
+          )}')`,
         );
       }
       explorerManager.emitterDidAutoload.fire();

@@ -143,7 +143,9 @@ export function initFileActions(file: FileSource) {
   file.addNodesAction(
     'copyFilepath',
     async (nodes) => {
-      await file.copy(nodes ? nodes.map((it) => it.fullpath).join('\n') : file.root);
+      await file.copy(
+        nodes ? nodes.map((it) => it.fullpath).join('\n') : file.root,
+      );
       // tslint:disable-next-line: ban
       workspace.showMessage('Copy filepath to clipboard');
     },
@@ -152,7 +154,11 @@ export function initFileActions(file: FileSource) {
   file.addNodesAction(
     'copyFilename',
     async (nodes) => {
-      await file.copy(nodes ? nodes.map((it) => it.name).join('\n') : pathLib.basename(file.root));
+      await file.copy(
+        nodes
+          ? nodes.map((it) => it.name).join('\n')
+          : pathLib.basename(file.root),
+      );
       // tslint:disable-next-line: ban
       workspace.showMessage('Copy filename to clipboard');
     },
@@ -222,7 +228,10 @@ export function initFileActions(file: FileSource) {
     'delete',
     async (nodes) => {
       const list = nodes.map((node) => node.fullpath).join('\n');
-      if ((await prompt('Move these files or directories to trash?\n' + list)) === 'yes') {
+      if (
+        (await prompt('Move these files or directories to trash?\n' + list)) ===
+        'yes'
+      ) {
         await fsTrash(nodes.map((node) => node.fullpath));
       }
     },
@@ -233,7 +242,11 @@ export function initFileActions(file: FileSource) {
     'deleteForever',
     async (nodes) => {
       const list = nodes.map((node) => node.fullpath).join('\n');
-      if ((await prompt('Forever delete these files or directories?\n' + list)) === 'yes') {
+      if (
+        (await prompt(
+          'Forever delete these files or directories?\n' + list,
+        )) === 'yes'
+      ) {
         for (const node of nodes) {
           await fsRimraf(node.fullpath);
         }
@@ -281,7 +294,8 @@ export function initFileActions(file: FileSource) {
   file.addNodeAction(
     'addDirectory',
     async (node, [arg]) => {
-      let directoryName = arg ?? (await input('Input a new directory name: ', '', 'file'));
+      let directoryName =
+        arg ?? (await input('Input a new directory name: ', '', 'file'));
       directoryName = directoryName.trim().replace(/(\/|\\)*$/g, '');
       if (!directoryName) {
         return;
@@ -300,11 +314,14 @@ export function initFileActions(file: FileSource) {
         },
       );
       const reloadNotifier = await file.reloadNotifier(putTargetNode);
-      const [, revealNotifiers] = await file.revealNodeByPathNotifier(targetPath, {
-        node: putTargetNode,
-        render: true,
-        goto: true,
-      });
+      const [, revealNotifiers] = await file.revealNodeByPathNotifier(
+        targetPath,
+        {
+          node: putTargetNode,
+          render: true,
+          goto: true,
+        },
+      );
       await Notifier.runAll([reloadNotifier, ...revealNotifiers]);
     },
     'add a new directory',
@@ -312,7 +329,11 @@ export function initFileActions(file: FileSource) {
   file.addNodeAction(
     'rename',
     async (node) => {
-      const targetPath = await input(`Rename: ${node.fullpath} -> `, node.fullpath, 'file');
+      const targetPath = await input(
+        `Rename: ${node.fullpath} -> `,
+        node.fullpath,
+        'file',
+      );
       if (targetPath.length == 0) {
         return;
       }
@@ -358,7 +379,11 @@ export function initFileActions(file: FileSource) {
           })),
         );
         const disposable = listManager.registerList(driveList);
-        await listManager.start(['--normal', '--number-select', driveList.name]);
+        await listManager.start([
+          '--normal',
+          '--number-select',
+          driveList.name,
+        ]);
         disposable.dispose();
       },
       'list drives',
@@ -368,7 +393,10 @@ export function initFileActions(file: FileSource) {
   file.addNodeAction(
     'search',
     async (node) => {
-      await file.searchByCocList(pathLib.dirname(node.fullpath), false);
+      await file.searchByCocList(
+        node.isRoot ? node.fullpath : pathLib.dirname(node.fullpath),
+        false,
+      );
     },
     'search by coc-list',
   );

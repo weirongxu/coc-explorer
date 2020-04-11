@@ -44,7 +44,9 @@ function isHidden(filename: string) {
   return (
     hiddenRules.filenames.includes(basename) ||
     hiddenRules.extensions.includes(extname) ||
-    hiddenRules.patternMatches.some((pattern) => new RegExp(pattern).test(filename))
+    hiddenRules.patternMatches.some((pattern) =>
+      new RegExp(pattern).test(filename),
+    )
   );
 }
 
@@ -138,7 +140,10 @@ export class FileSource extends ExplorerSource<FileNode> {
               if (!bufinfo[0] || !bufinfo[0].name) {
                 return;
               }
-              const [revealNode, notifiers] = await this.revealNodeByPathNotifier(bufinfo[0].name, {
+              const [
+                revealNode,
+                notifiers,
+              ] = await this.revealNodeByPathNotifier(bufinfo[0].name, {
                 render: true,
                 goto: true,
               });
@@ -221,14 +226,20 @@ export class FileSource extends ExplorerSource<FileNode> {
     const hasRevealPath = args.has(argOptions.reveal);
 
     if (getAutoReveal() || hasRevealPath) {
-      const [revealNode, notifiers] = await this.revealNodeByPathNotifier(revealPath, {
-        render: true,
-        goto: true,
-      });
+      const [revealNode, notifiers] = await this.revealNodeByPathNotifier(
+        revealPath,
+        {
+          render: true,
+          goto: true,
+        },
+      );
       if (revealNode !== null) {
         return Notifier.combine(notifiers);
       } else if (isFirst) {
-        return Notifier.combine([...notifiers, await this.gotoRootNotifier({ col: 1 })]);
+        return Notifier.combine([
+          ...notifiers,
+          await this.gotoRootNotifier({ col: 1 }),
+        ]);
       }
     } else if (isFirst) {
       return this.gotoRootNotifier({ col: 1 });
@@ -256,23 +267,29 @@ export class FileSource extends ExplorerSource<FileNode> {
     filesList.rootPath = path;
     filesList.recursive = recursive;
     filesList.revealCallback = async (loc) => {
-      const [node, notifiers] = await this.revealNodeByPathNotifier(Uri.parse(loc.uri).fsPath, {
-        render: true,
-        goto: true,
-      });
-      if (node) {
-        await task.resolve();
-      }
+      await task.waitShow();
+      const [, notifiers] = await this.revealNodeByPathNotifier(
+        Uri.parse(loc.uri).fsPath,
+        {
+          render: true,
+          goto: true,
+        },
+      );
       await Notifier.runAll(notifiers);
     };
 
     const task = await this.startCocList(filesList);
-    await task.done();
+    await task.waitShow();
   }
 
   async revealNodeByPathNotifier(
     path: string,
-    { node = this.rootNode, goto = false, render = false, notifiers = [] as Notifier[] } = {},
+    {
+      node = this.rootNode,
+      goto = false,
+      render = false,
+      notifiers = [] as Notifier[],
+    } = {},
   ): Promise<[FileNode | null, Notifier[]]> {
     path = normalizePath(path);
     if (path === node.fullpath) {
@@ -298,7 +315,10 @@ export class FileSource extends ExplorerSource<FileNode> {
       }
       if (foundNode) {
         if (isRender) {
-          const renderNotifier = await this.renderNotifier({ node, storeCursor: false });
+          const renderNotifier = await this.renderNotifier({
+            node,
+            storeCursor: false,
+          });
           if (renderNotifier) {
             notifiers.push(renderNotifier);
           }
@@ -338,7 +358,9 @@ export class FileSource extends ExplorerSource<FileNode> {
           if (!this.showHidden && hidden) {
             return null;
           }
-          const fullpath = normalizePath(pathLib.join(parent.fullpath, filename));
+          const fullpath = normalizePath(
+            pathLib.join(parent.fullpath, filename),
+          );
           const stat = await fsStat(fullpath).catch(() => {});
           const lstat = await fsLstat(fullpath).catch(() => {});
           const executable = await fsAccess(fullpath, fs.constants.X_OK);
