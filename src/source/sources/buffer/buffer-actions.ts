@@ -1,5 +1,5 @@
 import { BufferSource } from './buffer-source';
-import { OpenStrategy } from '../../../util';
+import { OpenStrategy, prompt } from '../../../util';
 
 export function initBufferActions(buffer: BufferSource) {
   const { nvim } = buffer;
@@ -73,7 +73,13 @@ export function initBufferActions(buffer: BufferSource) {
   buffer.addNodeAction(
     'delete',
     async (node) => {
-      await nvim.command(`bdelete ${node.bufnr}`);
+      if (
+        buffer.bufManager.modified(node.fullpath) &&
+        (await prompt('Buffer is being modified, delete it?')) !== 'yes'
+      ) {
+        return;
+      }
+      await nvim.command(`bdelete! ${node.bufnr}`);
     },
     'delete buffer',
     { multi: true, reload: true },
@@ -81,7 +87,13 @@ export function initBufferActions(buffer: BufferSource) {
   buffer.addNodeAction(
     'deleteForever',
     async (node) => {
-      await nvim.command(`bwipeout ${node.bufnr}`);
+      if (
+        buffer.bufManager.modified(node.fullpath) &&
+        (await prompt('Buffer is being modified, wipeout it?')) !== 'yes'
+      ) {
+        return;
+      }
+      await nvim.command(`bwipeout! ${node.bufnr}`);
     },
     'bwipeout buffer',
     { multi: true, reload: true },

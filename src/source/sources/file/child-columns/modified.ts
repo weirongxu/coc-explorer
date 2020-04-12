@@ -1,14 +1,20 @@
 import { fileColumnRegistrar } from '../file-column-registrar';
-import { format } from 'date-fns';
-import { getDatetimeFormat } from '../../../../util';
 import { fileHighlights } from '../file-source';
 
-fileColumnRegistrar.registerColumn('child', 'modified', () => ({
+fileColumnRegistrar.registerColumn('child', 'modified', ({ source }) => ({
+  labelOnly: true,
+  labelVisible: (node) => source.bufManager.modified(node.fullpath),
   draw(row, node) {
-    if (node.lstat) {
-      row.add(format(node.lstat.mtime, getDatetimeFormat()), {
-        hl: fileHighlights.timeModified,
-      });
+    let modified: boolean = false;
+    if (node.directory) {
+      if (!source.expandStore.isExpanded(node)) {
+        modified = source.bufManager.modifiedPrefix(node.fullpath);
+      }
+    } else {
+      modified = source.bufManager.modified(node.fullpath);
     }
+    row.add(modified ? '+' : '', {
+      hl: fileHighlights.readonly,
+    });
   },
 }));

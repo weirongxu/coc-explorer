@@ -16,6 +16,7 @@ import {
   Notifier,
   listDrive,
   isWindows,
+  debounce,
 } from '../../../util';
 import { hlGroupManager } from '../../highlight-manager';
 import { ExplorerSource, BaseTreeNode } from '../../source';
@@ -80,6 +81,7 @@ export const fileHighlights = {
   clip: hl('FileClip', 'Statement'),
   size: hl('FileSize', 'Constant'),
   readonly: hl('FileReadonly', 'Operator'),
+  modified: hl('FileModified', 'Operator'),
   timeAccessed: hl('TimeAccessed', 'Identifier'),
   timeModified: hl('TimeModified', 'Identifier'),
   timeCreated: hl('TimeCreated', 'Identifier'),
@@ -153,6 +155,14 @@ export class FileSource extends ExplorerSource<FileNode> {
             }, 200),
           );
         }
+
+        this.subscriptions.push(
+          this.bufManager.onModified(
+            debounce(500, async (fullpath) => {
+              await this.renderPaths([fullpath]);
+            }),
+          ),
+        );
       } else {
         this.subscriptions.push(
           onBufEnter(async (bufnr) => {

@@ -3,7 +3,7 @@ import { format } from 'date-fns';
 import { getDatetimeFormat } from '../../../../util';
 import { fileHighlights } from '../file-source';
 
-fileColumnRegistrar.registerColumn('child', 'created', () => ({
+fileColumnRegistrar.registerColumn('child', 'timeCreated', () => ({
   draw(row, node) {
     if (node.lstat) {
       row.add(format(node.lstat.ctime, getDatetimeFormat()), {

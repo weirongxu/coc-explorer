@@ -94,6 +94,7 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>> {
   readonly helper = {
     generateUri: (path: string) => generateUri(path, this.scheme),
   };
+  bufManager = this.explorer.explorerManager.bufManager;
   templateRenderer?: TemplateRenderer<TreeNode>;
 
   actions: Record<

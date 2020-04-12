@@ -548,12 +548,12 @@
         "explorer.file.child.template": {
           "description": "Template for child node file source",
           "type": "string",
-          "default": "[git | 2] [selection | clip | 1] [indent][icon | 1] [diagnosticError & 1][filename omitCenter 1][readonly] [linkIcon & 1][link growRight 1 omitCenter 5][size]"
+          "default": "[git | 2] [selection | clip | 1] [indent][icon | 1] [diagnosticError & 1][filename omitCenter 1][modified][readonly] [linkIcon & 1][link growRight 1 omitCenter 5][size]"
         },
         "explorer.file.child.labelingTemplate": {
           "description": "Labeling template for child node of file source",
           "type": "string",
-          "default": "[fullpath][link][diagnosticWarning][diagnosticError][size][accessed][modified][created][readonly]"
+          "default": "[fullpath][link][diagnosticWarning][diagnosticError][size][timeAccessed][timeModified][timeCreated][readonly][modified]"
         },
         "explorer.file.column.git.showIgnored": {
           "description": "Show ignored files in git column",

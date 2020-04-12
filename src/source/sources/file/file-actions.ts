@@ -227,12 +227,25 @@ export function initFileActions(file: FileSource) {
   file.addNodesAction(
     'delete',
     async (nodes) => {
+      if (
+        nodes.some((node) => file.bufManager.modified(node.fullpath)) &&
+        (await prompt('Buffer is being modified, discard it?')) !== 'yes'
+      ) {
+        return;
+      }
+
       const list = nodes.map((node) => node.fullpath).join('\n');
       if (
-        (await prompt('Move these files or directories to trash?\n' + list)) ===
+        (await prompt('Move these files or directories to trash?\n' + list)) !==
         'yes'
       ) {
-        await fsTrash(nodes.map((node) => node.fullpath));
+        return;
+      }
+
+      await fsTrash(nodes.map((node) => node.fullpath));
+
+      for (const node of nodes) {
+        await file.bufManager.remove(node.fullpath, true);
       }
     },
     'move file or directory to trash',
@@ -241,15 +254,25 @@ export function initFileActions(file: FileSource) {
   file.addNodesAction(
     'deleteForever',
     async (nodes) => {
+      if (
+        nodes.some((node) => file.bufManager.modified(node.fullpath)) &&
+        (await prompt('Buffer is being modified, discard it?')) !== 'yes'
+      ) {
+        return;
+      }
+
       const list = nodes.map((node) => node.fullpath).join('\n');
       if (
         (await prompt(
           'Forever delete these files or directories?\n' + list,
-        )) === 'yes'
+        )) !== 'yes'
       ) {
-        for (const node of nodes) {
-          await fsRimraf(node.fullpath);
-        }
+        return;
+      }
+
+      for (const node of nodes) {
+        await fsRimraf(node.fullpath);
+        await file.bufManager.remove(node.fullpath, true);
       }
     },
     'delete file or directory forever',
@@ -329,6 +352,13 @@ export function initFileActions(file: FileSource) {
   file.addNodeAction(
     'rename',
     async (node) => {
+      if (
+        file.bufManager.modified(node.fullpath) &&
+        (await prompt('Buffer is being modified, discard it?')) !== 'yes'
+      ) {
+        return;
+      }
+
       const targetPath = await input(
         `Rename: ${node.fullpath} -> `,
         node.fullpath,
@@ -337,6 +367,7 @@ export function initFileActions(file: FileSource) {
       if (targetPath.length == 0) {
         return;
       }
+
       await overwritePrompt(
         [
           {
@@ -346,8 +377,12 @@ export function initFileActions(file: FileSource) {
         ],
         fsRename,
       );
+
+      await file.bufManager.remove(node.fullpath, true);
+
       await file.reload(file.rootNode);
     },
+
     'rename a file or directory',
   );
 

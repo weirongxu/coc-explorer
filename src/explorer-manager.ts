@@ -1,10 +1,11 @@
-import { workspace, ExtensionContext, Emitter, Disposable } from 'coc.nvim';
+import { workspace, ExtensionContext, Emitter } from 'coc.nvim';
 import { Explorer } from './explorer';
 import { argOptions, Args } from './parse-args';
 import { onError } from './logger';
 import { getMappings } from './mappings';
 import { onBufEnter, supportedNvimFloating } from './util';
 import { GlobalContextVars } from './context-variables';
+import { BufManager } from './buf-manager';
 
 export class ExplorerManager {
   bufferName = '[coc-explorer]';
@@ -24,7 +25,7 @@ export class ExplorerManager {
   > = {};
   rootPathRecords: Set<string> = new Set();
   nvim = workspace.nvim;
-  subscriptions: Disposable[];
+  bufManager: BufManager;
 
   /**
    * mappings[key][mode] = '<Plug>(coc-action-mode-key)'
@@ -39,8 +40,6 @@ export class ExplorerManager {
   private onInited = new Emitter<void>();
 
   constructor(public context: ExtensionContext) {
-    this.subscriptions = context.subscriptions;
-
     this.initedState.list.forEach((method) => {
       this[method].event(() => {
         this.initedState.initedCount += 1;
@@ -55,11 +54,13 @@ export class ExplorerManager {
     });
 
     this.updatePrevCtxVars(workspace.bufnr).catch(onError);
-    this.subscriptions.push(
+    this.context.subscriptions.push(
       onBufEnter(async (bufnr) => {
         await this.updatePrevCtxVars(bufnr);
       }),
     );
+
+    this.bufManager = new BufManager(this.context);
   }
 
   async currentTabId() {
@@ -98,7 +99,9 @@ export class ExplorerManager {
     if (!previousWindowID) {
       return null;
     }
-    const winnr = (await this.nvim.call('win_id2win', [previousWindowID])) as number;
+    const winnr = (await this.nvim.call('win_id2win', [
+      previousWindowID,
+    ])) as number;
     if (winnr <= 0 || (await this.winnrs()).includes(winnr)) {
       return null;
     }
@@ -118,7 +121,9 @@ export class ExplorerManager {
       explorers.push(...container.right);
       explorers.push(...container.tab);
     }
-    const winnrs = await Promise.all(explorers.map((explorer) => explorer.winnr));
+    const winnrs = await Promise.all(
+      explorers.map((explorer) => explorer.winnr),
+    );
     return winnrs.filter((winnr) => winnr !== null);
   }
 
@@ -155,15 +160,20 @@ export class ExplorerManager {
         if (mode === 'v' && ['o', 'j', 'k'].includes(key)) {
           return;
         }
-        const plugKey = `explorer-action-${mode}-${key.replace(/\<(.*)\>/, '[$1]')}`;
-        this.subscriptions.push(
+        const plugKey = `explorer-action-${mode}-${key.replace(
+          /\<(.*)\>/,
+          '[$1]',
+        )}`;
+        this.context.subscriptions.push(
           workspace.registerKeymap(
             [mode],
             plugKey,
             async () => {
               const count = (await this.nvim.eval('v:count')) as number;
               const explorer = this.currentExplorer();
-              explorer?.doActionsWithCount(actions, mode, count || 1).catch(onError);
+              explorer
+                ?.doActionsWithCount(actions, mode, count || 1)
+                .catch(onError);
             },
             { sync: true },
           ),
@@ -197,7 +207,9 @@ export class ExplorerManager {
 
     const position = await args.value(argOptions.position);
     const tabid =
-      position === 'tab' ? (await this.currentTabIdMax()) + 1 : await this.currentTabId();
+      position === 'tab'
+        ? (await this.currentTabIdMax()) + 1
+        : await this.currentTabId();
     if (!(tabid in this.tabContainer)) {
       this.tabContainer[tabid] = {
         left: [],
