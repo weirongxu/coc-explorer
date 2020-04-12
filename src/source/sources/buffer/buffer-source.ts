@@ -5,7 +5,6 @@ import {
   debounce,
   config,
   uniq,
-  prettyPrint,
 } from '../../../util';
 import { hlGroupManager } from '../../highlight-manager';
 import { ExplorerSource, BaseTreeNode } from '../../source';
@@ -121,7 +120,10 @@ export class BufferSource extends ExplorerSource<BufferNode> {
     );
   }
 
-  async loadChildren() {
+  async loadChildren(_parentNode: BufferNode, { force = false } = {}) {
+    if (force) {
+      await this.bufManager.reload();
+    }
     const list = this.bufManager.list;
     const tabOnly = config.get<boolean>('buffer.tabOnly')!;
     let newList: BufferNode[];

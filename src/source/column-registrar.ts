@@ -17,7 +17,7 @@ export interface Column<TreeNode extends BaseTreeNode<TreeNode>, Data = any> {
 
   validate?(): boolean | Promise<boolean>;
 
-  reload?(sourceNode: TreeNode): void | Promise<void>;
+  reload?(parentNode: TreeNode): void | Promise<void>;
 
   /**
    * @returns return true to redraw all rows

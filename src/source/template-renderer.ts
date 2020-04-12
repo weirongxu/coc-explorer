@@ -130,12 +130,12 @@ export class TemplateRenderer<
     return redraw;
   }
 
-  async reload(sourceNode: TreeNode) {
+  async reload(parentNode: TreeNode) {
     for (const columns of Object.values<ColumnRequired<TreeNode, any>[]>(
       this.uniqueColumns,
     )) {
       for (const column of columns) {
-        await (column.reload && column.reload(sourceNode));
+        await (column.reload && column.reload(parentNode));
       }
     }
   }

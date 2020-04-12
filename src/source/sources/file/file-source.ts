@@ -354,12 +354,12 @@ export class FileSource extends ExplorerSource<FileNode> {
     });
   }
 
-  async loadChildren(parent: FileNode): Promise<FileNode[]> {
+  async loadChildren(parentNode: FileNode): Promise<FileNode[]> {
     let filenames: string[];
-    if (isWindows && parent.fullpath === '') {
+    if (isWindows && parentNode.fullpath === '') {
       filenames = await listDrive();
     } else {
-      filenames = await fsReaddir(parent.fullpath);
+      filenames = await fsReaddir(parentNode.fullpath);
     }
     const files = await Promise.all(
       filenames.map(async (filename) => {
@@ -369,7 +369,7 @@ export class FileSource extends ExplorerSource<FileNode> {
             return null;
           }
           const fullpath = normalizePath(
-            pathLib.join(parent.fullpath, filename),
+            pathLib.join(parentNode.fullpath, filename),
           );
           const stat = await fsStat(fullpath).catch(() => {});
           const lstat = await fsLstat(fullpath).catch(() => {});
@@ -385,9 +385,9 @@ export class FileSource extends ExplorerSource<FileNode> {
           const child: FileNode = {
             type: 'child',
             uri: this.helper.generateUri(fullpath),
-            level: parent ? parent.level + 1 : 1,
+            level: parentNode ? parentNode.level + 1 : 1,
             drawnLine: '',
-            parent: parent || this.rootNode,
+            parent: parentNode || this.rootNode,
             expandable: directory,
             name: filename,
             fullpath,
@@ -414,10 +414,10 @@ export class FileSource extends ExplorerSource<FileNode> {
     return this.sortFiles(files.filter((r): r is FileNode => r !== null));
   }
 
-  async loaded(sourceNode: FileNode) {
+  async loaded(parentNode: FileNode) {
     this.copiedNodes.clear();
     this.cutNodes.clear();
-    await super.loaded(sourceNode);
+    await super.loaded(parentNode);
   }
 
   async renderPaths(paths: Set<string> | string[]) {
