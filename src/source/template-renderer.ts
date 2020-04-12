@@ -4,7 +4,7 @@ import { SourceRowBuilder } from './view-builder';
 import { hlGroupManager, HighlightPositionWithLine } from './highlight-manager';
 import pFilter from 'p-filter';
 import { parseTemplate, TemplatePart } from '../parse-template';
-import { groupBy } from 'lodash';
+import { groupBy } from '../util';
 
 export interface DrawLabelingResult {
   highlightPositions: HighlightPositionWithLine[];
@@ -15,7 +15,10 @@ export const labelHighlight = hlGroupManager.linkGroup('Label', 'Label');
 
 export type InitedPartColumn<TreeNode extends BaseTreeNode<TreeNode>> = {
   column: number | ColumnRequired<TreeNode, any>;
-  modifiers?: { name: string; column: number | ColumnRequired<TreeNode, any> }[];
+  modifiers?: {
+    name: string;
+    column: number | ColumnRequired<TreeNode, any>;
+  }[];
 };
 export type InitedPart<TreeNode extends BaseTreeNode<TreeNode>> =
   | string
@@ -36,16 +39,27 @@ export class TemplateRenderer<
     public columnRegistrar: ColumnRegistrar<TreeNode, any>,
   ) {}
 
-  private async initPart(type: Type, part: TemplatePart): Promise<InitedPart<TreeNode>> {
+  private async initPart(
+    type: Type,
+    part: TemplatePart,
+  ): Promise<InitedPart<TreeNode>> {
     if (typeof part !== 'string') {
       const column: InitedPartColumn<TreeNode> = {
-        column: await this.columnRegistrar.getInitedColumn(type, this.source, part.column),
+        column: await this.columnRegistrar.getInitedColumn(
+          type,
+          this.source,
+          part.column,
+        ),
       };
       if (part.modifiers) {
         column.modifiers = await Promise.all(
           part.modifiers.map(async (modifier) => ({
             name: modifier.name,
-            column: await this.columnRegistrar.getInitedColumn(type, this.source, modifier.column),
+            column: await this.columnRegistrar.getInitedColumn(
+              type,
+              this.source,
+              modifier.column,
+            ),
           })),
         );
       }
@@ -72,7 +86,9 @@ export class TemplateRenderer<
         this.initedLabelingParts[type] = [];
 
         for (const parsedPart of parseTemplate(labelingTemplate)) {
-          this.initedLabelingParts[type].push(await this.initPart(type, parsedPart));
+          this.initedLabelingParts[type].push(
+            await this.initPart(type, parsedPart),
+          );
         }
         updateUniqueColumns = true;
       }
@@ -115,7 +131,9 @@ export class TemplateRenderer<
   }
 
   async reload(sourceNode: TreeNode) {
-    for (const columns of Object.values<ColumnRequired<TreeNode, any>[]>(this.uniqueColumns)) {
+    for (const columns of Object.values<ColumnRequired<TreeNode, any>[]>(
+      this.uniqueColumns,
+    )) {
       for (const column of columns) {
         await (column.reload && column.reload(sourceNode));
       }
@@ -138,7 +156,10 @@ export class TemplateRenderer<
     return row;
   }
 
-  async drawLabeling(node: TreeNode, nodeIndex: number): Promise<DrawLabelingResult> {
+  async drawLabeling(
+    node: TreeNode,
+    nodeIndex: number,
+  ): Promise<DrawLabelingResult> {
     const highlightPositionWithLines: HighlightPositionWithLine[] = [];
     const lines: string[] = [];
     for (const part of this.initedLabelingParts[node.type]) {
@@ -149,10 +170,13 @@ export class TemplateRenderer<
       const columns = [
         part.column,
         ...(part.modifiers?.map((m) => (m.name === '&' ? m.column : '')) ?? []),
-      ].filter((c): c is ColumnRequired<TreeNode, any> => typeof c !== 'string');
+      ].filter(
+        (c): c is ColumnRequired<TreeNode, any> => typeof c !== 'string',
+      );
       const visibleColumns = await pFilter(
         columns,
-        async (c) => !c.labelVisible || (await c.labelVisible(node, { nodeIndex })),
+        async (c) =>
+          !c.labelVisible || (await c.labelVisible(node, { nodeIndex })),
       );
       if (!visibleColumns.length) {
         continue;
@@ -161,7 +185,8 @@ export class TemplateRenderer<
       const contentColumns = visibleColumns.filter(async (c) => !c.labelOnly);
       const row = await this.source.viewBuilder.drawRow(async (row) => {
         row.add(
-          contentColumns.map((column) => column.label).join(' & ') + (isAllLabelOnly ? '' : ':'),
+          contentColumns.map((column) => column.label).join(' & ') +
+            (isAllLabelOnly ? '' : ':'),
           { hl: labelHighlight },
         );
         row.add(' ');
@@ -169,7 +194,9 @@ export class TemplateRenderer<
           await row.addColumn(node, nodeIndex, column, true);
         }
       });
-      const { highlightPositions, content } = await row.draw({ flexible: false });
+      const { highlightPositions, content } = await row.draw({
+        flexible: false,
+      });
       lines.push(content);
       highlightPositionWithLines.push(
         ...highlightPositions.map((hl) => ({

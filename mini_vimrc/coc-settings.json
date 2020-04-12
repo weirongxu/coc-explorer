@@ -18,5 +18,6 @@
     }
   },
   "explorer.icon.enableNerdfont": true,
+  "explorer.buffer.tabOnly": true,
   "explorer.debug": true
 }

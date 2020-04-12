@@ -466,6 +466,11 @@
           "type": "boolean",
           "default": false
         },
+        "explorer.buffer.tabOnly": {
+          "description": "Default only show buffers in current tab",
+          "type": "boolean",
+          "default": false
+        },
         "explorer.buffer.root.template": {
           "description": "Template for root node of buffer source",
           "type": "string",
@@ -662,7 +667,7 @@
     "@types/command-exists": "^1.2.0",
     "@types/jest": "^25.2.1",
     "@types/json-schema": "^7.0.4",
-    "@types/lodash": "^4.14.149",
+    "@types/lodash-es": "^4.17.3",
     "@types/minimatch": "^3.0.3",
     "@types/node": "^13.11.0",
     "@types/rimraf": "^3.0.0",
@@ -672,7 +677,7 @@
     "command-exists": "^1.2.8",
     "date-fns": "^2.11.1",
     "jest": "^25.2.7",
-    "lodash": "^4.17.15",
+    "lodash-es": "^4.17.15",
     "make-dir": "^3.0.2",
     "minimatch": "^3.0.4",
     "p-filter": "^2.1.0",

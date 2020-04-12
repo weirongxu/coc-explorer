@@ -1,8 +1,18 @@
-import { HighlightCommand, HighlightPosition, hlGroupManager } from './highlight-manager';
-import { byteLength, displayWidth, displaySlice } from '../util';
+import {
+  HighlightCommand,
+  HighlightPosition,
+  hlGroupManager,
+} from './highlight-manager';
+import {
+  byteLength,
+  displayWidth,
+  displaySlice,
+  sum,
+  compact,
+  flatten,
+} from '../util';
 import { BaseTreeNode } from './source';
 import { Explorer } from '../explorer';
-import { compact, flatten, sum } from 'lodash';
 import { InitedPart } from './template-renderer';
 import { ColumnRequired } from './column-registrar';
 
@@ -50,9 +60,16 @@ interface DrawGroupWithWidth extends DrawGroup {
 
 type DrawableWithWidth = DrawContentWithWidth | DrawGroupWithWidth;
 
-const omitSymbolHighlight = hlGroupManager.linkGroup('OmitSymbol', 'SpecialComment');
+const omitSymbolHighlight = hlGroupManager.linkGroup(
+  'OmitSymbol',
+  'SpecialComment',
+);
 
-function divideVolumeBy(totalWidth: number, volumes: number[], widthLimit?: number[]) {
+function divideVolumeBy(
+  totalWidth: number,
+  volumes: number[],
+  widthLimit?: number[],
+) {
   let unit = totalWidth / sum(volumes);
   const widthes: number[] = new Array(volumes.length);
   if (widthLimit) {
@@ -105,11 +122,17 @@ export class SourceRowBuilder {
 
   constructor(public view: SourceViewBuilder) {}
 
-  private async fetchDisplayWidth(drawableList: Drawable[]): Promise<DrawableWithWidth[]> {
-    async function getDrawContentWith(drawable: DrawContent): Promise<DrawContentWithWidth> {
+  private async fetchDisplayWidth(
+    drawableList: Drawable[],
+  ): Promise<DrawableWithWidth[]> {
+    async function getDrawContentWith(
+      drawable: DrawContent,
+    ): Promise<DrawContentWithWidth> {
       return {
         ...drawable,
-        width: drawable.unicode ? await displayWidth(drawable.content) : drawable.content.length,
+        width: drawable.unicode
+          ? await displayWidth(drawable.content)
+          : drawable.content.length,
       };
     }
     return compact(
@@ -123,7 +146,9 @@ export class SourceRowBuilder {
                 ...it,
                 contents: await Promise.all(
                   compact(
-                    it.contents.map((c) => (c.type === 'content' ? getDrawContentWith(c) : null)),
+                    it.contents.map((c) =>
+                      c.type === 'content' ? getDrawContentWith(c) : null,
+                    ),
                   ),
                 ),
               };
@@ -136,10 +161,18 @@ export class SourceRowBuilder {
     );
   }
 
-  private async handlePadding(drawableList: DrawableWithWidth[]): Promise<DrawableWithWidth[]> {
+  private async handlePadding(
+    drawableList: DrawableWithWidth[],
+  ): Promise<DrawableWithWidth[]> {
     return drawableList.map((it) => {
-      if (it.type === 'group' && it.flexible?.padding && it.flexible.paddingVolume) {
-        const width = sum(it.contents.map((c) => (c.type === 'content' ? c.width : 0)));
+      if (
+        it.type === 'group' &&
+        it.flexible?.padding &&
+        it.flexible.paddingVolume
+      ) {
+        const width = sum(
+          it.contents.map((c) => (c.type === 'content' ? c.width : 0)),
+        );
         if (it.flexible.paddingVolume > width) {
           const width = it.flexible.paddingVolume;
           if (it.flexible.padding === 'left') {
@@ -216,7 +249,9 @@ export class SourceRowBuilder {
             async (
               item,
               idx,
-            ): Promise<DrawContentWithWidth | DrawContentWithWidth[] | undefined> => {
+            ): Promise<
+              DrawContentWithWidth | DrawContentWithWidth[] | undefined
+            > => {
               if (item.type === 'content') {
                 return item;
               } else if (item.type === 'group') {
@@ -285,7 +320,9 @@ export class SourceRowBuilder {
         if (c.type === 'content') {
           return c.width;
         } else if (c.type === 'group') {
-          return sum(c.contents.map((cc) => (cc.type === 'content' ? cc.width : 0)));
+          return sum(
+            c.contents.map((cc) => (cc.type === 'content' ? cc.width : 0)),
+          );
         } else {
           return 0;
         }
@@ -298,7 +335,9 @@ export class SourceRowBuilder {
             async (
               item,
               idx,
-            ): Promise<DrawContentWithWidth | DrawContentWithWidth[] | undefined> => {
+            ): Promise<
+              DrawContentWithWidth | DrawContentWithWidth[] | undefined
+            > => {
               if (item.type === 'content') {
                 return item;
               } else if (item.type === 'group') {
@@ -341,7 +380,9 @@ export class SourceRowBuilder {
                 } else if (item.flexible.omit === 'right') {
                   const cutWid = omitWid + 1;
                   const contentWid = sum(
-                    item.contents.map((c) => (c.type === 'content' ? c.width : 0)),
+                    item.contents.map((c) =>
+                      c.type === 'content' ? c.width : 0,
+                    ),
                   );
                   let remainWid = contentWid - cutWid;
                   for (const c of item.contents) {
@@ -373,7 +414,9 @@ export class SourceRowBuilder {
                   return contents;
                 } else if (item.flexible.omit === 'center') {
                   const contentWid = sum(
-                    item.contents.map((c) => (c.type === 'content' ? c.width : 0)),
+                    item.contents.map((c) =>
+                      c.type === 'content' ? c.width : 0,
+                    ),
                   );
                   const cutWid = omitWid + 1;
                   const remainWid = contentWid - cutWid;
@@ -420,7 +463,10 @@ export class SourceRowBuilder {
                         const rightWidth = itemEndPos - rightCutPos;
                         contents.push({
                           ...c,
-                          content: await displaySlice(c.content, c.width - rightWidth),
+                          content: await displaySlice(
+                            c.content,
+                            c.width - rightWidth,
+                          ),
                           width: rightWidth,
                         });
                       }
@@ -431,7 +477,10 @@ export class SourceRowBuilder {
                         const width = itemEndPos - rightCutPos;
                         contents.push({
                           ...c,
-                          content: await displaySlice(c.content, c.width - width),
+                          content: await displaySlice(
+                            c.content,
+                            c.width - width,
+                          ),
                           width,
                         });
                       }
@@ -450,7 +499,9 @@ export class SourceRowBuilder {
 
   async draw({ flexible = true } = {}) {
     // Get drawContent display width
-    const drawableList = await this.handlePadding(await this.fetchDisplayWidth(this.drawableList));
+    const drawableList = await this.handlePadding(
+      await this.fetchDisplayWidth(this.drawableList),
+    );
 
     // Draw flexible
     let drawContents: DrawContentWithWidth[] = [];
@@ -460,7 +511,9 @@ export class SourceRowBuilder {
         if (c.type === 'content') {
           return c.width;
         } else if (c.type === 'group') {
-          return sum(c.contents.map((cc) => (cc.type === 'content' ? cc.width : 0)));
+          return sum(
+            c.contents.map((cc) => (cc.type === 'content' ? cc.width : 0)),
+          );
         } else {
           return 0;
         }
@@ -468,7 +521,9 @@ export class SourceRowBuilder {
     );
     if (!flexible || usedWidth === fullwidth) {
       drawContents = flatten(
-        drawableList.map((item): DrawContentWithWidth | DrawContentWithWidth[] => {
+        drawableList.map((item):
+          | DrawContentWithWidth
+          | DrawContentWithWidth[] => {
           if (item.type === 'group') {
             return item.contents;
           } else {
@@ -548,7 +603,10 @@ export class SourceRowBuilder {
     return drawableList;
   }
 
-  async flexible(flexible: DrawFlexible | undefined, drawFn: () => any | Promise<any>) {
+  async flexible(
+    flexible: DrawFlexible | undefined,
+    drawFn: () => any | Promise<any>,
+  ) {
     const list = await this.drawToList(drawFn);
     this.drawableList.push(this.flexibleFor(flexible, list));
   }
@@ -616,7 +674,9 @@ export class SourceRowBuilder {
 
     const drawableList: Drawable[] = [];
     const column = part.column;
-    drawableList.push(...(await this.addColumnTo(node, nodeIndex, column, isLabeling)));
+    drawableList.push(
+      ...(await this.addColumnTo(node, nodeIndex, column, isLabeling)),
+    );
 
     const flexible: DrawFlexible = {};
 
@@ -626,7 +686,11 @@ export class SourceRowBuilder {
           p.type === 'content'
             ? p.content.length
             : p.type === 'group'
-            ? sum(p.contents.map((c) => (c.type === 'content' ? c.content.length : 0)))
+            ? sum(
+                p.contents.map((c) =>
+                  c.type === 'content' ? c.content.length : 0,
+                ),
+              )
             : 0,
         ),
       ) === 0;
@@ -639,13 +703,23 @@ export class SourceRowBuilder {
         if (modifier.name === '|') {
           if (isEmpty()) {
             drawableList.push(
-              ...(await this.addColumnTo(node, nodeIndex, modifier.column, isLabeling)),
+              ...(await this.addColumnTo(
+                node,
+                nodeIndex,
+                modifier.column,
+                isLabeling,
+              )),
             );
           }
         } else if (modifier.name === '&') {
           if (!isEmpty()) {
             drawableList.push(
-              ...(await this.addColumnTo(node, nodeIndex, modifier.column, isLabeling)),
+              ...(await this.addColumnTo(
+                node,
+                nodeIndex,
+                modifier.column,
+                isLabeling,
+              )),
             );
           }
         } else if (modifier.name === 'growLeft') {

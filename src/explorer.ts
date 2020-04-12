@@ -5,7 +5,6 @@ import {
   Window,
   workspace,
 } from 'coc.nvim';
-import { partition } from 'lodash';
 import { Range } from 'vscode-languageserver-protocol';
 import { conditionActionRules } from './actions';
 import { BuffuerContextVars } from './context-variables';
@@ -37,6 +36,7 @@ import {
   winidByWinnr,
   onEvents,
   getEnableFloatingBorder,
+  partition,
 } from './util';
 
 const hl = hlGroupManager.linkGroup.bind(hlGroupManager);

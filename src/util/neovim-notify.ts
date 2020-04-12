@@ -1,5 +1,5 @@
 import { workspace } from 'coc.nvim';
-import { compact } from 'lodash';
+import { compact } from '../util';
 
 type NotifierCell = Notifier | void | undefined | null;
 
@@ -26,7 +26,9 @@ export class Notifier {
     }
   }
 
-  static async runAll(notifierPromises: (NotifierCell | Promise<NotifierCell>)[]) {
+  static async runAll(
+    notifierPromises: (NotifierCell | Promise<NotifierCell>)[],
+  ) {
     const notifiers = await Promise.all(notifierPromises);
     workspace.nvim.pauseNotification();
     this.notifyAll(notifiers);

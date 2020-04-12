@@ -1,5 +1,12 @@
 import { workspace } from 'coc.nvim';
-import { getActiveMode, onBufEnter, debounce, config } from '../../../util';
+import {
+  getActiveMode,
+  onBufEnter,
+  debounce,
+  config,
+  uniq,
+  prettyPrint,
+} from '../../../util';
 import { hlGroupManager } from '../../highlight-manager';
 import { ExplorerSource, BaseTreeNode } from '../../source';
 import { sourceManager } from '../../source-manager';
@@ -116,9 +123,22 @@ export class BufferSource extends ExplorerSource<BufferNode> {
 
   async loadChildren() {
     const list = this.bufManager.list;
-    const newList = this.showHidden
-      ? [...list]
-      : list.filter((it) => !it.unlisted);
+    const tabOnly = config.get<boolean>('buffer.tabOnly')!;
+    let newList: BufferNode[];
+    if (this.showHidden) {
+      newList = [...list];
+    } else {
+      if (tabOnly) {
+        const tabBuflist: number[] = uniq(
+          await this.nvim.call('tabpagebuflist', []),
+        );
+        newList = list.filter(
+          (it) => tabBuflist.includes(it.bufnr) && !it.unlisted,
+        );
+      } else {
+        newList = list.filter((it) => !it.unlisted);
+      }
+    }
     return newList.map((it) => ({
       ...it,
       parent: this.rootNode,

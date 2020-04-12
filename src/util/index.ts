@@ -3,7 +3,7 @@ import util from 'util';
 import { format } from 'date-fns';
 export * from './string';
 export * from './number';
-export * from './array';
+export * from './collection';
 export * from './async';
 export * from './config';
 export * from './events';

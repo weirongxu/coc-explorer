@@ -482,6 +482,10 @@ Default: <pre><code>"I"</code></pre>
 Default: <pre><code>false</code></pre>
 </details>
 <details>
+<summary><code>explorer.buffer.tabOnly</code>: Default only show buffers in current tab. type: <code>boolean</code></summary>
+Default: <pre><code>false</code></pre>
+</details>
+<details>
 <summary><code>explorer.buffer.root.template</code>: Template for root node of buffer source. type: <code>string</code></summary>
 Default: <pre><code>"[icon] [title]"</code></pre>
 </details>
@@ -534,11 +538,11 @@ Default: <pre><code>"[fullpath]"</code></pre>
 </details>
 <details>
 <summary><code>explorer.file.child.template</code>: Template for child node file source. type: <code>string</code></summary>
-Default: <pre><code>"[git | 2] [selection | clip | 1] [indent][icon | 1] [diagnosticError & 1][filename omitCenter 1][readonly] [linkIcon & 1][link growRight 1 omitCenter 5][size]"</code></pre>
+Default: <pre><code>"[git | 2] [selection | clip | 1] [indent][icon | 1] [diagnosticError & 1][filename omitCenter 1][modified][readonly] [linkIcon & 1][link growRight 1 omitCenter 5][size]"</code></pre>
 </details>
 <details>
 <summary><code>explorer.file.child.labelingTemplate</code>: Labeling template for child node of file source. type: <code>string</code></summary>
-Default: <pre><code>"[fullpath][link][diagnosticWarning][diagnosticError][size][accessed][modified][created][readonly]"</code></pre>
+Default: <pre><code>"[fullpath][link][diagnosticWarning][diagnosticError][size][timeAccessed][timeModified][timeCreated][readonly][modified]"</code></pre>
 </details>
 <details>
 <summary><code>explorer.file.column.git.showIgnored</code>: Show ignored files in git column. type: <code>boolean</code></summary>
