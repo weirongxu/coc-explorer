@@ -259,12 +259,13 @@ Columns:
 - size
 - readonly
 - modified
-- created
-- accessed
+- timeModified
+- timeCreated
+- timeAccessed
 - diagnosticError
 - diagnosticWarning
 
-default: `[git | 2] [selection | clip | 1] [indent][icon | 1] [diagnosticError & 1][filename omitCenter 1][readonly] [linkIcon & 1][link growRight 1 omitCenter 5][size]`
+default: `[git | 2] [selection | clip | 1] [indent][icon | 1] [diagnosticError & 1][filename omitCenter 1][modified][readonly] [linkIcon & 1][link growRight 1 omitCenter 5][size]`
 
 #### `--file-child-labeling-template <template>`
 
@@ -272,7 +273,7 @@ Labeling template for child node of file source
 
 Columns: same with `--file-child-template`
 
-default: `[fullpath][link][diagnosticWarning][diagnosticError][size][accessed][modified][created][readonly]`
+default: `[fullpath][link][diagnosticWarning][diagnosticError][size][timeAccessed][timeModified][timeCreated][readonly][modified]`
 
 #### `--reveal <filepath>`
 
