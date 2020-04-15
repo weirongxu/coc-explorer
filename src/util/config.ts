@@ -33,3 +33,6 @@ export const getEnableNerdfont = () =>
 
 export const getEnableFloatingBorder = () =>
   config.get<boolean>('floating.border.enable')!;
+
+export const getFloatingBorderChars = () =>
+  config.get<string[]>('floating.border.chars')!;

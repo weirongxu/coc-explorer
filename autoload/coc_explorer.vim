@@ -18,17 +18,7 @@ function! coc_explorer#create(name, explorer_id, position, width, height, left, 
     let floating_winid = v:null
     if a:floating_border_enable
       let floating_border_bufnr = nvim_create_buf(v:false, v:true)
-      let floating_border_winid = nvim_open_win(floating_border_bufnr, v:true, s:floating_win_config(a:width, a:height, a:left, a:top))
-      let ch = a:floating_border_chars
-      let repeat_width = a:width - 2
-      let border_content = [ch[0] . repeat(ch[1], repeat_width) . ch[2]]
-      let border_content += repeat([ch[7] . repeat(' ', repeat_width) . ch[3]], a:height - 2)
-      let border_content += [ch[6] . repeat(ch[5], repeat_width) . ch[4]]
-      call nvim_buf_set_lines(floating_border_bufnr, 0, -1, v:false, border_content)
-      call coc_explorer#init_buf()
-      set nocursorline
-      call nvim_win_set_option(floating_border_winid, 'winhl', 'Normal:CocExplorerNormalFloatBorder')
-
+      call s:floating_border_buffer_render(floating_border_bufnr, a:floating_border_chars, a:width, a:height, a:left, a:top, v:true)
       let floating_winid = nvim_open_win(nvim_create_buf(v:false, v:true), v:true, s:floating_win_config(a:width-2, a:height-2, a:left+1, a:top+1))
     else
       let floating_winid = nvim_open_win(nvim_create_buf(v:false, v:true), v:true, s:floating_win_config(a:width, a:height, a:left, a:top))
@@ -37,11 +27,11 @@ function! coc_explorer#create(name, explorer_id, position, width, height, left, 
   else
     throw 'No support position '.a:position
   endif
-  call coc_explorer#init_buf()
+  call coc_explorer#init_buf(v:false)
   return [bufnr('%'), floating_border_bufnr]
 endfunction
 
-function! coc_explorer#resume(bufnr, floating_border_bufnr, position, width, height, left, top)
+function! coc_explorer#resume(bufnr, position, width, height, left, top, floating_border_bufnr, floating_border_enable, floating_border_chars)
   if a:position ==# 'left'
     wincmd t
     execute 'silent keepalt leftabove vertical sb '.a:bufnr
@@ -51,8 +41,8 @@ function! coc_explorer#resume(bufnr, floating_border_bufnr, position, width, hei
     execute 'silent keepalt rightbelow vertical sb '.a:bufnr
     call coc_explorer#resize_win(a:position, a:width)
   elseif a:position ==# 'floating'
-    if a:floating_border_bufnr isnot v:null
-      call nvim_open_win(a:floating_border_bufnr, v:true, s:floating_win_config(a:width, a:height, a:left, a:top))
+    if a:floating_border_enable && a:floating_border_bufnr isnot v:null
+      call s:floating_border_buffer_render(a:floating_border_bufnr, a:floating_border_chars, a:width, a:height, a:left, a:top, v:true)
       call nvim_open_win(a:bufnr, v:true, s:floating_win_config(a:width-2, a:height-2, a:left+1, a:top+1))
     else
       call nvim_open_win(a:bufnr, v:true, s:floating_win_config(a:width, a:height, a:left, a:top))
@@ -60,6 +50,21 @@ function! coc_explorer#resume(bufnr, floating_border_bufnr, position, width, hei
   else
     throw 'No support position '.a:position
   endif
+endfunction
+
+function s:floating_border_buffer_render(bufnr, chars, width, height, left, top, is_first)
+  let floating_border_winid = nvim_open_win(a:bufnr, v:true, s:floating_win_config(a:width, a:height, a:left, a:top))
+  let repeat_width = a:width - 2
+  let border_content = [a:chars[0] . repeat(a:chars[1], repeat_width) . a:chars[2]]
+  let border_content += repeat([a:chars[7] . repeat(' ', repeat_width) . a:chars[3]], a:height - 2)
+  let border_content += [a:chars[6] . repeat(a:chars[5], repeat_width) . a:chars[4]]
+  set modifiable
+  call nvim_buf_set_lines(a:bufnr, 0, -1, v:false, border_content)
+  if a:is_first
+    call coc_explorer#init_buf(v:true)
+    call nvim_win_set_option(floating_border_winid, 'winhl', 'Normal:CocExplorerNormalFloatBorder')
+  endif
+  wincmd p
 endfunction
 
 function! s:floating_win_config(width, height, left, top)
@@ -81,19 +86,22 @@ function! coc_explorer#resize_win(position, width)
   endif
 endfunction
 
-function! coc_explorer#init_buf()
+function! coc_explorer#init_buf(is_border)
   silent setlocal colorcolumn=
               \ buftype=nofile bufhidden=hide nobuflisted nolist
               \ nomodifiable nomodified
               \ noswapfile noundofile
               \ nomodeline
               \ signcolumn=no
-              \ nocursorcolumn cursorline
+              \ nocursorcolumn
               \ nofoldenable foldcolumn=0
               \ nonumber norelativenumber
               \ nospell
               \ nowrap
-  silent setlocal filetype=coc-explorer
+  if !a:is_border
+    silent setlocal cursorline
+    silent setlocal filetype=coc-explorer
+  end
 endfunction
 
 function! coc_explorer#is_float_window(winnr)

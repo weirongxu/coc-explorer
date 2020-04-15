@@ -37,6 +37,8 @@ import {
   onEvents,
   getEnableFloatingBorder,
   partition,
+  getFloatingBorderChars,
+  delay,
 } from './util';
 
 const hl = hlGroupManager.linkGroup.bind(hlGroupManager);
@@ -133,7 +135,7 @@ export class Explorer {
         left,
         top,
         getEnableFloatingBorder(),
-        config.get<string[]>('floating.border.chars')!,
+        getFloatingBorderChars(),
       ]);
       return new Explorer(
         explorerManager.maxExplorerID,
@@ -495,12 +497,14 @@ export class Explorer {
       );
       await this.nvim.call('coc_explorer#resume', [
         this.bufnr,
-        this.floatingBorderBufnr,
         position,
         width,
         height,
         left,
         top,
+        this.floatingBorderBufnr,
+        getEnableFloatingBorder(),
+        getFloatingBorderChars(),
       ]);
     }
   }
@@ -601,14 +605,21 @@ export class Explorer {
 
   async quit() {
     const win = await this.win;
+    const prevWin = await this.sourceWinnr();
     if (win) {
-      await this.nvim.command(`${await win.number}wincmd q`);
+      this.nvim.pauseNotification();
+      this.nvim.command(`${await win.number}wincmd q`, true);
+      if (prevWin) {
+        this.nvim.command(`${prevWin}wincmd w`, true);
+      }
       // win.close() not work in nvim 3.8
       // await win.close(true);
+      await this.nvim.resumeNotification();
     }
   }
 
   async quitFloatingBorderWin() {
+    await delay(0);
     const borderWin = await this.floatingBorderWin;
     if (borderWin) {
       await this.nvim.command(`${await borderWin.number}wincmd q`);

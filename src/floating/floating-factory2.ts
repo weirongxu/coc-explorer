@@ -374,6 +374,31 @@ export class FloatingFactory2 implements Disposable {
       if (!reuse) {
         nvim.command(`noa call win_gotoid(${this.window.id})`, true);
         this.window.setVar('float', 1, true);
+        // const winOpts = [
+        //   ['spell', false],
+        //   ['list', false],
+        //   ['wrap', true],
+        //   ['linebreak', true],
+        //   ['foldcolumn', 1],
+        //
+        //   ['number', false],
+        //   ['relativenumber', false],
+        //   ['cursorline', false],
+        //   ['cursorcolumn', false],
+        //   ['colorcolumn', ''],
+        //
+        //   ['signcolumn', 'no'],
+        //   ['conceallevel', 2],
+        //   ['concealcursor', 'n'],
+        //
+        //   [
+        //     'winhl',
+        //     'Normal:CocFloating,NormalNC:CocFloating,FoldColumn:CocFloating',
+        //   ],
+        // ];
+        // for (const [option, value] of winOpts) {
+        //   this.window.setVar('&' + option, value, true);
+        // }
         nvim.command(`setl nospell nolist wrap linebreak foldcolumn=1`, true);
         nvim.command(
           `setl nonumber norelativenumber nocursorline nocursorcolumn colorcolumn=`,

@@ -5,7 +5,9 @@ const nvim = () => workspace.nvim;
 let _supportedSetbufline: boolean | null = null;
 export async function supportedSetbufline() {
   if (_supportedSetbufline === null) {
-    _supportedSetbufline = Boolean(await nvim().call('exists', ['*setbufline']));
+    _supportedSetbufline = Boolean(
+      await nvim().call('exists', ['*setbufline']),
+    );
   }
   return _supportedSetbufline;
 }
@@ -32,7 +34,11 @@ export async function displayWidth(str: string) {
 }
 
 export async function displaySlice(str: string, start: number, end?: number) {
-  return (await nvim().call('coc_explorer#strdisplayslice', [str, start, end ?? null])) as string;
+  return (await nvim().call('coc_explorer#strdisplayslice', [
+    str,
+    start,
+    end ?? null,
+  ])) as string;
 }
 
 export async function winnrByBufnr(bufnr: number | null) {
@@ -104,7 +110,12 @@ export async function prompt(
         if (index === -1) {
           index = 0;
         }
-        return choice.slice(0, index) + '&' + choice[index].toUpperCase() + choice.slice(index + 1);
+        return (
+          choice.slice(0, index) +
+          '&' +
+          choice[index].toUpperCase() +
+          choice.slice(index + 1)
+        );
       })
       .join('\n'),
     defaultNumber + 1,
@@ -159,5 +170,8 @@ export async function input(
   defaultInput = '',
   completion: InputCompletion = undefined,
 ): Promise<string> {
-  return nvim().callAsync('coc#util#with_callback', ['input', [prompt, defaultInput, completion]]);
+  return nvim().callAsync('coc#util#with_callback', [
+    'input',
+    [prompt, defaultInput, completion],
+  ]);
 }
