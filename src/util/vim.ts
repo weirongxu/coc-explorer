@@ -1,4 +1,5 @@
-import { workspace } from 'coc.nvim';
+import { workspace, Window } from 'coc.nvim';
+import { Notifier } from '.';
 
 const nvim = () => workspace.nvim;
 
@@ -41,6 +42,12 @@ export async function displaySlice(str: string, start: number, end?: number) {
   ])) as string;
 }
 
+export function closeWinByBufnrNotifier(bufnr: number) {
+  return Notifier.create(() => {
+    nvim().call('coc_explorer#close_win_by_bufnr', [bufnr], true);
+  });
+}
+
 export async function winnrByBufnr(bufnr: number | null) {
   if (!bufnr) {
     return null;
@@ -78,9 +85,24 @@ export async function winidByBufnr(bufnr: number | null) {
   });
 }
 
+export function winByWinid(winid: number): Promise<Window>;
+export function winByWinid(winid: null): Promise<null>;
+export function winByWinid(winid: number | null): Promise<Window | null>;
 export async function winByWinid(winid: number | null) {
   if (winid) {
     return nvim().createWindow(winid);
+  } else {
+    return null;
+  }
+}
+
+export async function bufnrByWinnrOrWinid(winnrOrWinid: number | null) {
+  if (!winnrOrWinid) {
+    return null;
+  }
+  const bufnr = (await nvim().call('winbufnr', winnrOrWinid)) as number;
+  if (bufnr >= 0) {
+    return bufnr;
   } else {
     return null;
   }

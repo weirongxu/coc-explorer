@@ -42,7 +42,12 @@ class HighlightManager {
     return highlight;
   }
 
-  clearHighlights(explorer: Explorer, hlSrcId: number, lineStart?: number, lineEnd?: number) {
+  clearHighlightsNotify(
+    explorer: Explorer,
+    hlSrcId: number,
+    lineStart?: number,
+    lineEnd?: number,
+  ) {
     explorer.buffer.clearNamespace(hlSrcId, lineStart, lineEnd);
   }
 

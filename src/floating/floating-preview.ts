@@ -7,6 +7,7 @@ import {
   PreviewStrategy,
   getPreviewStrategy,
   supportedFloat,
+  Cancelled,
 } from '../util';
 import { workspace } from 'coc.nvim';
 import { FloatingFactory2 } from './floating-factory2';
@@ -17,7 +18,12 @@ export class FloatingPreview {
   shown: boolean = false;
 
   constructor(public explorer: Explorer) {
-    this.floatFactory = new FloatingFactory2(this.explorer, this.nvim, workspace.env, false);
+    this.floatFactory = new FloatingFactory2(
+      this.explorer,
+      this.nvim,
+      workspace.env,
+      false,
+    );
   }
 
   async previewNode(
@@ -34,7 +40,10 @@ export class FloatingPreview {
     if (node.isRoot) {
       drawLabelingResult = await source.drawRootLabeling(node);
     } else {
-      drawLabelingResult = await source.templateRenderer?.drawLabeling(node, nodeIndex);
+      drawLabelingResult = await source.templateRenderer?.drawLabeling(
+        node,
+        nodeIndex,
+      );
     }
     if (!drawLabelingResult || !this.explorer.explorerManager.inExplorer()) {
       return;
@@ -57,7 +66,7 @@ export class FloatingPreview {
     );
   }
 
-  _hoverPreview?: Cancellable<() => Promise<void>>;
+  _hoverPreview?: Cancellable<() => Promise<void | Cancelled>>;
   async hoverPreview() {
     if (!supportedFloat()) {
       return;
@@ -72,7 +81,7 @@ export class FloatingPreview {
         if (!source) {
           return;
         }
-        const nodeIndex = await source.currentLineIndex();
+        const nodeIndex = source.currentLineIndex;
         if (nodeIndex === null) {
           return;
         }

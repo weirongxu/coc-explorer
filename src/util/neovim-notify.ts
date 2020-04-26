@@ -1,5 +1,5 @@
 import { workspace } from 'coc.nvim';
-import { compact } from '../util';
+import { compactI } from '../util';
 
 type NotifierCell = Notifier | void | undefined | null;
 
@@ -36,7 +36,7 @@ export class Notifier {
   }
 
   static combine(notifiers: NotifierCell[]) {
-    const safeNotifiers = compact(notifiers) as Notifier[];
+    const safeNotifiers = compactI(notifiers);
     if (safeNotifiers.length < 1) {
       return Notifier.create(() => {});
     }

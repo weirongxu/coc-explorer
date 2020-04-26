@@ -3,7 +3,7 @@ import { Explorer } from './explorer';
 import { argOptions, Args } from './parse-args';
 import { onError } from './logger';
 import { getMappings } from './mappings';
-import { onBufEnter, supportedNvimFloating } from './util';
+import { onBufEnter, supportedNvimFloating, compactI } from './util';
 import { GlobalContextVars } from './context-variables';
 import { BufManager } from './buf-manager';
 
@@ -112,6 +112,12 @@ export class ExplorerManager {
     return this.explorers().map((explorer) => explorer.bufnr);
   }
 
+  async winids(): Promise<number[]> {
+    return compactI(
+      await Promise.all(this.explorers().map((explorer) => explorer.winid)),
+    );
+  }
+
   async winnrs() {
     const tabid = await this.currentTabId();
     const explorers: Explorer[] = [];
@@ -139,7 +145,18 @@ export class ExplorerManager {
   }
 
   currentExplorer() {
-    const bufnr = workspace.bufnr;
+    return this.explorerByBufnr(workspace.bufnr);
+  }
+
+  async explorerByWinid(winid: number) {
+    for (const e of this.explorers()) {
+      if ((await e.winid) === winid) {
+        return e;
+      }
+    }
+  }
+
+  explorerByBufnr(bufnr: number) {
     return this.explorers().find((e) => e.bufnr === bufnr);
   }
 

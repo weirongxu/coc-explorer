@@ -33,12 +33,9 @@ export class BufManager {
       ...(['TextChanged', 'TextChangedI', 'TextChangedP'] as const).map(
         (event) =>
           onEvents(event, async (bufnr: number) => {
-            const bufinfo = await this.nvim.call('getbufinfo', [bufnr]);
-            const bufname: string | undefined = bufinfo[0]?.name;
-            if (!bufname) {
-              return;
-            }
-            const fullpath = pathLib.resolve(normalizePath(bufname));
+            const fullpath: string = await workspace.nvim.call('expand', [
+              `#${bufnr}:p`,
+            ]);
             const bufNode = this.bufferNodes.get(fullpath);
             if (!bufNode) {
               return;

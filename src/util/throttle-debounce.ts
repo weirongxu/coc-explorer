@@ -1,14 +1,22 @@
 import { onError } from '../logger';
 import { clearTimeout } from 'timers';
 
+export class Cancelled {}
+const cancelled = new Cancelled();
+
 export type Cancellable<F extends Function> = F & {
   cancel(): void;
+};
+
+export type ThrottleOptions = {
+  leading?: boolean;
+  trailing?: boolean;
 };
 
 export function throttle<A extends Array<any>, R>(
   delay: number,
   fn: (...args: A) => Promise<R> | R,
-  options: { tail?: boolean } = {},
+  options: ThrottleOptions = {},
 ): Cancellable<(...args: A) => void> {
   const throttleFn = throttlePromise(delay, fn, options);
   const wrap = (...args: A) => {
@@ -21,29 +29,52 @@ export function throttle<A extends Array<any>, R>(
 export function throttlePromise<A extends Array<any>, R>(
   delay: number,
   fn: (...args: A) => Promise<R> | R,
-  { tail = false }: { tail?: boolean } = {},
-): Cancellable<(...args: A) => Promise<R | undefined>> {
-  const debounceFn = debouncePromise(delay, fn);
-  let lastTime = 0;
+  { leading = true, trailing = false }: ThrottleOptions = {},
+): Cancellable<(...args: A) => Promise<R | Cancelled>> {
+  let blockTimer: NodeJS.Timeout | null = null;
+  let trailStore: {
+    cancel: () => void;
+    invoke: () => void;
+  } | null = null;
+
   const wrap = async (...args: A) => {
-    const now = Date.now();
-    if (now - lastTime < delay) {
-      if (tail) {
-        return await debounceFn(...args);
+    const toTrailStore = () =>
+      new Promise<R | Cancelled>((resolve, reject) => {
+        trailStore = {
+          cancel() {
+            resolve(cancelled);
+            trailStore = null;
+          },
+          async invoke() {
+            try {
+              resolve(await fn(...args));
+            } catch (err) {
+              reject(err);
+            } finally {
+              trailStore = null;
+            }
+          },
+        };
+      });
+    if (blockTimer === null) {
+      blockTimer = setTimeout(() => {
+        trailStore?.invoke();
+        blockTimer = null;
+      }, delay);
+      if (leading) {
+        return fn(...args);
       } else {
-        return undefined;
+        return toTrailStore();
       }
-    } else {
-      lastTime = now;
-      try {
-        const ret = await fn(...args);
-        return ret;
-      } catch (error) {
-        throw error;
-      }
+    } else if (trailing) {
+      trailStore?.cancel();
+      return toTrailStore();
     }
+    return cancelled;
   };
-  wrap.cancel = debounceFn.cancel;
+  wrap.cancel = () => {
+    trailStore?.cancel();
+  };
   return wrap;
 }
 
@@ -62,28 +93,42 @@ export function debounce<A extends Array<any>, R>(
 export function debouncePromise<A extends Array<any>, R>(
   delay: number,
   fn: (...args: A) => Promise<R> | R,
-): Cancellable<(...args: A) => Promise<R | undefined>> {
+): Cancellable<(...args: A) => Promise<R | Cancelled>> {
   let timer: NodeJS.Timeout | null = null;
-  let lastResolve: null | ((value: R | undefined) => void) = null;
+  let store: {
+    cancel: () => void;
+    invoke: () => void;
+  } | null = null;
   const wrap = async (...args: A) => {
-    wrap.cancel();
-    return await new Promise<R | undefined>((resolve, reject) => {
-      lastResolve = resolve;
-      timer = setTimeout(async () => {
-        try {
-          resolve(await fn(...args));
-        } catch (error) {
-          reject(error);
-        }
-      }, delay);
+    store?.cancel();
+    timer = setTimeout(async () => {
+      store?.invoke();
+    }, delay);
+    return await new Promise<R | Cancelled>((resolve, reject) => {
+      store = {
+        cancel() {
+          if (timer) {
+            clearTimeout(timer);
+            timer = null;
+          }
+          resolve(cancelled);
+          store = null;
+        },
+        async invoke() {
+          try {
+            resolve(await fn(...args));
+          } catch (err) {
+            reject(err);
+          } finally {
+            timer = null;
+            store = null;
+          }
+        },
+      };
     });
   };
   wrap.cancel = () => {
-    if (timer) {
-      clearTimeout(timer);
-      timer = null;
-      lastResolve!(undefined);
-    }
+    store?.cancel();
   };
   return wrap;
 }

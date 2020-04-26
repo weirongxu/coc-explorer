@@ -138,14 +138,16 @@ export class FileSource extends ExplorerSource<FileNode> {
               if (bufnr === this.explorer.bufnr) {
                 return;
               }
-              const bufinfo = await nvim.call('getbufinfo', [bufnr]);
-              if (!bufinfo[0] || !bufinfo[0].name) {
+              const fullpath: string = await workspace.nvim.call('expand', [
+                `#${bufnr}:p`,
+              ]);
+              if (!fullpath) {
                 return;
               }
               const [
                 revealNode,
                 notifiers,
-              ] = await this.revealNodeByPathNotifier(bufinfo[0].name, {
+              ] = await this.revealNodeByPathNotifier(fullpath, {
                 render: true,
                 goto: true,
               });
@@ -327,7 +329,6 @@ export class FileSource extends ExplorerSource<FileNode> {
         if (isRender) {
           const renderNotifier = await this.renderNotifier({
             node,
-            storeCursor: false,
           });
           if (renderNotifier) {
             notifiers.push(renderNotifier);

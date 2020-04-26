@@ -53,16 +53,16 @@ function! coc_explorer#resume(bufnr, position, width, height, left, top, floatin
 endfunction
 
 function s:floating_border_buffer_render(bufnr, chars, width, height, left, top, is_first)
-  let floating_border_winid = nvim_open_win(a:bufnr, v:true, s:floating_win_config(a:width, a:height, a:left, a:top))
+  let winid = nvim_open_win(a:bufnr, v:true, s:floating_win_config(a:width, a:height, a:left, a:top))
   let repeat_width = a:width - 2
-  let border_content = [a:chars[0] . repeat(a:chars[1], repeat_width) . a:chars[2]]
-  let border_content += repeat([a:chars[7] . repeat(' ', repeat_width) . a:chars[3]], a:height - 2)
-  let border_content += [a:chars[6] . repeat(a:chars[5], repeat_width) . a:chars[4]]
+  let content = [a:chars[0] . repeat(a:chars[1], repeat_width) . a:chars[2]]
+  let content += repeat([a:chars[7] . repeat(' ', repeat_width) . a:chars[3]], a:height - 2)
+  let content += [a:chars[6] . repeat(a:chars[5], repeat_width) . a:chars[4]]
   set modifiable
-  call nvim_buf_set_lines(a:bufnr, 0, -1, v:false, border_content)
+  call nvim_buf_set_lines(a:bufnr, 0, -1, v:false, content)
   if a:is_first
     call coc_explorer#init_buf(v:true)
-    call nvim_win_set_option(floating_border_winid, 'winhl', 'Normal:CocExplorerNormalFloatBorder')
+    call nvim_win_set_option(winid, 'winhl', 'Normal:CocExplorerNormalFloatBorder')
   endif
   wincmd p
 endfunction
@@ -113,6 +113,10 @@ function! coc_explorer#is_float_window(winnr)
   endif
 endfunction
 
+function! coc_explorer#close_win_by_bufnr(bufnr)
+  let winnr = bufwinnr(a:bufnr)
+  execute winnr . 'wincmd q'
+endfunction
 
 " Select action
 let s:select_wins_chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'

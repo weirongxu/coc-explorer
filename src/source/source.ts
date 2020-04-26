@@ -22,7 +22,6 @@ import {
   onEvents,
   OpenStrategy,
   PreviewStrategy,
-  skipOnEventsByWins,
 } from '../util';
 import {
   HighlightPosition,
@@ -30,12 +29,18 @@ import {
 } from './highlight-manager';
 import { DrawLabelingResult, TemplateRenderer } from './template-renderer';
 import { SourceViewBuilder } from './view-builder';
+import { WinLayoutFinder } from '../win-layout-finder';
 
 export type ActionOptions = {
   multi: boolean;
   render: boolean;
   reload: boolean;
   select: boolean;
+};
+
+export type RenderOptions<TreeNode extends BaseTreeNode<any>> = {
+  node?: TreeNode;
+  force?: boolean;
 };
 
 export const sourceIcons = {
@@ -112,7 +117,7 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>> {
   private requestedRenderNodes: Set<TreeNode> = new Set();
   subscriptions: Disposable[];
 
-  constructor(public sourceName: string, public explorer: Explorer) {
+  constructor(public sourceType: string, public explorer: Explorer) {
     this.context = this.explorer.context;
     this.subscriptions = this.context.subscriptions;
 
@@ -140,7 +145,7 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>> {
     this.addNodeAction(
       'refresh',
       async () => {
-        const notifier = await this.reloadNotifier(this.rootNode, {
+        const reloadNotifier = await this.reloadNotifier(this.rootNode, {
           force: true,
         });
 
@@ -158,7 +163,7 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>> {
         }
 
         this.nvim.pauseNotification();
-        notifier?.notify();
+        reloadNotifier?.notify();
         this.clearHighlightsNotify();
         this.executeHighlightsNotify(highlights);
         await this.nvim.resumeNotification();
@@ -336,23 +341,18 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>> {
       return;
     }
     const { nvim } = this;
-    const curWinnr = await nvim.call('winnr');
     const openByWinnr =
       originalOpenByWinnr ??
       (async (winnr: number) => {
-        if (curWinnr !== winnr) {
-          await skipOnEventsByWins([winnr]);
-        }
-        await nvim.command(`${winnr}wincmd w`);
+        nvim.pauseNotification();
+        nvim.command(`${winnr}wincmd w`, true);
+        nvim.command(`edit ${await getURI()}`, true);
         if (workspace.isVim) {
-          // Avoid vim highlight not working, https://github.com/weirongxu/coc-explorer/issues/113
-          nvim.pauseNotification();
-          nvim.command(`edit ${await getURI()}`, true);
+          // Avoid vim highlight not working,
+          // https://github.com/weirongxu/coc-explorer/issues/113
           nvim.command('redraw', true);
-          await nvim.resumeNotification();
-        } else {
-          await nvim.command(`edit ${await getURI()}`);
         }
+        await nvim.resumeNotification();
       });
     const actions: Record<
       OpenStrategy,
@@ -379,7 +379,7 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>> {
         );
       },
       split: async (args) => {
-        type Mode = 'plain' | 'intelligent';
+        type Mode = 'intelligent' | 'plain';
         const mode: Mode = (args?.[0] ?? 'intelligent') as Mode;
         if (mode === 'plain') {
           await nvim.command(`split ${await getURI()}`);
@@ -399,59 +399,28 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>> {
             return;
           }
 
-          type WinLayoutGroup = ['col' | 'row', WinLayoutNode[]];
-          type WinLayoutNode = WinLayoutGroup | ['leaf', number];
-          const winLayoutRoot: WinLayoutNode = await nvim.call('winlayout', []);
-          const getFirstLeafWinid = (node: WinLayoutNode): number => {
-            if (node[0] === 'leaf') {
-              return node[1];
-            } else {
-              return getFirstLeafWinid(node[1][0]);
-            }
-          };
-          const getTargetWinid = (
-            node: WinLayoutNode,
-            parent: WinLayoutGroup | null = null,
-            indexInParent: number = 0,
-          ): number | 'vsplit' | null => {
-            if (node[0] === 'leaf') {
-              if (node[1] === explWinid) {
-                if (parent === null) {
-                  return 'vsplit';
-                }
-                const target =
-                  parent[1][indexInParent + (position === 'left' ? 1 : -1)];
-                return target ? getFirstLeafWinid(target) : 'vsplit';
-              } else {
-                return null;
-              }
-            } else {
-              for (let i = 0; i < node[1].length; i++) {
-                const child = node[1][i];
-                const target = getTargetWinid(child, node, i);
-                if (target) {
-                  return target;
-                }
-              }
-              return null;
-            }
-          };
+          const winFinder = await WinLayoutFinder.create();
+          const node = winFinder.findWinid(explWinid);
+          if (node) {
+            if (node.parent) {
+              const target =
+                node.parent.group.children[
+                  node.parent.indexInParent + (position === 'left' ? 1 : -1)
+                ];
+              if (target) {
+                const targetWinid = WinLayoutFinder.getFirstLeafWinid(target);
 
-          const targetWinid = getTargetWinid(winLayoutRoot);
-          if (targetWinid === null) {
-            actions.split(['plain']);
-            return;
-          } else if (targetWinid === 'vsplit') {
-            actions.vsplit();
-            return;
+                nvim.pauseNotification();
+                nvim.call('win_gotoid', [targetWinid], true);
+                nvim.command(`split ${await getURI()}`, true);
+                await nvim.resumeNotification();
+                await this.explorer.tryQuitOnOpen();
+              }
+            } else {
+              actions.vsplit();
+            }
           } else {
-            await skipOnEventsByWins([targetWinid]);
-            nvim.pauseNotification();
-            nvim.call('win_gotoid', [targetWinid], true);
-            nvim.command(`split ${await getURI()}`, true);
-            await nvim.resumeNotification();
-            await this.explorer.tryQuitOnOpen();
-            return;
+            actions.split(['plain']);
           }
         }
       },
@@ -625,13 +594,12 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>> {
   /**
    * Relative line index for source
    */
-  async currentLineIndex() {
-    const cursor = await this.explorer.currentCursor();
-    if (cursor) {
-      return cursor.lineIndex - this.startLineIndex;
-    } else {
-      return null;
-    }
+  get currentLineIndex() {
+    return this.explorer.lineIndex - this.startLineIndex;
+  }
+
+  async currentNode() {
+    return this.flattenedNodes[this.currentLineIndex] as TreeNode | undefined;
   }
 
   async gotoLineIndex(lineIndex: number, col?: number) {
@@ -681,19 +649,18 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>> {
     node: TreeNode,
     {
       lineIndex: fallbackLineIndex,
-      col,
+      col = 0,
     }: { lineIndex?: number; col?: number } = {},
   ) {
-    const finalCol = col === undefined ? await this.explorer.currentCol() : col;
     const lineIndex = this.flattenedNodes.findIndex(
       (it) => it.uri === node.uri,
     );
     if (lineIndex !== -1) {
-      return this.gotoLineIndexNotifier(lineIndex, finalCol);
+      return this.gotoLineIndexNotifier(lineIndex, col);
     } else if (fallbackLineIndex !== undefined) {
-      return this.gotoLineIndexNotifier(fallbackLineIndex, finalCol);
+      return this.gotoLineIndexNotifier(fallbackLineIndex, col);
     } else {
-      return this.gotoRootNotifier({ col: finalCol });
+      return this.gotoRootNotifier({ col: col });
     }
   }
 
@@ -890,15 +857,14 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>> {
       .concat(this.flattenedNodes.slice(endIndex + 1));
     this.offsetAfterLine(needDrawNodes.length - 1, startIndex);
     const highlights = await this.drawNodes(needDrawNodes);
-    const gotoNotifier = await this.gotoLineIndexNotifier(startIndex, 1);
-    const setLinesNotifier = await this.setLinesNotifier(
+    const gotoNotifier = await this.gotoLineIndexNotifier(startIndex, 0);
+
+    this.nvim.pauseNotification();
+    this.setLinesNotifier(
       needDrawNodes.map((node) => node.drawnLine),
       startIndex,
       endIndex + 1,
-    );
-
-    this.nvim.pauseNotification();
-    setLinesNotifier.notify();
+    ).notify();
     this.executeHighlightsNotify(highlights);
     gotoNotifier.notify();
     await this.nvim.resumeNotification();
@@ -948,15 +914,10 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>> {
     );
     this.offsetAfterLine(-(endIndex - startIndex), endIndex);
     const highlights = await this.drawNodes([node]);
-    const gotoNotifier = await this.gotoLineIndexNotifier(startIndex, 1);
-    const setLinesNotifier = await this.setLinesNotifier(
-      [node.drawnLine],
-      startIndex,
-      endIndex + 1,
-    );
+    const gotoNotifier = await this.gotoLineIndexNotifier(startIndex, 0);
 
     this.nvim.pauseNotification();
-    setLinesNotifier.notify();
+    this.setLinesNotifier([node.drawnLine], startIndex, endIndex + 1).notify();
     this.executeHighlightsNotify(highlights);
     gotoNotifier.notify();
     await this.nvim.resumeNotification();
@@ -1013,40 +974,31 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>> {
         needDrawNodes.push([node, nodeIndex]);
       }),
     );
-    const notifiers = await Promise.all(
-      needDrawNodes.map(([node, nodeIndex]) =>
-        this.setLinesNotifier([node.drawnLine], nodeIndex, nodeIndex + 1),
-      ),
-    );
     return Notifier.create(() => {
-      Notifier.notifyAll(notifiers);
+      needDrawNodes.forEach(([node, nodeIndex]) =>
+        this.setLinesNotifier(
+          [node.drawnLine],
+          nodeIndex,
+          nodeIndex + 1,
+        ).notify(),
+      );
       this.executeHighlightsNotify(highlights);
     });
   }
 
-  async render(options?: {
-    node: TreeNode;
-    storeCursor: boolean;
-    force: boolean;
-  }) {
+  async render(options?: RenderOptions<TreeNode>) {
     return (await this.renderNotifier(options))?.run();
   }
 
   async renderNotifier({
     node = this.rootNode,
-    storeCursor = true,
     force = false,
-  } = {}) {
+  }: RenderOptions<TreeNode> = {}) {
     if (this.explorer.isHelpUI) {
       return;
     }
 
     const { nvim } = this;
-
-    let restoreCursor: (() => Promise<Notifier>) | null = null;
-    if (storeCursor) {
-      restoreCursor = await this.explorer.storeCursor();
-    }
 
     const range = this.nodeAndChildrenRange(node);
     if (!range && !node.isRoot) {
@@ -1076,20 +1028,18 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>> {
 
     const sourceIndex = this.currentSourceIndex();
     const isLastSource = this.explorer.sources.length - 1 == sourceIndex;
-    const restoreCursorNotifier = await restoreCursor?.();
 
-    const notifier = await this.explorer.setLinesNotifier(
-      needDrawNodes.map((node) => node.drawnLine),
-      this.startLineIndex + nodeIndex,
-      isLastSource && node.isRoot
-        ? -1
-        : this.startLineIndex + nodeIndex + oldHeight,
-    );
     return Notifier.create(() => {
-      notifier.notify();
+      this.explorer
+        .setLinesNotifier(
+          needDrawNodes.map((node) => node.drawnLine),
+          this.startLineIndex + nodeIndex,
+          isLastSource && node.isRoot
+            ? -1
+            : this.startLineIndex + nodeIndex + oldHeight,
+        )
+        .notify();
       this.executeHighlightsNotify(highlights);
-
-      restoreCursorNotifier?.notify();
 
       if (workspace.env.isVim) {
         nvim.command('redraw', true);

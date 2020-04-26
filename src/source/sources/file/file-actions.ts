@@ -15,6 +15,8 @@ import {
   Notifier,
   getOpenActionForDirectory,
   input,
+  bufnrByWinnrOrWinid,
+  RevealStrategy,
 } from '../../../util';
 import { workspace, listManager } from 'coc.nvim';
 import open from 'open';
@@ -40,6 +42,66 @@ export function initFileActions(file: FileSource) {
       await file.reload(file.rootNode);
     },
     'change directory to parent directory',
+  );
+  file.addNodesAction(
+    'reveal',
+    async (_nodes, args) => {
+      const target = args[0];
+      let targetBufnr: number | null = null;
+      if (/\d+/.test(target)) {
+        targetBufnr = parseInt(target, 10);
+        if (targetBufnr === 0) {
+          targetBufnr = workspace.bufnr;
+        }
+      } else {
+        const revealStrategy = (target ?? 'previousWindow') as RevealStrategy;
+
+        const actions: Record<
+          RevealStrategy,
+          null | ((args?: string[]) => void | Promise<void>)
+        > = {
+          select: async () => {
+            await file.explorer.selectWindowsUI(async (winnr) => {
+              targetBufnr = await bufnrByWinnrOrWinid(winnr);
+            });
+          },
+          sourceWindow: async () => {
+            targetBufnr = await bufnrByWinnrOrWinid(
+              await file.explorer.sourceWinnr(),
+            );
+          },
+          previousBuffer: async () => {
+            targetBufnr = await file.explorer.explorerManager.previousBufnr.get();
+          },
+          previousWindow: async () => {
+            targetBufnr = await bufnrByWinnrOrWinid(
+              await file.explorer.explorerManager.prevWinnrByPrevWindowID(),
+            );
+          },
+        };
+        await actions[revealStrategy]?.();
+      }
+
+      if (!targetBufnr) {
+        return;
+      }
+
+      const bufinfo = await nvim.call('getbufinfo', [targetBufnr]);
+      if (!bufinfo[0] || !bufinfo[0].name) {
+        return;
+      }
+      const [revealNode, notifiers] = await file.revealNodeByPathNotifier(
+        bufinfo[0].name,
+        {
+          render: true,
+          goto: true,
+        },
+      );
+      if (revealNode) {
+        await Notifier.runAll(notifiers);
+      }
+    },
+    'reveal buffer in explorer',
   );
   file.addNodeAction(
     'cd',

@@ -6,11 +6,17 @@ enum MappingMode {
   default = 'default',
 }
 
-export const mappingMode = config.get<MappingMode>('keyMappingMode', MappingMode.default);
+export const mappingMode = config.get<MappingMode>(
+  'keyMappingMode',
+  MappingMode.default,
+);
 
 type OriginalMappings = Record<string, false | string | string[]>;
 
-const defaultMappingGroups: Record<keyof typeof MappingMode, OriginalMappings> = {
+const defaultMappingGroups: Record<
+  keyof typeof MappingMode,
+  OriginalMappings
+> = {
   none: {},
   default: {
     '*': 'toggleSelection',
@@ -34,6 +40,7 @@ const defaultMappingGroups: Record<keyof typeof MappingMode, OriginalMappings> =
     E: 'open:vsplit',
     t: 'open:tab',
     '<bs>': 'gotoParent',
+    gs: 'reveal:select',
     gp: 'preview:labeling',
 
     y: 'copyFilepath',
@@ -109,7 +116,7 @@ export async function getMappings(): Promise<Mappings> {
  * parseAction('open:split:plain')
  * // return { name: 'open', args: ['split', 'plain'] }
  */
-function parseAction(originalAction: string): Action {
+export function parseAction(originalAction: string): Action {
   const [name, ...args] = originalAction.split(/:(.+)/, 2);
   return {
     name,

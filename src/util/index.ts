@@ -2,6 +2,7 @@ import { workspace } from 'coc.nvim';
 import util from 'util';
 import { format } from 'date-fns';
 export * from './string';
+export * from './symbol';
 export * from './number';
 export * from './collection';
 export * from './async';

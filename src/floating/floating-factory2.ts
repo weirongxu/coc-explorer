@@ -246,10 +246,7 @@ export class FloatingFactory2 implements Disposable {
     await this.floatBuffer.setDocuments(docs, maxWidth);
     const { width: previewWidth } = this.floatBuffer;
 
-    const explorerCursor = await explorer.currentCursor();
-    if (!explorerCursor) {
-      return;
-    }
+    const explorerLineIndex = explorer.lineIndex;
     const view: {
       topline: number;
       leftcol: number;
@@ -258,7 +255,7 @@ export class FloatingFactory2 implements Disposable {
     } = await nvim.call('winsaveview', []);
     let col = 0;
     let row =
-      explorerCursor.lineIndex -
+      explorerLineIndex -
       view.topline +
       1 +
       (alignTop ? -previewHeight + 1 : 0);

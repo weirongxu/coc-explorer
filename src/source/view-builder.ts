@@ -8,7 +8,7 @@ import {
   displayWidth,
   displaySlice,
   sum,
-  compact,
+  compactI,
   flatten,
 } from '../util';
 import { BaseTreeNode } from './source';
@@ -135,7 +135,7 @@ export class SourceRowBuilder {
           : drawable.content.length,
       };
     }
-    return compact(
+    return compactI(
       flatten(
         await Promise.all(
           drawableList.map(async (it) => {
@@ -145,7 +145,7 @@ export class SourceRowBuilder {
               return {
                 ...it,
                 contents: await Promise.all(
-                  compact(
+                  compactI(
                     it.contents.map((c) =>
                       c.type === 'content' ? getDrawContentWith(c) : null,
                     ),
@@ -242,7 +242,7 @@ export class SourceRowBuilder {
         c.type === 'group' && c.flexible?.grow ? c.flexible.growVolume ?? 1 : 0,
       ),
     );
-    return compact(
+    return compactI(
       flatten(
         await Promise.all(
           drawableList.map(
@@ -328,7 +328,7 @@ export class SourceRowBuilder {
         }
       }),
     );
-    return compact(
+    return compactI(
       flatten(
         await Promise.all(
           drawableList.map(

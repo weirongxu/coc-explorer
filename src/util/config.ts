@@ -8,6 +8,12 @@ export const getActiveMode = () => config.get<boolean>('activeMode')!;
 
 export const getAutoReveal = () => config.get<boolean>('file.autoReveal')!;
 
+export type RevealStrategy =
+  | 'select'
+  | 'previousBuffer'
+  | 'previousWindow'
+  | 'sourceWindow';
+
 export type OpenStrategy =
   | 'select'
   | 'split'

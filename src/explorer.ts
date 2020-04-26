@@ -5,7 +5,6 @@ import {
   Window,
   workspace,
 } from 'coc.nvim';
-import { Range } from 'vscode-languageserver-protocol';
 import { conditionActionRules } from './actions';
 import { BuffuerContextVars } from './context-variables';
 import { ExplorerManager } from './explorer-manager';
@@ -22,7 +21,6 @@ import { ActionOptions, BaseTreeNode, ExplorerSource } from './source/source';
 import { sourceManager } from './source/source-manager';
 import { SourceRowBuilder, SourceViewBuilder } from './source/view-builder';
 import {
-  avoidOnBufEvents,
   config,
   enableWrapscan,
   getEnableDebug,
@@ -38,7 +36,7 @@ import {
   getEnableFloatingBorder,
   partition,
   getFloatingBorderChars,
-  delay,
+  closeWinByBufnrNotifier,
 } from './util';
 
 const hl = hlGroupManager.linkGroup.bind(hlGroupManager);
@@ -54,6 +52,7 @@ const helpHightlights = {
 export class Explorer {
   nvim = workspace.nvim;
   isHelpUI: boolean = false;
+  lineIndex = 0;
   helpHlSrcId = workspace.createNameSpace('coc-explorer-help');
   indexesManager = new IndexesManager(this);
   inited = new BuffuerContextVars<boolean>('inited', this);
@@ -79,7 +78,7 @@ export class Explorer {
   private lastArgSources?: string;
   private isHide = false;
 
-  private static async getExplorerPosition(args: Args) {
+  private static async genExplorerPosition(args: Args) {
     let width: number = 0;
     let height: number = 0;
     let left: number = 0;
@@ -120,30 +119,31 @@ export class Explorer {
 
   static async create(explorerManager: ExplorerManager, args: Args) {
     explorerManager.maxExplorerID += 1;
-    const explorer = await avoidOnBufEvents(async () => {
-      const position = await args.value(argOptions.position);
-      const { width, height, top, left } = await this.getExplorerPosition(args);
-      const [bufnr, floatingBorderBufnr]: [
-        number,
-        number | null,
-      ] = await workspace.nvim.call('coc_explorer#create', [
-        explorerManager.bufferName,
-        explorerManager.maxExplorerID,
-        position,
-        width,
-        height,
-        left,
-        top,
-        getEnableFloatingBorder(),
-        getFloatingBorderChars(),
-      ]);
-      return new Explorer(
-        explorerManager.maxExplorerID,
-        explorerManager,
-        bufnr,
-        floatingBorderBufnr,
-      );
-    });
+
+    const position = await args.value(argOptions.position);
+    const { width, height, top, left } = await this.genExplorerPosition(args);
+    const [bufnr, floatingBorderBufnr]: [
+      number,
+      number | null,
+    ] = await workspace.nvim.call('coc_explorer#create', [
+      explorerManager.bufferName,
+      explorerManager.maxExplorerID,
+      position,
+      width,
+      height,
+      left,
+      top,
+      getEnableFloatingBorder(),
+      getFloatingBorderChars(),
+    ]);
+
+    const explorer = new Explorer(
+      explorerManager.maxExplorerID,
+      explorerManager,
+      bufnr,
+      floatingBorderBufnr,
+    );
+
     await explorer.inited.set(true);
     return explorer;
   }
@@ -181,14 +181,20 @@ export class Explorer {
           await this.floatingWindow.floatFactory.close();
         }
       }),
+      onCursorMoved(async (bufnr: number) => {
+        if (bufnr === this.bufnr) {
+          this.lineIndex =
+            ((await this.nvim.call('line', ['.'])) as number) - 1;
+        }
+      }),
     );
 
     this.addGlobalAction(
       'nodePrev',
       async () => {
-        const line = await this.currentLineIndex();
+        const line = this.lineIndex;
         if (line !== null) {
-          await this.gotoLineIndex(line - 1, 1);
+          await this.gotoLineIndex(line - 1);
         }
       },
       'previous node',
@@ -196,9 +202,9 @@ export class Explorer {
     this.addGlobalAction(
       'nodeNext',
       async () => {
-        const line = await this.currentLineIndex();
+        const line = this.lineIndex;
         if (line !== null) {
-          await this.gotoLineIndex(line + 1, 1);
+          await this.gotoLineIndex(line + 1);
         }
       },
       'next node',
@@ -237,7 +243,7 @@ export class Explorer {
 
         const sourceIndex = await this.currentSourceIndex();
         const source = this.sources[sourceIndex];
-        const lineIndex = await this.currentLineIndex();
+        const lineIndex = this.lineIndex;
         await getExpandableLine(
           sourceIndex,
           lineIndex - source.startLineIndex - 1,
@@ -278,7 +284,7 @@ export class Explorer {
 
         const sourceIndex = await this.currentSourceIndex();
         const source = this.sources[sourceIndex];
-        const lineIndex = await this.currentLineIndex();
+        const lineIndex = this.lineIndex;
         await getExpandableLine(
           sourceIndex,
           lineIndex - source.startLineIndex + 1,
@@ -317,7 +323,7 @@ export class Explorer {
     this.addGlobalAction(
       'gotoSource',
       async (_nodes, [arg]) => {
-        const source = this.sources.find((s) => s.sourceName === arg);
+        const source = this.sources.find((s) => s.sourceType === arg);
         if (source) {
           await source.gotoLineIndex(0);
         }
@@ -458,7 +464,7 @@ export class Explorer {
   }
 
   clearHighlightsNotify(hlSrcId: number, lineStart?: number, lineEnd?: number) {
-    hlGroupManager.clearHighlights(this, hlSrcId, lineStart, lineEnd);
+    hlGroupManager.clearHighlightsNotify(this, hlSrcId, lineStart, lineEnd);
   }
 
   executeHighlightsNotify(
@@ -492,7 +498,7 @@ export class Explorer {
     } else {
       // resume the explorer window
       const position = await args.value(argOptions.position);
-      const { width, height, top, left } = await Explorer.getExplorerPosition(
+      const { width, height, top, left } = await Explorer.genExplorerPosition(
         args,
       );
       await this.nvim.call('coc_explorer#resume', [
@@ -521,15 +527,13 @@ export class Explorer {
     for (const source of this.sources) {
       await source.open();
     }
-    const notifiers = [];
-    notifiers.push(await this.reloadAllNotifier({ render: false }));
-    notifiers.push(await this.renderAllNotifier({ storeCursor: false }));
-    notifiers.push(
+
+    await Notifier.runAll([
+      await this.reloadAllNotifier(),
       ...(await Promise.all(
         this.sources.map((s) => s.openedNotifier(isFirst)),
       )),
-    );
-    await Notifier.runAll(notifiers);
+    ]);
   }
 
   async refreshWidth() {
@@ -604,25 +608,20 @@ export class Explorer {
   }
 
   async quit() {
-    const win = await this.win;
-    const prevWin = await this.sourceWinnr();
-    if (win) {
-      this.nvim.pauseNotification();
-      this.nvim.command(`${await win.number}wincmd q`, true);
-      if (prevWin) {
-        this.nvim.command(`${prevWin}wincmd w`, true);
-      }
-      // win.close() not work in nvim 3.8
-      // await win.close(true);
-      await this.nvim.resumeNotification();
+    const sourceWinnr = await this.sourceWinnr();
+    this.nvim.pauseNotification();
+    closeWinByBufnrNotifier(this.bufnr).notify();
+    if (sourceWinnr) {
+      this.nvim.command(`${sourceWinnr}wincmd w`, true);
     }
+    // win.close() not work in nvim 3.8
+    // await win.close(true);
+    await this.nvim.resumeNotification();
   }
 
   async quitFloatingBorderWin() {
-    await delay(0);
-    const borderWin = await this.floatingBorderWin;
-    if (borderWin) {
-      await this.nvim.command(`${await borderWin.number}wincmd q`);
+    if (this.floatingBorderBufnr) {
+      await closeWinByBufnrNotifier(this.floatingBorderBufnr).run();
     }
   }
 
@@ -663,23 +662,60 @@ export class Explorer {
     };
   }
 
+  async getSelectedLineIndexes(mode: ActionMode) {
+    const { nvim } = this;
+    const lineIndexes = new Set<number>();
+    const document = await workspace.document;
+    if (mode === 'v') {
+      const range = await workspace.getSelectedRange('v', document);
+      if (range) {
+        for (
+          let lineIndex = range.start.line;
+          lineIndex <= range.end.line;
+          lineIndex++
+        ) {
+          lineIndexes.add(lineIndex);
+        }
+        return lineIndexes;
+      }
+    }
+    const line = ((await nvim.call('line', ['.'])) as number) - 1;
+    lineIndexes.add(line);
+    return lineIndexes;
+  }
+
   private _doActionsWithCount?: (
     actions: Action[],
     mode: ActionMode,
     count?: number,
+    lineIndexes?: number[] | Set<number> | null,
   ) => Promise<void>;
   async doActionsWithCount(
     actions: Action[],
     mode: ActionMode,
     count: number = 1,
+    lineIndexes: number[] | Set<number> | null = null,
   ) {
     if (!this._doActionsWithCount) {
       this._doActionsWithCount = queueAsyncFunction(
-        async (actions: Action[], mode: ActionMode, count: number = 1) => {
+        async (
+          actions: Action[],
+          mode: ActionMode,
+          count: number = 1,
+          lineIndexes: number[] | Set<number> | null = null,
+        ) => {
           const now = Date.now();
 
+          const firstLineIndexes = lineIndexes
+            ? new Set(lineIndexes)
+            : await this.getSelectedLineIndexes(mode);
+
           for (let c = 0; c < count; c++) {
-            await this.doActions(actions, mode);
+            const selectedLineIndexes =
+              c === 0
+                ? firstLineIndexes
+                : await this.getSelectedLineIndexes(mode);
+            await this.doActions(selectedLineIndexes, actions, mode);
           }
           const notifiers = await Promise.all(
             this.sources.map((source) =>
@@ -701,34 +737,16 @@ export class Explorer {
         },
       );
     }
-    return this._doActionsWithCount(actions, mode, count);
+    return this._doActionsWithCount(actions, mode, count, lineIndexes);
   }
 
-  async getSelectedNodesGroup(mode: ActionMode) {
-    const { nvim } = this;
-    let selectedRange: undefined | Range;
-    const document = await workspace.document;
-    if (mode === 'v') {
-      const range = await workspace.getSelectedRange('v', document);
-      if (range) {
-        selectedRange = range;
-      }
-    }
-    if (!selectedRange) {
-      const line = ((await nvim.call('line', ['.'])) as number) - 1;
-      selectedRange = {
-        start: { line, character: 0 },
-        end: { line, character: 0 },
-      };
-    }
-
+  async doActions(
+    selectedLineIndexes: Set<number>,
+    actions: Action[],
+    _mode: ActionMode,
+  ) {
     const nodesGroup: Map<ExplorerSource<any>, BaseTreeNode<any>[]> = new Map();
-
-    for (
-      let lineIndex = selectedRange.start.line;
-      lineIndex <= selectedRange.end.line;
-      lineIndex++
-    ) {
+    for (const lineIndex of selectedLineIndexes) {
       const [source] = this.findSourceByLineIndex(lineIndex);
       if (!nodesGroup.has(source)) {
         nodesGroup.set(source, []);
@@ -737,12 +755,6 @@ export class Explorer {
 
       nodesGroup.get(source)!.push(source.flattenedNodes[relativeLineIndex]);
     }
-
-    return nodesGroup;
-  }
-
-  async doActions(actions: Action[], mode: ActionMode) {
-    const nodesGroup = await this.getSelectedNodesGroup(mode);
 
     for (const [source, nodes] of nodesGroup.entries()) {
       for (let i = 0; i < actions.length; i++) {
@@ -816,7 +828,7 @@ export class Explorer {
   }
 
   async currentSourceIndex() {
-    const lineIndex = await this.currentLineIndex();
+    const lineIndex = this.lineIndex;
     return this.sources.findIndex(
       (source) =>
         lineIndex >= source.startLineIndex && lineIndex < source.endLineIndex,
@@ -826,94 +838,23 @@ export class Explorer {
   async currentNode() {
     const source = await this.currentSource();
     if (source) {
-      const nodeIndex = (await this.currentLineIndex()) - source.startLineIndex;
-      return source.flattenedNodes[nodeIndex];
+      const nodeIndex = this.lineIndex - source.startLineIndex;
+      return source.flattenedNodes[nodeIndex] as
+        | BaseTreeNode<any, string>
+        | undefined;
     }
   }
 
-  async currentCursor() {
-    const win = await this.win;
-    if (win) {
-      const [line, col] = await win.cursor;
-      const lineIndex = line - 1;
-      return {
-        lineIndex,
-        col: col + 1,
-      };
-    }
-    return null;
-  }
-
-  async currentLineIndex() {
-    const cursor = await this.currentCursor();
-    if (cursor) {
-      return cursor.lineIndex;
-    }
-    return 0;
-  }
-
-  async currentCol() {
-    const cursor = await this.currentCursor();
-    if (cursor) {
-      return cursor.col;
-    }
-    return 0;
-  }
-
-  async storeCursor() {
-    const storeCursor = await this.currentCursor();
-    let storeView = await this.nvim.call('winsaveview');
-    storeView = { topline: storeView.topline };
-    if (storeCursor) {
-      const defaultRestore = async () => {
-        const gotoLineNotifier = await this.gotoLineIndexNotifier(
-          storeCursor.lineIndex,
-          storeCursor.col,
-        );
-        return Notifier.create(() => {
-          gotoLineNotifier.notify();
-          this.nvim.call('winrestview', [storeView], true);
-        });
-      };
-
-      const [, sourceIndex] = this.findSourceByLineIndex(storeCursor.lineIndex);
-      const source = this.sources[sourceIndex];
-
-      if (!source) {
-        return defaultRestore;
-      }
-
-      const relativeLineIndex = storeCursor.lineIndex - source.startLineIndex;
-      const storeNode = source.getNodeByLine(relativeLineIndex);
-
-      if (!storeNode) {
-        return defaultRestore;
-      }
-
-      return async () => {
-        const gotoNodeNotifier = await source.gotoNodeNotifier(storeNode, {
-          lineIndex: relativeLineIndex,
-          col: storeCursor.col,
-        });
-        return Notifier.create(() => {
-          gotoNodeNotifier.notify();
-          this.nvim.call('winrestview', [storeView], true);
-        });
-      };
-    }
-    return null;
-  }
-
-  async gotoLineIndex(lineIndex: number, col?: number) {
-    return (await this.gotoLineIndexNotifier(lineIndex, col)).run();
+  async gotoLineIndex(lineIndex: number) {
+    return (await this.gotoLineIndexNotifier(lineIndex)).run();
   }
 
   async gotoLineIndexNotifier(lineIndex: number, col?: number) {
-    const finalCol = col === undefined ? await this.currentCol() : col;
     const win = await this.win;
     return Notifier.create(() => {
       if (win) {
-        win.setCursor([lineIndex + 1, finalCol - 1], true);
+        this.lineIndex = lineIndex;
+        win.setCursor([lineIndex + 1, col ?? 0], true);
         if (workspace.isVim) {
           this.nvim.command('redraw', true);
         } else {
@@ -923,10 +864,7 @@ export class Explorer {
     });
   }
 
-  async setLinesNotifier(lines: string[], start: number, end: number) {
-    const restoreCursor = workspace.isVim ? await this.storeCursor() : null;
-    const notifier = await restoreCursor?.();
-
+  setLinesNotifier(lines: string[], start: number, end: number) {
     return Notifier.create(() => {
       this.buffer.setOption('modifiable', true, true);
 
@@ -941,8 +879,6 @@ export class Explorer {
       );
 
       this.buffer.setOption('modifiable', false, true);
-
-      notifier?.notify();
     });
   }
 
@@ -953,21 +889,15 @@ export class Explorer {
       ),
     );
     if (render) {
-      notifiers.push(await this.renderAllNotifier({ storeCursor: false }));
+      notifiers.push(await this.renderAllNotifier());
     }
     return Notifier.combine(notifiers);
   }
 
-  async renderAllNotifier({ storeCursor = true } = {}) {
-    const restoreCursor = storeCursor ? await this.storeCursor() : null;
+  async renderAllNotifier() {
     const notifiers = await Promise.all(
-      this.sources.map((s) =>
-        s.renderNotifier({ storeCursor: false, force: true }),
-      ),
+      this.sources.map((s) => s.renderNotifier({ force: true })),
     );
-    if (restoreCursor) {
-      notifiers.push(await restoreCursor());
-    }
 
     return Notifier.combine(notifiers);
   }
@@ -1004,7 +934,7 @@ export class Explorer {
     this.isHelpUI = true;
     const builder = new SourceViewBuilder(this);
     const width = await this.nvim.call('winwidth', '%');
-    const restoreCursor = await this.storeCursor();
+    const storeNode = await this.currentNode();
     const nodes: BaseTreeNode<any>[] = [];
 
     let curUid = 0;
@@ -1021,7 +951,7 @@ export class Explorer {
     nodes.push(
       await builder.drawRowForNode(createNode(), (row) => {
         row.add(
-          `Help for [${source.sourceName}], (use q or <esc> return to explorer)`,
+          `Help for [${source.sourceType}], (use q or <esc> return to explorer)`,
         );
       }),
     );
@@ -1082,14 +1012,12 @@ export class Explorer {
       }
     }
 
-    const notifier = await this.setLinesNotifier(
+    this.nvim.pauseNotification();
+    this.setLinesNotifier(
       nodes.map((n) => n.drawnLine),
       0,
       -1,
-    );
-
-    this.nvim.pauseNotification();
-    notifier.notify();
+    ).notify();
     const highlightPositions: HighlightPositionWithLine[] = [];
     for (let i = 0; i < nodes.length; i++) {
       const node = nodes[i];
@@ -1116,13 +1044,10 @@ export class Explorer {
           async () => {
             disposables.forEach((d) => d.dispose());
             await this.quitHelp();
-            const notifiers = [
-              await this.renderAllNotifier({ storeCursor: false }),
-            ];
-            if (restoreCursor) {
-              notifiers.push(await restoreCursor());
-            }
-            await Notifier.runAll(notifiers);
+            await Notifier.runAll([
+              await this.renderAllNotifier(),
+              await source.gotoNodeNotifier(storeNode),
+            ]);
           },
           true,
         ),
