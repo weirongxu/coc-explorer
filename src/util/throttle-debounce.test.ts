@@ -1,4 +1,4 @@
-import { throttlePromise, debouncePromise2 } from './throttle-debounce';
+import { throttlePromise, debouncePromise } from './throttle-debounce';
 import { delay } from './async';
 
 describe('throttlePromise', () => {
@@ -72,7 +72,7 @@ describe('throttlePromise', () => {
 describe('debouncePromise', () => {
   test('debouncePromise', async () => {
     let sentCount = 0;
-    const fn = debouncePromise2(100, () => {
+    const fn = debouncePromise(100, () => {
       sentCount += 1;
     });
     void fn();
