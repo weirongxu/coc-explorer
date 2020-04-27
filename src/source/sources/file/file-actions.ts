@@ -11,17 +11,16 @@ import {
   listDrive,
   prompt,
   overwritePrompt,
-  OpenStrategy,
   Notifier,
   getOpenActionForDirectory,
   input,
   bufnrByWinnrOrWinid,
-  RevealStrategy,
 } from '../../../util';
 import { workspace, listManager } from 'coc.nvim';
 import open from 'open';
 import { driveList } from '../../../lists/drives';
 import { gitManager } from '../../../git-manager';
+import { RevealStrategy, OpenStrategy } from '../../../types';
 
 export function initFileActions(file: FileSource) {
   const { nvim } = file;

@@ -128,6 +128,10 @@ Open explorer use presets
 
 Close the explorer if it exists, default: `--toggle`
 
+#### `--open-action-strategy`
+
+Strategy for open action, types: `select | vsplit | split | tab | previousBuffer | previousWindow | sourceWindow`, default: `select`
+
 #### `--quit-on-open | --no-quit-on-open`
 
 quit explorer when open action, default: `--no-quit-on-open`

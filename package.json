@@ -66,6 +66,9 @@
               "toggle": {
                 "$ref": "#/properties/explorer.toggle"
               },
+              "open-action-strategy": {
+                "$ref": "#/properties/explorer.openAction.strategy"
+              },
               "quit-on-open": {
                 "$ref": "#/properties/explorer.quitOnOpen"
               },

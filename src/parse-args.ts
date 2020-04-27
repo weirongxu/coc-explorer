@@ -1,6 +1,7 @@
 import { config, normalizePath, splitCount } from './util';
 import { workspace } from 'coc.nvim';
 import { getPresets } from './presets';
+import { OpenStrategy } from './types';
 
 export interface ArgsSource {
   name: string;
@@ -210,6 +211,12 @@ export const argOptions = {
     handler: (path: string) => normalizePath(path),
   }),
   toggle: Args.registerBoolOption('toggle', true),
+  openActionStrategy: Args.registerOption<OpenStrategy>(
+    'open-action-strategy',
+    {
+      getDefault: () => config.get<OpenStrategy>('openAction.strategy')!,
+    },
+  ),
   quitOnOpen: Args.registerBoolOption(
     'quit-on-open',
     () => config.get<boolean>('quitOnOpen')!,

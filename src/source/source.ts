@@ -16,11 +16,9 @@ import {
   config,
   generateUri,
   getEnableNerdfont,
-  getOpenStrategy,
   getPreviewStrategy,
   Notifier,
   onEvents,
-  OpenStrategy,
   PreviewStrategy,
 } from '../util';
 import {
@@ -30,6 +28,7 @@ import {
 import { DrawLabelingResult, TemplateRenderer } from './template-renderer';
 import { SourceViewBuilder } from './view-builder';
 import { WinLayoutFinder } from '../win-layout-finder';
+import { OpenStrategy } from '../types';
 
 export type ActionOptions = {
   multi: boolean;
@@ -470,7 +469,10 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>> {
         await this.explorer.tryQuitOnOpen();
       },
     };
-    await actions[openStrategy || getOpenStrategy()]();
+    const openStrategyOption = await this.explorer.args.value(
+      argOptions.openActionStrategy,
+    );
+    await actions[openStrategy ?? openStrategyOption]();
   }
 
   async previewAction(node: TreeNode, previewStrategy?: PreviewStrategy) {
