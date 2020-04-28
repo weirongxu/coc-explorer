@@ -72,7 +72,7 @@ describe('throttlePromise', () => {
 describe('debouncePromise', () => {
   test('debouncePromise', async () => {
     let sentCount = 0;
-    const fn = debouncePromise(100, () => {
+    const fn = debouncePromise(500, () => {
       sentCount += 1;
     });
     void fn();
@@ -80,19 +80,20 @@ describe('debouncePromise', () => {
     void fn();
     void fn();
     void fn();
-    await delay(10);
+    await delay(50);
     void fn();
-    await delay(10);
+    await delay(50);
     expect(sentCount).toEqual(0);
-    await delay(95);
+    await delay(480);
     expect(sentCount).toEqual(1);
 
     void fn();
-    await delay(40);
-    void fn();
-    await delay(40);
+    await delay(100);
     expect(sentCount).toEqual(1);
-    await delay(65);
+    void fn();
+    await delay(100);
+    expect(sentCount).toEqual(1);
+    await delay(430);
     expect(sentCount).toEqual(2);
   });
 });
