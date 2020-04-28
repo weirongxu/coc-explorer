@@ -612,7 +612,7 @@ export class Explorer {
     const sourceWinnr = await this.sourceWinnr();
     this.nvim.pauseNotification();
     closeWinByBufnrNotifier(this.bufnr).notify();
-    if (sourceWinnr) {
+    if (sourceWinnr && this.bufnr === workspace.bufnr) {
       this.nvim.command(`${sourceWinnr}wincmd w`, true);
     }
     // win.close() not work in nvim 3.8
