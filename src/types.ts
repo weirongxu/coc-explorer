@@ -2,7 +2,8 @@ export type RevealStrategy =
   | 'select'
   | 'previousBuffer'
   | 'previousWindow'
-  | 'sourceWindow';
+  | 'sourceWindow'
+  | 'path';
 
 export type OpenStrategy =
   | 'select'

@@ -47,6 +47,7 @@ export function initFileActions(file: FileSource) {
     async (_nodes, args) => {
       const target = args[0];
       let targetBufnr: number | null = null;
+      let targetPath: string | null = null;
       if (/\d+/.test(target)) {
         targetBufnr = parseInt(target, 10);
         if (targetBufnr === 0) {
@@ -77,20 +78,31 @@ export function initFileActions(file: FileSource) {
               await file.explorer.explorerManager.prevWinnrByPrevWindowID(),
             );
           },
+          path: async () => {
+            targetPath = args[1];
+            if (!targetPath) {
+              throw new Error('Please provide a path when do reveal:path');
+            }
+          },
         };
         await actions[revealStrategy]?.();
       }
 
-      if (!targetBufnr) {
+      if (targetBufnr) {
+        const bufinfo = await nvim.call('getbufinfo', [targetBufnr]);
+        if (!bufinfo[0] || !bufinfo[0].name) {
+          return;
+        }
+
+        targetPath = bufinfo[0].name;
+      }
+
+      if (!targetPath) {
         return;
       }
 
-      const bufinfo = await nvim.call('getbufinfo', [targetBufnr]);
-      if (!bufinfo[0] || !bufinfo[0].name) {
-        return;
-      }
       const [revealNode, notifiers] = await file.revealNodeByPathNotifier(
-        bufinfo[0].name,
+        targetPath,
         {
           render: true,
           goto: true,

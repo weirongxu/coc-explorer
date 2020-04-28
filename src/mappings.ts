@@ -11,7 +11,17 @@ export const mappingMode = config.get<MappingMode>(
   MappingMode.default,
 );
 
-type OriginalMappings = Record<string, false | string | string[]>;
+export type Action = {
+  name: string;
+  args: string[];
+};
+
+export type OriginalAction = string | Action;
+
+export type OriginalMappings = Record<
+  string,
+  false | OriginalAction | OriginalAction[]
+>;
 
 const defaultMappingGroups: Record<
   keyof typeof MappingMode,
@@ -83,14 +93,9 @@ const defaultMappingGroups: Record<
   },
 };
 
-export type Action = {
-  name: string;
-  args: string[];
-};
-
 export type ActionMode = 'n' | 'v';
 
-type Mappings = Record<string, Action[]>;
+export type Mappings = Record<string, Action[]>;
 
 export async function getMappings(): Promise<Mappings> {
   const mappings: Mappings = {};
@@ -102,7 +107,7 @@ export async function getMappings(): Promise<Mappings> {
     ...(defaultMappings || {}),
     ...config.get<OriginalMappings>('keyMappings', {}),
   }).forEach(([key, actions]) => {
-    if (actions) {
+    if (actions !== false) {
       mappings[key] = Array.isArray(actions)
         ? actions.map((action) => parseAction(action))
         : [parseAction(actions)];
@@ -116,7 +121,10 @@ export async function getMappings(): Promise<Mappings> {
  * parseAction('open:split:plain')
  * // return { name: 'open', args: ['split', 'plain'] }
  */
-export function parseAction(originalAction: string): Action {
+export function parseAction(originalAction: OriginalAction): Action {
+  if (typeof originalAction !== 'string') {
+    return originalAction;
+  }
   const [name, ...args] = originalAction.split(/:(.+)/, 2);
   return {
     name,

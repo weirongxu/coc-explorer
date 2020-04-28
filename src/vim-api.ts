@@ -1,5 +1,5 @@
 import { ExtensionContext, commands, workspace } from 'coc.nvim';
-import { ActionMode, parseAction } from './mappings';
+import { ActionMode, parseAction, OriginalAction } from './mappings';
 import { ExplorerManager } from './explorer-manager';
 import { getFileIcon, getDirectoryIcon } from './icons';
 import pathLib from 'path';
@@ -114,7 +114,7 @@ export function registerVimApi(
       'explorer.doAction',
       async (
         explorerFinder: ExplorerFinder,
-        actions: string[],
+        actions: OriginalAction[],
         positions: Position[] = ['current'],
         mode: ActionMode = 'n',
         count: number = 1,

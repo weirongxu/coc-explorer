@@ -49,6 +49,27 @@
               "$ref": "#/definitions/flexible.position"
             }
           }
+        },
+        "mapping.action": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "object",
+              "properties": {
+                "name": {
+                  "type": "string"
+                },
+                "args": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          ]
         }
       },
       "type": "object",
@@ -140,12 +161,12 @@
           "additionalProperties": {
             "anyOf": [
               {
-                "type": "string"
+                "$ref": "#/definitions/mapping.action"
               },
               {
                 "type": "array",
                 "items": {
-                  "type": "string"
+                  "$ref": "#/definitions/mapping.action"
                 }
               },
               {

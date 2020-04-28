@@ -628,7 +628,7 @@ Default: <pre><code>false</code></pre>
 // coc-settings.json
 {
   "explorer.keyMappings": {
-    "i": "unmap", // cancel default mapkey
+    "i": false, // cancel default mapkey
 
     "k": "nodePrev",
     "j": "nodeNext",
