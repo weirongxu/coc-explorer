@@ -27,7 +27,7 @@ import { filesList } from '../../../lists/files';
 import { initFileActions } from './file-actions';
 import { homedir } from 'os';
 import { labelHighlight, TemplateRenderer } from '../../template-renderer';
-import { argOptions } from '../../../parse-args';
+import { argOptions } from '../../../arg-options';
 
 const getHiddenRules = () =>
   config.get<{

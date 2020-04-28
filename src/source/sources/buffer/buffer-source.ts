@@ -12,8 +12,8 @@ import { sourceManager } from '../../source-manager';
 import { bufferColumnRegistrar } from './buffer-column-registrar';
 import './load';
 import { initBufferActions } from './buffer-actions';
-import { argOptions } from '../../../parse-args';
 import { TemplateRenderer } from '../../template-renderer';
+import { argOptions } from '../../../arg-options';
 
 export interface BufferNode extends BaseTreeNode<BufferNode, 'root' | 'child'> {
   bufnr: number;

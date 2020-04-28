@@ -11,7 +11,6 @@ import { Explorer } from '../explorer';
 import { explorerActionList } from '../lists/actions';
 import { onError } from '../logger';
 import { getMappings, getReverseMappings } from '../mappings';
-import { argOptions } from '../parse-args';
 import {
   config,
   generateUri,
@@ -29,6 +28,7 @@ import { DrawLabelingResult, TemplateRenderer } from './template-renderer';
 import { SourceViewBuilder } from './view-builder';
 import { WinLayoutFinder } from '../win-layout-finder';
 import { OpenStrategy } from '../types';
+import { argOptions } from '../arg-options';
 
 export type ActionOptions = {
   multi: boolean;

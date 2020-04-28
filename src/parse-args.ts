@@ -1,7 +1,6 @@
-import { config, normalizePath, splitCount } from './util';
+import { splitCount } from './util';
 import { workspace } from 'coc.nvim';
 import { getPresets } from './presets';
-import { OpenStrategy } from './types';
 
 export interface ArgsSource {
   name: string;
@@ -10,9 +9,9 @@ export interface ArgsSource {
 
 export type ArgPosition = 'tab' | 'left' | 'right' | 'floating';
 
-type OptionType = 'boolean' | 'string' | 'positional';
+export type OptionType = 'boolean' | 'string' | 'positional';
 
-type ArgOption<T> = {
+export type ArgOption<T> = {
   type: OptionType;
   name: string;
   position?: number;
@@ -22,7 +21,7 @@ type ArgOption<T> = {
   description?: string;
 };
 
-type ArgOptionRequired<T> = {
+export type ArgOptionRequired<T> = {
   type: OptionType;
   name: string;
   position?: number;
@@ -188,131 +187,3 @@ export class Args {
     return Args.registeredOptions.get(option.name)?.handler?.(result) ?? result;
   }
 }
-
-export const argOptions = {
-  rootUri: Args.registerOption('root-uri', {
-    position: 1,
-    getDefault: async () => {
-      let useGetcwd = false;
-      const buftype = await workspace.nvim.getVar('&buftype');
-      if (buftype === 'nofile') {
-        useGetcwd = true;
-      } else {
-        const bufname = await workspace.nvim.call('bufname', ['%']);
-        if (!bufname) {
-          useGetcwd = true;
-        }
-      }
-      const rootPath = useGetcwd
-        ? ((await workspace.nvim.call('getcwd', [])) as string)
-        : workspace.rootPath;
-      return rootPath;
-    },
-    handler: (path: string) => normalizePath(path),
-  }),
-  toggle: Args.registerBoolOption('toggle', true),
-  openActionStrategy: Args.registerOption<OpenStrategy>(
-    'open-action-strategy',
-    {
-      getDefault: () => config.get<OpenStrategy>('openAction.strategy')!,
-    },
-  ),
-  quitOnOpen: Args.registerBoolOption(
-    'quit-on-open',
-    () => config.get<boolean>('quitOnOpen')!,
-  ),
-  reveal: Args.registerOption<string>('reveal', {
-    handler: (path) => (path ? normalizePath(path) : path),
-  }),
-  preset: Args.registerOption<string>('preset'),
-  sources: Args.registerOption('sources', {
-    parseArg: (sources) =>
-      sources.split(',').map((source) => {
-        let expand = false;
-        let name: string;
-        if (source.endsWith('+')) {
-          expand = true;
-          name = source.slice(0, source.length - 1);
-        } else if (source.endsWith('-')) {
-          expand = false;
-          name = source.slice(0, source.length - 1);
-        } else {
-          name = source;
-        }
-        return {
-          name,
-          expand,
-        };
-      }),
-    getDefault: () => config.get<ArgsSource[]>('sources')!,
-  }),
-  position: Args.registerOption<ArgPosition>('position', {
-    getDefault: () => config.get<ArgPosition>('position')!,
-  }),
-  width: Args.registerOption('width', {
-    parseArg: (s) => parseInt(s, 10),
-    getDefault: () => config.get<number>('width')!,
-  }),
-  contentWidth: Args.registerOption('content-width', {
-    parseArg: (s) => parseInt(s, 10),
-    getDefault: () => config.get<number>('contentWidth')!,
-  }),
-  contentWidthType: Args.registerOption('content-width-type', {
-    getDefault: () => config.get<ArgContentWidthTypes>('contentWidthType')!,
-  }),
-  floatingPosition: Args.registerOption<
-    ArgFloatingPositions | [number, number]
-  >('floating-position', {
-    parseArg: (s) => {
-      if (['left-center', 'right-center', 'center'].includes(s)) {
-        return s as ArgFloatingPositions;
-      } else {
-        return s.split(',').map((i) => parseInt(i, 10)) as [number, number];
-      }
-    },
-    getDefault: () =>
-      config.get<ArgFloatingPositions | [number, number]>('floating.position')!,
-  }),
-  floatingWidth: Args.registerOption('floating-width', {
-    parseArg: (s) => parseInt(s, 10),
-    getDefault: () => config.get<number>('floating.width')!,
-  }),
-  floatingHeight: Args.registerOption('floating-height', {
-    parseArg: (s) => parseInt(s, 10),
-    getDefault: () => config.get<number>('floating.height')!,
-  }),
-  floatingContentWidth: Args.registerOption('floating-content-width', {
-    parseArg: (s) => parseInt(s, 10),
-    getDefault: () => config.get<number>('floating.contentWidth')!,
-  }),
-  bufferRootTemplate: Args.registerOption<string>('buffer-root-template', {
-    getDefault: () => config.get<string>('buffer.root.template')!,
-  }),
-  bufferChildTemplate: Args.registerOption<string>('buffer-child-template', {
-    getDefault: () => config.get<string>('buffer.child.template')!,
-  }),
-  bufferChildLabelingTemplate: Args.registerOption<string>(
-    'buffer-child-labeling-template',
-    {
-      getDefault: () => config.get<string>('buffer.child.labelingTemplate')!,
-    },
-  ),
-  fileRootTemplate: Args.registerOption<string>('file-root-template', {
-    getDefault: () => config.get<string>('file.root.template')!,
-  }),
-  fileRootLabelingTemplate: Args.registerOption<string>(
-    'file-root-labeling-template',
-    {
-      getDefault: () => config.get<string>('file.root.labelingTemplate')!,
-    },
-  ),
-  fileChildTemplate: Args.registerOption<string>('file-child-template', {
-    getDefault: () => config.get<string>('file.child.template')!,
-  }),
-  fileChildLabelingTemplate: Args.registerOption<string>(
-    'file-child-labeling-template',
-    {
-      getDefault: () => config.get<string>('file.child.labelingTemplate')!,
-    },
-  ),
-};

@@ -1,11 +1,12 @@
 import { workspace, ExtensionContext, Emitter } from 'coc.nvim';
 import { Explorer } from './explorer';
-import { argOptions, Args } from './parse-args';
+import { Args } from './parse-args';
 import { onError } from './logger';
 import { getMappings } from './mappings';
 import { onBufEnter, supportedNvimFloating, compactI } from './util';
 import { GlobalContextVars } from './context-variables';
 import { BufManager } from './buf-manager';
+import { argOptions } from './arg-options';
 
 export type TabContainer = {
   left: Explorer[];
@@ -225,7 +226,9 @@ export class ExplorerManager {
 
     const args = await Args.parse(argStrs);
 
+    const quit = await args.value(argOptions.quit);
     const position = await args.value(argOptions.position);
+
     const tabid =
       position === 'tab'
         ? (await this.currentTabIdMax()) + 1
@@ -256,6 +259,11 @@ export class ExplorerManager {
     const sourceWinid = (await this.nvim.call('win_getid')) as number;
 
     let explorer = explorers[0];
+
+    if (explorer && quit) {
+      await explorer.quit();
+      return;
+    }
 
     if (!explorer) {
       explorer = await Explorer.create(this, args);

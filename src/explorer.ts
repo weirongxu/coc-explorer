@@ -11,7 +11,7 @@ import { ExplorerManager } from './explorer-manager';
 import { FloatingPreview } from './floating/floating-preview';
 import { IndexesManager } from './indexes-manager';
 import { Action, ActionMode, getMappings } from './mappings';
-import { ArgContentWidthTypes, argOptions, Args } from './parse-args';
+import { ArgContentWidthTypes, Args } from './parse-args';
 import {
   HighlightPositionWithLine,
   hlGroupManager,
@@ -38,6 +38,7 @@ import {
   getFloatingBorderChars,
   closeWinByBufnrNotifier,
 } from './util';
+import { argOptions } from './arg-options';
 
 const hl = hlGroupManager.linkGroup.bind(hlGroupManager);
 const helpHightlights = {

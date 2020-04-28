@@ -28,7 +28,7 @@ import { WindowConfig } from 'coc.nvim/lib/model/floatFactory';
 import { CancellationTokenSource } from 'vscode-languageserver-protocol';
 import createPopup, { Popup } from 'coc.nvim/lib/model/popup';
 import { Explorer } from '../explorer';
-import { argOptions } from '../parse-args';
+import { argOptions } from '../arg-options';
 
 export class FloatingFactory2 implements Disposable {
   private targetBufnr?: number;
