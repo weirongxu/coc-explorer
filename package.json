@@ -684,6 +684,7 @@
     "make-dir": "^3.0.2",
     "minimatch": "^3.0.4",
     "p-filter": "^2.1.0",
+    "p-locate": "^4.1.0",
     "pretty-bytes": "^5.3.0",
     "rimraf": "^3.0.2",
     "ts-jest": "^25.3.1",

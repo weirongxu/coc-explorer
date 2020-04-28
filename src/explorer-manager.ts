@@ -7,6 +7,13 @@ import { onBufEnter, supportedNvimFloating, compactI } from './util';
 import { GlobalContextVars } from './context-variables';
 import { BufManager } from './buf-manager';
 
+export type TabContainer = {
+  left: Explorer[];
+  right: Explorer[];
+  tab: Explorer[];
+  floating: Explorer[];
+};
+
 export class ExplorerManager {
   bufferName = '[coc-explorer]';
   filetype = 'coc-explorer';
@@ -14,15 +21,7 @@ export class ExplorerManager {
   previousBufnr = new GlobalContextVars<number>('previousBufnr');
   previousWindowID = new GlobalContextVars<number>('previousWindowID');
   maxExplorerID = 0;
-  tabContainer: Record<
-    number,
-    {
-      left: Explorer[];
-      right: Explorer[];
-      tab: Explorer[];
-      floating: Explorer[];
-    }
-  > = {};
+  tabContainer: Record<number, TabContainer> = {};
   rootPathRecords: Set<string> = new Set();
   nvim = workspace.nvim;
   bufManager: BufManager;
@@ -69,6 +68,10 @@ export class ExplorerManager {
 
   async currentTabIdMax() {
     return (await this.nvim.call('coc_explorer#tab_id_max')) as number;
+  }
+
+  async currentTabContainer(): Promise<undefined | TabContainer> {
+    return this.tabContainer[await this.currentTabId()];
   }
 
   private async updatePrevCtxVars(bufnr: number) {

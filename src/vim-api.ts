@@ -7,6 +7,7 @@ import { Explorer } from './explorer';
 import { BaseTreeNode, ExplorerSource } from './source/source';
 import { compactI, asyncCatchError } from './util';
 import { WinLayoutFinder } from './win-layout-finder';
+import pLocate from 'p-locate';
 
 export function registerApi(
   id: string,
@@ -25,7 +26,7 @@ type ExplorerFinder = number | 'closest';
 async function getExplorer(
   explorerFinder: ExplorerFinder,
   explorerManager: ExplorerManager,
-) {
+): Promise<undefined | Explorer> {
   if (explorerFinder === 'closest') {
     const winFinder = await WinLayoutFinder.create();
     const curWinid = (await workspace.nvim.call('bufwinid', [
@@ -43,7 +44,15 @@ async function getExplorer(
       return;
     }
     const node = winFinder.findClosest(curNode, winids);
-    return node ? explorerManager.explorerByWinid(node.winid) : undefined;
+    if (node) {
+      return explorerManager.explorerByWinid(node.winid);
+    } else {
+      const current = await explorerManager.currentTabContainer();
+      return await pLocate(
+        current?.floating ?? [],
+        async (e) => (await e.winnr) !== null,
+      );
+    }
   } else {
     return explorerFinder === 0
       ? explorerManager.currentExplorer()
