@@ -120,12 +120,20 @@ export function initFileActions(file: FileSource) {
   );
   file.addNodeAction(
     'cd',
-    async (node) => {
-      if (node.directory) {
-        await file.cd(node.fullpath);
-        file.root = node.fullpath;
+    async (node, args) => {
+      const cdTo = async (fullpath: string) => {
+        await file.cd(fullpath);
+        file.root = fullpath;
         file.expandStore.expand(file.rootNode);
         await file.reload(file.rootNode);
+      };
+      const path = args[0];
+      if (path !== undefined) {
+        await cdTo(path);
+      } else {
+        if (node.directory) {
+          await cdTo(node.fullpath);
+        }
       }
     },
     'change directory to current node',
