@@ -38,15 +38,19 @@ export class Notifier {
   static combine(notifiers: NotifierCell[]) {
     const safeNotifiers = compactI(notifiers);
     if (safeNotifiers.length < 1) {
-      return Notifier.create(() => {});
+      return Notifier.noop();
     }
     if (safeNotifiers.length === 1) {
       return safeNotifiers[0];
     }
     return safeNotifiers.reduce(
       (ret, cur) => ret.concat(cur),
-      Notifier.create(() => {}),
+      Notifier.noop(),
     );
+  }
+
+  static noop() {
+    return this.create(() => {});
   }
 
   static create(notify: () => void) {

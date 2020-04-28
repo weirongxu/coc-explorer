@@ -31,6 +31,7 @@ export function initFileActions(file: FileSource) {
       if (file.root === '') {
         return;
       }
+      const nodeUri = file.currentNode()?.uri;
       if (/^[A-Za-z]:[\\\/]$/.test(file.root)) {
         file.root = '';
       } else {
@@ -39,6 +40,9 @@ export function initFileActions(file: FileSource) {
       }
       file.expandStore.expand(file.rootNode);
       await file.reload(file.rootNode);
+      if (nodeUri) {
+        await file.gotoNodeUri(nodeUri);
+      }
     },
     'change directory to parent directory',
   );
@@ -120,7 +124,7 @@ export function initFileActions(file: FileSource) {
       if (node.directory) {
         await file.cd(node.fullpath);
         file.root = node.fullpath;
-        file.expanded = true;
+        file.expandStore.expand(file.rootNode);
         await file.reload(file.rootNode);
       }
     },
@@ -481,7 +485,7 @@ export function initFileActions(file: FileSource) {
             name: drive,
             callback: async (drive) => {
               file.root = drive;
-              file.expanded = true;
+              file.expandStore.expand(file.rootNode);
               await file.reload(file.rootNode);
             },
           })),

@@ -85,6 +85,13 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>> {
   readonly viewBuilder = new SourceViewBuilder(this.explorer);
   readonly expandStore = {
     record: new Map<string, boolean>(),
+    expanded(node: TreeNode, expanded: boolean) {
+      if (expanded) {
+        this.expand(node);
+      } else {
+        this.collapse(node);
+      }
+    },
     expand(node: TreeNode) {
       this.record.set(node.uri, true);
     },
@@ -95,6 +102,7 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>> {
       return this.record.get(node.uri) || false;
     },
   };
+  defaultExpanded = false;
   readonly helper = {
     generateUri: (path: string) => generateUri(path, this.scheme),
   };
@@ -215,33 +223,23 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>> {
     );
   }
 
-  get expanded() {
-    return this.expandStore.isExpanded(this.rootNode);
-  }
-
-  set expanded(expanded: boolean) {
-    if (expanded) {
-      this.expandStore.expand(this.rootNode);
-    } else {
-      this.expandStore.collapse(this.rootNode);
-    }
-  }
-
   get height() {
     return this.flattenedNodes.length;
   }
 
   boot(expanded: boolean) {
     Promise.resolve(this.init()).catch(onError);
-    this.expanded = expanded;
+
+    this.defaultExpanded = expanded;
+    this.expandStore.expanded(this.rootNode, expanded);
   }
 
   abstract init(): Promise<void>;
 
-  abstract open(): Promise<void>;
+  abstract open(isFirst: boolean): Promise<void>;
 
   async openedNotifier(_isFirst: boolean): Promise<Notifier | void> {
-    return Notifier.create(() => {});
+    return Notifier.noop();
   }
 
   addNodesAction(
@@ -600,7 +598,7 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>> {
     return this.explorer.lineIndex - this.startLineIndex;
   }
 
-  async currentNode() {
+  currentNode() {
     return this.flattenedNodes[this.currentLineIndex] as TreeNode | undefined;
   }
 
@@ -634,9 +632,6 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>> {
     return this.gotoLineIndexNotifier(0, col);
   }
 
-  /**
-   * if node is null, move to root, otherwise move to node
-   */
   async gotoNode(
     node: TreeNode,
     options: { lineIndex?: number; col?: number } = {},
@@ -644,25 +639,34 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>> {
     return (await this.gotoNodeNotifier(node, options)).run();
   }
 
-  /**
-   * if node is null, move to root, otherwise move to node
-   */
   async gotoNodeNotifier(
     node: TreeNode,
+    options: { lineIndex?: number; col?: number } = {},
+  ) {
+    return this.gotoNodeUriNotifier(node.uri, options);
+  }
+
+  async gotoNodeUri(
+    nodeUri: string,
+    options: { lineIndex?: number; col?: number } = {},
+  ) {
+    return (await this.gotoNodeUriNotifier(nodeUri, options)).run();
+  }
+
+  async gotoNodeUriNotifier(
+    nodeUri: string,
     {
       lineIndex: fallbackLineIndex,
       col = 0,
     }: { lineIndex?: number; col?: number } = {},
   ) {
-    const lineIndex = this.flattenedNodes.findIndex(
-      (it) => it.uri === node.uri,
-    );
+    const lineIndex = this.flattenedNodes.findIndex((it) => it.uri === nodeUri);
     if (lineIndex !== -1) {
       return this.gotoLineIndexNotifier(lineIndex, col);
     } else if (fallbackLineIndex !== undefined) {
       return this.gotoLineIndexNotifier(fallbackLineIndex, col);
     } else {
-      return this.gotoRootNotifier({ col: col });
+      return Notifier.noop();
     }
   }
 

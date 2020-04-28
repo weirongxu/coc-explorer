@@ -123,6 +123,7 @@ export class FileSource extends ExplorerSource<FileNode> {
   }
 
   set root(root: string) {
+    this.rootNode.uri = this.helper.generateUri(root);
     this.rootNode.fullpath = root;
     this.rootNode.children = undefined;
   }
@@ -179,7 +180,7 @@ export class FileSource extends ExplorerSource<FileNode> {
     initFileActions(this);
   }
 
-  async open() {
+  async open(isFirst: boolean) {
     await this.templateRenderer.parse(
       'root',
       await this.explorer.args.value(argOptions.fileRootTemplate),
@@ -194,6 +195,9 @@ export class FileSource extends ExplorerSource<FileNode> {
 
     const args = this.explorer.args;
     this.root = await args.value(argOptions.rootUri);
+    if (isFirst) {
+      this.expandStore.expanded(this.rootNode, this.defaultExpanded);
+    }
   }
 
   async cd(fullpath: string) {

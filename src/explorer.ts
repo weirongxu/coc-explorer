@@ -526,7 +526,7 @@ export class Explorer {
     await this.initArgs(args);
 
     for (const source of this.sources) {
-      await source.open();
+      await source.open(isFirst);
     }
 
     await Notifier.runAll([
