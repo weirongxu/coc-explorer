@@ -37,7 +37,7 @@ import {
   partition,
   getFloatingBorderChars,
   closeWinByBufnrNotifier,
-  getFloatingTitle,
+  getFloatingBorderTitle,
 } from './util';
 import { argOptions } from './arg-options';
 
@@ -137,7 +137,7 @@ export class Explorer {
       top,
       getEnableFloatingBorder(),
       getFloatingBorderChars(),
-      getFloatingTitle(),
+      getFloatingBorderTitle(),
     ]);
 
     const explorer = new Explorer(
@@ -514,7 +514,7 @@ export class Explorer {
         this.floatingBorderBufnr,
         getEnableFloatingBorder(),
         getFloatingBorderChars(),
-        getFloatingTitle(),
+        getFloatingBorderTitle(),
       ]);
     }
   }

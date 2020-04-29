@@ -268,7 +268,7 @@
             "│"
           ]
         },
-        "explorer.floating.title": {
+        "explorer.floating.border.title": {
           "type": "string",
           "default": "coc-explorer"
         },

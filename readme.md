@@ -386,7 +386,7 @@ Default: <pre><code>[
 ]</code></pre>
 </details>
 <details>
-<summary><code>explorer.floating.title</code>: . type: <code>string</code></summary>
+<summary><code>explorer.floating.border.title</code>: . type: <code>string</code></summary>
 Default: <pre><code>"coc-explorer"</code></pre>
 </details>
 <details>

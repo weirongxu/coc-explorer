@@ -26,5 +26,5 @@ export const getEnableFloatingBorder = () =>
 export const getFloatingBorderChars = () =>
   config.get<string[]>('floating.border.chars')!;
 
-export const getFloatingTitle = () =>
-  config.get<string>('floating.title')!;
+export const getFloatingBorderTitle = () =>
+  config.get<string>('floating.border.title')!;
