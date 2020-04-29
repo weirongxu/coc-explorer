@@ -368,6 +368,7 @@
     "lock": "lock",
     "json": "json",
     "js": "javascript",
+    "cjs": "javascript",
     "mjs": "javascript",
     "es6": "javascript",
     "jsx": "javascriptreact",
