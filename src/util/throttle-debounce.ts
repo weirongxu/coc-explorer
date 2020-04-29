@@ -1,5 +1,4 @@
 import { onError } from '../logger';
-import { clearTimeout } from 'timers';
 
 export class Cancelled {}
 const cancelled = new Cancelled();
