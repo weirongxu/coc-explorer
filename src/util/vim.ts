@@ -1,13 +1,11 @@
 import { workspace, Window } from 'coc.nvim';
 import { Notifier } from '.';
 
-const nvim = () => workspace.nvim;
-
 let _supportedSetbufline: boolean | null = null;
 export async function supportedSetbufline() {
   if (_supportedSetbufline === null) {
     _supportedSetbufline = Boolean(
-      await nvim().call('exists', ['*setbufline']),
+      await workspace.nvim.call('exists', ['*setbufline']),
     );
   }
   return _supportedSetbufline;
@@ -26,16 +24,16 @@ export function supportedBufferHighlight() {
 }
 
 export async function enableWrapscan() {
-  const wrapscan = await nvim().getOption('wrapscan');
+  const wrapscan = await workspace.nvim.getOption('wrapscan');
   return !!wrapscan;
 }
 
 export async function displayWidth(str: string) {
-  return (await nvim().call('strdisplaywidth', [str])) as number;
+  return (await workspace.nvim.call('strdisplaywidth', [str])) as number;
 }
 
 export async function displaySlice(str: string, start: number, end?: number) {
-  return (await nvim().call('coc_explorer#strdisplayslice', [
+  return (await workspace.nvim.call('coc_explorer#strdisplayslice', [
     str,
     start,
     end ?? null,
@@ -44,7 +42,7 @@ export async function displaySlice(str: string, start: number, end?: number) {
 
 export function closeWinByBufnrNotifier(bufnr: number) {
   return Notifier.create(() => {
-    nvim().call('coc_explorer#close_win_by_bufnr', [bufnr], true);
+    workspace.nvim.call('coc_explorer#close_win_by_bufnr', [bufnr], true);
   });
 }
 
@@ -52,22 +50,20 @@ export async function winnrByBufnr(bufnr: number | null) {
   if (!bufnr) {
     return null;
   }
-  return nvim()
-    .call('bufwinnr', bufnr)
-    .then((winnr: number) => {
-      if (winnr > 0) {
-        return winnr;
-      } else {
-        return null;
-      }
-    });
+  return workspace.nvim.call('bufwinnr', bufnr).then((winnr: number) => {
+    if (winnr > 0) {
+      return winnr;
+    } else {
+      return null;
+    }
+  });
 }
 
 export async function winidByWinnr(winnr: number | null) {
   if (!winnr) {
     return null;
   }
-  const winid = (await nvim().call('win_getid', winnr)) as number;
+  const winid = (await workspace.nvim.call('win_getid', winnr)) as number;
   if (winid >= 0) {
     return winid;
   } else {
@@ -90,7 +86,7 @@ export function winByWinid(winid: null): Promise<null>;
 export function winByWinid(winid: number | null): Promise<Window | null>;
 export async function winByWinid(winid: number | null) {
   if (winid) {
-    return nvim().createWindow(winid);
+    return workspace.nvim.createWindow(winid);
   } else {
     return null;
   }
@@ -100,7 +96,7 @@ export async function bufnrByWinnrOrWinid(winnrOrWinid: number | null) {
   if (!winnrOrWinid) {
     return null;
   }
-  const bufnr = (await nvim().call('winbufnr', winnrOrWinid)) as number;
+  const bufnr = (await workspace.nvim.call('winbufnr', winnrOrWinid)) as number;
   if (bufnr >= 0) {
     return bufnr;
   } else {
@@ -124,7 +120,7 @@ export async function prompt(
     defaultChoice = 'no';
   }
   const defaultNumber = defaultChoice ? choices.indexOf(defaultChoice) : -1;
-  const result = (await nvim().call('confirm', [
+  const result = (await workspace.nvim.call('confirm', [
     msg,
     choices
       .map((choice) => {
@@ -192,7 +188,7 @@ export async function input(
   defaultInput = '',
   completion: InputCompletion = undefined,
 ): Promise<string> {
-  return nvim().callAsync('coc#util#with_callback', [
+  return workspace.nvim.callAsync('coc#util#with_callback', [
     'input',
     [prompt, defaultInput, completion],
   ]);

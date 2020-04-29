@@ -1,4 +1,4 @@
-import { events, workspace, Disposable } from 'coc.nvim';
+import { events, workspace, Disposable, commands } from 'coc.nvim';
 import { getEnableDebug } from './config';
 import { throttle } from './throttle-debounce';
 import { asyncCatchError } from './function';
@@ -116,4 +116,56 @@ export async function avoidOnBufEvents<R>(block: () => Promise<R>) {
   } finally {
     stopBufEvent = false;
   }
+}
+
+export function registerBufDeleteEvents() {
+  commands.registerCommand(
+    'explorer.internal.didVimEvent',
+    asyncCatchError((event, ...args: any[]) => {
+      if (event === 'BufDelete') {
+        onBufDeleteHandlers.forEach((handler) => {
+          handler(...(args as [number]));
+        });
+      } else if (event === 'BufWipeout') {
+        onBufWipeoutHandlers.forEach((handler) => {
+          handler(...(args as [number]));
+        });
+      }
+    }),
+    undefined,
+    true,
+  );
+}
+
+const onBufDeleteHandlers: BufEventHandler[] = [];
+const onBufWipeoutHandlers: BufEventHandler[] = [];
+
+export function onBufDelete(handler: BufEventHandler) {
+  onBufDeleteHandlers.push(handler);
+
+  const disposable = Disposable.create(() => {
+    const index = onBufDeleteHandlers.indexOf(handler);
+    if (index !== -1) {
+      onBufDeleteHandlers.splice(index, 1);
+    }
+  });
+
+  onBufDeleteHandlers.push(handler);
+
+  return disposable;
+}
+
+export function onBufWipeout(handler: BufEventHandler) {
+  onBufWipeoutHandlers.push(handler);
+
+  const disposable = Disposable.create(() => {
+    const index = onBufWipeoutHandlers.indexOf(handler);
+    if (index !== -1) {
+      onBufWipeoutHandlers.splice(index, 1);
+    }
+  });
+
+  onBufWipeoutHandlers.push(handler);
+
+  return disposable;
 }

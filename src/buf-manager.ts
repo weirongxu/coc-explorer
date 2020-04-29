@@ -1,6 +1,12 @@
 import { workspace, ExtensionContext, Emitter } from 'coc.nvim';
 import pathLib from 'path';
-import { normalizePath, generateUri, onEvents } from './util';
+import {
+  normalizePath,
+  generateUri,
+  onEvents,
+  onBufDelete,
+  onBufWipeout,
+} from './util';
 import {
   bufferScheme,
   BufferNode,
@@ -30,6 +36,8 @@ export class BufManager {
         ],
         () => this.reload(),
       ),
+      onBufDelete(() => this.reload()),
+      onBufWipeout(() => this.reload()),
       ...(['TextChanged', 'TextChangedI', 'TextChangedP'] as const).map(
         (event) =>
           onEvents(event, async (bufnr: number) => {

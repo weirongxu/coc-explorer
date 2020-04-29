@@ -83,7 +83,7 @@ export function initBufferActions(buffer: BufferSource) {
       await nvim.command(`bdelete! ${node.bufnr}`);
     },
     'delete buffer',
-    { multi: true, reload: true },
+    { multi: true },
   );
   buffer.addNodeAction(
     'deleteForever',
@@ -97,6 +97,6 @@ export function initBufferActions(buffer: BufferSource) {
       await nvim.command(`bwipeout! ${node.bufnr}`);
     },
     'bwipeout buffer',
-    { multi: true, reload: true },
+    { multi: true },
   );
 }

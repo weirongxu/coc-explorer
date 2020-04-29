@@ -3,9 +3,8 @@ import { registerLogger, onError } from './logger';
 import { hlGroupManager } from './source/highlight-manager';
 import { ExplorerManager } from './explorer-manager';
 import { PresetsList } from './lists/presets';
-import { Action, ActionMode, parseAction } from './mappings';
-import { BaseTreeNode } from './source/source';
 import { registerVimApi } from './vim-api';
+import { registerBufDeleteEvents } from './util';
 
 export const activate = async (context: ExtensionContext) => {
   const { subscriptions, logger } = context;
@@ -29,6 +28,7 @@ export const activate = async (context: ExtensionContext) => {
     }),
   );
   registerVimApi(context, explorerManager);
+  registerBufDeleteEvents();
 
   nvim
     .getOption('runtimepath')
