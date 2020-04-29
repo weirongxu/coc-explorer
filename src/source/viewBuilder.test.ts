@@ -1,9 +1,9 @@
-import { SourceRowBuilder, SourceViewBuilder } from './view-builder';
+import { SourceRowBuilder, SourceViewBuilder } from './viewBuilder';
 import { Explorer } from '../explorer';
-import { ExplorerManager } from '../explorer-manager';
+import { ExplorerManager } from '../explorerManager';
 import { BaseTreeNode } from './source';
-import { ColumnRegistrar } from './column-registrar';
-import helper from './../tests/help-test';
+import { ColumnRegistrar } from './columnRegistrar';
+import helper from '../tests/helpTest';
 
 let explorer: Explorer;
 

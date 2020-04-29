@@ -1,7 +1,7 @@
-import { fileColumnRegistrar } from '../file-column-registrar';
+import { fileColumnRegistrar } from '../fileColumnRegistrar';
 import { format } from 'date-fns';
 import { getDatetimeFormat } from '../../../../util';
-import { fileHighlights } from '../file-source';
+import { fileHighlights } from '../fileSource';
 
 fileColumnRegistrar.registerColumn('child', 'timeCreated', () => ({
   draw(row, node) {

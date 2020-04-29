@@ -1,12 +1,12 @@
 import { workspace, ExtensionContext, Emitter } from 'coc.nvim';
 import { Explorer } from './explorer';
-import { Args } from './parse-args';
+import { Args } from './parseArgs';
 import { onError } from './logger';
 import { getMappings } from './mappings';
 import { onBufEnter, supportedNvimFloating, compactI } from './util';
-import { GlobalContextVars } from './context-variables';
-import { BufManager } from './buf-manager';
-import { argOptions } from './arg-options';
+import { GlobalContextVars } from './contextVariables';
+import { BufManager } from './bufManager';
+import { argOptions } from './argOptions';
 
 export type TabContainer = {
   left: Explorer[];

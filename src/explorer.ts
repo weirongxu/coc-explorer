@@ -6,20 +6,20 @@ import {
   workspace,
 } from 'coc.nvim';
 import { conditionActionRules } from './actions';
-import { BuffuerContextVars } from './context-variables';
-import { ExplorerManager } from './explorer-manager';
-import { FloatingPreview } from './floating/floating-preview';
-import { IndexesManager } from './indexes-manager';
+import { BuffuerContextVars } from './contextVariables';
+import { ExplorerManager } from './explorerManager';
+import { FloatingPreview } from './floating/floatingPreview';
+import { IndexesManager } from './indexesManager';
 import { Action, ActionMode, getMappings } from './mappings';
-import { ArgContentWidthTypes, Args } from './parse-args';
+import { ArgContentWidthTypes, Args } from './parseArgs';
 import {
   HighlightPositionWithLine,
   hlGroupManager,
-} from './source/highlight-manager';
+} from './source/highlightManager';
 import './source/load';
 import { ActionOptions, BaseTreeNode, ExplorerSource } from './source/source';
-import { sourceManager } from './source/source-manager';
-import { SourceRowBuilder, SourceViewBuilder } from './source/view-builder';
+import { sourceManager } from './source/sourceManager';
+import { SourceRowBuilder, SourceViewBuilder } from './source/viewBuilder';
 import {
   config,
   enableWrapscan,
@@ -39,7 +39,7 @@ import {
   closeWinByBufnrNotifier,
   getFloatingBorderTitle,
 } from './util';
-import { argOptions } from './arg-options';
+import { argOptions } from './argOptions';
 
 const hl = hlGroupManager.linkGroup.bind(hlGroupManager);
 const helpHightlights = {

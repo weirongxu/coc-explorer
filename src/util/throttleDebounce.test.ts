@@ -1,4 +1,4 @@
-import { throttlePromise, debouncePromise } from './throttle-debounce';
+import { throttlePromise, debouncePromise } from './throttleDebounce';
 import { delay } from './async';
 
 describe('throttlePromise', () => {

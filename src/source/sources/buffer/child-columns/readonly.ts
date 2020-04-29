@@ -1,5 +1,5 @@
-import { bufferColumnRegistrar } from '../buffer-column-registrar';
-import { bufferHighlights } from '../buffer-source';
+import { bufferColumnRegistrar } from '../bufferColumnRegistrar';
+import { bufferHighlights } from '../bufferSource';
 import { getEnableNerdfont } from '../../../../util';
 
 bufferColumnRegistrar.registerColumn('child', 'readonly', () => ({

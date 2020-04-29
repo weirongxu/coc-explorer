@@ -1,4 +1,4 @@
-import { fileColumnRegistrar } from '../file-column-registrar';
+import { fileColumnRegistrar } from '../fileColumnRegistrar';
 
 fileColumnRegistrar.registerColumn('child', 'linkIcon', () => ({
   draw(row, node) {

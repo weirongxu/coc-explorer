@@ -18,16 +18,16 @@ import {
   isWindows,
   debounce,
 } from '../../../util';
-import { hlGroupManager } from '../../highlight-manager';
+import { hlGroupManager } from '../../highlightManager';
 import { ExplorerSource, BaseTreeNode } from '../../source';
-import { sourceManager } from '../../source-manager';
-import { fileColumnRegistrar } from './file-column-registrar';
+import { sourceManager } from '../../sourceManager';
+import { fileColumnRegistrar } from './fileColumnRegistrar';
 import './load';
 import { filesList } from '../../../lists/files';
-import { initFileActions } from './file-actions';
+import { initFileActions } from './fileActions';
 import { homedir } from 'os';
-import { labelHighlight, TemplateRenderer } from '../../template-renderer';
-import { argOptions } from '../../../arg-options';
+import { labelHighlight, TemplateRenderer } from '../../templateRenderer';
+import { argOptions } from '../../../argOptions';
 
 const getHiddenRules = () =>
   config.get<{

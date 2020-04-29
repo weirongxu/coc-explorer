@@ -1,4 +1,4 @@
-import { bufferColumnRegistrar } from '../buffer-column-registrar';
+import { bufferColumnRegistrar } from '../bufferColumnRegistrar';
 import { sourceIcons } from '../../../source';
 
 bufferColumnRegistrar.registerColumn('child', 'selection', ({ source }) => ({

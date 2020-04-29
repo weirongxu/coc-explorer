@@ -1,6 +1,6 @@
 import prettyBytes from 'pretty-bytes';
-import { fileColumnRegistrar } from '../file-column-registrar';
-import { fileHighlights } from '../file-source';
+import { fileColumnRegistrar } from '../fileColumnRegistrar';
+import { fileHighlights } from '../fileSource';
 
 fileColumnRegistrar.registerColumn('child', 'size', () => ({
   labelVisible: (node) => !node.directory,

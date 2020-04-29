@@ -1,4 +1,4 @@
-import { parseTemplate } from './parse-template';
+import { parseTemplate } from './parseTemplate';
 
 describe('parse columns', () => {
   test('buffer root columns', () => {

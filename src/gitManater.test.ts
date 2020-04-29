@@ -1,4 +1,4 @@
-import { gitManager, GitFormat } from './git-manager';
+import { gitManager, GitFormat } from './gitManager';
 
 ([
   {

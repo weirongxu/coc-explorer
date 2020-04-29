@@ -1,5 +1,5 @@
-import { BufferNode, BufferSource } from './buffer-source';
-import { ColumnRegistrar } from '../../column-registrar';
+import { BufferNode, BufferSource } from './bufferSource';
+import { ColumnRegistrar } from '../../columnRegistrar';
 import { config } from '../../../util';
 
 class BufferColumnRegistrar extends ColumnRegistrar<BufferNode, BufferSource> {

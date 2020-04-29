@@ -2,7 +2,7 @@ import {
   HighlightCommand,
   HighlightPosition,
   hlGroupManager,
-} from './highlight-manager';
+} from './highlightManager';
 import {
   byteLength,
   displayWidth,
@@ -13,8 +13,8 @@ import {
 } from '../util';
 import { BaseTreeNode } from './source';
 import { Explorer } from '../explorer';
-import { InitedPart } from './template-renderer';
-import { ColumnRequired } from './column-registrar';
+import { InitedPart } from './templateRenderer';
+import { ColumnRequired } from './columnRegistrar';
 
 // Flexible types
 export type DrawFlexiblePosition = 'left' | 'right' | 'center';

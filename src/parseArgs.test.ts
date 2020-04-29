@@ -1,6 +1,6 @@
-import { Args } from './parse-args';
+import { Args } from './parseArgs';
 import { workspace } from 'coc.nvim';
-import { argOptions } from './arg-options';
+import { argOptions } from './argOptions';
 
 it('should parse args', async () => {
   const oldNvim = workspace.nvim;

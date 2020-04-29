@@ -1,5 +1,5 @@
 import { Explorer } from '../explorer';
-import { DrawLabelingResult } from '../source/template-renderer';
+import { DrawLabelingResult } from '../source/templateRenderer';
 import { BaseTreeNode, ExplorerSource } from '../source/source';
 import {
   Cancellable,
@@ -10,7 +10,7 @@ import {
   Cancelled,
 } from '../util';
 import { workspace } from 'coc.nvim';
-import { FloatingFactory2 } from './floating-factory2';
+import { FloatingFactory2 } from './floatingFactory2';
 
 export class FloatingPreview {
   nvim = workspace.nvim;

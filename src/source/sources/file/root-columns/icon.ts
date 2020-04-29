@@ -1,6 +1,6 @@
-import { fileColumnRegistrar } from '../file-column-registrar';
+import { fileColumnRegistrar } from '../fileColumnRegistrar';
 import { sourceIcons } from '../../../source';
-import { fileHighlights } from '../file-source';
+import { fileHighlights } from '../fileSource';
 
 fileColumnRegistrar.registerColumn('root', 'icon', ({ source }) => ({
   draw(row, node) {

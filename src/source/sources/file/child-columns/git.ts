@@ -1,9 +1,9 @@
 import commandExists from 'command-exists';
-import { fileColumnRegistrar } from '../file-column-registrar';
-import { GitFormat, gitManager, GitMixedStatus } from '../../../../git-manager';
+import { fileColumnRegistrar } from '../fileColumnRegistrar';
+import { GitFormat, gitManager, GitMixedStatus } from '../../../../gitManager';
 import pathLib from 'path';
 import { debounce, onEvents } from '../../../../util';
-import { fileHighlights } from '../file-source';
+import { fileHighlights } from '../fileSource';
 
 const getIconConf = (name: string) => {
   return fileColumnRegistrar.getColumnConfig<string>('git.icon.' + name)!;

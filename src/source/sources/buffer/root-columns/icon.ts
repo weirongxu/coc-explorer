@@ -1,6 +1,6 @@
-import { bufferColumnRegistrar } from '../buffer-column-registrar';
+import { bufferColumnRegistrar } from '../bufferColumnRegistrar';
 import { sourceIcons } from '../../../source';
-import { bufferHighlights } from '../buffer-source';
+import { bufferHighlights } from '../bufferSource';
 
 bufferColumnRegistrar.registerColumn('root', 'icon', ({ source }) => ({
   draw(row, node) {

@@ -1,5 +1,5 @@
 import { workspace } from 'coc.nvim';
-import { compactI } from '../util';
+import { compactI } from '.';
 
 type NotifierCell = Notifier | void | undefined | null;
 

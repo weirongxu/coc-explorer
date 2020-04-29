@@ -1,4 +1,4 @@
-import { FileSource } from './file-source';
+import { FileSource } from './fileSource';
 import pathLib from 'path';
 import {
   fsCopyFileRecursive,
@@ -19,7 +19,7 @@ import {
 import { workspace, listManager } from 'coc.nvim';
 import open from 'open';
 import { driveList } from '../../../lists/drives';
-import { gitManager } from '../../../git-manager';
+import { gitManager } from '../../../gitManager';
 import { RevealStrategy, OpenStrategy } from '../../../types';
 
 export function initFileActions(file: FileSource) {

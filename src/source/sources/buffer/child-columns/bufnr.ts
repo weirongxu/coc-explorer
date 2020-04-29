@@ -1,6 +1,6 @@
-import { bufferColumnRegistrar } from '../buffer-column-registrar';
+import { bufferColumnRegistrar } from '../bufferColumnRegistrar';
 import { max } from '../../../../util';
-import { bufferHighlights } from '../buffer-source';
+import { bufferHighlights } from '../bufferSource';
 
 bufferColumnRegistrar.registerColumn<{
   maxBufnrWidth: number;

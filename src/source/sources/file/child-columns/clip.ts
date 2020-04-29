@@ -1,6 +1,6 @@
-import { fileColumnRegistrar } from '../file-column-registrar';
+import { fileColumnRegistrar } from '../fileColumnRegistrar';
 import { getEnableNerdfont } from '../../../../util';
-import { fileHighlights } from '../file-source';
+import { fileHighlights } from '../fileSource';
 
 let copy = fileColumnRegistrar.getColumnConfig<string>('clip.copy');
 let cut = fileColumnRegistrar.getColumnConfig<string>('clip.cut');

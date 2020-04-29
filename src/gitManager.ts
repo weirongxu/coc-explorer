@@ -1,6 +1,6 @@
 import pathLib from 'path';
 import { onError } from './logger';
-import { fileColumnRegistrar } from './source/sources/file/file-column-registrar';
+import { fileColumnRegistrar } from './source/sources/file/fileColumnRegistrar';
 import { config, execCli } from './util';
 
 const showIgnored = fileColumnRegistrar.getColumnConfig<boolean>('git.showIgnored')!;

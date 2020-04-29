@@ -1,9 +1,9 @@
 import { ExtensionContext, commands, workspace, listManager } from 'coc.nvim';
 import { registerLogger, onError } from './logger';
-import { hlGroupManager } from './source/highlight-manager';
-import { ExplorerManager } from './explorer-manager';
+import { hlGroupManager } from './source/highlightManager';
+import { ExplorerManager } from './explorerManager';
 import { PresetsList } from './lists/presets';
-import { registerVimApi } from './vim-api';
+import { registerVimApi } from './vimApi';
 import { registerBufDeleteEvents } from './util';
 
 export const activate = async (context: ExtensionContext) => {

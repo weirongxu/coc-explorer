@@ -23,12 +23,12 @@ import {
 import {
   HighlightPosition,
   HighlightPositionWithLine,
-} from './highlight-manager';
-import { DrawLabelingResult, TemplateRenderer } from './template-renderer';
-import { SourceViewBuilder } from './view-builder';
-import { WinLayoutFinder } from '../win-layout-finder';
+} from './highlightManager';
+import { DrawLabelingResult, TemplateRenderer } from './templateRenderer';
+import { SourceViewBuilder } from './viewBuilder';
+import { WinLayoutFinder } from '../winLayoutFinder';
 import { OpenStrategy } from '../types';
-import { argOptions } from '../arg-options';
+import { argOptions } from '../argOptions';
 
 export type ActionOptions = {
   multi: boolean;

@@ -6,14 +6,14 @@ import {
   config,
   uniq,
 } from '../../../util';
-import { hlGroupManager } from '../../highlight-manager';
+import { hlGroupManager } from '../../highlightManager';
 import { ExplorerSource, BaseTreeNode } from '../../source';
-import { sourceManager } from '../../source-manager';
-import { bufferColumnRegistrar } from './buffer-column-registrar';
+import { sourceManager } from '../../sourceManager';
+import { bufferColumnRegistrar } from './bufferColumnRegistrar';
 import './load';
-import { initBufferActions } from './buffer-actions';
-import { TemplateRenderer } from '../../template-renderer';
-import { argOptions } from '../../../arg-options';
+import { initBufferActions } from './bufferActions';
+import { TemplateRenderer } from '../../templateRenderer';
+import { argOptions } from '../../../argOptions';
 
 export interface BufferNode extends BaseTreeNode<BufferNode, 'root' | 'child'> {
   bufnr: number;

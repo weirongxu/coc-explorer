@@ -1,6 +1,6 @@
-import { fileColumnRegistrar } from '../file-column-registrar';
+import { fileColumnRegistrar } from '../fileColumnRegistrar';
 import pathLib from 'path';
-import { fileHighlights } from '../file-source';
+import { fileHighlights } from '../fileSource';
 
 fileColumnRegistrar.registerColumn('root', 'root', ({ source }) => ({
   draw(row) {

@@ -1,6 +1,6 @@
 import { events, workspace, Disposable, commands } from 'coc.nvim';
 import { getEnableDebug } from './config';
-import { throttle } from './throttle-debounce';
+import { throttle } from './throttleDebounce';
 import { asyncCatchError } from './function';
 
 type OnEvent = typeof events.on;

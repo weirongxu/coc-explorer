@@ -1,4 +1,4 @@
-import { BufferSource } from './buffer-source';
+import { BufferSource } from './bufferSource';
 import { prompt } from '../../../util';
 import { OpenStrategy } from '../../../types';
 

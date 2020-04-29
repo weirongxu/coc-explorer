@@ -1,9 +1,9 @@
-import { ColumnRegistrar, ColumnRequired } from './column-registrar';
+import { ColumnRegistrar, ColumnRequired } from './columnRegistrar';
 import { BaseTreeNode, ExplorerSource } from './source';
-import { SourceRowBuilder } from './view-builder';
-import { hlGroupManager, HighlightPositionWithLine } from './highlight-manager';
+import { SourceRowBuilder } from './viewBuilder';
+import { hlGroupManager, HighlightPositionWithLine } from './highlightManager';
 import pFilter from 'p-filter';
-import { parseTemplate, TemplatePart } from '../parse-template';
+import { parseTemplate, TemplatePart } from '../parseTemplate';
 import { groupBy } from '../util';
 
 export interface DrawLabelingResult {

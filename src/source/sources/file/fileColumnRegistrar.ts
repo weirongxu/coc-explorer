@@ -1,6 +1,6 @@
-import { FileNode, FileSource } from './file-source';
+import { FileNode, FileSource } from './fileSource';
 import { config } from '../../../util';
-import { ColumnRegistrar } from '../../column-registrar';
+import { ColumnRegistrar } from '../../columnRegistrar';
 
 export class FileColumnRegistrar extends ColumnRegistrar<FileNode, FileSource> {
   getColumnConfig<T>(name: string, defaultValue?: T): T {

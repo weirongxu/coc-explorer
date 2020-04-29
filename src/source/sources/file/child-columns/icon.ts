@@ -1,8 +1,8 @@
-import { fileColumnRegistrar } from '../file-column-registrar';
+import { fileColumnRegistrar } from '../fileColumnRegistrar';
 import { sourceIcons } from '../../../source';
 import { config, getEnableNerdfont } from '../../../../util';
 import { workspace } from 'coc.nvim';
-import { FileNode, fileHighlights } from '../file-source';
+import { FileNode, fileHighlights } from '../fileSource';
 import { getSymbol } from '../../../../util/symbol';
 import {
   getFileIcon,

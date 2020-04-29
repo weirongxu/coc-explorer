@@ -1,4 +1,4 @@
-import { SourceRowBuilder } from './view-builder';
+import { SourceRowBuilder } from './viewBuilder';
 import { ExplorerSource, BaseTreeNode } from './source';
 import { Disposable } from 'coc.nvim';
 

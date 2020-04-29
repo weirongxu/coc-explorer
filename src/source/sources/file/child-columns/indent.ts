@@ -1,5 +1,5 @@
-import { fileColumnRegistrar } from '../file-column-registrar';
-import { FileNode, fileHighlights } from '../file-source';
+import { fileColumnRegistrar } from '../fileColumnRegistrar';
+import { FileNode, fileHighlights } from '../fileSource';
 import { getEnableNerdfont } from '../../../../util';
 
 export const getIndentChars = () => fileColumnRegistrar.getColumnConfig<string>('indent.chars');

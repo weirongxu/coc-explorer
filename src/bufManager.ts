@@ -10,7 +10,7 @@ import {
 import {
   bufferScheme,
   BufferNode,
-} from './source/sources/buffer/buffer-source';
+} from './source/sources/buffer/bufferSource';
 
 const regex = /^\s*(\d+)(.+?)"(.+?)".*/;
 

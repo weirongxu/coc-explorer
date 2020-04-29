@@ -5,7 +5,7 @@ import {
   ArgPosition,
   ArgContentWidthTypes,
   ArgFloatingPositions,
-} from './parse-args';
+} from './parseArgs';
 import { OpenStrategy } from './types';
 import { workspace } from 'coc.nvim';
 

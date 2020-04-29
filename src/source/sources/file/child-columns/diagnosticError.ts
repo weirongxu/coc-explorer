@@ -1,7 +1,7 @@
-import { fileColumnRegistrar } from '../file-column-registrar';
-import { diagnosticManager } from '../../../../diagnostic-manager';
+import { fileColumnRegistrar } from '../fileColumnRegistrar';
+import { diagnosticManager } from '../../../../diagnosticManager';
 import { config, debounce, onEvents } from '../../../../util';
-import { fileHighlights } from '../file-source';
+import { fileHighlights } from '../fileSource';
 
 fileColumnRegistrar.registerColumn<{
   errorMap: Record<string, string>;

@@ -1,12 +1,12 @@
 import { ExtensionContext, commands, workspace } from 'coc.nvim';
 import { ActionMode, parseAction, OriginalAction } from './mappings';
-import { ExplorerManager } from './explorer-manager';
+import { ExplorerManager } from './explorerManager';
 import { getFileIcon, getDirectoryIcon } from './icons';
 import pathLib from 'path';
 import { Explorer } from './explorer';
 import { BaseTreeNode, ExplorerSource } from './source/source';
 import { compactI, asyncCatchError } from './util';
-import { WinLayoutFinder } from './win-layout-finder';
+import { WinLayoutFinder } from './winLayoutFinder';
 import pLocate from 'p-locate';
 
 export function registerApi(
