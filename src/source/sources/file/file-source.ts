@@ -180,7 +180,7 @@ export class FileSource extends ExplorerSource<FileNode> {
     initFileActions(this);
   }
 
-  async open(isFirst: boolean) {
+  async open() {
     await this.templateRenderer.parse(
       'root',
       await this.explorer.args.value(argOptions.fileRootTemplate),
@@ -195,9 +195,7 @@ export class FileSource extends ExplorerSource<FileNode> {
 
     const args = this.explorer.args;
     this.root = await args.value(argOptions.rootUri);
-    if (isFirst) {
-      this.expandStore.expanded(this.rootNode, this.defaultExpanded);
-    }
+    this.expandStore.expanded(this.rootNode, this.defaultExpanded);
   }
 
   async cd(fullpath: string) {
