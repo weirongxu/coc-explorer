@@ -386,6 +386,10 @@ Default: <pre><code>[
 ]</code></pre>
 </details>
 <details>
+<summary><code>explorer.floating.title</code>: . type: <code>string</code></summary>
+Default: <pre><code>"coc-explorer"</code></pre>
+</details>
+<details>
 <summary><code>explorer.autoExpandSingleNode</code>: Automatically expand next node when it's a single node. type: <code>boolean</code></summary>
 Default: <pre><code>true</code></pre>
 </details>

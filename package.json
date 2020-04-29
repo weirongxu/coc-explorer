@@ -268,6 +268,10 @@
             "│"
           ]
         },
+        "explorer.floating.title": {
+          "type": "string",
+          "default": "coc-explorer"
+        },
         "explorer.autoExpandSingleNode": {
           "description": "Automatically expand next node when it's a single node",
           "type": "boolean",

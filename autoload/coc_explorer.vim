@@ -1,7 +1,18 @@
 let s:explorer_root = expand('<sfile>:p:h:h')
 
 " Buffer & window manage
-function! coc_explorer#create(name, explorer_id, position, width, height, left, top, floating_border_enable, floating_border_chars)
+function! coc_explorer#create(
+      \  name,
+      \  explorer_id,
+      \  position,
+      \  width,
+      \  height,
+      \  left,
+      \  top,
+      \  floating_border_enable,
+      \  floating_border_chars,
+      \  floating_title
+      \)
   let name = a:name.'-'.a:explorer_id
   let floating_border_bufnr = v:null
   if a:position ==# 'tab'
@@ -18,10 +29,27 @@ function! coc_explorer#create(name, explorer_id, position, width, height, left, 
     let floating_winid = v:null
     if a:floating_border_enable
       let floating_border_bufnr = nvim_create_buf(v:false, v:true)
-      call s:floating_border_buffer_render(floating_border_bufnr, a:floating_border_chars, a:width, a:height, a:left, a:top, v:true)
-      let floating_winid = nvim_open_win(nvim_create_buf(v:false, v:true), v:true, s:floating_win_config(a:width-2, a:height-2, a:left+1, a:top+1))
+      call s:floating_border_buffer_render(
+            \  floating_border_bufnr,
+            \  a:floating_border_chars,
+            \  a:floating_title,
+            \  a:width,
+            \  a:height,
+            \  a:left,
+            \  a:top,
+            \  v:true
+            \)
+      let floating_winid = nvim_open_win(
+            \  nvim_create_buf(v:false, v:true),
+            \  v:true,
+            \  s:floating_win_config(a:width-2, a:height-2, a:left+1, a:top+1)
+            \)
     else
-      let floating_winid = nvim_open_win(nvim_create_buf(v:false, v:true), v:true, s:floating_win_config(a:width, a:height, a:left, a:top))
+      let floating_winid = nvim_open_win(
+            \  nvim_create_buf(v:false, v:true),
+            \  v:true,
+            \  s:floating_win_config(a:width, a:height, a:left, a:top)
+            \)
     endif
     call nvim_win_set_option(floating_winid, 'winhl', 'Normal:CocExplorerNormalFloat')
   else
@@ -31,7 +59,18 @@ function! coc_explorer#create(name, explorer_id, position, width, height, left, 
   return [bufnr('%'), floating_border_bufnr]
 endfunction
 
-function! coc_explorer#resume(bufnr, position, width, height, left, top, floating_border_bufnr, floating_border_enable, floating_border_chars)
+function! coc_explorer#resume(
+      \  bufnr,
+      \  position,
+      \  width,
+      \  height,
+      \  left,
+      \  top,
+      \  floating_border_bufnr,
+      \  floating_border_enable,
+      \  floating_border_chars,
+      \  floating_title
+      \)
   if a:position ==# 'left'
     wincmd t
     execute 'silent keepalt leftabove vertical sb '.a:bufnr
@@ -42,20 +81,54 @@ function! coc_explorer#resume(bufnr, position, width, height, left, top, floatin
     call coc_explorer#resize_win(a:position, a:width)
   elseif a:position ==# 'floating'
     if a:floating_border_enable && a:floating_border_bufnr isnot v:null
-      call s:floating_border_buffer_render(a:floating_border_bufnr, a:floating_border_chars, a:width, a:height, a:left, a:top, v:true)
-      call nvim_open_win(a:bufnr, v:true, s:floating_win_config(a:width-2, a:height-2, a:left+1, a:top+1))
+      call s:floating_border_buffer_render(
+            \  a:floating_border_bufnr,
+            \  a:floating_border_chars,
+            \  a:floating_title,
+            \  a:width,
+            \  a:height,
+            \  a:left,
+            \  a:top,
+            \  v:true
+            \)
+      call nvim_open_win(
+            \  a:bufnr,
+            \  v:true,
+            \  s:floating_win_config(a:width-2, a:height-2, a:left+1, a:top+1)
+            \)
     else
-      call nvim_open_win(a:bufnr, v:true, s:floating_win_config(a:width, a:height, a:left, a:top))
+      call nvim_open_win(
+            \  a:bufnr,
+            \  v:true,
+            \  s:floating_win_config(a:width, a:height, a:left, a:top)
+            \)
     endif
   else
     throw 'No support position '.a:position
   endif
 endfunction
 
-function s:floating_border_buffer_render(bufnr, chars, width, height, left, top, is_first)
-  let winid = nvim_open_win(a:bufnr, v:true, s:floating_win_config(a:width, a:height, a:left, a:top))
+function s:floating_border_buffer_render(
+      \  bufnr,
+      \  chars,
+      \  title,
+      \  width,
+      \  height,
+      \  left,
+      \  top,
+      \  is_first
+      \)
+  let winid = nvim_open_win(
+        \  a:bufnr,
+        \  v:true,
+        \  s:floating_win_config(a:width, a:height, a:left, a:top)
+        \)
   let repeat_width = a:width - 2
-  let content = [a:chars[0] . repeat(a:chars[1], repeat_width) . a:chars[2]]
+  let content = [
+        \ a:chars[0]
+        \ . ' ' . a:title . ' '
+        \ . repeat(a:chars[1], repeat_width - strdisplaywidth(a:title) - 2)
+        \ . a:chars[2]]
   let content += repeat([a:chars[7] . repeat(' ', repeat_width) . a:chars[3]], a:height - 2)
   let content += [a:chars[6] . repeat(a:chars[5], repeat_width) . a:chars[4]]
   set modifiable
