@@ -2,7 +2,7 @@ import { BasicList, Neovim } from 'coc.nvim';
 import { getPresets } from '../presets';
 import { onError } from '../logger';
 
-export class PresetsList extends BasicList {
+export class PresetList extends BasicList {
   readonly name = 'explPresets';
   readonly defaultAction = 'do';
   public description = 'explorer presets';

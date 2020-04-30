@@ -21,6 +21,8 @@ import open from 'open';
 import { driveList } from '../../../lists/drives';
 import { gitManager } from '../../../gitManager';
 import { RevealStrategy, OpenStrategy } from '../../../types';
+import { explorerWorkspaceFolderList } from '../../../lists/workspaceFolders';
+import { WorkspaceEdit, RenameFile } from 'vscode-languageserver-protocol';
 
 export function initFileActions(file: FileSource) {
   const { nvim } = file;
@@ -139,8 +141,18 @@ export function initFileActions(file: FileSource) {
     'change directory to current node',
   );
   file.addNodeAction(
+    'workspaceFolders',
+    async () => {
+      explorerWorkspaceFolderList.setFileSource(file);
+      const disposable = listManager.registerList(explorerWorkspaceFolderList);
+      await listManager.start(['--normal', explorerWorkspaceFolderList.name]);
+      disposable.dispose();
+    },
+    'change directory to current node',
+  );
+  file.addNodeAction(
     'open',
-    async (node, [arg]) => {
+    async (node, [openStrategy, ...args]) => {
       if (node.directory) {
         const directoryAction = getOpenActionForDirectory();
         if (directoryAction) {
@@ -148,7 +160,8 @@ export function initFileActions(file: FileSource) {
         }
       } else {
         await file.openAction(node, {
-          openStrategy: arg as OpenStrategy,
+          openStrategy: openStrategy as OpenStrategy,
+          args,
         });
       }
     },

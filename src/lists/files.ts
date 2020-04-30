@@ -56,7 +56,7 @@ class Task extends EventEmitter implements ListTask {
   }
 }
 
-export default class FilesList extends BasicList {
+export default class FileList extends BasicList {
   readonly name = 'explorerFiles';
   readonly defaultAction = 'reveal';
   revealCallback?: (location: Location) => void | Promise<void>;
@@ -122,4 +122,4 @@ export default class FilesList extends BasicList {
   }
 }
 
-export const filesList = new FilesList(workspace.nvim);
+export const fileList = new FileList(workspace.nvim);

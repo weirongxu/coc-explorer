@@ -23,7 +23,7 @@ import { ExplorerSource, BaseTreeNode } from '../../source';
 import { sourceManager } from '../../sourceManager';
 import { fileColumnRegistrar } from './fileColumnRegistrar';
 import './load';
-import { filesList } from '../../../lists/files';
+import { fileList } from '../../../lists/files';
 import { initFileActions } from './fileActions';
 import { homedir } from 'os';
 import { labelHighlight, TemplateRenderer } from '../../templateRenderer';
@@ -277,10 +277,10 @@ export class FileSource extends ExplorerSource<FileNode> {
   }
 
   async searchByCocList(path: string, recursive: boolean) {
-    filesList.showHidden = this.showHidden;
-    filesList.rootPath = path;
-    filesList.recursive = recursive;
-    filesList.revealCallback = async (loc) => {
+    fileList.showHidden = this.showHidden;
+    fileList.rootPath = path;
+    fileList.recursive = recursive;
+    fileList.revealCallback = async (loc) => {
       await task.waitShow();
       const [, notifiers] = await this.revealNodeByPathNotifier(
         Uri.parse(loc.uri).fsPath,
@@ -292,7 +292,7 @@ export class FileSource extends ExplorerSource<FileNode> {
       await Notifier.runAll(notifiers);
     };
 
-    const task = await this.startCocList(filesList);
+    const task = await this.startCocList(fileList);
     await task.waitShow();
   }
 

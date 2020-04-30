@@ -328,10 +328,12 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>> {
         }
       },
       openStrategy,
+      args = [],
     }: {
       openByWinnr?: (winnr: number) => void | Promise<void>;
       getURI?: () => string | Promise<string>;
       openStrategy?: OpenStrategy;
+      args?: string[];
     },
   ) {
     if (node.expandable) {
@@ -375,9 +377,9 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>> {
           },
         );
       },
-      split: async (args) => {
+      split: async (args = []) => {
         type Mode = 'intelligent' | 'plain';
-        const mode: Mode = (args?.[0] ?? 'intelligent') as Mode;
+        const mode: Mode = (args[0] ?? 'intelligent') as Mode;
         if (mode === 'plain') {
           await nvim.command(`split ${await getURI()}`);
           await this.explorer.tryQuitOnOpen();
@@ -470,7 +472,7 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>> {
     const openStrategyOption = await this.explorer.args.value(
       argOptions.openActionStrategy,
     );
-    await actions[openStrategy ?? openStrategyOption]();
+    await actions[openStrategy ?? openStrategyOption](args);
   }
 
   async previewAction(node: TreeNode, previewStrategy?: PreviewStrategy) {

@@ -2,7 +2,7 @@ import { ExtensionContext, commands, workspace, listManager } from 'coc.nvim';
 import { registerLogger, onError } from './logger';
 import { hlGroupManager } from './source/highlightManager';
 import { ExplorerManager } from './explorerManager';
-import { PresetsList } from './lists/presets';
+import { PresetList } from './lists/presets';
 import { registerVimApi } from './vimApi';
 import { registerBufDeleteEvents } from './util';
 
@@ -18,7 +18,7 @@ export const activate = async (context: ExtensionContext) => {
   const normalFloat = hlGroupManager.linkGroup('NormalFloat', 'NormalFloat');
   hlGroupManager.linkGroup('NormalFloatBorder', normalFloat.group);
 
-  listManager.registerList(new PresetsList(nvim));
+  listManager.registerList(new PresetList(nvim));
 
   const explorerManager = new ExplorerManager(context);
 
