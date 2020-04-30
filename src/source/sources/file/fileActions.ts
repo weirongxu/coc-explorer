@@ -50,7 +50,7 @@ export function initFileActions(file: FileSource) {
   );
   file.addNodesAction(
     'reveal',
-    async (_nodes, args) => {
+    async ({ args }) => {
       const target = args[0];
       let targetBufnr: number | null = null;
       let targetPath: string | null = null;
@@ -122,7 +122,7 @@ export function initFileActions(file: FileSource) {
   );
   file.addNodeAction(
     'cd',
-    async (node, args) => {
+    async ({ node, args }) => {
       const cdTo = async (fullpath: string) => {
         await file.cd(fullpath);
         file.root = fullpath;
@@ -152,7 +152,7 @@ export function initFileActions(file: FileSource) {
   );
   file.addNodeAction(
     'open',
-    async (node, [openStrategy, ...args]) => {
+    async ({ node, args: [openStrategy, ...args] }) => {
       if (node.directory) {
         const directoryAction = getOpenActionForDirectory();
         if (directoryAction) {
@@ -170,7 +170,7 @@ export function initFileActions(file: FileSource) {
   );
   file.addNodeAction(
     'drop',
-    async (node) => {
+    async ({ node }) => {
       if (!node.directory) {
         await nvim.command(`drop ${node.fullpath}`);
         await file.explorer.tryQuitOnOpen();
@@ -181,7 +181,7 @@ export function initFileActions(file: FileSource) {
   );
   file.addNodeAction(
     'expand',
-    async (node) => {
+    async ({ node }) => {
       if (node.directory) {
         await file.expandNode(node);
       }
@@ -191,7 +191,7 @@ export function initFileActions(file: FileSource) {
   );
   file.addNodeAction(
     'expandRecursive',
-    async (node) => {
+    async ({ node }) => {
       if (node.directory) {
         await file.expandNode(node, { recursive: true });
       }
@@ -201,7 +201,7 @@ export function initFileActions(file: FileSource) {
   );
   file.addNodeAction(
     'collapse',
-    async (node) => {
+    async ({ node }) => {
       if (node.directory && file.expandStore.isExpanded(node)) {
         await file.collapseNode(node);
       } else if (node.parent) {
@@ -213,7 +213,7 @@ export function initFileActions(file: FileSource) {
   );
   file.addNodeAction(
     'collapseRecursive',
-    async (node) => {
+    async ({ node }) => {
       if (node.directory && file.expandStore.isExpanded(node)) {
         await file.collapseNode(node, { recursive: true });
       } else if (node.parent) {
@@ -225,7 +225,7 @@ export function initFileActions(file: FileSource) {
   );
   file.addNodeAction(
     'expandOrCollapse',
-    async (node) => {
+    async ({ node }) => {
       if (node.directory) {
         if (file.expandStore.isExpanded(node)) {
           await file.doAction('collapse', node);
@@ -240,7 +240,7 @@ export function initFileActions(file: FileSource) {
 
   file.addNodesAction(
     'copyFilepath',
-    async (nodes) => {
+    async ({ nodes }) => {
       await file.copy(
         nodes ? nodes.map((it) => it.fullpath).join('\n') : file.root,
       );
@@ -251,7 +251,7 @@ export function initFileActions(file: FileSource) {
   );
   file.addNodesAction(
     'copyFilename',
-    async (nodes) => {
+    async ({ nodes }) => {
       await file.copy(
         nodes
           ? nodes.map((it) => it.name).join('\n')
@@ -264,7 +264,7 @@ export function initFileActions(file: FileSource) {
   );
   file.addNodesAction(
     'copyFile',
-    async (nodes) => {
+    async ({ nodes }) => {
       const clearNodes = [...file.copiedNodes, ...file.cutNodes];
       file.copiedNodes.clear();
       file.cutNodes.clear();
@@ -277,7 +277,7 @@ export function initFileActions(file: FileSource) {
   );
   file.addNodesAction(
     'cutFile',
-    async (nodes) => {
+    async ({ nodes }) => {
       const clearNodes = [...file.copiedNodes, ...file.cutNodes];
       file.copiedNodes.clear();
       file.cutNodes.clear();
@@ -290,7 +290,7 @@ export function initFileActions(file: FileSource) {
   );
   file.addNodeAction(
     'pasteFile',
-    async (node) => {
+    async ({ node }) => {
       const targetDir = file.getPutTargetDir(node);
       if (file.copiedNodes.size > 0) {
         const nodes = Array.from(file.copiedNodes);
@@ -324,7 +324,7 @@ export function initFileActions(file: FileSource) {
   );
   file.addNodesAction(
     'delete',
-    async (nodes) => {
+    async ({ nodes }) => {
       if (
         nodes.some((node) => file.bufManager.modified(node.fullpath)) &&
         (await prompt('Buffer is being modified, discard it?')) !== 'yes'
@@ -351,7 +351,7 @@ export function initFileActions(file: FileSource) {
   );
   file.addNodesAction(
     'deleteForever',
-    async (nodes) => {
+    async ({ nodes }) => {
       if (
         nodes.some((node) => file.bufManager.modified(node.fullpath)) &&
         (await prompt('Buffer is being modified, discard it?')) !== 'yes'
@@ -379,8 +379,9 @@ export function initFileActions(file: FileSource) {
 
   file.addNodeAction(
     'addFile',
-    async (node, [arg]) => {
-      let filename = arg ?? (await input('Input a new filename: ', '', 'file'));
+    async ({ node, args }) => {
+      let filename =
+        args[0] ?? (await input('Input a new filename: ', '', 'file'));
       filename = filename.trim();
       if (!filename) {
         return;
@@ -414,9 +415,9 @@ export function initFileActions(file: FileSource) {
   );
   file.addNodeAction(
     'addDirectory',
-    async (node, [arg]) => {
+    async ({ node, args }) => {
       let directoryName =
-        arg ?? (await input('Input a new directory name: ', '', 'file'));
+        args[0] ?? (await input('Input a new directory name: ', '', 'file'));
       directoryName = directoryName.trim().replace(/(\/|\\)*$/g, '');
       if (!directoryName) {
         return;
@@ -449,7 +450,7 @@ export function initFileActions(file: FileSource) {
   );
   file.addNodeAction(
     'rename',
-    async (node) => {
+    async ({ node }) => {
       if (
         file.bufManager.modified(node.fullpath) &&
         (await prompt('Buffer is being modified, discard it?')) !== 'yes'
@@ -486,7 +487,7 @@ export function initFileActions(file: FileSource) {
 
   file.addNodesAction(
     'systemExecute',
-    async (nodes) => {
+    async ({ nodes }) => {
       if (nodes) {
         await Promise.all(nodes.map((node) => open(node.fullpath)));
       } else {
@@ -525,7 +526,7 @@ export function initFileActions(file: FileSource) {
 
   file.addNodeAction(
     'search',
-    async (node) => {
+    async ({ node }) => {
       await file.searchByCocList(
         node.isRoot ? node.fullpath : pathLib.dirname(node.fullpath),
         false,
@@ -536,7 +537,7 @@ export function initFileActions(file: FileSource) {
 
   file.addNodeAction(
     'searchRecursive',
-    async (node) => {
+    async ({ node }) => {
       await file.searchByCocList(pathLib.dirname(node.fullpath), true);
     },
     'search by coc-list recursively',
@@ -544,7 +545,7 @@ export function initFileActions(file: FileSource) {
 
   file.addNodesAction(
     'gitStage',
-    async (nodes) => {
+    async ({ nodes }) => {
       await gitManager.cmd.stage(...nodes.map((node) => node.fullpath));
       await file.reload(file.rootNode);
     },
@@ -553,7 +554,7 @@ export function initFileActions(file: FileSource) {
 
   file.addNodesAction(
     'gitUnstage',
-    async (nodes) => {
+    async ({ nodes }) => {
       await gitManager.cmd.unstage(...nodes.map((node) => node.fullpath));
       await file.reload(file.rootNode);
     },

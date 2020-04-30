@@ -64,10 +64,11 @@ export class Explorer {
     {
       description: string;
       options: Partial<ActionOptions>;
-      callback: (
-        nodes: BaseTreeNode<any>[],
-        args: string[],
-      ) => void | Promise<void>;
+      callback: (options: {
+        nodes: BaseTreeNode<any>[];
+        args: string[];
+        mode: ActionMode;
+      }) => void | Promise<void>;
     }
   > = {};
   context: ExtensionContext;
@@ -297,9 +298,9 @@ export class Explorer {
     );
     this.addGlobalAction(
       'normal',
-      async (_node, [arg]) => {
-        if (arg) {
-          await this.nvim.command('normal ' + arg);
+      async ({ args }) => {
+        if (args[0]) {
+          await this.nvim.command('normal ' + args[0]);
         }
       },
       'execute vim normal mode commands',
@@ -313,11 +314,11 @@ export class Explorer {
     );
     this.addGlobalAction(
       'preview',
-      async (nodes, [arg]) => {
+      async ({ nodes, args }) => {
         const source = await this.currentSource();
         if (nodes && nodes[0] && source) {
           const node = nodes[0];
-          return source.previewAction(node, arg as PreviewStrategy);
+          return source.previewAction(node, args[0] as PreviewStrategy);
         }
       },
       'preview',
@@ -325,8 +326,8 @@ export class Explorer {
 
     this.addGlobalAction(
       'gotoSource',
-      async (_nodes, [arg]) => {
-        const source = this.sources.find((s) => s.sourceType === arg);
+      async ({ args }) => {
+        const source = this.sources.find((s) => s.sourceType === args[0]);
         if (source) {
           await source.gotoLineIndex(0);
         }
@@ -652,10 +653,11 @@ export class Explorer {
 
   addGlobalAction(
     name: string,
-    callback: (
-      nodes: BaseTreeNode<any>[],
-      args: string[],
-    ) => void | Promise<void>,
+    callback: (options: {
+      nodes: BaseTreeNode<any>[];
+      args: string[];
+      mode: ActionMode;
+    }) => void | Promise<void>,
     description: string,
     options: Partial<ActionOptions> = {},
   ) {
@@ -747,7 +749,7 @@ export class Explorer {
   async doActions(
     selectedLineIndexes: Set<number>,
     actions: Action[],
-    _mode: ActionMode,
+    mode: ActionMode,
   ) {
     const nodesGroup: Map<ExplorerSource<any>, BaseTreeNode<any>[]> = new Map();
     for (const lineIndex of selectedLineIndexes) {
@@ -771,17 +773,23 @@ export class Explorer {
           const [trueAction, falseAction] = [actions[i + 1], actions[i + 2]];
           i += 2;
           if (trueNodes.length) {
-            await source.doAction(trueAction.name, trueNodes, trueAction.args);
+            await source.doAction(
+              trueAction.name,
+              trueNodes,
+              trueAction.args,
+              mode,
+            );
           }
           if (falseNodes.length) {
             await source.doAction(
               falseAction.name,
               falseNodes,
               falseAction.args,
+              mode,
             );
           }
         } else {
-          await source.doAction(action.name, nodes, action.args);
+          await source.doAction(action.name, nodes, action.args, mode);
         }
       }
     }

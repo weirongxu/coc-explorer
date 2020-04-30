@@ -6,7 +6,7 @@ export function initBufferActions(buffer: BufferSource) {
   const { nvim } = buffer;
   buffer.addNodeAction(
     'expand',
-    async (node) => {
+    async ({ node }) => {
       if (node.expandable) {
         await buffer.expandNode(node);
       }
@@ -16,7 +16,7 @@ export function initBufferActions(buffer: BufferSource) {
   );
   buffer.addNodeAction(
     'collapse',
-    async (node) => {
+    async ({ node }) => {
       if (node.expandable && buffer.expandStore.isExpanded(node)) {
         await buffer.collapseNode(node);
       } else if (node.parent) {
@@ -28,7 +28,7 @@ export function initBufferActions(buffer: BufferSource) {
   );
   buffer.addNodeAction(
     'expandOrCollapse',
-    async (node) => {
+    async ({ node }) => {
       if (node.expandable) {
         if (buffer.expandStore.isExpanded(node)) {
           await buffer.doAction('collapse', node);
@@ -42,7 +42,7 @@ export function initBufferActions(buffer: BufferSource) {
   );
   buffer.addNodeAction(
     'open',
-    async (node, [openStrategy, ...args]) => {
+    async ({ node, args: [openStrategy, ...args] }) => {
       await buffer.openAction(node, {
         async getURI() {
           return (await nvim.call('fnameescape', node.bufname)) as string;
@@ -56,7 +56,7 @@ export function initBufferActions(buffer: BufferSource) {
   );
   buffer.addNodeAction(
     'drop',
-    async (node) => {
+    async ({ node }) => {
       if (!node.hidden) {
         const info = (await nvim.call('getbufinfo', node.bufnr)) as any[];
         if (info.length && info[0].windows.length) {
@@ -74,7 +74,7 @@ export function initBufferActions(buffer: BufferSource) {
   );
   buffer.addNodeAction(
     'delete',
-    async (node) => {
+    async ({ node }) => {
       if (
         buffer.bufManager.modified(node.fullpath) &&
         (await prompt('Buffer is being modified, delete it?')) !== 'yes'
@@ -88,7 +88,7 @@ export function initBufferActions(buffer: BufferSource) {
   );
   buffer.addNodeAction(
     'deleteForever',
-    async (node) => {
+    async ({ node }) => {
       if (
         buffer.bufManager.modified(node.fullpath) &&
         (await prompt('Buffer is being modified, wipeout it?')) !== 'yes'
