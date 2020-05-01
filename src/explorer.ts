@@ -360,13 +360,27 @@ export class Explorer {
     );
 
     this.addGlobalAction(
+      'modifiedPrev',
+      async () => {
+        await this.gotoPrevLineIndex('modified');
+      },
+      'go to previous modified',
+    );
+    this.addGlobalAction(
+      'modifiedNext',
+      async () => {
+        await this.gotoNextLineIndex('modified');
+      },
+      'go to next modified',
+    );
+
+    this.addGlobalAction(
       'diagnosticPrev',
       async () => {
         await this.gotoPrevLineIndex('diagnosticError', 'diagnosticWarning');
       },
       'go to previous diagnostic',
     );
-
     this.addGlobalAction(
       'diagnosticNext',
       async () => {
@@ -382,7 +396,6 @@ export class Explorer {
       },
       'go to previous git changed',
     );
-
     this.addGlobalAction(
       'gitNext',
       async () => {

@@ -82,6 +82,9 @@ export class IndexesManager {
   }
 
   offsetLines(offset: number, startLine: number, endLine: number = Infinity) {
+    if (offset === 0) {
+      return;
+    }
     this.linesMap.forEach((lines, name) => {
       const newLines = new Set<number>();
       lines.forEach((line) => {
