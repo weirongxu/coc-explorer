@@ -22,7 +22,6 @@ import { driveList } from '../../../lists/drives';
 import { gitManager } from '../../../gitManager';
 import { RevealStrategy, OpenStrategy } from '../../../types';
 import { explorerWorkspaceFolderList } from '../../../lists/workspaceFolders';
-import { WorkspaceEdit, RenameFile } from 'vscode-languageserver-protocol';
 
 export function initFileActions(file: FileSource) {
   const { nvim } = file;

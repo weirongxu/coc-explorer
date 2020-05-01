@@ -822,7 +822,7 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>> {
       .slice(this.currentSourceIndex() + 1)
       .forEach((source) => {
         source.startLineIndex += offset;
-        source.offsetAfterLine(offset, source.startLineIndex);
+        source.endLineIndex += offset;
       });
   }
 

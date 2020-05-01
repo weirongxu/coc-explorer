@@ -83,6 +83,9 @@ const defaultMappingGroups: Record<
     '[[': 'sourcePrev',
     ']]': 'sourceNext',
 
+    '[m': 'modifiedPrev',
+    ']m': 'modifiedNext',
+
     '[d': 'diagnosticPrev',
     ']d': 'diagnosticNext',
 

@@ -4,7 +4,7 @@ import { fileHighlights } from '../fileSource';
 fileColumnRegistrar.registerColumn('child', 'modified', ({ source }) => ({
   labelOnly: true,
   labelVisible: (node) => source.bufManager.modified(node.fullpath),
-  draw(row, node) {
+  draw(row, node, { nodeIndex }) {
     let modified: boolean = false;
     if (node.directory) {
       if (!source.expandStore.isExpanded(node)) {
@@ -16,5 +16,8 @@ fileColumnRegistrar.registerColumn('child', 'modified', ({ source }) => ({
     row.add(modified ? '+' : '', {
       hl: fileHighlights.readonly,
     });
+    modified
+      ? source.addIndexes('modified', nodeIndex)
+      : source.removeIndexes('modified', nodeIndex);
   },
 }));
