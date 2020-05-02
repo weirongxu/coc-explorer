@@ -17,6 +17,9 @@ export const getPreviewStrategy = () =>
 
 export const getDatetimeFormat = () => config.get<string>('datetime.format')!;
 
+export const getEnableVimDevicons = () =>
+  config.get<boolean>('icon.enableVimDevicons')!;
+
 export const getEnableNerdfont = () =>
   config.get<string>('icon.enableNerdfont')!;
 
