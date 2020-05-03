@@ -43,10 +43,17 @@ export function onBufEnter(
   delay?: number,
   disposables?: Disposable[],
 ) {
+  const handler2 = (bufnr: number) => {
+    let prevBufnr = 0;
+    if (bufnr !== prevBufnr) {
+      prevBufnr = bufnr;
+      handler(bufnr);
+    }
+  };
   const fn =
     delay !== undefined
-      ? throttle(delay, handler, { leading: false, trailing: true })
-      : handler;
+      ? throttle(delay, handler2, { leading: false, trailing: true })
+      : handler2;
 
   const disposable = Disposable.create(() => {
     const index = onBufEnterHandlers.indexOf(fn);
