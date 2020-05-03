@@ -12,7 +12,6 @@ import {
   prompt,
   overwritePrompt,
   Notifier,
-  getOpenActionForDirectory,
   input,
   bufnrByWinnrOrWinid,
 } from '../../../util';
@@ -153,7 +152,7 @@ export function initFileActions(file: FileSource) {
     'open',
     async ({ node, args: [openStrategy, ...args] }) => {
       if (node.directory) {
-        const directoryAction = getOpenActionForDirectory();
+        const directoryAction = file.config.openActionForDirectory;
         if (directoryAction) {
           await file.doAction(directoryAction, node);
         }

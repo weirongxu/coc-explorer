@@ -1,16 +1,5 @@
 import { fileColumnRegistrar } from '../fileColumnRegistrar';
 import { FileNode, fileHighlights } from '../fileSource';
-import { getEnableNerdfont } from '../../../../util';
-
-export const getIndentChars = () => fileColumnRegistrar.getColumnConfig<string>('indent.chars');
-const getIndentLine = () => {
-  const indentLine = fileColumnRegistrar.getColumnConfig<boolean | undefined>('indent.indentLine');
-  if (getEnableNerdfont() && indentLine === undefined) {
-    return true;
-  } else {
-    return indentLine;
-  }
-};
 
 /**
  * indentLine
@@ -43,12 +32,25 @@ function printIndentLine(node: FileNode) {
   return row;
 }
 
-fileColumnRegistrar.registerColumn('child', 'indent', () => ({
+fileColumnRegistrar.registerColumn('child', 'indent', ({ source }) => ({
   draw(row, node) {
-    if (getIndentLine()) {
+    const enableIndentLine = (() => {
+      const indentLine = source.getColumnConfig<boolean | undefined>(
+        'indent.indentLine',
+      );
+      if (source.config.getEnableNerdfont && indentLine === undefined) {
+        return true;
+      } else {
+        return indentLine;
+      }
+    })();
+
+    if (enableIndentLine) {
       row.add(printIndentLine(node), { hl: fileHighlights.indentLine });
     } else {
-      row.add(getIndentChars().repeat(node.level - 1));
+      row.add(
+        source.getColumnConfig<string>('indent.chars').repeat(node.level - 1),
+      );
     }
   },
 }));

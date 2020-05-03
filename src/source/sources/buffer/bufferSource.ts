@@ -1,6 +1,5 @@
 import { workspace } from 'coc.nvim';
 import {
-  getActiveMode,
   onBufEnter,
   debounce,
   config,
@@ -80,7 +79,7 @@ export class BufferSource extends ExplorerSource<BufferNode> {
   >(this, bufferColumnRegistrar);
 
   async init() {
-    if (getActiveMode()) {
+    if (this.config.activeMode) {
       if (workspace.isNvim) {
         this.subscriptions.push(
           this.bufManager.onReload(

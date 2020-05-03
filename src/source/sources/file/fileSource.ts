@@ -3,8 +3,6 @@ import fs from 'fs';
 import pathLib from 'path';
 import { onError } from '../../../logger';
 import {
-  getActiveMode,
-  getAutoReveal,
   config,
   onBufEnter,
   fsAccess,
@@ -128,12 +126,16 @@ export class FileSource extends ExplorerSource<FileNode> {
     this.rootNode.children = undefined;
   }
 
+  getColumnConfig<T>(name: string, defaultValue?: T): T {
+    return this.config.get('file.column.' + name, defaultValue)!;
+  }
+
   async init() {
     const { nvim } = this;
 
-    if (getActiveMode()) {
+    if (this.config.activeMode) {
       if (workspace.isNvim) {
-        if (getAutoReveal()) {
+        if (this.config.autoReveal) {
           this.subscriptions.push(
             onBufEnter(async (bufnr) => {
               if (bufnr === this.explorer.bufnr) {
@@ -239,7 +241,7 @@ export class FileSource extends ExplorerSource<FileNode> {
 
     const hasRevealPath = args.has(argOptions.reveal);
 
-    if (getAutoReveal() || hasRevealPath) {
+    if (this.config.autoReveal || hasRevealPath) {
       const [revealNode, notifiers] = await this.revealNodeByPathNotifier(
         revealPath,
         {

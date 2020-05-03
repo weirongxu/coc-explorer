@@ -5,23 +5,6 @@ import pathLib from 'path';
 import { debounce, onEvents } from '../../../../util';
 import { fileHighlights } from '../fileSource';
 
-const getIconConf = (name: string) => {
-  return fileColumnRegistrar.getColumnConfig<string>('git.icon.' + name)!;
-};
-
-const statusIcons = {
-  [GitFormat.mixed]: getIconConf('mixed'),
-  [GitFormat.unmodified]: getIconConf('unmodified'),
-  [GitFormat.modified]: getIconConf('modified'),
-  [GitFormat.added]: getIconConf('added'),
-  [GitFormat.deleted]: getIconConf('deleted'),
-  [GitFormat.renamed]: getIconConf('renamed'),
-  [GitFormat.copied]: getIconConf('copied'),
-  [GitFormat.unmerged]: getIconConf('unmerged'),
-  [GitFormat.untracked]: getIconConf('untracked'),
-  [GitFormat.ignored]: getIconConf('ignored'),
-};
-
 fileColumnRegistrar.registerColumn<{
   prevStatuses: Record<string, GitMixedStatus>;
 }>('child', 'git', ({ source, column }) => ({
@@ -93,8 +76,27 @@ fileColumnRegistrar.registerColumn<{
     column.data.prevStatuses = await gitManager.getStatuses(folderPath);
   },
   draw(row, node, { nodeIndex }) {
+    const getIconConf = (name: string) => {
+      return source.getColumnConfig<string>('git.icon.' + name)!;
+    };
+
+    const statusIcons = {
+      [GitFormat.mixed]: getIconConf('mixed'),
+      [GitFormat.unmodified]: getIconConf('unmodified'),
+      [GitFormat.modified]: getIconConf('modified'),
+      [GitFormat.added]: getIconConf('added'),
+      [GitFormat.deleted]: getIconConf('deleted'),
+      [GitFormat.renamed]: getIconConf('renamed'),
+      [GitFormat.copied]: getIconConf('copied'),
+      [GitFormat.unmerged]: getIconConf('unmerged'),
+      [GitFormat.untracked]: getIconConf('untracked'),
+      [GitFormat.ignored]: getIconConf('ignored'),
+    };
+
     const showFormat = (f: string, staged: boolean) => {
-      row.add(f, { hl: staged ? fileHighlights.gitStage : fileHighlights.gitUnstage });
+      row.add(f, {
+        hl: staged ? fileHighlights.gitStage : fileHighlights.gitUnstage,
+      });
     };
     const status = gitManager.getStatus(node.fullpath);
     if (status) {

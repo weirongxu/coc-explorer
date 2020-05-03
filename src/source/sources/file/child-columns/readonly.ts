@@ -1,15 +1,17 @@
 import { fileColumnRegistrar } from '../fileColumnRegistrar';
 import { fileHighlights } from '../fileSource';
-import { getEnableNerdfont } from '../../../../util';
 
-fileColumnRegistrar.registerColumn('child', 'readonly', () => ({
+fileColumnRegistrar.registerColumn('child', 'readonly', ({ source }) => ({
   labelOnly: true,
   labelVisible: (node) => node.readonly,
   draw(row, node) {
     if (node.readonly) {
-      row.add(node.readonly ? (getEnableNerdfont() ? '' : 'RO') : '', {
-        hl: fileHighlights.readonly,
-      });
+      row.add(
+        node.readonly ? (source.config.getEnableNerdfont ? '' : 'RO') : '',
+        {
+          hl: fileHighlights.readonly,
+        },
+      );
     }
   },
 }));

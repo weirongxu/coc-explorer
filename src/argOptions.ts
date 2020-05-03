@@ -23,10 +23,7 @@ export const argOptions = {
           useGetcwd = true;
         }
       }
-      const rootPath = useGetcwd
-        ? ((await workspace.nvim.call('getcwd', [])) as string)
-        : workspace.rootPath;
-      return rootPath;
+      return useGetcwd ? workspace.cwd : workspace.rootPath;
     },
     handler: (path: string) => normalizePath(path),
   }),

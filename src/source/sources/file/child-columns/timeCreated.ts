@@ -1,12 +1,11 @@
 import { fileColumnRegistrar } from '../fileColumnRegistrar';
 import { format } from 'date-fns';
-import { getDatetimeFormat } from '../../../../util';
 import { fileHighlights } from '../fileSource';
 
-fileColumnRegistrar.registerColumn('child', 'timeCreated', () => ({
+fileColumnRegistrar.registerColumn('child', 'timeCreated', ({ source }) => ({
   draw(row, node) {
     if (node.lstat) {
-      row.add(format(node.lstat.ctime, getDatetimeFormat()), {
+      row.add(format(node.lstat.ctime, source.config.datetimeFormat), {
         hl: fileHighlights.timeCreated,
       });
     }

@@ -1,6 +1,4 @@
 import { fileColumnRegistrar } from '../fileColumnRegistrar';
-import { sourceIcons } from '../../../source';
-import { getEnableNerdfont, getEnableVimDevicons } from '../../../../util';
 import { workspace } from 'coc.nvim';
 import { FileNode, fileHighlights } from '../fileSource';
 import { getSymbol } from '../../../../util/symbol';
@@ -21,7 +19,7 @@ function getAttr(node: FileNode) {
 
 fileColumnRegistrar.registerColumn('child', 'icon', ({ source }) => ({
   async beforeDraw(nodes) {
-    if (getEnableVimDevicons()) {
+    if (source.config.enableVimDevicons) {
       await Promise.all(
         nodes.map(async (node) => {
           getAttr(
@@ -35,13 +33,15 @@ fileColumnRegistrar.registerColumn('child', 'icon', ({ source }) => ({
     }
   },
   async draw(row, node) {
+    const enabledVimDevicons = source.config.enableVimDevicons;
+    const enabledNerdFont = source.config.getEnableNerdfont;
     if (node.directory) {
       const hl = source.expandStore.isExpanded(node)
         ? fileHighlights.directoryExpanded
         : fileHighlights.directoryCollapsed;
-      if (getEnableVimDevicons()) {
+      if (enabledVimDevicons) {
         row.add(getAttr(node).devicons, { hl });
-      } else if (getEnableNerdfont()) {
+      } else if (enabledNerdFont) {
         const icon = getDirectoryIcon(node.name);
         if (icon) {
           row.add(icon.code, { hl });
@@ -56,16 +56,16 @@ fileColumnRegistrar.registerColumn('child', 'icon', ({ source }) => ({
       } else {
         row.add(
           source.expandStore.isExpanded(node)
-            ? sourceIcons.getExpanded()
-            : sourceIcons.getCollapsed(),
+            ? source.icons.expanded
+            : source.icons.collapsed,
           { hl: fileHighlights.directory },
         );
       }
     } else {
-      if (getEnableVimDevicons()) {
+      if (enabledVimDevicons) {
         const code = getAttr(node).devicons;
         row.add(code, { hl: nerdfontHighlights['file'] });
-      } else if (getEnableNerdfont()) {
+      } else if (enabledNerdFont) {
         const icon = getFileIcon(node.name);
         if (icon) {
           row.add(icon.code, { hl: nerdfontHighlights[icon.name] });

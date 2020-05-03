@@ -1,11 +1,12 @@
 import { fileColumnRegistrar } from '../fileColumnRegistrar';
-import { sourceIcons } from '../../../source';
 import { fileHighlights } from '../fileSource';
 
 fileColumnRegistrar.registerColumn('root', 'icon', ({ source }) => ({
   draw(row, node) {
     row.add(
-      source.expandStore.isExpanded(node) ? sourceIcons.getExpanded() : sourceIcons.getCollapsed(),
+      source.expandStore.isExpanded(node)
+        ? source.icons.expanded
+        : source.icons.collapsed,
       { hl: fileHighlights.expandIcon },
     );
   },

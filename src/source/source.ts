@@ -12,13 +12,11 @@ import { explorerActionList } from '../lists/actions';
 import { onError } from '../logger';
 import { getMappings, getReverseMappings, ActionMode } from '../mappings';
 import {
-  config,
   generateUri,
-  getEnableNerdfont,
-  getPreviewStrategy,
   Notifier,
   onEvents,
   PreviewStrategy,
+  configLocal,
 } from '../util';
 import {
   HighlightPosition,
@@ -40,15 +38,6 @@ export type ActionOptions = {
 export type RenderOptions<TreeNode extends BaseTreeNode<any>> = {
   node?: TreeNode;
   force?: boolean;
-};
-
-export const sourceIcons = {
-  getExpanded: () =>
-    config.get<string>('icon.expanded') || (getEnableNerdfont() ? '' : '-'),
-  getCollapsed: () =>
-    config.get<string>('icon.collapsed') || (getEnableNerdfont() ? '' : '+'),
-  getSelected: () => config.get<string>('icon.selected')!,
-  getHidden: () => config.get<string>('icon.hidden')!,
 };
 
 export interface BaseTreeNode<
@@ -83,6 +72,15 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>> {
   showHidden: boolean = false;
   selectedNodes: Set<TreeNode> = new Set();
   readonly viewBuilder = new SourceViewBuilder(this.explorer);
+  defaultExpanded = false;
+  templateRenderer?: TemplateRenderer<TreeNode>;
+  hlIds: number[] = []; // hightlight match ids for vim8.0
+  nvim = workspace.nvim;
+  context: ExtensionContext;
+
+  private requestedRenderNodes: Set<TreeNode> = new Set();
+  subscriptions: Disposable[];
+
   readonly expandStore = {
     record: new Map<string, boolean>(),
     expanded(node: TreeNode, expanded: boolean) {
@@ -102,12 +100,83 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>> {
       return this.record.get(node.uri) || false;
     },
   };
-  defaultExpanded = false;
+
+  get root() {
+    return workspace.cwd;
+  }
+
+  config = ((source) => ({
+    get config() {
+      return configLocal(generateUri(source.root, 'file'));
+    },
+    get<T>(section: string, defaultValue?: T): T {
+      return this.config.get<T>(section, defaultValue!)!;
+    },
+    get activeMode() {
+      return this.config.get<boolean>('activeMode')!;
+    },
+    get autoReveal() {
+      return this.config.get<boolean>('file.autoReveal')!;
+    },
+    get openActionForDirectory() {
+      return this.config.get<string>('openAction.for.directory')!;
+    },
+
+    get previewStrategy() {
+      return this.config.get<PreviewStrategy>('previewAction.strategy')!;
+    },
+
+    get datetimeFormat() {
+      return this.config.get<string>('datetime.format')!;
+    },
+
+    get enableVimDevicons() {
+      return this.config.get<boolean>('icon.enableVimDevicons')!;
+    },
+
+    get getEnableNerdfont() {
+      return this.config.get<string>('icon.enableNerdfont')!;
+    },
+
+    get getEnableFloatingBorder() {
+      return this.config.get<boolean>('floating.border.enable')!;
+    },
+
+    get getFloatingBorderChars() {
+      return this.config.get<string[]>('floating.border.chars')!;
+    },
+
+    get getFloatingBorderTitle() {
+      return this.config.get<string>('floating.border.title')!;
+    },
+  }))(this);
+
+  icons = ((source) => ({
+    get expanded() {
+      return (
+        source.config.get<string>('icon.expanded') ||
+        (source.config.getEnableNerdfont ? '' : '-')
+      );
+    },
+    get collapsed() {
+      return (
+        source.config.get<string>('icon.collapsed') ||
+        (source.config.getEnableNerdfont ? '' : '+')
+      );
+    },
+    get selected() {
+      return source.config.get<string>('icon.selected')!;
+    },
+    get hidden() {
+      return source.config.get<string>('icon.hidden')!;
+    },
+  }))(this);
+
   readonly helper = {
     generateUri: (path: string) => generateUri(path, this.scheme),
   };
+
   bufManager = this.explorer.explorerManager.bufManager;
-  templateRenderer?: TemplateRenderer<TreeNode>;
 
   actions: Record<
     string,
@@ -121,12 +190,6 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>> {
       }) => void | Promise<void>;
     }
   > = {};
-  hlIds: number[] = []; // hightlight match ids for vim8.0
-  nvim = workspace.nvim;
-  context: ExtensionContext;
-
-  private requestedRenderNodes: Set<TreeNode> = new Set();
-  subscriptions: Disposable[];
 
   constructor(public sourceType: string, public explorer: Explorer) {
     this.context = this.explorer.context;
@@ -491,7 +554,7 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>> {
   async previewAction(node: TreeNode, previewStrategy?: PreviewStrategy) {
     const nodeIndex = this.getLineByNode(node);
     await this.explorer.floatingWindow.previewNode(
-      previewStrategy || getPreviewStrategy(),
+      previewStrategy ?? this.config.previewStrategy,
       this,
       node,
       nodeIndex,
@@ -899,7 +962,7 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>> {
         recursive ||
         (node.children.length === 1 &&
           node.children[0].expandable &&
-          config.get<boolean>('autoExpandSingleNode')!)
+          this.config.get<boolean>('autoExpandSingleNode')!)
       ) {
         await Promise.all(
           node.children.map(async (child) => {
@@ -947,7 +1010,7 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>> {
   private async collapseNodeRecursive(node: TreeNode, recursive: boolean) {
     if (node.expandable) {
       this.expandStore.collapse(node);
-      if (recursive || config.get<boolean>('autoCollapseChildren')!) {
+      if (recursive || this.config.get<boolean>('autoCollapseChildren')!) {
         if (node.children) {
           for (const child of node.children) {
             await this.collapseNodeRecursive(child, recursive);

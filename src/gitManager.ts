@@ -1,9 +1,8 @@
 import pathLib from 'path';
 import { onError } from './logger';
-import { fileColumnRegistrar } from './source/sources/file/fileColumnRegistrar';
 import { config, execCli } from './util';
 
-const showIgnored = fileColumnRegistrar.getColumnConfig<boolean>('git.showIgnored')!;
+const showIgnored = config.get<boolean>('file.column.git.showIgnored')!;
 
 export enum GitFormat {
   mixed = '*',
@@ -131,12 +130,11 @@ class GitCommand {
       [GitFormat.renamed, GitFormat.copied].includes(xFormat) ||
       [GitFormat.renamed, GitFormat.copied].includes(yFormat);
     const paths = this.parsePath(rawPath, hasArrow);
-    return [xFormat, yFormat, ...paths.map((p) => pathLib.join(gitRoot, p))] as [
-      GitFormat,
-      GitFormat,
-      string,
-      string | undefined,
-    ];
+    return [
+      xFormat,
+      yFormat,
+      ...paths.map((p) => pathLib.join(gitRoot, p)),
+    ] as [GitFormat, GitFormat, string, string | undefined];
   }
 
   async status(root: string): Promise<Record<string, GitStatus>> {
@@ -150,7 +148,9 @@ class GitCommand {
     const lines = output.split('\n');
     lines.forEach((line) => {
       const [x_, y, leftpath, rightpath] = this.parseStatusLine(root, line);
-      const x = [GitFormat.untracked, GitFormat.ignored].includes(x_) ? GitFormat.unmodified : x_;
+      const x = [GitFormat.untracked, GitFormat.ignored].includes(x_)
+        ? GitFormat.unmodified
+        : x_;
 
       const changedList = [
         GitFormat.modified,
@@ -260,7 +260,10 @@ class GitManager {
         const relativePath = pathLib.relative(root, fullpath);
         const parts = relativePath.split(pathLib.sep);
         for (let i = 1; i <= parts.length; i++) {
-          const frontalPath = pathLib.join(root, parts.slice(0, i).join(pathLib.sep));
+          const frontalPath = pathLib.join(
+            root,
+            parts.slice(0, i).join(pathLib.sep),
+          );
           const cache = this.mixedStatusCache[root][frontalPath];
           if (cache) {
             if (cache.x !== GitFormat.mixed) {
@@ -293,7 +296,9 @@ class GitManager {
   }
 
   getRootStatuses(rootPath: string) {
-    return this.mixedStatusCache[rootPath] as Record<string, GitMixedStatus> | undefined;
+    return this.mixedStatusCache[rootPath] as
+      | Record<string, GitMixedStatus>
+      | undefined;
   }
 
   async getStatuses(path: string) {
@@ -306,7 +311,9 @@ class GitManager {
   }
 
   getStatus(path: string): GitMixedStatus | null {
-    for (const [, directoryStatusCache] of Object.entries(this.mixedStatusCache)) {
+    for (const [, directoryStatusCache] of Object.entries(
+      this.mixedStatusCache,
+    )) {
       if (path in directoryStatusCache) {
         return directoryStatusCache[path];
       }
