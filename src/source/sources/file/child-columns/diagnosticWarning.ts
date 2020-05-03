@@ -47,7 +47,7 @@ fileColumnRegistrar.registerColumn<{
   reload() {
     diagnosticManager.warningReload(source.root);
   },
-  draw(row, node, { nodeIndex }) {
+  drawLine(row, node, { nodeIndex }) {
     const warningMap = column.data.warningMap;
     if (node.fullpath in warningMap) {
       if (node.directory && source.expandStore.isExpanded(node)) {

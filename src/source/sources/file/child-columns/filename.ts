@@ -2,7 +2,7 @@ import { fileColumnRegistrar } from '../fileColumnRegistrar';
 import { fileHighlights } from '../fileSource';
 
 fileColumnRegistrar.registerColumn('child', 'filename', () => ({
-  async draw(row, node) {
+  async drawLine(row, node) {
     if (node.directory) {
       row.add(node.name, {
         hl: fileHighlights.directory,

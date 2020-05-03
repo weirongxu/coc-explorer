@@ -4,7 +4,7 @@ import { fsReadlink } from '../../../../util';
 
 fileColumnRegistrar.registerColumn('child', 'link', () => ({
   labelVisible: (node) => node.symbolicLink,
-  async draw(row, node) {
+  async drawLine(row, node) {
     const linkTarget = node.symbolicLink
       ? await fsReadlink(node.fullpath)
           .then((link) => {

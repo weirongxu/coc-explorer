@@ -3,7 +3,7 @@ import { generateUri } from './uri';
 
 export const config = workspace.getConfiguration(
   'explorer',
-  generateUri(workspace.cwd, 'file'),
+  generateUri(workspace.cwd),
 );
 
 export const configLocal = (resource: string) =>

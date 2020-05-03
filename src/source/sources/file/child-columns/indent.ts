@@ -33,7 +33,7 @@ function printIndentLine(node: FileNode) {
 }
 
 fileColumnRegistrar.registerColumn('child', 'indent', ({ source }) => ({
-  draw(row, node) {
+  drawLine(row, node) {
     const enableIndentLine = (() => {
       const indentLine = source.getColumnConfig<boolean | undefined>(
         'indent.indentLine',

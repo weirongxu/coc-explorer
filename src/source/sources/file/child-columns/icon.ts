@@ -11,7 +11,7 @@ import {
 
 const attrSymbol = Symbol('icon-column');
 
-function getAttr(node: FileNode) {
+function nodeSymbol(node: FileNode) {
   return getSymbol(node, attrSymbol, () => ({
     devicons: '',
   }));
@@ -22,7 +22,7 @@ fileColumnRegistrar.registerColumn('child', 'icon', ({ source }) => ({
     if (source.config.enableVimDevicons) {
       await Promise.all(
         nodes.map(async (node) => {
-          getAttr(
+          nodeSymbol(
             node,
           ).devicons = await workspace.nvim.call(
             'WebDevIconsGetFileTypeSymbol',
@@ -32,7 +32,7 @@ fileColumnRegistrar.registerColumn('child', 'icon', ({ source }) => ({
       );
     }
   },
-  async draw(row, node) {
+  async drawLine(row, node) {
     const enabledVimDevicons = source.config.enableVimDevicons;
     const enabledNerdFont = source.config.getEnableNerdfont;
     if (node.directory) {
@@ -40,7 +40,7 @@ fileColumnRegistrar.registerColumn('child', 'icon', ({ source }) => ({
         ? fileHighlights.directoryExpanded
         : fileHighlights.directoryCollapsed;
       if (enabledVimDevicons) {
-        row.add(getAttr(node).devicons, { hl });
+        row.add(nodeSymbol(node).devicons, { hl });
       } else if (enabledNerdFont) {
         const icon = getDirectoryIcon(node.name);
         if (icon) {
@@ -63,7 +63,7 @@ fileColumnRegistrar.registerColumn('child', 'icon', ({ source }) => ({
       }
     } else {
       if (enabledVimDevicons) {
-        const code = getAttr(node).devicons;
+        const code = nodeSymbol(node).devicons;
         row.add(code, { hl: nerdfontHighlights['file'] });
       } else if (enabledNerdFont) {
         const icon = getFileIcon(node.name);

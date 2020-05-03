@@ -57,7 +57,7 @@ fileColumnRegistrar.registerColumn<{
       ),
     );
   },
-  async validate() {
+  async available() {
     try {
       await commandExists('git');
       return true;
@@ -75,7 +75,7 @@ fileColumnRegistrar.registerColumn<{
     await gitManager.reload(folderPath);
     column.data.prevStatuses = await gitManager.getStatuses(folderPath);
   },
-  draw(row, node, { nodeIndex }) {
+  drawLine(row, node, { nodeIndex }) {
     const getIconConf = (name: string) => {
       return source.getColumnConfig<string>('git.icon.' + name)!;
     };

@@ -4,7 +4,7 @@ import { bufferHighlights } from '../bufferSource';
 bufferColumnRegistrar.registerColumn('child', 'readonly', ({ source }) => ({
   labelOnly: true,
   labelVisible: (node) => node.readonly,
-  draw(row, node) {
+  drawLine(row, node) {
     if (node.readonly) {
       row.add(
         node.readonly ? (source.config.getEnableNerdfont ? '' : 'RO') : '',

@@ -43,10 +43,7 @@ export function initBufferActions(buffer: BufferSource) {
   buffer.addNodeAction(
     'open',
     async ({ node, args: [openStrategy, ...args] }) => {
-      await buffer.openAction(node, {
-        async getURI() {
-          return (await nvim.call('fnameescape', node.bufname)) as string;
-        },
+      await buffer.openAction(node, () => node.fullpath, {
         openStrategy: openStrategy as OpenStrategy,
         args,
       });

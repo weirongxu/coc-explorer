@@ -1,16 +1,7 @@
 import { workspace, ExtensionContext, Emitter } from 'coc.nvim';
 import pathLib from 'path';
-import {
-  normalizePath,
-  generateUri,
-  onEvents,
-  onBufDelete,
-  onBufWipeout,
-} from './util';
-import {
-  bufferScheme,
-  BufferNode,
-} from './source/sources/buffer/bufferSource';
+import { normalizePath, onEvents, onBufDelete, onBufWipeout } from './util';
+import { BufferNode } from './source/sources/buffer/bufferSource';
 
 const regex = /^\s*(\d+)(.+?)"(.+?)".*/;
 
@@ -129,7 +120,7 @@ export class BufManager {
         const fullpath = pathLib.resolve(normalizePath(bufname));
         map.set(fullpath, {
           type: 'child',
-          uri: generateUri(`${fullpath}?bufnr=${bufnr}`, bufferScheme),
+          uid: bufnr,
           level: 1,
           drawnLine: '',
           // parent: this.rootNode,

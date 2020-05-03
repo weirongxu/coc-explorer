@@ -18,7 +18,7 @@ bufferColumnRegistrar.registerColumn<{
       return true;
     }
   },
-  draw(row, node) {
+  drawLine(row, node) {
     row.add(node.bufnrStr.padStart(column.data.maxBufnrWidth), {
       hl: bufferHighlights.bufnr,
     });

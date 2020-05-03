@@ -38,6 +38,7 @@ import {
   getFloatingBorderChars,
   closeWinByBufnrNotifier,
   getFloatingBorderTitle,
+  generateUri,
 } from './util';
 import { argOptions } from './argOptions';
 
@@ -967,7 +968,7 @@ export class Explorer {
       curUid += 1;
       return {
         type: '',
-        uri: `help://${curUid}`,
+        uid: generateUri(curUid.toString(), 'help'),
         level: 0,
         drawnLine: '',
       };

@@ -23,7 +23,7 @@ const testColumnRegistrar = new TestColumnRegistrar();
 
 (['left', 'right', 'center'] as const).forEach((pos) => {
   testColumnRegistrar.registerColumn('child', `grow-${pos}`, () => ({
-    async draw(row, node) {
+    async drawLine(row, node) {
       await row.flexible(
         {
           grow: pos,
@@ -37,7 +37,7 @@ const testColumnRegistrar = new TestColumnRegistrar();
     },
   }));
   testColumnRegistrar.registerColumn('child', `omit-${pos}`, () => ({
-    async draw(row, node) {
+    async drawLine(row, node) {
       await row.flexible(
         {
           omit: pos,
@@ -53,7 +53,7 @@ const testColumnRegistrar = new TestColumnRegistrar();
 });
 
 testColumnRegistrar.registerColumn('child', 'filename', () => ({
-  async draw(row, node) {
+  async drawLine(row, node) {
     await row.flexible(
       {
         omit: 'center',
@@ -67,7 +67,7 @@ testColumnRegistrar.registerColumn('child', 'filename', () => ({
 }));
 
 testColumnRegistrar.registerColumn('child', 'link', () => ({
-  async draw(row, node) {
+  async drawLine(row, node) {
     await row.flexible(
       {
         omit: 'center',

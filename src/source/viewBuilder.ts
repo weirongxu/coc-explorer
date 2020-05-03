@@ -642,7 +642,7 @@ export class SourceRowBuilder {
 
     this.drawableList.push(
       ...(await this.drawToList(async () => {
-        await column.draw(this, node, {
+        await column.drawLine(this, node, {
           nodeIndex,
           isLabeling,
         });

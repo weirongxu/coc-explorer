@@ -15,6 +15,7 @@ import {
   listDrive,
   isWindows,
   debounce,
+  generateUri,
 } from '../../../util';
 import { hlGroupManager } from '../../highlightManager';
 import { ExplorerSource, BaseTreeNode } from '../../source';
@@ -52,6 +53,7 @@ function isHidden(filename: string) {
 export interface FileNode extends BaseTreeNode<FileNode, 'root' | 'child'> {
   name: string;
   fullpath: string;
+  uri: string;
   directory: boolean;
   readonly: boolean;
   executable: boolean;
@@ -96,7 +98,8 @@ export class FileSource extends ExplorerSource<FileNode> {
   rootNode: FileNode = {
     type: 'root',
     isRoot: true,
-    uri: this.helper.generateUri('/'),
+    uid: this.helper.getUid('/'),
+    uri: generateUri('/'),
     level: 0,
     drawnLine: '',
     name: 'root',
@@ -121,7 +124,8 @@ export class FileSource extends ExplorerSource<FileNode> {
   }
 
   set root(root: string) {
-    this.rootNode.uri = this.helper.generateUri(root);
+    this.rootNode.uri = generateUri(root);
+    this.rootNode.uid = this.helper.getUid(root);
     this.rootNode.fullpath = root;
     this.rootNode.children = undefined;
   }
@@ -389,7 +393,8 @@ export class FileSource extends ExplorerSource<FileNode> {
               : false;
           const child: FileNode = {
             type: 'child',
-            uri: this.helper.generateUri(fullpath),
+            uid: this.helper.getUid(fullpath),
+            uri: generateUri(fullpath),
             level: parentNode ? parentNode.level + 1 : 1,
             drawnLine: '',
             parent: parentNode || this.rootNode,

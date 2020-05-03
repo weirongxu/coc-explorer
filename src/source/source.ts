@@ -3,7 +3,6 @@ import {
   ExtensionContext,
   IList,
   listManager,
-  Uri,
   workspace,
   Emitter,
 } from 'coc.nvim';
@@ -40,13 +39,15 @@ export type RenderOptions<TreeNode extends BaseTreeNode<any>> = {
   force?: boolean;
 };
 
+export type NodeUid = string;
+
 export interface BaseTreeNode<
   TreeNode extends BaseTreeNode<TreeNode>,
   Type extends string = string
 > {
   type: Type;
   isRoot?: boolean;
-  uri: string;
+  uid: NodeUid;
   level: number;
   drawnLine: string;
   highlightPositions?: HighlightPosition[];
@@ -62,7 +63,6 @@ export type ExplorerSourceClass = {
 };
 
 export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>> {
-  abstract scheme: string;
   abstract hlSrcId: number;
   startLineIndex: number = 0;
   endLineIndex: number = 0;
@@ -77,12 +77,13 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>> {
   hlIds: number[] = []; // hightlight match ids for vim8.0
   nvim = workspace.nvim;
   context: ExtensionContext;
+  bufManager = this.explorer.explorerManager.bufManager;
 
   private requestedRenderNodes: Set<TreeNode> = new Set();
   subscriptions: Disposable[];
 
   readonly expandStore = {
-    record: new Map<string, boolean>(),
+    record: new Map<NodeUid, boolean>(),
     expanded(node: TreeNode, expanded: boolean) {
       if (expanded) {
         this.expand(node);
@@ -91,13 +92,13 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>> {
       }
     },
     expand(node: TreeNode) {
-      this.record.set(node.uri, true);
+      this.record.set(node.uid, true);
     },
     collapse(node: TreeNode) {
-      this.record.set(node.uri, false);
+      this.record.set(node.uid, false);
     },
     isExpanded(node: TreeNode) {
-      return this.record.get(node.uri) || false;
+      return this.record.get(node.uid) || false;
     },
   };
 
@@ -107,7 +108,7 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>> {
 
   config = ((source) => ({
     get config() {
-      return configLocal(generateUri(source.root, 'file'));
+      return configLocal(generateUri(source.root));
     },
     get<T>(section: string, defaultValue?: T): T {
       return this.config.get<T>(section, defaultValue!)!;
@@ -172,11 +173,11 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>> {
     },
   }))(this);
 
-  readonly helper = {
-    generateUri: (path: string) => generateUri(path, this.scheme),
-  };
-
-  bufManager = this.explorer.explorerManager.bufManager;
+  helper = ((source) => ({
+    getUid(uid: string | number) {
+      return generateUri(uid.toString(), source.sourceType);
+    },
+  }))(this);
 
   actions: Record<
     string,
@@ -393,21 +394,13 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>> {
 
   async openAction(
     node: TreeNode,
+    getFullpath: () => string | Promise<string>,
     {
       openByWinnr: originalOpenByWinnr,
-      getURI = async () => {
-        const uri = Uri.parse(node.uri);
-        if (uri.scheme === 'file') {
-          return (await this.nvim.call('fnameescape', uri.fsPath)) as string;
-        } else {
-          return (await this.nvim.call('fnameescape', node.uri)) as string;
-        }
-      },
       openStrategy,
       args = [],
     }: {
       openByWinnr?: (winnr: number) => void | Promise<void>;
-      getURI?: () => string | Promise<string>;
       openStrategy?: OpenStrategy;
       args?: string[];
     },
@@ -416,12 +409,15 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>> {
       return;
     }
     const { nvim } = this;
+    const getEscapeFullpath = async () => {
+      return await this.nvim.call('fnameescape', [await getFullpath()]);
+    };
     const openByWinnr =
       originalOpenByWinnr ??
       (async (winnr: number) => {
         nvim.pauseNotification();
         nvim.command(`${winnr}wincmd w`, true);
-        nvim.command(`edit ${await getURI()}`, true);
+        nvim.command(`edit ${await getEscapeFullpath()}`, true);
         if (workspace.isVim) {
           // Avoid vim highlight not working,
           // https://github.com/weirongxu/coc-explorer/issues/113
@@ -457,7 +453,7 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>> {
         type Mode = 'intelligent' | 'plain';
         const mode: Mode = (args[0] ?? 'intelligent') as Mode;
         if (mode === 'plain') {
-          await nvim.command(`split ${await getURI()}`);
+          await nvim.command(`split ${await getEscapeFullpath()}`);
           await this.explorer.tryQuitOnOpen();
         } else {
           const position = await this.explorer.args.value(argOptions.position);
@@ -487,7 +483,7 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>> {
 
                 nvim.pauseNotification();
                 nvim.call('win_gotoid', [targetWinid], true);
-                nvim.command(`split ${await getURI()}`, true);
+                nvim.command(`split ${await getEscapeFullpath()}`, true);
                 await nvim.resumeNotification();
                 await this.explorer.tryQuitOnOpen();
               }
@@ -501,7 +497,7 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>> {
       },
       vsplit: async () => {
         nvim.pauseNotification();
-        nvim.command(`vsplit ${await getURI()}`, true);
+        nvim.command(`vsplit ${await getEscapeFullpath()}`, true);
         const position = await this.explorer.args.value(argOptions.position);
         if (position === 'left') {
           nvim.command('wincmd L', true);
@@ -515,7 +511,7 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>> {
       },
       tab: async () => {
         await this.explorer.tryQuitOnOpen();
-        await nvim.command(`tabedit ${await getURI()}`);
+        await nvim.command(`tabedit ${await getEscapeFullpath()}`);
       },
       previousBuffer: async () => {
         const prevWinnr = await this.explorer.explorerManager.prevWinnrByPrevBufnr();
@@ -663,7 +659,7 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>> {
    */
   getLineByNode(node: TreeNode): number {
     if (node) {
-      return this.flattenedNodes.findIndex((it) => it.uri === node.uri);
+      return this.flattenedNodes.findIndex((it) => it.uid === node.uid);
     } else {
       return 0;
     }
@@ -721,24 +717,24 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>> {
     node: TreeNode,
     options: { lineIndex?: number; col?: number } = {},
   ) {
-    return this.gotoNodeUriNotifier(node.uri, options);
+    return this.gotoNodeUidNotifier(node.uid, options);
   }
 
-  async gotoNodeUri(
-    nodeUri: string,
+  async gotoNodeUid(
+    nodeUid: NodeUid,
     options: { lineIndex?: number; col?: number } = {},
   ) {
-    return (await this.gotoNodeUriNotifier(nodeUri, options)).run();
+    return (await this.gotoNodeUidNotifier(nodeUid, options)).run();
   }
 
-  async gotoNodeUriNotifier(
-    nodeUri: string,
+  async gotoNodeUidNotifier(
+    nodeUid: NodeUid,
     {
       lineIndex: fallbackLineIndex,
       col = 0,
     }: { lineIndex?: number; col?: number } = {},
   ) {
-    const lineIndex = this.flattenedNodes.findIndex((it) => it.uri === nodeUri);
+    const lineIndex = this.flattenedNodes.findIndex((it) => it.uid === nodeUid);
     if (lineIndex !== -1) {
       return this.gotoLineIndexNotifier(lineIndex, col);
     } else if (fallbackLineIndex !== undefined) {
@@ -815,7 +811,7 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>> {
         }
 
         const nodeIndex = this.flattenedNodes.findIndex(
-          (it) => it.uri === node.uri,
+          (it) => it.uid === node.uid,
         );
         if (nodeIndex > -1) {
           if (node.parent?.children) {
@@ -901,7 +897,7 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>> {
     node: TreeNode,
   ): { startIndex: number; endIndex: number } | null {
     const startIndex = this.flattenedNodes.findIndex(
-      (it) => it.uri === node.uri,
+      (it) => it.uid === node.uid,
     );
     if (startIndex === -1) {
       return null;
@@ -1049,7 +1045,7 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>> {
     await Promise.all(
       nodes.map(async (node) => {
         const nodeIndex = this.flattenedNodes.findIndex(
-          (it) => it.uri === node.uri,
+          (it) => it.uid === node.uid,
         );
         if (nodeIndex === -1) {
           return;

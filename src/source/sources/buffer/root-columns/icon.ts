@@ -2,7 +2,7 @@ import { bufferColumnRegistrar } from '../bufferColumnRegistrar';
 import { bufferHighlights } from '../bufferSource';
 
 bufferColumnRegistrar.registerColumn('root', 'icon', ({ source }) => ({
-  draw(row, node) {
+  drawLine(row, node) {
     row.add(
       source.expandStore.isExpanded(node)
         ? source.icons.expanded

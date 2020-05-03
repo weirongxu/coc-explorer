@@ -4,7 +4,7 @@ import { fileHighlights } from '../fileSource';
 fileColumnRegistrar.registerColumn('child', 'modified', ({ source }) => ({
   labelOnly: true,
   labelVisible: (node) => source.bufManager.modified(node.fullpath),
-  draw(row, node, { nodeIndex }) {
+  drawLine(row, node, { nodeIndex }) {
     let modified: boolean = false;
     if (node.directory) {
       if (!source.expandStore.isExpanded(node)) {

@@ -1,10 +1,5 @@
 import { workspace } from 'coc.nvim';
-import {
-  onBufEnter,
-  debounce,
-  config,
-  uniq,
-} from '../../../util';
+import { onBufEnter, debounce, config, uniq } from '../../../util';
 import { hlGroupManager } from '../../highlightManager';
 import { ExplorerSource, BaseTreeNode } from '../../source';
 import { sourceManager } from '../../sourceManager';
@@ -45,19 +40,16 @@ export const bufferHighlights = {
   fullpath: hl('BufferFullpath', 'Comment'),
 };
 
-export const bufferScheme = 'buf';
-
 export class BufferSource extends ExplorerSource<BufferNode> {
-  scheme = bufferScheme;
   hlSrcId = workspace.createNameSpace('coc-explorer-buffer');
   showHidden: boolean = config.get<boolean>('file.showHiddenBuffers')!;
   rootNode: BufferNode = {
     type: 'root',
     isRoot: true,
-    uri: this.helper.generateUri('/'),
     level: 0,
     drawnLine: '',
     expandable: true,
+    uid: this.helper.getUid('0'),
     bufnr: 0,
     bufnrStr: '0',
     bufname: '',

@@ -1,7 +1,7 @@
 import { fileColumnRegistrar } from '../fileColumnRegistrar';
 
 fileColumnRegistrar.registerColumn('child', 'linkIcon', () => ({
-  draw(row, node) {
+  drawLine(row, node) {
     if (node.symbolicLink) {
       row.add('→');
     }

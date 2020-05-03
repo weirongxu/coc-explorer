@@ -2,7 +2,7 @@ import { fileColumnRegistrar } from '../fileColumnRegistrar';
 import { fileHighlights } from '../fileSource';
 
 fileColumnRegistrar.registerColumn('child', 'clip', ({ source }) => ({
-  draw(row, node) {
+  drawLine(row, node) {
     let copy = source.getColumnConfig<string>('clip.copy');
     let cut = source.getColumnConfig<string>('clip.cut');
 

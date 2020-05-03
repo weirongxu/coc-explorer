@@ -15,7 +15,9 @@ fileColumnRegistrar.registerColumn<{
       onEvents(
         'BufWritePost',
         debounce(1000, async () => {
-          const diagnosticCountMax = config.get<number>('file.diagnosticCountMax')!;
+          const diagnosticCountMax = config.get<number>(
+            'file.diagnosticCountMax',
+          )!;
           diagnosticManager.errorReload(source.root);
 
           const errorMixedCount = diagnosticManager.errorMixedCount;
@@ -48,7 +50,7 @@ fileColumnRegistrar.registerColumn<{
   reload() {
     diagnosticManager.errorReload(source.root);
   },
-  draw(row, node, { nodeIndex }) {
+  drawLine(row, node, { nodeIndex }) {
     const errorMap = column.data.errorMap;
     if (node.fullpath in errorMap) {
       if (node.directory && source.expandStore.isExpanded(node)) {

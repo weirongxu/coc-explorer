@@ -41,7 +41,7 @@ export function initFileActions(file: FileSource) {
       file.expandStore.expand(file.rootNode);
       await file.reload(file.rootNode);
       if (nodeUri) {
-        await file.gotoNodeUri(nodeUri);
+        await file.gotoNodeUid(nodeUri);
       }
     },
     'change directory to parent directory',
@@ -157,7 +157,7 @@ export function initFileActions(file: FileSource) {
           await file.doAction(directoryAction, node);
         }
       } else {
-        await file.openAction(node, {
+        await file.openAction(node, () => node.fullpath, {
           openStrategy: openStrategy as OpenStrategy,
           args,
         });
