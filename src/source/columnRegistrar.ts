@@ -8,9 +8,10 @@ export type ColumnDrawLine<TreeNode extends BaseTreeNode<TreeNode>> = (
   option: { nodeIndex: number; isLabeling: boolean },
 ) => void | Promise<void>;
 
-// TODO
-// Change Data default to unknown
-export interface Column<TreeNode extends BaseTreeNode<TreeNode>, Data = any> {
+export interface Column<
+  TreeNode extends BaseTreeNode<TreeNode>,
+  Data = unknown
+> {
   label?: string;
 
   labelOnly?: boolean;
