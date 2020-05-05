@@ -188,7 +188,9 @@ endfunction
 
 function! coc_explorer#close_win_by_bufnr(bufnr)
   let winnr = bufwinnr(a:bufnr)
-  execute winnr . 'wincmd q'
+  if winnr >= 0
+    execute winnr . 'wincmd q'
+  endif
 endfunction
 
 " Select action

@@ -373,7 +373,7 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>> {
       select: async () => {
         const position = await this.explorer.args.value(argOptions.position);
         if (position === 'floating') {
-          await this.explorer.quit();
+          await this.explorer.hide();
         }
         await this.explorer.selectWindowsUI(
           async (winnr) => {
@@ -385,7 +385,7 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>> {
           },
           async () => {
             if (position === 'floating') {
-              await this.explorer.resume(this.explorer.args);
+              await this.explorer.show();
             }
           },
         );
