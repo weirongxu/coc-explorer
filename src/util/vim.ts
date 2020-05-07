@@ -12,7 +12,6 @@ export async function supportedSetbufline() {
 }
 
 export function supportedFloat(): boolean {
-  // @ts-ignore
   return workspace.floatSupported;
 }
 export function supportedNvimFloating() {

@@ -9,21 +9,19 @@ import {
   supportedFloat,
   Cancelled,
 } from '../util';
-import { workspace } from 'coc.nvim';
+import { workspace, FloatBuffer } from 'coc.nvim';
 import { FloatingFactory2 } from './floatingFactory2';
+import { FloatingFactory3 } from './floatingFactory3';
 
 export class FloatingPreview {
   nvim = workspace.nvim;
-  floatFactory: FloatingFactory2;
+  floatFactory: FloatingFactory2 | FloatingFactory3;
   shown: boolean = false;
 
   constructor(public explorer: Explorer) {
-    this.floatFactory = new FloatingFactory2(
-      this.explorer,
-      this.nvim,
-      workspace.env,
-      false,
-    );
+    this.floatFactory = new ('getDimension' in FloatBuffer
+      ? FloatingFactory3
+      : FloatingFactory2)(this.explorer, this.nvim, workspace.env, false);
   }
 
   async previewNode(
