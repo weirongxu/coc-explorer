@@ -6,13 +6,12 @@ import { fileHighlights } from '../fileSource';
 fileColumnRegistrar.registerColumn(
   'child',
   'diagnosticWarning',
-  ({ source }) => {
+  ({ source, subscriptions }) => {
     let cacheWarningMap = {} as Record<string, string>;
 
     return {
-      // TODO destroy and remove subscription
       init() {
-        source.subscriptions.push(
+        subscriptions.push(
           onEvents(
             'BufWritePost',
             debounce(1000, async () => {

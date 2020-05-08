@@ -45,7 +45,6 @@ import {
   winnrByBufnr,
   scanIndexPrev,
   scanIndexNext,
-  prettyPrint,
 } from './util';
 
 const hl = hlGroupManager.linkGroup.bind(hlGroupManager);

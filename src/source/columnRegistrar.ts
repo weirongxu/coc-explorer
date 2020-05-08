@@ -38,6 +38,7 @@ export interface ColumnInitial<TreeNode extends BaseTreeNode<TreeNode>> {
 export interface Column<TreeNode extends BaseTreeNode<TreeNode>>
   extends ColumnInitial<TreeNode> {
   label: string;
+  subscriptions: Disposable[];
   drawHandle?: ColumnDrawHandle<TreeNode>;
 }
 
@@ -47,6 +48,7 @@ type CreateColumn<
 > = (context: {
   source: S;
   column: Column<TreeNode>;
+  subscriptions: Disposable[];
 }) => ColumnInitial<TreeNode>;
 
 export class ColumnRegistrar<
@@ -80,12 +82,15 @@ export class ColumnRegistrar<
         ?.get(columnName);
       if (registeredColumn) {
         const column = { label: columnName } as Column<TreeNode>;
+        const subscriptions: Disposable[] = [];
         Object.assign(
           column,
           registeredColumn.createColumn({
             source,
-            column: column,
+            column,
+            subscriptions,
           }),
+          { subscriptions },
         );
 
         if (column.inited) {

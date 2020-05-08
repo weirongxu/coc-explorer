@@ -37,6 +37,21 @@ export class SourcePainter<
     public columnRegistrar: ColumnRegistrar<TreeNode, any>,
   ) {}
 
+  private clearColumn(column: number | Column<TreeNode>) {
+    if (typeof column !== 'number') {
+      column.subscriptions.map((s) => s.dispose());
+    }
+  }
+
+  private clearParts(parts: TemplatePart<TreeNode>[]) {
+    parts.forEach((part) => {
+      if (typeof part !== 'string') {
+        this.clearColumn(part.column);
+        part.modifiers?.forEach((m) => this.clearColumn(m.column));
+      }
+    });
+  }
+
   async parseTemplate(template: string, labelingTemplate?: string) {
     let needUpdateColumns = false;
     if (this.templateStr !== template) {
@@ -47,6 +62,7 @@ export class SourcePainter<
         initedParts.push(await this.initPart(parsedPart));
       }
 
+      this.clearParts(this.parts);
       this.parts = initedParts;
       needUpdateColumns = true;
     }
@@ -59,6 +75,7 @@ export class SourcePainter<
           initedLabelingParts.push(await this.initPart(parsedPart));
         }
 
+        this.clearParts(this.labelingParts);
         this.labelingParts = initedLabelingParts;
         needUpdateColumns = true;
       }
@@ -224,7 +241,6 @@ export class SourcePainters<
     };
   }
 
-  // TODO refactor
   async drawNodeLabeling(node: TreeNode, nodeIndex: number): Promise<Drawn[]> {
     const drawnList: Drawn[] = [];
     for (const part of this.getPainter(node.type).labelingParts) {

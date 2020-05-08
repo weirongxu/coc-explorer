@@ -1,4 +1,4 @@
-import { ViewRowPainter, ViewPainter } from './viewPainter';
+import { ViewRowPainter } from './viewPainter';
 import { Explorer } from '../explorer';
 import { ExplorerManager } from '../explorerManager';
 import { BaseTreeNode, ExplorerSource } from './source';
