@@ -128,7 +128,7 @@ export function parseAction(originalAction: OriginalAction): Action {
   if (typeof originalAction !== 'string') {
     return originalAction;
   }
-  const [name, ...args] = originalAction.split(/:(.+)/, 2);
+  const [name, ...args] = originalAction.split(/:/);
   return {
     name,
     args,

@@ -10,7 +10,7 @@ import { argOptions } from '../argOptions';
 import { Explorer } from '../explorer';
 import { explorerActionList } from '../lists/actions';
 import { onError } from '../logger';
-import { ActionMode, getMappings, getReverseMappings } from '../mappings';
+import { ActionMode, getReverseMappings } from '../mappings';
 import { OpenStrategy } from '../types';
 import {
   drawnToRange,
@@ -29,7 +29,21 @@ export type ActionOptions = {
   render: boolean;
   reload: boolean;
   select: boolean;
+  menu: Record<string, string>;
 };
+
+export type ActionMap<TreeNode extends BaseTreeNode<TreeNode>> = Record<
+  string,
+  {
+    description: string;
+    options: Partial<ActionOptions>;
+    callback: (options: {
+      nodes: TreeNode[];
+      args: string[];
+      mode: ActionMode;
+    }) => void | Promise<void>;
+  }
+>;
 
 export type RenderOptions<TreeNode extends BaseTreeNode<any>> = {
   node?: TreeNode;
@@ -129,18 +143,7 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>> {
     },
   }))(this);
 
-  actions: Record<
-    string,
-    {
-      description: string;
-      options: Partial<ActionOptions>;
-      callback: (options: {
-        nodes: TreeNode[];
-        args: string[];
-        mode: ActionMode;
-      }) => void | Promise<void>;
-    }
-  > = {};
+  actions: ActionMap<TreeNode> = {};
 
   constructor(public sourceType: string, public explorer: Explorer) {
     this.context = this.explorer.context;
@@ -328,6 +331,17 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>> {
     }
   }
 
+  readonly openActionMenu = {
+    select: 'use select window UI',
+    'split:plain': 'use vim split',
+    'split:intelligent': 'use split like vscode',
+    vsplit: 'use vim vsplit',
+    tab: 'vim tab',
+    previousBuffer: 'use last used buffer',
+    previousWindow: 'use last used window',
+    sourceWindow: 'use the window where explorer opened',
+  };
+
   async openAction(
     node: TreeNode,
     getFullpath: () => string | Promise<string>,
@@ -487,6 +501,10 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>> {
     await actions[openStrategy ?? openStrategyOption](args);
   }
 
+  readonly previewActionMenu = {
+    labeling: 'preview for node labeling',
+  };
+
   async previewAction(node: TreeNode, previewStrategy?: PreviewStrategy) {
     const nodeIndex = this.getLineByNode(node);
     await this.explorer.floatingWindow.previewNode(
@@ -558,25 +576,50 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>> {
       ...this.actions,
     };
 
-    const mappings = await getMappings();
     const reverseMappings = await getReverseMappings();
 
     explorerActionList.setExplorerActions(
-      Object.entries(actions)
-        .sort(([aName], [bName]) => aName.localeCompare(bName))
-        .map(([actionName, { callback, description }]) => ({
-          name: actionName,
-          nodes,
-          mappings,
-          root: nodes === null,
-          key: reverseMappings[actionName],
-          description,
-          async callback() {
-            await task.waitShow();
-            callback({ nodes, args: [], mode: 'n' });
-          },
-        }))
-        .filter((a) => a.name !== 'actionMenu'),
+      flatten(
+        Object.entries(actions)
+          .filter(([actionName]) => actionName !== 'actionMenu')
+          .sort(([aName], [bName]) => aName.localeCompare(bName))
+          .map(([actionName, { callback, options, description }]) => {
+            const list = [
+              {
+                name: actionName,
+                key: reverseMappings[actionName],
+                description,
+                async callback() {
+                  await task.waitShow();
+                  callback({ nodes, args: [], mode: 'n' });
+                },
+              },
+            ];
+            if (options.menu) {
+              list.push(
+                ...Object.entries(options.menu).map(
+                  ([subActionName, subDescription]) => {
+                    const fullActionName = actionName + ':' + subActionName;
+                    return {
+                      name: fullActionName,
+                      key: reverseMappings[fullActionName],
+                      description: description + ' ' + subDescription,
+                      async callback() {
+                        await task.waitShow();
+                        callback({
+                          nodes,
+                          args: subActionName.split(/:/),
+                          mode: 'n',
+                        });
+                      },
+                    };
+                  },
+                ),
+              );
+            }
+            return list;
+          }),
+      ),
     );
     const task = await this.startCocList(explorerActionList);
     await task.waitShow();

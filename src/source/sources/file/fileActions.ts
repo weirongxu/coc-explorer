@@ -164,7 +164,10 @@ export function initFileActions(file: FileSource) {
       }
     },
     'open file or directory',
-    { multi: true },
+    {
+      multi: true,
+      menu: file.openActionMenu,
+    },
   );
   file.addNodeAction(
     'drop',

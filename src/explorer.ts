@@ -19,7 +19,12 @@ import {
   hlGroupManager,
 } from './source/highlightManager';
 import './source/load';
-import { ActionOptions, BaseTreeNode, ExplorerSource } from './source/source';
+import {
+  ActionOptions,
+  BaseTreeNode,
+  ExplorerSource,
+  ActionMap,
+} from './source/source';
 import { sourceManager } from './source/sourceManager';
 import { ViewPainter, ViewRowPainter } from './source/viewPainter';
 import {
@@ -47,16 +52,7 @@ import {
   scanIndexNext,
   uniq,
 } from './util';
-
-const hl = hlGroupManager.linkGroup.bind(hlGroupManager);
-const helpHightlights = {
-  line: hl('HelpLine', 'Operator'),
-  mappingKey: hl('HelpMappingKey', 'PreProc'),
-  action: hl('HelpAction', 'Identifier'),
-  arg: hl('HelpArg', 'Identifier'),
-  description: hl('HelpDescription', 'Comment'),
-  conditional: hl('HelpConditional', 'Conditional'),
-};
+import { showHelp, quitHelp } from './help';
 
 export class Explorer {
   nvim = workspace.nvim;
@@ -66,18 +62,7 @@ export class Explorer {
   indexesManager = new IndexesManager(this);
   inited = new BuffuerContextVars<boolean>('inited', this);
   sourceWinid = new BuffuerContextVars<number>('sourceWinid', this);
-  globalActions: Record<
-    string,
-    {
-      description: string;
-      options: Partial<ActionOptions>;
-      callback: (options: {
-        nodes: BaseTreeNode<any>[];
-        args: string[];
-        mode: ActionMode;
-      }) => void | Promise<void>;
-    }
-  > = {};
+  globalActions: ActionMap<BaseTreeNode<any>> = {};
   context: ExtensionContext;
   floatingWindow: FloatingPreview;
   contentWidth = 0;
@@ -207,6 +192,9 @@ export class Explorer {
     );
 
     type MoveStrategy = 'default' | 'insideSource';
+    const moveActionMenu = {
+      insideSource: 'move inside current source',
+    };
     this.addGlobalAction(
       'nodePrev',
       async ({ args }) => {
@@ -225,6 +213,9 @@ export class Explorer {
         }
       },
       'previous node',
+      {
+        menu: moveActionMenu,
+      },
     );
     this.addGlobalAction(
       'nodeNext',
@@ -244,6 +235,9 @@ export class Explorer {
         }
       },
       'next node',
+      {
+        menu: moveActionMenu,
+      },
     );
     this.addGlobalAction(
       'expandablePrev',
@@ -286,6 +280,9 @@ export class Explorer {
         }
       },
       'previous expandable node',
+      {
+        menu: moveActionMenu,
+      },
     );
     this.addGlobalAction(
       'expandableNext',
@@ -328,6 +325,9 @@ export class Explorer {
         }
       },
       'next expandable node',
+      {
+        menu: moveActionMenu,
+      },
     );
     this.addGlobalAction(
       'normal',
@@ -355,6 +355,9 @@ export class Explorer {
         }
       },
       'preview',
+      {
+        menu: ExplorerSource.prototype.previewActionMenu,
+      },
     );
 
     this.addGlobalAction(
@@ -1014,125 +1017,10 @@ export class Explorer {
   }
 
   async showHelp(source: ExplorerSource<any>) {
-    this.isHelpUI = true;
-    const painter = new ViewPainter(this);
-    const width = (await (await this.win)?.width) ?? 80;
-    const storeNode = await this.currentNode();
-    const drawnResults: {
-      highlightPositions: HighlightPosition[];
-      content: string;
-    }[] = [];
-
-    async function drawRow(drawBlock: DrawBlock) {
-      const row = await painter.drawRow(drawBlock);
-      drawnResults.push(await row.draw());
-    }
-
-    await drawRow((row) => {
-      row.add(
-        `Help for [${source.sourceType}], (use q or <esc> return to explorer)`,
-      );
-    });
-    await drawRow((row) => {
-      row.add('—'.repeat(width), { hl: helpHightlights.line });
-    });
-
-    const registeredActions = {
-      ...this.globalActions,
-      ...source.actions,
-    };
-    const drawAction = (row: ViewRowPainter, action: Action) => {
-      row.add(action.name, { hl: helpHightlights.action });
-      if (action.args) {
-        row.add(`(${action.args.join(',')})`, { hl: helpHightlights.arg });
-      }
-      row.add(' ');
-      if (action.name in registeredActions) {
-        row.add(registeredActions[action.name].description, {
-          hl: helpHightlights.description,
-        });
-      }
-    };
-    const mappings = await getMappings();
-    for (const [key, actions] of Object.entries(mappings)) {
-      if (!actions.some((action) => action.name in registeredActions)) {
-        continue;
-      }
-      for (let i = 0; i < actions.length; i++) {
-        let row = new ViewRowPainter(painter);
-        if (i === 0) {
-          row.add(' ');
-          row.add(key, { hl: helpHightlights.mappingKey });
-          row.add(' - ');
-        } else {
-          row.add(' '.repeat(key.length + 4));
-        }
-        const action = actions[i];
-        const rule = conditionActionRules[action.name];
-        if (rule) {
-          row.add('if ' + rule.getDescription(action.args) + ' ', {
-            hl: helpHightlights.conditional,
-          });
-          drawAction(row, actions[i + 1]);
-          drawnResults.push(await row.draw());
-          row = new ViewRowPainter(painter);
-          row.add(' '.repeat(key.length + 4));
-          row.add('else ', { hl: helpHightlights.conditional });
-          drawAction(row, actions[i + 2]);
-          drawnResults.push(await row.draw());
-          i += 2;
-        } else {
-          drawAction(row, action);
-          drawnResults.push(await row.draw());
-        }
-      }
-    }
-
-    this.nvim.pauseNotification();
-    this.setLinesNotifier(
-      drawnResults.map((n) => n.content),
-      0,
-      -1,
-    ).notify();
-    const highlightPositions: HighlightPositionWithLine[] = [];
-    for (let i = 0; i < drawnResults.length; i++) {
-      const drawn = drawnResults[i];
-      if (drawn.highlightPositions) {
-        highlightPositions.push(
-          ...drawn.highlightPositions.map((hl) => ({
-            line: i,
-            ...hl,
-          })),
-        );
-      }
-    }
-    this.replaceHighlightsNotify(this.helpHlSrcId, highlightPositions);
-    await this.nvim.resumeNotification();
-
-    await this.explorerManager.clearMappings();
-
-    const disposables: Disposable[] = [];
-    ['<esc>', 'q'].forEach((key) => {
-      disposables.push(
-        workspace.registerLocalKeymap(
-          'n',
-          key,
-          async () => {
-            disposables.forEach((d) => d.dispose());
-            await this.quitHelp();
-            await Notifier.runAll([
-              await this.renderAllNotifier(),
-              await source.gotoNodeNotifier(storeNode),
-            ]);
-          },
-          true,
-        ),
-      );
-    });
+    return showHelp(this, source);
   }
 
   async quitHelp() {
-    await this.explorerManager.executeMappings();
-    this.isHelpUI = false;
+    return quitHelp(this);
   }
 }

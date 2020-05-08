@@ -49,7 +49,7 @@ export function initBufferActions(buffer: BufferSource) {
       });
     },
     'open buffer',
-    { multi: true },
+    { multi: true, menu: buffer.openActionMenu },
   );
   buffer.addNodeAction(
     'drop',

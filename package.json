@@ -323,7 +323,7 @@
             "Open action use tab",
             "Open action use last used buffer",
             "Open action use last used window",
-            "Open action use the window when opening explorer"
+            "Open action use the window where explorer opened"
           ]
         },
         "explorer.openAction.select.filterFloatWindows": {

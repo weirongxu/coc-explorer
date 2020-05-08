@@ -44,7 +44,7 @@ Explorer extension for [coc.nvim](https://github.com/neoclide/coc.nvim)
       - tab: Open action use tab
       - previousBuffer: Open action use last used buffer
       - previousWindow: Open action use last used window
-      - sourceWindow: Open action use the window when opening explorer
+      - sourceWindow: Open action use the window where explorer opened
     - [x] Selection
     - [x] Cut / Copy / Paste
     - [x] Delete action use trash by default
