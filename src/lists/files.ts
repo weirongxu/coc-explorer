@@ -1,7 +1,15 @@
 // modified from: https://github.com/neoclide/coc-lists/blob/3c117046b54130157006f8ddf048304507499260/src/files.ts
 
 import { ChildProcess, spawn } from 'child_process';
-import { BasicList, ListContext, ListTask, Neovim, Uri, workspace, ListItem } from 'coc.nvim';
+import {
+  BasicList,
+  ListContext,
+  ListTask,
+  Neovim,
+  Uri,
+  workspace,
+  ListItem,
+} from 'coc.nvim';
 import { EventEmitter } from 'events';
 import minimatch from 'minimatch';
 import path from 'path';
@@ -107,7 +115,9 @@ export default class FileList extends BasicList {
     }
   }
 
-  async loadItems(_context: ListContext): Promise<ListItem[] | ListTask | null> {
+  async loadItems(
+    _context: ListContext,
+  ): Promise<ListItem[] | ListTask | null> {
     if (!this.rootPath) {
       return null;
     }
@@ -116,7 +126,10 @@ export default class FileList extends BasicList {
       return null;
     }
     const task = new Task();
-    const excludePatterns = this.getConfig().get<string[]>('excludePatterns', []);
+    const excludePatterns = this.getConfig().get<string[]>(
+      'excludePatterns',
+      [],
+    );
     task.start(res.cmd, res.args, [this.rootPath], excludePatterns);
     return task;
   }

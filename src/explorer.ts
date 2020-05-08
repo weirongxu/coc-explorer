@@ -1,20 +1,13 @@
-import {
-  Buffer,
-  Disposable,
-  ExtensionContext,
-  Window,
-  workspace,
-} from 'coc.nvim';
+import { Buffer, ExtensionContext, Window, workspace } from 'coc.nvim';
 import { conditionActionRules } from './actions';
 import { argOptions } from './argOptions';
 import { BuffuerContextVars } from './contextVariables';
 import { ExplorerManager } from './explorerManager';
 import { FloatingPreview } from './floating/floatingPreview';
 import { IndexesManager } from './indexesManager';
-import { Action, ActionMode, getMappings } from './mappings';
+import { Action, ActionMode } from './mappings';
 import { ArgContentWidthTypes, Args } from './parseArgs';
 import {
-  HighlightPosition,
   HighlightPositionWithLine,
   hlGroupManager,
 } from './source/highlightManager';
@@ -26,14 +19,12 @@ import {
   ActionMap,
 } from './source/source';
 import { sourceManager } from './source/sourceManager';
-import { ViewPainter, ViewRowPainter } from './source/viewPainter';
 import {
   closeWinByBufnrNotifier,
   doCocExplorerOpenPost,
   doCocExplorerOpenPre,
   doCocExplorerQuitPost,
   doCocExplorerQuitPre,
-  DrawBlock,
   enableWrapscan,
   ExplorerConfig,
   flatten,
@@ -51,6 +42,7 @@ import {
   scanIndexPrev,
   scanIndexNext,
   uniq,
+  sum,
 } from './util';
 import { showHelp, quitHelp } from './help';
 
@@ -466,6 +458,10 @@ export class Explorer {
     return flatten(this.sources.map((s) => s.flattenedNodes));
   }
 
+  get height() {
+    return sum(this.sources.map((s) => s.height));
+  }
+
   get win(): Promise<Window | null> {
     return this.winid.then(winByWinid);
   }
@@ -585,6 +581,7 @@ export class Explorer {
 
   async open(args: Args, isFirst: boolean) {
     await doCocExplorerOpenPre();
+
     if (this.isHelpUI) {
       await this.quitHelp();
     }
@@ -937,6 +934,12 @@ export class Explorer {
     const win = await this.win;
     return Notifier.create(() => {
       if (win) {
+        const height = this.height;
+        if (lineIndex < 0) {
+          lineIndex = 0;
+        } else if (lineIndex >= height) {
+          lineIndex = height - 1;
+        }
         this.currentLineIndex = lineIndex;
         win.setCursor([lineIndex + 1, col ?? 0], true);
         if (workspace.isVim) {
