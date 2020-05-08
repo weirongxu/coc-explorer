@@ -128,7 +128,7 @@ Open explorer use presets
 
 Close the explorer if it exists, default: `--toggle`
 
-#### `--open-action-strategy`
+#### `--open-action-strategy <strategy>`
 
 Strategy for open action, types: `select | vsplit | split | tab | previousBuffer | previousWindow | sourceWindow`, default: `select`
 
