@@ -51,30 +51,32 @@ export class FloatingFactory3 implements Disposable {
     }
     // @ts-ignore
     this.floatBuffer = new FloatBuffer(nvim);
-    onBufEnter(
-      (bufnr) => {
-        if (bufnr == this.bufnr || bufnr == this.targetBufnr) {
-          return;
-        }
-        this.close();
-      },
-      undefined,
-      this.disposables,
-    );
-    onEvents(
-      'MenuPopupChanged',
-      async (ev, cursorline) => {
-        const pumAlignTop = (this.pumAlignTop = cursorline > ev.row);
-        if (pumAlignTop == this.alignTop) {
-          this.close();
-        }
-      },
-      null,
-      this.disposables,
-    );
     this.onCursorMoved = debounce(300, this._onCursorMoved.bind(this));
-    onEvents('CursorMoved', this.onCursorMoved, null, this.disposables);
-    onEvents('CursorMovedI', this.onCursorMoved, null, this.disposables);
+    this.explorer.context.subscriptions.push(
+      onBufEnter(
+        (bufnr) => {
+          if (bufnr == this.bufnr || bufnr == this.targetBufnr) {
+            return;
+          }
+          this.close();
+        },
+        undefined,
+        this.disposables,
+      ),
+      onEvents(
+        'MenuPopupChanged',
+        async (ev, cursorline) => {
+          const pumAlignTop = (this.pumAlignTop = cursorline > ev.row);
+          if (pumAlignTop == this.alignTop) {
+            this.close();
+          }
+        },
+        null,
+        this.disposables,
+      ),
+      onEvents('CursorMoved', this.onCursorMoved, null, this.disposables),
+      onEvents('CursorMovedI', this.onCursorMoved, null, this.disposables),
+    );
   }
 
   private _onCursorMoved(): void {
@@ -105,20 +107,19 @@ export class FloatingFactory3 implements Disposable {
   }
 
   public async getWindowConfig(
-    explorer: Explorer,
     docs: Documentation[],
     win_position: [number, number],
   ): Promise<WindowConfig | void> {
     const { columns, preferTop, lines, nvim } = this;
     let alignTop = false;
     const [winRow] = win_position;
-    const position = await explorer.args.value(argOptions.position);
+    const position = await this.explorer.args.value(argOptions.position);
     const isFloating = position === 'floating';
-    const enabledFloatingBorder = explorer.config.enableFloatingBorder;
+    const enabledFloatingBorder = this.explorer.config.enableFloatingBorder;
     const containerWin =
       isFloating && enabledFloatingBorder
-        ? await explorer.floatingBorderWin
-        : await explorer.win;
+        ? await this.explorer.floatingBorderWin
+        : await this.explorer.win;
     if (!containerWin) {
       return;
     }
@@ -143,7 +144,7 @@ export class FloatingFactory3 implements Disposable {
     }
     this.alignTop = alignTop;
 
-    const explorerLineIndex = explorer.lineIndex;
+    const explorerLineIndex = this.explorer.currentLineIndex;
     const view: {
       topline: number;
       leftcol: number;
@@ -167,7 +168,7 @@ export class FloatingFactory3 implements Disposable {
       } = (await nvim.call('nvim_win_get_config', [
         containerWin.id,
       ])) as WindowConfig;
-      const floatingPosition = await explorer.args.value(
+      const floatingPosition = await this.explorer.args.value(
         argOptions.floatingPosition,
       );
       row += floatingRow;
@@ -190,7 +191,6 @@ export class FloatingFactory3 implements Disposable {
   }
 
   public async create(
-    explorer: Explorer,
     docs: Documentation[],
     highlights: BufferHighlight[] = [],
     allowSelection = false,
@@ -207,7 +207,7 @@ export class FloatingFactory3 implements Disposable {
     }
     this.cancel();
     try {
-      await this.createPopup(explorer, docs, highlights, allowSelection);
+      await this.createPopup(docs, highlights, allowSelection);
     } catch (e) {
       // tslint:disable-next-line: ban
       log('error', `Error on create popup: ${e.message}`);
@@ -216,7 +216,6 @@ export class FloatingFactory3 implements Disposable {
   }
 
   public async createPopup(
-    explorer: Explorer,
     docs: Documentation[],
     highlights: BufferHighlight[],
     allowSelection = false,
@@ -235,7 +234,7 @@ export class FloatingFactory3 implements Disposable {
     }
     const [mode, targetBufnr, win_position] = arr;
     this.targetBufnr = targetBufnr;
-    const config = await this.getWindowConfig(explorer, docs, win_position);
+    const config = await this.getWindowConfig(docs, win_position);
     if (!config) {
       return;
     }

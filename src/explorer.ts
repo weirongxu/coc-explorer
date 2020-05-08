@@ -6,6 +6,7 @@ import {
   workspace,
 } from 'coc.nvim';
 import { conditionActionRules } from './actions';
+import { argOptions } from './argOptions';
 import { BuffuerContextVars } from './contextVariables';
 import { ExplorerManager } from './explorerManager';
 import { FloatingPreview } from './floating/floatingPreview';
@@ -13,36 +14,39 @@ import { IndexesManager } from './indexesManager';
 import { Action, ActionMode, getMappings } from './mappings';
 import { ArgContentWidthTypes, Args } from './parseArgs';
 import {
+  HighlightPosition,
   HighlightPositionWithLine,
   hlGroupManager,
-  HighlightPosition,
 } from './source/highlightManager';
 import './source/load';
 import { ActionOptions, BaseTreeNode, ExplorerSource } from './source/source';
 import { sourceManager } from './source/sourceManager';
-import { ViewRowPainter, ViewPainter } from './source/viewPainter';
+import { ViewPainter, ViewRowPainter } from './source/viewPainter';
 import {
+  closeWinByBufnrNotifier,
+  doCocExplorerOpenPost,
+  doCocExplorerOpenPre,
+  doCocExplorerQuitPost,
+  doCocExplorerQuitPre,
+  DrawBlock,
   enableWrapscan,
+  ExplorerConfig,
+  flatten,
   getEnableDebug,
   Notifier,
   onBufEnter,
   onCursorMoved,
+  onEvents,
+  partition,
   PreviewStrategy,
   queueAsyncFunction,
   winByWinid,
-  winnrByBufnr,
   winidByWinnr,
-  onEvents,
-  partition,
-  closeWinByBufnrNotifier,
-  ExplorerConfig,
-  doCocExplorerOpenPre,
-  doCocExplorerOpenPost,
-  doCocExplorerQuitPre,
-  doCocExplorerQuitPost,
+  winnrByBufnr,
+  scanIndexPrev,
+  scanIndexNext,
+  prettyPrint,
 } from './util';
-import { argOptions } from './argOptions';
-import { DrawBlock } from './util/painter';
 
 const hl = hlGroupManager.linkGroup.bind(hlGroupManager);
 const helpHightlights = {
@@ -57,7 +61,7 @@ const helpHightlights = {
 export class Explorer {
   nvim = workspace.nvim;
   isHelpUI: boolean = false;
-  lineIndex = 0;
+  currentLineIndex = 0;
   helpHlSrcId = workspace.createNameSpace('coc-explorer-help');
   indexesManager = new IndexesManager(this);
   inited = new BuffuerContextVars<boolean>('inited', this);
@@ -196,112 +200,132 @@ export class Explorer {
       }),
       onCursorMoved(async (bufnr: number) => {
         if (bufnr === this.bufnr) {
-          this.lineIndex =
+          this.currentLineIndex =
             ((await this.nvim.call('line', ['.'])) as number) - 1;
         }
       }),
     );
 
+    type MoveStrategy = 'default' | 'insideSource';
     this.addGlobalAction(
       'nodePrev',
-      async () => {
-        const line = this.lineIndex;
-        if (line !== null) {
-          await this.gotoLineIndex(line - 1);
+      async ({ args }) => {
+        const moveStrategy = args[0] as MoveStrategy;
+        if (moveStrategy === 'insideSource') {
+          const source = await this.currentSource();
+          if (!source) {
+            return;
+          }
+          await source.gotoLineIndex(source.currentLineIndex - 1);
+        } else {
+          const line = this.currentLineIndex;
+          if (line !== null) {
+            await this.gotoLineIndex(line - 1);
+          }
         }
       },
       'previous node',
     );
     this.addGlobalAction(
       'nodeNext',
-      async () => {
-        const line = this.lineIndex;
-        if (line !== null) {
-          await this.gotoLineIndex(line + 1);
+      async ({ args }) => {
+        const moveStrategy = args[0] as MoveStrategy;
+        if (moveStrategy === 'insideSource') {
+          const source = await this.currentSource();
+          if (!source) {
+            return;
+          }
+          await source.gotoLineIndex(source.currentLineIndex + 1);
+        } else {
+          const line = this.currentLineIndex;
+          if (line !== null) {
+            await this.gotoLineIndex(line + 1);
+          }
         }
       },
       'next node',
     );
     this.addGlobalAction(
       'expandablePrev',
-      async () => {
-        const getExpandableLine = async (
-          sourceIndex: number,
-          startIndex: number,
-          startSourceIndex = sourceIndex,
+      async ({ args }) => {
+        const moveStrategy = args[0] as MoveStrategy;
+
+        const gotoPrevExpandable = async (
+          nodes: BaseTreeNode<any>[],
+          lineIndex: number,
+          startLineIndex: number,
         ) => {
-          const source = this.sources[sourceIndex];
-          for (let i = startIndex; i >= 0; i--) {
-            const node = source.flattenedNodes[i];
-            if (node.expandable) {
-              await this.gotoLineIndex(
-                source.startLineIndex + source.getLineByNode(node),
-              );
-              return;
-            }
-          }
-
-          const nextSourceIndex = (sourceIndex - 1) % this.sources.length;
-
-          if (startSourceIndex === nextSourceIndex) {
+          const relativeIndex = scanIndexPrev(
+            nodes,
+            lineIndex,
+            await enableWrapscan(),
+            (n) => !!n.expandable,
+          );
+          if (relativeIndex === null) {
             return;
           }
-
-          if (sourceIndex === 0 && !(await enableWrapscan())) {
-            return;
-          }
-
-          await getExpandableLine(nextSourceIndex, 0);
+          await this.gotoLineIndex(startLineIndex + relativeIndex);
         };
 
-        const sourceIndex = await this.currentSourceIndex();
-        const source = this.sources[sourceIndex];
-        const lineIndex = this.lineIndex;
-        await getExpandableLine(
-          sourceIndex,
-          lineIndex - source.startLineIndex - 1,
-        );
+        if (moveStrategy === 'insideSource') {
+          const source = await this.currentSource();
+          if (!source) {
+            return;
+          }
+          await gotoPrevExpandable(
+            source.flattenedNodes,
+            source.currentLineIndex,
+            source.startLineIndex,
+          );
+        } else {
+          await gotoPrevExpandable(
+            this.flattenedNodes,
+            this.currentLineIndex,
+            0,
+          );
+        }
       },
       'previous expandable node',
     );
     this.addGlobalAction(
       'expandableNext',
-      async () => {
-        const getExpandableLine = async (
-          sourceIndex: number,
-          startIndex: number,
-          startSourceIndex = sourceIndex,
+      async ({ args }) => {
+        const moveStrategy = args[0] as MoveStrategy;
+
+        const gotoNextExpandable = async (
+          nodes: BaseTreeNode<any>[],
+          lineIndex: number,
+          startLineIndex: number,
         ) => {
-          const source = this.sources[sourceIndex];
-          for (let i = startIndex; i < source.height; i++) {
-            const node = source.flattenedNodes[i];
-            if (node.expandable) {
-              await this.gotoLineIndex(
-                source.startLineIndex + source.getLineByNode(node),
-              );
-              return;
-            }
-          }
-
-          const nextSourceIndex = (sourceIndex + 1) % this.sources.length;
-          if (startSourceIndex === nextSourceIndex) {
+          const relativeIndex = scanIndexNext(
+            nodes,
+            lineIndex,
+            await enableWrapscan(),
+            (n) => !!n.expandable,
+          );
+          if (relativeIndex === null) {
             return;
           }
-
-          if (sourceIndex === 0 && !(await enableWrapscan())) {
-            return;
-          }
-
-          await getExpandableLine(nextSourceIndex, 0);
+          await this.gotoLineIndex(startLineIndex + relativeIndex);
         };
 
-        const sourceIndex = await this.currentSourceIndex();
-        const source = this.sources[sourceIndex];
-        const lineIndex = this.lineIndex;
-        await getExpandableLine(
-          sourceIndex,
-          lineIndex - source.startLineIndex + 1,
-        );
+        if (moveStrategy === 'insideSource') {
+          const source = await this.currentSource();
+          if (!source) {
+            return;
+          }
+          await gotoNextExpandable(
+            source.flattenedNodes,
+            source.currentLineIndex,
+            source.startLineIndex,
+          );
+        } else {
+          await gotoNextExpandable(
+            this.flattenedNodes,
+            this.currentLineIndex,
+            0,
+          );
+        }
       },
       'next expandable node',
     );
@@ -421,6 +445,13 @@ export class Explorer {
     return this._args;
   }
 
+  get buffer(): Buffer {
+    if (!this._buffer) {
+      this._buffer = this.nvim.createBuffer(this.bufnr);
+    }
+    return this._buffer;
+  }
+
   get sources(): ExplorerSource<BaseTreeNode<any>>[] {
     if (!this._sources) {
       throw Error('Explorer sources not initialized yet');
@@ -428,11 +459,8 @@ export class Explorer {
     return this._sources;
   }
 
-  get buffer(): Buffer {
-    if (!this._buffer) {
-      this._buffer = this.nvim.createBuffer(this.bufnr);
-    }
-    return this._buffer;
+  get flattenedNodes() {
+    return flatten(this.sources.map((s) => s.flattenedNodes));
   }
 
   get win(): Promise<Window | null> {
@@ -871,7 +899,7 @@ export class Explorer {
   }
 
   async currentSourceIndex() {
-    const lineIndex = this.lineIndex;
+    const lineIndex = this.currentLineIndex;
     return this.sources.findIndex(
       (source) =>
         lineIndex >= source.startLineIndex && lineIndex < source.endLineIndex,
@@ -881,7 +909,7 @@ export class Explorer {
   async currentNode() {
     const source = await this.currentSource();
     if (source) {
-      const nodeIndex = this.lineIndex - source.startLineIndex;
+      const nodeIndex = this.currentLineIndex - source.startLineIndex;
       return source.flattenedNodes[nodeIndex] as
         | BaseTreeNode<any, string>
         | undefined;
@@ -896,7 +924,7 @@ export class Explorer {
     const win = await this.win;
     return Notifier.create(() => {
       if (win) {
-        this.lineIndex = lineIndex;
+        this.currentLineIndex = lineIndex;
         win.setCursor([lineIndex + 1, col ?? 0], true);
         if (workspace.isVim) {
           this.nvim.command('redraw', true);

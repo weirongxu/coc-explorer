@@ -1,23 +1,25 @@
-import { HighlightCommand, HighlightPosition } from './highlightManager';
-import { byteLength, sum, flatten } from '../util';
-import { BaseTreeNode } from './source';
 import { Explorer } from '../explorer';
-import { TemplatePart } from './sourcePainters';
-import { Column } from './columnRegistrar';
 import {
-  DrawBlock,
+  byteLength,
   Drawable,
-  DrawContentWithWidth,
-  fetchDisplayWidth,
-  DrawGroup,
+  DrawBlock,
   DrawContent,
+  DrawContentWithWidth,
   DrawFlexible,
-  handlePadding,
+  DrawGroup,
+  Drawn,
+  fetchDisplayWidth,
+  flatten,
   handleGrow,
   handleOmit,
-  Drawn,
+  handlePadding,
   isEmptyDrawableList,
-} from '../util/painter';
+  sum,
+} from '../util';
+import { Column } from './columnRegistrar';
+import { HighlightCommand, HighlightPosition } from './highlightManager';
+import { BaseTreeNode } from './source';
+import { TemplatePart } from './sourcePainters';
 
 export class ViewPainter {
   constructor(public explorer: Explorer) {}

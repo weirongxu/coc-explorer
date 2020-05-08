@@ -1,10 +1,9 @@
-import { ColumnRegistrar, Column } from './columnRegistrar';
-import { BaseTreeNode, ExplorerSource } from './source';
-import { hlGroupManager } from './highlightManager';
 import pFilter from 'p-filter';
-import { parseTemplate, OriginalTemplatePart } from './parseTemplate';
-import { groupBy } from '../util';
-import { DrawnWithNodeIndex, Drawn } from '../util/painter';
+import { Drawn, DrawnWithNodeIndex, groupBy } from '../util';
+import { Column, ColumnRegistrar } from './columnRegistrar';
+import { hlGroupManager } from './highlightManager';
+import { OriginalTemplatePart, parseTemplate } from './parseTemplate';
+import { BaseTreeNode, ExplorerSource } from './source';
 import { ViewPainter } from './viewPainter';
 
 export const labelHighlight = hlGroupManager.linkGroup('Label', 'Label');

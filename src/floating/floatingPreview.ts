@@ -1,17 +1,17 @@
+import { FloatBuffer, workspace } from 'coc.nvim';
 import { Explorer } from '../explorer';
 import { BaseTreeNode, ExplorerSource } from '../source/source';
 import {
   Cancellable,
+  Cancelled,
   debouncePromise,
+  Drawn,
+  flatten,
   PreviewStrategy,
   supportedFloat,
-  Cancelled,
-  flatten,
 } from '../util';
-import { workspace, FloatBuffer } from 'coc.nvim';
 import { FloatingFactory2 } from './floatingFactory2';
 import { FloatingFactory3 } from './floatingFactory3';
-import { Drawn } from '../util/painter';
 
 export class FloatingPreview {
   nvim = workspace.nvim;
@@ -45,7 +45,6 @@ export class FloatingPreview {
     }
 
     await this.floatFactory.create(
-      this.explorer,
       [
         {
           content: drawnList.map((d) => d.content).join('\n'),

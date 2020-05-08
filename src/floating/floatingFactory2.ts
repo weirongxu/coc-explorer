@@ -191,7 +191,6 @@ export class FloatingFactory2 implements Disposable {
   }
 
   public async getBoundings(
-    explorer: Explorer,
     docs: Documentation[],
   ): Promise<WindowConfig | void> {
     const { nvim, preferTop } = this;
@@ -201,13 +200,13 @@ export class FloatingFactory2 implements Disposable {
       number,
       number,
     ];
-    const position = await explorer.args.value(argOptions.position);
+    const position = await this.explorer.args.value(argOptions.position);
     const isFloating = position === 'floating';
-    const enabledFloatingBorder = explorer.config.enableFloatingBorder;
+    const enabledFloatingBorder = this.explorer.config.enableFloatingBorder;
     const containerWin =
       isFloating && enabledFloatingBorder
-        ? await explorer.floatingBorderWin
-        : await explorer.win;
+        ? await this.explorer.floatingBorderWin
+        : await this.explorer.win;
     if (!containerWin) {
       return;
     }
@@ -245,7 +244,7 @@ export class FloatingFactory2 implements Disposable {
     await this.floatBuffer.setDocuments(docs, maxWidth);
     const { width: previewWidth } = this.floatBuffer;
 
-    const explorerLineIndex = explorer.lineIndex;
+    const explorerLineIndex = this.explorer.currentLineIndex;
     const view: {
       topline: number;
       leftcol: number;
@@ -269,7 +268,7 @@ export class FloatingFactory2 implements Disposable {
       } = (await nvim.call('nvim_win_get_config', [
         containerWin.id,
       ])) as WindowConfig;
-      const floatingPosition = await explorer.args.value(
+      const floatingPosition = await this.explorer.args.value(
         argOptions.floatingPosition,
       );
       row += floatingRow;
@@ -292,7 +291,6 @@ export class FloatingFactory2 implements Disposable {
   }
 
   public async create(
-    explorer: Explorer,
     docs: Documentation[],
     highlights: BufferHighlight[] = [],
     allowSelection = false,
@@ -302,19 +300,13 @@ export class FloatingFactory2 implements Disposable {
       log('error', 'Floating window & textprop not supported!');
       return;
     }
-    const shown = await this.createPopup(
-      explorer,
-      docs,
-      highlights,
-      allowSelection,
-    );
+    const shown = await this.createPopup(docs, highlights, allowSelection);
     if (!shown) {
       await this.close(false);
     }
   }
 
   private async createPopup(
-    explorer: Explorer,
     docs: Documentation[],
     highlights: BufferHighlight[],
     allowSelection = false,
@@ -330,7 +322,7 @@ export class FloatingFactory2 implements Disposable {
     const tokenSource = (this.tokenSource = new CancellationTokenSource());
     const token = tokenSource.token;
     await this.ensureFloatBuffer();
-    const config = await this.getBoundings(explorer, docs);
+    const config = await this.getBoundings(docs);
     const [mode, line, col, visible] = (await this.nvim.eval(
       '[mode(),line("."),col("."),pumvisible()]',
     )) as [string, number, number, number];

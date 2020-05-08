@@ -29,7 +29,7 @@ export class IndexesManager {
       mergeLines = mergeLines.concat(lines ? Array.from(lines) : []);
     }
     if (mergeLines.length) {
-      const curLine = this.explorer.lineIndex;
+      const curLine = this.explorer.currentLineIndex;
       const sortedLines = mergeLines.sort((a, b) => b - a);
       const prevLine = sortedLines.find((line) => line < curLine);
       if (prevLine) {
@@ -48,7 +48,7 @@ export class IndexesManager {
       mergeLines = mergeLines.concat(lines ? Array.from(lines) : []);
     }
     if (mergeLines.length) {
-      const curLine = this.explorer.lineIndex;
+      const curLine = this.explorer.currentLineIndex;
       const sortedLines = mergeLines.sort((a, b) => a - b);
       const nextLine = sortedLines.find((line) => line > curLine);
       if (nextLine) {

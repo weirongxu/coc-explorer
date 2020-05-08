@@ -1,28 +1,28 @@
 import {
   Disposable,
+  Emitter,
   ExtensionContext,
   IList,
   listManager,
   workspace,
-  Emitter,
 } from 'coc.nvim';
+import { argOptions } from '../argOptions';
 import { Explorer } from '../explorer';
 import { explorerActionList } from '../lists/actions';
 import { onError } from '../logger';
-import { getMappings, getReverseMappings, ActionMode } from '../mappings';
+import { ActionMode, getMappings, getReverseMappings } from '../mappings';
+import { OpenStrategy } from '../types';
 import {
+  drawnToRange,
+  flatten,
   generateUri,
   Notifier,
   onEvents,
   PreviewStrategy,
-  flatten,
 } from '../util';
+import { WinLayoutFinder } from '../winLayoutFinder';
 import { HighlightPositionWithLine } from './highlightManager';
 import { SourcePainters } from './sourcePainters';
-import { WinLayoutFinder } from '../winLayoutFinder';
-import { OpenStrategy } from '../types';
-import { argOptions } from '../argOptions';
-import { drawnToRange } from '../util/painter';
 
 export type ActionOptions = {
   multi: boolean;
@@ -605,7 +605,7 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>> {
    * Relative line index for source
    */
   get currentLineIndex() {
-    return this.explorer.lineIndex - this.startLineIndex;
+    return this.explorer.currentLineIndex - this.startLineIndex;
   }
 
   currentNode() {
@@ -613,19 +613,14 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>> {
   }
 
   async gotoLineIndex(lineIndex: number, col?: number) {
-    return (
-      await this.explorer.gotoLineIndexNotifier(
-        this.startLineIndex + lineIndex,
-        col,
-      )
-    ).run();
+    return (await this.gotoLineIndexNotifier(lineIndex, col)).run();
   }
 
   gotoLineIndexNotifier(lineIndex: number, col?: number) {
     if (lineIndex < 0) {
       lineIndex = 0;
     }
-    if (lineIndex > this.height) {
+    if (lineIndex >= this.height) {
       lineIndex = this.height - 1;
     }
     return this.explorer.gotoLineIndexNotifier(
