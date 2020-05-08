@@ -345,15 +345,19 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>> {
       return;
     }
     const { nvim } = this;
-    const getEscapeFullpath = async () => {
-      return await this.nvim.call('fnameescape', [await getFullpath()]);
+    const getEscapePath = async () => {
+      let path = await getFullpath();
+      if (this.config.openActionRelativePath) {
+        path = await this.nvim.call('fnamemodify', [path, ':.']);
+      }
+      return await this.nvim.call('fnameescape', [path]);
     };
     const openByWinnr =
       originalOpenByWinnr ??
       (async (winnr: number) => {
         nvim.pauseNotification();
         nvim.command(`${winnr}wincmd w`, true);
-        nvim.command(`edit ${await getEscapeFullpath()}`, true);
+        nvim.command(`edit ${await getEscapePath()}`, true);
         if (workspace.isVim) {
           // Avoid vim highlight not working,
           // https://github.com/weirongxu/coc-explorer/issues/113
@@ -389,7 +393,7 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>> {
         type Mode = 'intelligent' | 'plain';
         const mode: Mode = (args[0] ?? 'intelligent') as Mode;
         if (mode === 'plain') {
-          await nvim.command(`split ${await getEscapeFullpath()}`);
+          await nvim.command(`split ${await getEscapePath()}`);
           await this.explorer.tryQuitOnOpen();
         } else {
           const position = await this.explorer.args.value(argOptions.position);
@@ -419,7 +423,7 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>> {
 
                 nvim.pauseNotification();
                 nvim.call('win_gotoid', [targetWinid], true);
-                nvim.command(`split ${await getEscapeFullpath()}`, true);
+                nvim.command(`split ${await getEscapePath()}`, true);
                 await nvim.resumeNotification();
                 await this.explorer.tryQuitOnOpen();
               }
@@ -433,7 +437,7 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>> {
       },
       vsplit: async () => {
         nvim.pauseNotification();
-        nvim.command(`vsplit ${await getEscapeFullpath()}`, true);
+        nvim.command(`vsplit ${await getEscapePath()}`, true);
         const position = await this.explorer.args.value(argOptions.position);
         if (position === 'left') {
           nvim.command('wincmd L', true);
@@ -447,7 +451,7 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>> {
       },
       tab: async () => {
         await this.explorer.tryQuitOnOpen();
-        await nvim.command(`tabedit ${await getEscapeFullpath()}`);
+        await nvim.command(`tabedit ${await getEscapePath()}`);
       },
       previousBuffer: async () => {
         const prevWinnr = await this.explorer.explorerManager.prevWinnrByPrevBufnr();

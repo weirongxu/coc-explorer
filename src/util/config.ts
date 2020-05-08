@@ -27,6 +27,9 @@ export function buildExplorerConfig(config: WorkspaceConfiguration) {
     get openActionForDirectory() {
       return this.config.get<string>('openAction.for.directory')!;
     },
+    get openActionRelativePath() {
+      return this.config.get<boolean>('openAction.relativePath')!;
+    },
     get previewStrategy() {
       return this.config.get<PreviewStrategy>('previewAction.strategy')!;
     },

@@ -367,6 +367,11 @@
           "type": "string",
           "default": "cd"
         },
+        "explorer.openAction.relativePath": {
+          "description": "Use relative path when open a file with openAction",
+          "type": "boolean",
+          "default": false
+        },
         "explorer.sources": {
           "description": "Explorer sources",
           "type": "array",

@@ -446,6 +446,10 @@ Default: <pre><code>{
 Default: <pre><code>"cd"</code></pre>
 </details>
 <details>
+<summary><code>explorer.openAction.relativePath</code>: Use relative path when open a file with openAction. type: <code>boolean</code></summary>
+Default: <pre><code>false</code></pre>
+</details>
+<details>
 <summary><code>explorer.sources</code>: Explorer sources. type: <code>array</code></summary>
 Default: <pre><code>[
   {
