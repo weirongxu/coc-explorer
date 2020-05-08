@@ -153,3 +153,19 @@ export function onBufWipeout(handler: BufEventHandler) {
 
   return disposable;
 }
+
+export async function doCocExplorerOpenPre() {
+  await workspace.nvim.command('doautocmd User CocExplorerOpenPre');
+}
+
+export async function doCocExplorerOpenPost() {
+  await workspace.nvim.command('doautocmd User CocExplorerOpenPost');
+}
+
+export async function doCocExplorerQuitPre() {
+  await workspace.nvim.command('doautocmd User CocExplorerQuitPre');
+}
+
+export async function doCocExplorerQuitPost() {
+  await workspace.nvim.command('doautocmd User CocExplorerQuitPost');
+}

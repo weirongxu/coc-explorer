@@ -36,6 +36,10 @@ import {
   partition,
   closeWinByBufnrNotifier,
   ExplorerConfig,
+  doCocExplorerOpenPre,
+  doCocExplorerOpenPost,
+  doCocExplorerQuitPre,
+  doCocExplorerQuitPost,
 } from './util';
 import { argOptions } from './argOptions';
 import { DrawBlock } from './util/painter';
@@ -539,6 +543,7 @@ export class Explorer {
   }
 
   async open(args: Args, isFirst: boolean) {
+    await doCocExplorerOpenPre();
     if (this.isHelpUI) {
       await this.quitHelp();
     }
@@ -557,6 +562,8 @@ export class Explorer {
         this.sources.map((s) => s.openedNotifier(isFirst)),
       )),
     ]);
+
+    await doCocExplorerOpenPost();
   }
 
   async refreshWidth() {
@@ -620,7 +627,7 @@ export class Explorer {
 
   async hide() {
     this.isHide = true;
-    await this.quit();
+    await this.quit(true);
   }
 
   async show() {
@@ -630,7 +637,10 @@ export class Explorer {
     }
   }
 
-  async quit() {
+  async quit(isHide = false) {
+    if (!isHide) {
+      await doCocExplorerQuitPre();
+    }
     const sourceWinnr = await this.sourceWinnr();
     this.nvim.pauseNotification();
     closeWinByBufnrNotifier(this.bufnr).notify();
@@ -640,6 +650,9 @@ export class Explorer {
     // win.close() not work in nvim 3.8
     // await win.close(true);
     await this.nvim.resumeNotification();
+    if (!isHide) {
+      await doCocExplorerQuitPost();
+    }
   }
 
   async quitFloatingBorderWin() {
