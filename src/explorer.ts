@@ -897,6 +897,7 @@ export class Explorer {
   setLinesNotifier(lines: string[], start: number, end: number) {
     return Notifier.create(() => {
       this.buffer.setOption('modifiable', true, true);
+      this.buffer.setOption('readonly', false, true);
 
       this.buffer.setLines(
         lines,
@@ -908,6 +909,7 @@ export class Explorer {
         true,
       );
 
+      this.buffer.setOption('readonly', true, true);
       this.buffer.setOption('modifiable', false, true);
     });
   }

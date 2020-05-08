@@ -133,6 +133,7 @@ function s:floating_border_buffer_render(
   let content += [a:chars[6] . repeat(a:chars[5], repeat_width) . a:chars[4]]
   set modifiable
   call nvim_buf_set_lines(a:bufnr, 0, -1, v:false, content)
+  set nomodifiable
   if a:is_first
     call coc_explorer#init_buf(v:true)
     call nvim_win_set_option(winid, 'winhl', 'Normal:CocExplorerNormalFloatBorder')
@@ -162,7 +163,7 @@ endfunction
 function! coc_explorer#init_buf(is_border)
   silent setlocal colorcolumn=
               \ buftype=nofile bufhidden=hide nobuflisted nolist
-              \ nomodifiable nomodified
+              \ nomodifiable nomodified readonly
               \ noswapfile noundofile
               \ nomodeline
               \ signcolumn=no
