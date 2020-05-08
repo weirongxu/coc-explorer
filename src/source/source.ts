@@ -751,13 +751,12 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>> {
     return res;
   }
 
-  clearHighlightsNotify(lineStart?: number, lineEnd?: number) {
-    this.explorer.clearHighlightsNotify(this.hlSrcId, lineStart, lineEnd);
+  replaceHighlightsNotify(highlights: HighlightPositionWithLine[]) {
+    this.explorer.replaceHighlightsNotify(this.hlSrcId, highlights);
   }
 
-  executeHighlightsNotify(highlights: HighlightPositionWithLine[]) {
-    // TODO store highlightPositionWithLines and clear
-    this.explorer.executeHighlightsNotify(this.hlSrcId, highlights);
+  clearHighlightsNotify(lineStart?: number, lineEnd?: number) {
+    this.explorer.clearHighlightsNotify(this.hlSrcId, lineStart, lineEnd);
   }
 
   currentSourceIndex() {
@@ -857,7 +856,7 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>> {
 
         this.nvim.pauseNotification();
         this.setLinesNotifier(contents, startIndex, endIndex + 1).notify();
-        this.executeHighlightsNotify(highlightPositions);
+        this.replaceHighlightsNotify(highlightPositions);
         gotoNotifier.notify();
         await this.nvim.resumeNotification();
       },
@@ -912,7 +911,7 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>> {
 
         this.nvim.pauseNotification();
         this.setLinesNotifier(contents, startIndex, endIndex + 1).notify();
-        this.executeHighlightsNotify(highlightPositions);
+        this.replaceHighlightsNotify(highlightPositions);
         gotoNotifier.notify();
         await this.nvim.resumeNotification();
       },
@@ -966,7 +965,7 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>> {
               dr.nodeIndexEnd + 1,
             ).notify();
           });
-          this.executeHighlightsNotify(highlightPositions);
+          this.replaceHighlightsNotify(highlightPositions);
         });
       },
       drawAll: () => this.renderNotifier(),
@@ -1029,7 +1028,7 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>> {
             : this.startLineIndex + nodeIndex + oldHeight,
         )
         .notify();
-      this.executeHighlightsNotify(highlightPositions);
+      this.replaceHighlightsNotify(highlightPositions);
 
       if (workspace.env.isVim) {
         nvim.command('redraw', true);

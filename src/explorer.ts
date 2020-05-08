@@ -45,6 +45,7 @@ import {
   winnrByBufnr,
   scanIndexPrev,
   scanIndexNext,
+  uniq,
 } from './util';
 
 const hl = hlGroupManager.linkGroup.bind(hlGroupManager);
@@ -514,6 +515,16 @@ export class Explorer {
       return null;
     }
     return bufnr;
+  }
+
+  replaceHighlightsNotify(
+    hlSrcId: number,
+    highlights: HighlightPositionWithLine[],
+  ) {
+    uniq(highlights.map((hl) => hl.line)).forEach((line) =>
+      this.clearHighlightsNotify(hlSrcId, line, line),
+    );
+    this.executeHighlightsNotify(hlSrcId, highlights);
   }
 
   clearHighlightsNotify(hlSrcId: number, lineStart?: number, lineEnd?: number) {
@@ -1095,7 +1106,7 @@ export class Explorer {
         );
       }
     }
-    this.executeHighlightsNotify(this.helpHlSrcId, highlightPositions);
+    this.replaceHighlightsNotify(this.helpHlSrcId, highlightPositions);
     await this.nvim.resumeNotification();
 
     await this.explorerManager.clearMappings();
