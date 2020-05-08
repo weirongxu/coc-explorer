@@ -13,17 +13,11 @@ export const onEvents: OnEvent = (
   disposables?: Disposable[],
 ) => events.on(event, asyncCatchError(handler), disposables);
 
-let stopBufEvent = false;
-
 // onBufEnter
 const onBufEnterHandlers: BufEventHandler[] = [];
 let onBufEnterTriggerCount = 0;
 
 onEvents('BufEnter', (bufnr) => {
-  if (stopBufEvent) {
-    return;
-  }
-
   if (getEnableDebug()) {
     // tslint:disable-next-line: ban
     workspace.showMessage(
@@ -72,10 +66,6 @@ const onCursorMovedHandlers: BufEventHandler[] = [];
 let onCursorMovedTriggerCount = 0;
 
 onEvents('CursorMoved', (bufnr) => {
-  if (stopBufEvent) {
-    return;
-  }
-
   if (getEnableDebug()) {
     // tslint:disable-next-line: ban
     workspace.showMessage(
@@ -110,19 +100,6 @@ export function onCursorMoved(
 
   onCursorMovedHandlers.push(fn);
   return disposable;
-}
-
-export async function avoidOnBufEvents<R>(block: () => Promise<R>) {
-  let result: R;
-  try {
-    stopBufEvent = true;
-    result = await block();
-    return result;
-  } catch (error) {
-    throw error;
-  } finally {
-    stopBufEvent = false;
-  }
 }
 
 export function registerBufDeleteEvents() {
