@@ -238,6 +238,10 @@ export class FloatingFactory3 implements Disposable {
     if (!config) {
       return;
     }
+    if (!config.height) {
+      this.close();
+      return;
+    }
     // calculat highlights
     await floatBuffer.setDocuments(docs, config.width);
     if (token.isCancellationRequested) {
