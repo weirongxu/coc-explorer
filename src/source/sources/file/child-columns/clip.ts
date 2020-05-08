@@ -2,11 +2,11 @@ import { fileColumnRegistrar } from '../fileColumnRegistrar';
 import { fileHighlights } from '../fileSource';
 
 fileColumnRegistrar.registerColumn('child', 'clip', ({ source }) => ({
-  drawLine(row, node) {
+  draw() {
     let copy = source.getColumnConfig<string>('clip.copy');
     let cut = source.getColumnConfig<string>('clip.cut');
 
-    if (source.config.getEnableNerdfont) {
+    if (source.config.enableNerdfont) {
       copy = copy ?? '';
       cut = cut ?? '';
     } else {
@@ -14,13 +14,17 @@ fileColumnRegistrar.registerColumn('child', 'clip', ({ source }) => ({
       cut = cut ?? 'X';
     }
 
-    const ch = source.copiedNodes.has(node)
-      ? copy
-      : source.cutNodes.has(node)
-      ? cut
-      : '';
-    if (ch) {
-      row.add(ch, { hl: fileHighlights.clip });
-    }
+    return {
+      drawNode(row, { node }) {
+        const ch = source.copiedNodes.has(node)
+          ? copy
+          : source.cutNodes.has(node)
+          ? cut
+          : '';
+        if (ch) {
+          row.add(ch, { hl: fileHighlights.clip });
+        }
+      },
+    };
   },
 }));

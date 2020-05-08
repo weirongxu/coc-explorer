@@ -1,25 +1,58 @@
-import { workspace } from 'coc.nvim';
+import { workspace, WorkspaceConfiguration } from 'coc.nvim';
 import { generateUri } from './uri';
 
-export const config = workspace.getConfiguration(
-  'explorer',
-  generateUri(workspace.cwd),
-);
+export const config = workspace.getConfiguration('explorer');
 
-export const configLocal = (resource: string) =>
+export const configLocal = (resource: string = generateUri(workspace.cwd)) =>
   workspace.getConfiguration('explorer', resource);
 
 export const getEnableDebug = () => config.get<boolean>('debug')!;
 
 export type PreviewStrategy = 'labeling';
-export const getPreviewStrategy = () =>
-  config.get<PreviewStrategy>('previewAction.strategy')!;
 
-export const getEnableFloatingBorder = () =>
-  config.get<boolean>('floating.border.enable')!;
+export function buildExplorerConfig(config: WorkspaceConfiguration) {
+  return {
+    get config() {
+      return config;
+    },
+    get<T>(section: string, defaultValue?: T): T {
+      return this.config.get<T>(section, defaultValue!)!;
+    },
+    get activeMode() {
+      return this.config.get<boolean>('activeMode')!;
+    },
+    get autoReveal() {
+      return this.config.get<boolean>('file.autoReveal')!;
+    },
+    get openActionForDirectory() {
+      return this.config.get<string>('openAction.for.directory')!;
+    },
+    get previewStrategy() {
+      return this.config.get<PreviewStrategy>('previewAction.strategy')!;
+    },
+    get previewActionOnHover() {
+      return this.config.get<boolean>('previewAction.onHover')!;
+    },
+    get datetimeFormat() {
+      return this.config.get<string>('datetime.format')!;
+    },
+    get enableVimDevicons() {
+      return this.config.get<boolean>('icon.enableVimDevicons')!;
+    },
+    get enableNerdfont() {
+      return this.config.get<string>('icon.enableNerdfont')!;
+    },
+    get enableFloatingBorder() {
+      return this.config.get<boolean>('floating.border.enable')!;
+    },
+    get floatingBorderChars() {
+      return this.config.get<string[]>('floating.border.chars')!;
+    },
+    get floatingBorderTitle() {
+      return this.config.get<string>('floating.border.title')!;
+    },
+  };
+}
 
-export const getFloatingBorderChars = () =>
-  config.get<string[]>('floating.border.chars')!;
+export type ExplorerConfig = ReturnType<typeof buildExplorerConfig>;
 
-export const getFloatingBorderTitle = () =>
-  config.get<string>('floating.border.title')!;

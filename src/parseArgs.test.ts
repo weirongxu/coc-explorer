@@ -1,6 +1,7 @@
 import { Args } from './parseArgs';
 import { workspace } from 'coc.nvim';
 import { argOptions } from './argOptions';
+import { config } from './util';
 
 it('should parse args', async () => {
   const oldNvim = workspace.nvim;
@@ -11,23 +12,25 @@ it('should parse args', async () => {
   };
   const rootUri = '/root/path';
   let args: Args;
-  args = await Args.parse([rootUri, '--reveal', '/reveal/path', '/cwd/path']);
+  args = await Args.parse(
+    [rootUri, '--reveal', '/reveal/path', '/cwd/path'],
+    config,
+  );
   expect(await args.value(argOptions.rootUri)).toEqual(rootUri);
   expect(await args.value(argOptions.reveal)).toEqual('/reveal/path');
 
-  args = await Args.parse([rootUri, '--toggle']);
+  args = await Args.parse([rootUri, '--toggle'], config);
   expect(await args.value(argOptions.toggle)).toEqual(true);
   expect(await args.value(argOptions.rootUri)).toEqual(rootUri);
 
-  args = await Args.parse([rootUri, '--no-toggle']);
+  args = await Args.parse([rootUri, '--no-toggle'], config);
   expect(await args.value(argOptions.toggle)).toEqual(false);
   expect(await args.value(argOptions.rootUri)).toEqual(rootUri);
 
-  args = await Args.parse([
-    rootUri,
-    '--file-child-template',
-    '[git][fileame] [fullpath]',
-  ]);
+  args = await Args.parse(
+    [rootUri, '--file-child-template', '[git][fileame] [fullpath]'],
+    config,
+  );
   expect(await args.value(argOptions.fileChildTemplate)).toEqual(
     '[git][fileame] [fullpath]',
   );

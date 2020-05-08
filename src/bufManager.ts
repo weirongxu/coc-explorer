@@ -122,8 +122,6 @@ export class BufManager {
           type: 'child',
           uid: bufnr,
           level: 1,
-          drawnLine: '',
-          // parent: this.rootNode,
           bufnr: parseInt(bufnr),
           bufnrStr: bufnr,
           bufname,

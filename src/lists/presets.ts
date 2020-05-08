@@ -1,6 +1,7 @@
 import { BasicList, Neovim } from 'coc.nvim';
 import { getPresets } from '../presets';
 import { onError } from '../logger';
+import { configLocal } from '../util';
 
 export class PresetList extends BasicList {
   readonly name = 'explPresets';
@@ -11,12 +12,14 @@ export class PresetList extends BasicList {
     super(nvim);
 
     this.addAction('do', async (item) => {
-      this.nvim.command(`CocCommand explorer --preset ${item.data.name}`).catch(onError);
+      this.nvim
+        .command(`CocCommand explorer --preset ${item.data.name}`)
+        .catch(onError);
     });
   }
 
   async loadItems(_context: any) {
-    const presets = await getPresets();
+    const presets = await getPresets(configLocal());
     return Object.keys(presets).map((name) => ({
       label: name,
       data: {

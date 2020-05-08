@@ -1,10 +1,13 @@
-import { workspace } from 'coc.nvim';
-import { config } from './util';
+import { workspace, WorkspaceConfiguration } from 'coc.nvim';
 
 export type Presets = Record<string, object>;
 
-export async function getPresets(): Promise<Presets> {
-  const presets = (await workspace.nvim.eval('get(g:, "coc_explorer_global_presets", {})')) as Presets;
+export async function getPresets(
+  config: WorkspaceConfiguration,
+): Promise<Presets> {
+  const presets = (await workspace.nvim.eval(
+    'get(g:, "coc_explorer_global_presets", {})',
+  )) as Presets;
   return {
     ...presets,
     ...config.get<Presets>('presets'),

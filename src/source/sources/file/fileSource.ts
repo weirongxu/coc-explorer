@@ -25,7 +25,7 @@ import './load';
 import { fileList } from '../../../lists/files';
 import { initFileActions } from './fileActions';
 import { homedir } from 'os';
-import { labelHighlight, TemplateRenderer } from '../../templateRenderer';
+import { SourcePainters } from '../../sourcePainters';
 import { argOptions } from '../../../argOptions';
 
 const getHiddenRules = () =>
@@ -101,7 +101,6 @@ export class FileSource extends ExplorerSource<FileNode> {
     uid: this.helper.getUid('/'),
     uri: generateUri('/'),
     level: 0,
-    drawnLine: '',
     name: 'root',
     fullpath: homedir(),
     expandable: true,
@@ -114,7 +113,7 @@ export class FileSource extends ExplorerSource<FileNode> {
     symbolicLink: true,
     lstat: null,
   };
-  templateRenderer: TemplateRenderer<FileNode> = new TemplateRenderer<FileNode>(
+  sourcePainters: SourcePainters<FileNode> = new SourcePainters<FileNode>(
     this,
     fileColumnRegistrar,
   );
@@ -187,13 +186,13 @@ export class FileSource extends ExplorerSource<FileNode> {
   }
 
   async open() {
-    await this.templateRenderer.parse(
+    await this.sourcePainters.parseTemplate(
       'root',
       await this.explorer.args.value(argOptions.fileRootTemplate),
       await this.explorer.args.value(argOptions.fileRootLabelingTemplate),
     );
 
-    await this.templateRenderer.parse(
+    await this.sourcePainters.parseTemplate(
       'child',
       await this.explorer.args.value(argOptions.fileChildTemplate),
       await this.explorer.args.value(argOptions.fileChildLabelingTemplate),
@@ -396,7 +395,6 @@ export class FileSource extends ExplorerSource<FileNode> {
             uid: this.helper.getUid(fullpath),
             uri: generateUri(fullpath),
             level: parentNode ? parentNode.level + 1 : 1,
-            drawnLine: '',
             parent: parentNode || this.rootNode,
             expandable: directory,
             name: filename,
@@ -441,30 +439,6 @@ export class FileSource extends ExplorerSource<FileNode> {
       })
       .filter((node): node is FileNode => !!node);
     return this.renderNodesNotifier(nodes);
-  }
-
-  async drawRootLabeling(node: FileNode) {
-    const lines: string[] = [];
-    const row = await this.viewBuilder.drawRow(async (row) => {
-      row.add('Fullpath:', { hl: labelHighlight });
-      row.add(' ');
-      row.add(node.fullpath, { hl: fileHighlights.directory });
-    });
-    const { highlightPositions, content } = await row.draw();
-    lines.push(content);
-    return {
-      highlightPositions: highlightPositions.map((hl) => ({
-        line: 0,
-        ...hl,
-      })),
-      lines,
-    };
-  }
-
-  async drawNode(node: FileNode, nodeIndex: number) {
-    await this.viewBuilder.drawRowForNode(node, async (row) => {
-      await this.templateRenderer.draw(row, node, nodeIndex);
-    });
   }
 }
 

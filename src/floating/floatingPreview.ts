@@ -1,17 +1,17 @@
 import { Explorer } from '../explorer';
-import { DrawLabelingResult } from '../source/templateRenderer';
 import { BaseTreeNode, ExplorerSource } from '../source/source';
 import {
   Cancellable,
   debouncePromise,
   PreviewStrategy,
-  getPreviewStrategy,
   supportedFloat,
   Cancelled,
+  flatten,
 } from '../util';
 import { workspace, FloatBuffer } from 'coc.nvim';
 import { FloatingFactory2 } from './floatingFactory2';
 import { FloatingFactory3 } from './floatingFactory3';
+import { Drawn } from '../util/painter';
 
 export class FloatingPreview {
   nvim = workspace.nvim;
@@ -34,16 +34,13 @@ export class FloatingPreview {
       return;
     }
 
-    let drawLabelingResult: DrawLabelingResult | undefined;
-    if (node.isRoot) {
-      drawLabelingResult = await source.drawRootLabeling(node);
-    } else {
-      drawLabelingResult = await source.templateRenderer?.drawLabeling(
-        node,
-        nodeIndex,
-      );
-    }
-    if (!drawLabelingResult || !this.explorer.explorerManager.inExplorer()) {
+    const drawnList:
+      | Drawn[]
+      | undefined = await source.sourcePainters?.drawNodeLabeling(
+      node,
+      nodeIndex,
+    );
+    if (!drawnList || !this.explorer.explorerManager.inExplorer()) {
       return;
     }
 
@@ -51,16 +48,20 @@ export class FloatingPreview {
       this.explorer,
       [
         {
-          content: drawLabelingResult.lines.join('\n'),
+          content: drawnList.map((d) => d.content).join('\n'),
           filetype: 'coc-explorer-preview',
         },
       ],
-      drawLabelingResult.highlightPositions.map((hl) => ({
-        hlGroup: hl.group,
-        line: hl.line,
-        colStart: hl.start,
-        colEnd: hl.start + hl.size,
-      })),
+      flatten(
+        drawnList.map((d, index) =>
+          d.highlightPositions.map((hl) => ({
+            hlGroup: hl.group,
+            line: index,
+            colStart: hl.start,
+            colEnd: hl.start + hl.size,
+          })),
+        ),
+      ),
     );
   }
 
@@ -87,7 +88,12 @@ export class FloatingPreview {
         if (!node) {
           return;
         }
-        await this.previewNode(getPreviewStrategy(), source, node, nodeIndex);
+        await this.previewNode(
+          this.explorer.config.previewStrategy,
+          source,
+          node,
+          nodeIndex,
+        );
       });
     }
     return this._hoverPreview();

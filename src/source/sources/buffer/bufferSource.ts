@@ -6,7 +6,7 @@ import { sourceManager } from '../../sourceManager';
 import { bufferColumnRegistrar } from './bufferColumnRegistrar';
 import './load';
 import { initBufferActions } from './bufferActions';
-import { TemplateRenderer } from '../../templateRenderer';
+import { SourcePainters } from '../../sourcePainters';
 import { argOptions } from '../../../argOptions';
 
 export interface BufferNode extends BaseTreeNode<BufferNode, 'root' | 'child'> {
@@ -47,7 +47,6 @@ export class BufferSource extends ExplorerSource<BufferNode> {
     type: 'root',
     isRoot: true,
     level: 0,
-    drawnLine: '',
     expandable: true,
     uid: this.helper.getUid('0'),
     bufnr: 0,
@@ -66,9 +65,10 @@ export class BufferSource extends ExplorerSource<BufferNode> {
     modified: false,
     readErrors: false,
   };
-  templateRenderer: TemplateRenderer<BufferNode> = new TemplateRenderer<
-    BufferNode
-  >(this, bufferColumnRegistrar);
+  sourcePainters: SourcePainters<BufferNode> = new SourcePainters<BufferNode>(
+    this,
+    bufferColumnRegistrar,
+  );
 
   async init() {
     if (this.config.activeMode) {
@@ -100,11 +100,11 @@ export class BufferSource extends ExplorerSource<BufferNode> {
   }
 
   async open() {
-    await this.templateRenderer.parse(
+    await this.sourcePainters.parseTemplate(
       'root',
       await this.explorer.args.value(argOptions.bufferRootTemplate),
     );
-    await this.templateRenderer.parse(
+    await this.sourcePainters.parseTemplate(
       'child',
       await this.explorer.args.value(argOptions.bufferChildTemplate),
       await this.explorer.args.value(argOptions.bufferChildLabelingTemplate),
@@ -136,12 +136,6 @@ export class BufferSource extends ExplorerSource<BufferNode> {
       ...it,
       parent: this.rootNode,
     }));
-  }
-
-  async drawNode(node: BufferNode, nodeIndex: number) {
-    await this.viewBuilder.drawRowForNode(node, async (row) => {
-      await this.templateRenderer.draw(row, node, nodeIndex);
-    });
   }
 }
 

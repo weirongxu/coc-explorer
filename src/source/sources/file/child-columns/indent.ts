@@ -33,24 +33,31 @@ function printIndentLine(node: FileNode) {
 }
 
 fileColumnRegistrar.registerColumn('child', 'indent', ({ source }) => ({
-  drawLine(row, node) {
-    const enableIndentLine = (() => {
-      const indentLine = source.getColumnConfig<boolean | undefined>(
-        'indent.indentLine',
-      );
-      if (source.config.getEnableNerdfont && indentLine === undefined) {
-        return true;
-      } else {
-        return indentLine;
-      }
-    })();
+  draw() {
+    const enabledNerdFont = source.config.enableNerdfont;
+    return {
+      drawNode(row, { node }) {
+        const enableIndentLine = (() => {
+          const indentLine = source.getColumnConfig<boolean | undefined>(
+            'indent.indentLine',
+          );
+          if (enabledNerdFont && indentLine === undefined) {
+            return true;
+          } else {
+            return indentLine;
+          }
+        })();
 
-    if (enableIndentLine) {
-      row.add(printIndentLine(node), { hl: fileHighlights.indentLine });
-    } else {
-      row.add(
-        source.getColumnConfig<string>('indent.chars').repeat(node.level - 1),
-      );
-    }
+        if (enableIndentLine) {
+          row.add(printIndentLine(node), { hl: fileHighlights.indentLine });
+        } else {
+          row.add(
+            source
+              .getColumnConfig<string>('indent.chars')
+              .repeat(node.level - 1),
+          );
+        }
+      },
+    };
   },
 }));

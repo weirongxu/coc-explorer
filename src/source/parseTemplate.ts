@@ -23,12 +23,12 @@
  * '[status-plain] [filepath]'
  */
 
-export type TemplateColumn = {
+export type OriginalTemplateBlock = {
   column: string;
   modifiers?: { name: string; column: string }[];
 };
 
-export type TemplatePart = TemplateColumn | string;
+export type OriginalTemplatePart = OriginalTemplateBlock | string;
 
 class Source {
   constructor(public readonly s: string, public i: number) {}
@@ -98,15 +98,15 @@ function parseColumnName(s: Source) {
   return parseKeyword('column name', s, [' ', ']']);
 }
 
-function parseColumn(s: Source): TemplateColumn {
-  s.next();
-  const parsedColumn: TemplateColumn = {
+function parseColumn(s: Source): OriginalTemplateBlock {
+  s.next(); // skip a [
+  const parsedColumn: OriginalTemplateBlock = {
     column: parseColumnName(s),
   };
   do {
     const ch = s.ch();
     if (ch === ']') {
-      s.next();
+      s.next(); // skip a ]
       return parsedColumn;
     } else if (ch === ' ') {
       parsedColumn.modifiers = parseModifiers(s);
@@ -115,7 +115,7 @@ function parseColumn(s: Source): TemplateColumn {
   throw new ParseError(s, `Unexpected end when parse column block`);
 }
 
-function parseString(s: Source): string {
+function parsePlainString(s: Source): string {
   let str = '';
   while (!s.end()) {
     const ch = s.ch();
@@ -134,14 +134,14 @@ function parseString(s: Source): string {
 
 export function parseTemplate(str: string) {
   const s = new Source(str, 0);
-  const columns: TemplatePart[] = [];
+  const parts: OriginalTemplatePart[] = [];
   while (!s.end()) {
     const ch = s.ch();
     if (ch === '[') {
-      columns.push(parseColumn(s));
+      parts.push(parseColumn(s));
     } else {
-      columns.push(parseString(s));
+      parts.push(parsePlainString(s));
     }
   }
-  return columns;
+  return parts;
 }

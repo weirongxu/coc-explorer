@@ -1,5 +1,5 @@
 import { splitCount } from './util';
-import { workspace } from 'coc.nvim';
+import { workspace, WorkspaceConfiguration } from 'coc.nvim';
 import { getPresets } from './presets';
 
 export interface ArgsSource {
@@ -96,7 +96,7 @@ export class Args {
     return option;
   }
 
-  static async parse(strArgs: string[]) {
+  static async parse(strArgs: string[], config: WorkspaceConfiguration) {
     const self = new Args(strArgs);
     const args = [...strArgs];
     let position = 1;
@@ -148,7 +148,7 @@ export class Args {
     // presets
     const preset = self.optionValues.get('preset') as string | undefined;
     if (preset) {
-      const presets = await getPresets();
+      const presets = await getPresets(config);
       if (preset in presets) {
         for (const [argName, argValue] of Object.entries(presets[preset])) {
           if (self.optionValues.has(argName)) {

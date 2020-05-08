@@ -1,29 +1,23 @@
-import { SourceRowBuilder } from './viewBuilder';
+import { ViewRowPainter } from './viewPainter';
 import { ExplorerSource, BaseTreeNode } from './source';
 import { Disposable } from 'coc.nvim';
 
-export type ColumnDrawLine<TreeNode extends BaseTreeNode<TreeNode>> = (
-  row: SourceRowBuilder,
-  node: TreeNode,
-  option: { nodeIndex: number; isLabeling: boolean },
-) => void | Promise<void>;
+export type ColumnDrawHandle<TreeNode extends BaseTreeNode<TreeNode>> = {
+  labelOnly?: boolean;
+  labelVisible?: (option: {
+    node: TreeNode;
+    nodeIndex: number;
+  }) => boolean | Promise<boolean>;
+  drawNode: (
+    row: ViewRowPainter,
+    option: { node: TreeNode; nodeIndex: number; isLabeling: boolean },
+  ) => void | Promise<void>;
+};
 
-export interface Column<
-  TreeNode extends BaseTreeNode<TreeNode>,
-  Data = unknown
-> {
+export interface ColumnInitial<TreeNode extends BaseTreeNode<TreeNode>> {
   label?: string;
 
-  labelOnly?: boolean;
-
-  labelVisible?: (
-    node: TreeNode,
-    option: { nodeIndex: number },
-  ) => boolean | Promise<boolean>;
-
   inited?: boolean;
-
-  readonly data?: Data;
 
   init?(): void | Promise<void>;
 
@@ -31,65 +25,68 @@ export interface Column<
 
   reload?(parentNode: TreeNode): void | Promise<void>;
 
-  /**
-   * @returns return true to redraw all rows
-   */
-  beforeDraw?(nodes: TreeNode[]): boolean | void | Promise<boolean | void>;
-
-  // TODO
-  // draw?(
-  //   nodes: TreeNode[],
-  // ): boolean | Promise<ColumnDrawLine<TreeNode>> | ColumnDrawLine<TreeNode>;
-
-  drawLine(
-    row: SourceRowBuilder,
-    node: TreeNode,
-    option: { nodeIndex: number; isLabeling: boolean },
-  ): void | Promise<void>;
+  draw(
+    nodes: TreeNode[],
+    options: {
+      force: boolean;
+      drawAll: () => never | void;
+      abort: () => never;
+    },
+  ): ColumnDrawHandle<TreeNode> | Promise<ColumnDrawHandle<TreeNode>>;
 }
 
-export interface ColumnRequired<TreeNode extends BaseTreeNode<TreeNode>, Data>
-  extends Column<TreeNode, Data> {
+export interface Column<TreeNode extends BaseTreeNode<TreeNode>>
+  extends ColumnInitial<TreeNode> {
   label: string;
-  data: Data;
+  drawHandle?: ColumnDrawHandle<TreeNode>;
 }
 
-type GetColumn<
+type CreateColumn<
   S extends ExplorerSource<TreeNode>,
-  TreeNode extends BaseTreeNode<TreeNode>,
-  Data
+  TreeNode extends BaseTreeNode<TreeNode>
 > = (context: {
   source: S;
-  column: ColumnRequired<TreeNode, Data>;
-}) => Column<TreeNode, Data>;
+  column: Column<TreeNode>;
+}) => ColumnInitial<TreeNode>;
 
 export class ColumnRegistrar<
   TreeNode extends BaseTreeNode<TreeNode, Type>,
   S extends ExplorerSource<TreeNode>,
   Type extends string = TreeNode['type']
 > {
-  registeredColumns: Record<
-    string,
-    Record<
+  registeredColumns: Map<
+    Type,
+    Map<
       string,
       {
-        getColumn: GetColumn<S, TreeNode, any>;
+        createColumn: CreateColumn<S, TreeNode>;
       }
     >
-  > = {};
+  > = new Map();
 
-  async getInitedColumn(
-    type: string,
+  /**
+   * Get ColumnRequired by column name
+   */
+  async initColumn(
+    type: Type,
     source: S,
     columnName: string,
-  ): Promise<number | ColumnRequired<TreeNode, any>> {
+  ): Promise<number | Column<TreeNode>> {
     if (/\d+/.test(columnName)) {
       return parseInt(columnName, 10);
     } else {
-      const registeredColumn = this.registeredColumns[type]?.[columnName];
+      const registeredColumn = this.registeredColumns
+        .get(type)
+        ?.get(columnName);
       if (registeredColumn) {
-        const column = { label: columnName } as ColumnRequired<TreeNode, any>;
-        Object.assign(column, registeredColumn.getColumn({ source, column }));
+        const column = { label: columnName } as Column<TreeNode>;
+        Object.assign(
+          column,
+          registeredColumn.createColumn({
+            source,
+            column: column,
+          }),
+        );
 
         if (column.inited) {
           return column;
@@ -105,19 +102,19 @@ export class ColumnRegistrar<
     }
   }
 
-  registerColumn<Data>(
+  registerColumn(
     type: Type,
     name: string,
-    getColumn: GetColumn<S, TreeNode, Data>,
+    createColumn: CreateColumn<S, TreeNode>,
   ) {
-    if (!(type in this.registeredColumns)) {
-      this.registeredColumns[type] = {};
+    if (!this.registeredColumns.has(type)) {
+      this.registeredColumns.set(type, new Map());
     }
-    this.registeredColumns[type][name] = {
-      getColumn,
-    };
+    this.registeredColumns.get(type)!.set(name, {
+      createColumn,
+    });
     return Disposable.create(() => {
-      delete this.registeredColumns[type][name];
+      this.registeredColumns.get(type)!.delete(name);
     });
   }
 }

@@ -305,6 +305,13 @@ Explorer will expand to this filepath, default: `current buffer`
 **Grammar:**
 
 ```
+                      block
+         ┌──────────────┴───────────────┐
+┌────────┴───────────┐ ┌────────────────┴────────────────┐
+[selection | clip | 1] [filename growRight 1 omitCenter 5]
+                      ↑
+                 plain string
+
             column
      ┌─────────┴───────────┐
      │                     │   volume of modifier

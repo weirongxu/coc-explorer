@@ -3,10 +3,14 @@ import { fileColumnRegistrar } from '../fileColumnRegistrar';
 import { fileHighlights } from '../fileSource';
 
 fileColumnRegistrar.registerColumn('child', 'size', () => ({
-  labelVisible: (node) => !node.directory,
-  drawLine(row, node) {
-    if (node.lstat) {
-      row.add(prettyBytes(node.lstat.size), { hl: fileHighlights.size });
-    }
+  draw() {
+    return {
+      labelVisible: ({ node }) => !node.directory,
+      drawNode(row, { node }) {
+        if (node.lstat) {
+          row.add(prettyBytes(node.lstat.size), { hl: fileHighlights.size });
+        }
+      },
+    };
   },
 }));

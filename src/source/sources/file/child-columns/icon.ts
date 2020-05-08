@@ -8,6 +8,7 @@ import {
   nerdfont,
   nerdfontHighlights,
 } from '../../../../icons';
+import { ColumnDrawHandle } from '../../../columnRegistrar';
 
 const attrSymbol = Symbol('icon-column');
 
@@ -18,8 +19,11 @@ function nodeSymbol(node: FileNode) {
 }
 
 fileColumnRegistrar.registerColumn('child', 'icon', ({ source }) => ({
-  async beforeDraw(nodes) {
-    if (source.config.enableVimDevicons) {
+  async draw(nodes): Promise<ColumnDrawHandle<FileNode>> {
+    const enabledVimDevicons = source.config.enableVimDevicons;
+    const enabledNerdFont = source.config.enableNerdfont;
+
+    if (enabledVimDevicons) {
       await Promise.all(
         nodes.map(async (node) => {
           nodeSymbol(
@@ -31,52 +35,55 @@ fileColumnRegistrar.registerColumn('child', 'icon', ({ source }) => ({
         }),
       );
     }
-  },
-  async drawLine(row, node) {
-    const enabledVimDevicons = source.config.enableVimDevicons;
-    const enabledNerdFont = source.config.getEnableNerdfont;
-    if (node.directory) {
-      const hl = source.expandStore.isExpanded(node)
-        ? fileHighlights.directoryExpanded
-        : fileHighlights.directoryCollapsed;
-      if (enabledVimDevicons) {
-        row.add(nodeSymbol(node).devicons, { hl });
-      } else if (enabledNerdFont) {
-        const icon = getDirectoryIcon(node.name);
-        if (icon) {
-          row.add(icon.code, { hl });
+
+    return {
+      async drawNode(row, { node }) {
+        if (node.directory) {
+          const hl = source.expandStore.isExpanded(node)
+            ? fileHighlights.directoryExpanded
+            : fileHighlights.directoryCollapsed;
+          if (enabledVimDevicons) {
+            row.add(nodeSymbol(node).devicons, { hl });
+          } else if (enabledNerdFont) {
+            const icon = getDirectoryIcon(node.name);
+            if (icon) {
+              row.add(icon.code, { hl });
+            } else {
+              row.add(
+                source.expandStore.isExpanded(node)
+                  ? nerdfont.icons.folderOpened.code
+                  : nerdfont.icons.folderClosed.code,
+                { hl },
+              );
+            }
+          } else {
+            row.add(
+              source.expandStore.isExpanded(node)
+                ? source.icons.expanded
+                : source.icons.collapsed,
+              { hl: fileHighlights.directory },
+            );
+          }
         } else {
-          row.add(
-            source.expandStore.isExpanded(node)
-              ? nerdfont.icons.folderOpened.code
-              : nerdfont.icons.folderClosed.code,
-            { hl },
-          );
+          if (enabledVimDevicons) {
+            const code = nodeSymbol(node).devicons;
+            row.add(code, { hl: nerdfontHighlights['file'] });
+          } else if (enabledNerdFont) {
+            const icon = getFileIcon(node.name);
+            if (icon) {
+              row.add(icon.code, { hl: nerdfontHighlights[icon.name] });
+            } else if (node.hidden) {
+              row.add(nerdfont.icons.fileHidden.code, {
+                hl: nerdfontHighlights['fileHidden'],
+              });
+            } else {
+              row.add(nerdfont.icons.file.code, {
+                hl: nerdfontHighlights['file'],
+              });
+            }
+          }
         }
-      } else {
-        row.add(
-          source.expandStore.isExpanded(node)
-            ? source.icons.expanded
-            : source.icons.collapsed,
-          { hl: fileHighlights.directory },
-        );
-      }
-    } else {
-      if (enabledVimDevicons) {
-        const code = nodeSymbol(node).devicons;
-        row.add(code, { hl: nerdfontHighlights['file'] });
-      } else if (enabledNerdFont) {
-        const icon = getFileIcon(node.name);
-        if (icon) {
-          row.add(icon.code, { hl: nerdfontHighlights[icon.name] });
-        } else if (node.hidden) {
-          row.add(nerdfont.icons.fileHidden.code, {
-            hl: nerdfontHighlights['fileHidden'],
-          });
-        } else {
-          row.add(nerdfont.icons.file.code, { hl: nerdfontHighlights['file'] });
-        }
-      }
-    }
+      },
+    };
   },
 }));

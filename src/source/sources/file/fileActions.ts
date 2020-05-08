@@ -239,7 +239,7 @@ export function initFileActions(file: FileSource) {
   file.addNodesAction(
     'copyFilepath',
     async ({ nodes }) => {
-      await file.copy(
+      await file.copyToClipboard(
         nodes ? nodes.map((it) => it.fullpath).join('\n') : file.root,
       );
       // tslint:disable-next-line: ban
@@ -250,7 +250,7 @@ export function initFileActions(file: FileSource) {
   file.addNodesAction(
     'copyFilename',
     async ({ nodes }) => {
-      await file.copy(
+      await file.copyToClipboard(
         nodes
           ? nodes.map((it) => it.name).join('\n')
           : pathLib.basename(file.root),

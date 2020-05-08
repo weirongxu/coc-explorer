@@ -22,7 +22,6 @@ import {
   supportedFloat,
   onBufEnter,
   outputChannel,
-  getEnableFloatingBorder,
 } from '../util';
 import { WindowConfig } from 'coc.nvim/lib/model/floatFactory';
 import { CancellationTokenSource } from 'vscode-languageserver-protocol';
@@ -204,7 +203,7 @@ export class FloatingFactory2 implements Disposable {
     ];
     const position = await explorer.args.value(argOptions.position);
     const isFloating = position === 'floating';
-    const enabledFloatingBorder = getEnableFloatingBorder();
+    const enabledFloatingBorder = explorer.config.enableFloatingBorder;
     const containerWin =
       isFloating && enabledFloatingBorder
         ? await explorer.floatingBorderWin

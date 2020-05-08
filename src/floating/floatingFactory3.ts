@@ -19,7 +19,6 @@ import {
   Cancellable,
   delay,
   supportedFloat,
-  getEnableFloatingBorder,
   onBufEnter,
 } from '../util';
 import { Explorer } from '../explorer';
@@ -115,7 +114,7 @@ export class FloatingFactory3 implements Disposable {
     const [winRow] = win_position;
     const position = await explorer.args.value(argOptions.position);
     const isFloating = position === 'floating';
-    const enabledFloatingBorder = getEnableFloatingBorder();
+    const enabledFloatingBorder = explorer.config.enableFloatingBorder;
     const containerWin =
       isFloating && enabledFloatingBorder
         ? await explorer.floatingBorderWin
@@ -210,7 +209,8 @@ export class FloatingFactory3 implements Disposable {
     try {
       await this.createPopup(explorer, docs, highlights, allowSelection);
     } catch (e) {
-      logger.error(`Error on create popup:`, e.message);
+      // tslint:disable-next-line: ban
+      log('error', `Error on create popup: ${e.message}`);
       this.close();
     }
   }

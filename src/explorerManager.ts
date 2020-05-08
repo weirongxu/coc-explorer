@@ -3,7 +3,13 @@ import { Explorer } from './explorer';
 import { Args } from './parseArgs';
 import { onError } from './logger';
 import { getMappings } from './mappings';
-import { onBufEnter, supportedNvimFloating, compactI } from './util';
+import {
+  onBufEnter,
+  supportedNvimFloating,
+  compactI,
+  configLocal,
+  buildExplorerConfig,
+} from './util';
 import { GlobalContextVars } from './contextVariables';
 import { BufManager } from './bufManager';
 import { argOptions } from './argOptions';
@@ -224,7 +230,10 @@ export class ExplorerManager {
 
     let isFirst = true;
 
-    const args = await Args.parse(argStrs);
+    const config = configLocal();
+    const explorerConfig = buildExplorerConfig(config);
+
+    const args = await Args.parse(argStrs, config);
 
     const quit = await args.value(argOptions.quit);
     const position = await args.value(argOptions.position);
@@ -266,14 +275,14 @@ export class ExplorerManager {
     }
 
     if (!explorer) {
-      explorer = await Explorer.create(this, args);
+      explorer = await Explorer.create(this, args, explorerConfig);
       explorers.push(explorer);
     } else if (!(await this.nvim.call('bufexists', [explorer.bufnr]))) {
-      explorer = await Explorer.create(this, args);
+      explorer = await Explorer.create(this, args, explorerConfig);
       explorers[0] = explorer;
     } else if (!(await explorer.inited.get())) {
       await this.nvim.command(`bwipeout! ${explorer.bufnr}`);
-      explorer = await Explorer.create(this, args);
+      explorer = await Explorer.create(this, args, explorerConfig);
       explorers[0] = explorer;
     } else {
       const win = await explorer.win;
