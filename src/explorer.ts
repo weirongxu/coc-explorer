@@ -553,55 +553,12 @@ export class Explorer {
     }
   }
 
-  async resume(args: Args) {
+  async refreshLineIndex() {
     const win = await this.win;
     if (win) {
-      // focus on explorer window
-      await this.nvim.command(`${await win.number}wincmd w`);
-    } else {
-      // resume the explorer window
-      const position = await args.value(argOptions.position);
-      const { width, height, top, left } = await Explorer.genExplorerPosition(
-        args,
-      );
-      await this.nvim.call('coc_explorer#resume', [
-        this.bufnr,
-        position,
-        width,
-        height,
-        left,
-        top,
-        this.floatingBorderBufnr,
-        this.config.enableFloatingBorder,
-        this.config.floatingBorderChars,
-        this.config.floatingBorderTitle,
-      ]);
+      const cursor = await win.cursor;
+      this.currentLineIndex = cursor[0] - 1;
     }
-  }
-
-  async open(args: Args, isFirst: boolean) {
-    await doCocExplorerOpenPre();
-
-    if (this.isHelpUI) {
-      await this.quitHelp();
-    }
-
-    await this.executeHighlightSyntax();
-
-    await this.initArgs(args);
-
-    for (const source of this.sources) {
-      await source.open(isFirst);
-    }
-
-    await Notifier.runAll([
-      await this.reloadAllNotifier(),
-      ...(await Promise.all(
-        this.sources.map((s) => s.openedNotifier(isFirst)),
-      )),
-    ]);
-
-    await doCocExplorerOpenPost();
   }
 
   async refreshWidth() {
@@ -651,6 +608,57 @@ export class Explorer {
     ) {
       return;
     }
+  }
+
+  async resume(args: Args) {
+    const win = await this.win;
+    if (win) {
+      // focus on explorer window
+      await this.nvim.command(`${await win.number}wincmd w`);
+    } else {
+      // resume the explorer window
+      const position = await args.value(argOptions.position);
+      const { width, height, top, left } = await Explorer.genExplorerPosition(
+        args,
+      );
+      await this.nvim.call('coc_explorer#resume', [
+        this.bufnr,
+        position,
+        width,
+        height,
+        left,
+        top,
+        this.floatingBorderBufnr,
+        this.config.enableFloatingBorder,
+        this.config.floatingBorderChars,
+        this.config.floatingBorderTitle,
+      ]);
+    }
+  }
+
+  async open(args: Args, isFirst: boolean) {
+    await doCocExplorerOpenPre();
+
+    if (this.isHelpUI) {
+      await this.quitHelp();
+    }
+
+    await this.executeHighlightSyntax();
+
+    await this.initArgs(args);
+
+    for (const source of this.sources) {
+      await source.open(isFirst);
+    }
+
+    await Notifier.runAll([
+      await this.reloadAllNotifier(),
+      ...(await Promise.all(
+        this.sources.map((s) => s.openedNotifier(isFirst)),
+      )),
+    ]);
+
+    await doCocExplorerOpenPost();
   }
 
   async tryQuitOnOpen() {
@@ -820,6 +828,7 @@ export class Explorer {
     actions: Action[],
     mode: ActionMode,
   ) {
+    await this.refreshLineIndex();
     const nodesGroup: Map<ExplorerSource<any>, BaseTreeNode<any>[]> = new Map();
     for (const lineIndex of selectedLineIndexes) {
       const [source] = this.findSourceByLineIndex(lineIndex);
