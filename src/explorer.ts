@@ -956,15 +956,23 @@ export class Explorer {
       this.buffer.setOption('modifiable', true, true);
       this.buffer.setOption('readonly', false, true);
 
-      this.buffer.setLines(
-        lines,
-        {
-          start,
-          end,
-          strictIndexing: false,
-        },
-        true,
-      );
+      if (workspace.isVim) {
+        this.buffer.setLines(
+          lines,
+          {
+            start,
+            end,
+            strictIndexing: false,
+          },
+          true,
+        );
+      } else if (workspace.isNvim) {
+        this.nvim.call(
+          'coc_explorer#buf_set_lines',
+          [this.bufnr, start, end, false, lines],
+          true,
+        );
+      }
 
       this.buffer.setOption('readonly', true, true);
       this.buffer.setOption('modifiable', false, true);

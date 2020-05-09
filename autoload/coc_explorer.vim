@@ -325,6 +325,20 @@ function! coc_explorer#tab_id_max()
 endfunction
 
 
+" setlines
+function coc_explorer#buf_set_lines(bufnr, start, end, strict_indexing, lines)
+  let cursor = v:null
+  let winid = bufwinid(a:bufnr)
+  if winid >= 0
+    let cursor = nvim_win_get_cursor(winid)
+  endif
+  call nvim_buf_set_lines(a:bufnr, a:start, a:end, a:strict_indexing, a:lines)
+  if winid >= 0
+    call nvim_win_set_cursor(winid, cursor)
+  endif
+endfunction
+
+
 " displayslice
 function! s:pad_end(str, width)
   return a:str . repeat(' ', a:width - strdisplaywidth(a:str))
