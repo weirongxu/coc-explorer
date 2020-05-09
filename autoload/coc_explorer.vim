@@ -131,9 +131,9 @@ function s:floating_border_buffer_render(
         \ . a:chars[2]]
   let content += repeat([a:chars[7] . repeat(' ', repeat_width) . a:chars[3]], a:height - 2)
   let content += [a:chars[6] . repeat(a:chars[5], repeat_width) . a:chars[4]]
-  set modifiable
+  set modifiable noreadonly
   call nvim_buf_set_lines(a:bufnr, 0, -1, v:false, content)
-  set nomodifiable
+  set nomodifiable readonly
   if a:is_first
     call coc_explorer#init_buf(v:true)
     call nvim_win_set_option(winid, 'winhl', 'Normal:CocExplorerNormalFloatBorder')
