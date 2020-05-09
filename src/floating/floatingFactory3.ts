@@ -238,7 +238,7 @@ export class FloatingFactory3 implements Disposable {
     if (!config) {
       return;
     }
-    if (!config.height) {
+    if (!config.width || !config.height) {
       this.close();
       return;
     }
