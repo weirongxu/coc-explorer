@@ -397,11 +397,19 @@ Default: <pre><code>[
 Default: <pre><code>"coc-explorer"</code></pre>
 </details>
 <details>
-<summary><code>explorer.autoExpandSingleNode</code>: Automatically expand next node when it's a single node. type: <code>boolean</code></summary>
+<summary><code>explorer.autoExpandRecursiveSingle</code>: Automatically expand single child folder recursively. type: <code>boolean</code></summary>
 Default: <pre><code>true</code></pre>
 </details>
 <details>
-<summary><code>explorer.autoCollapseChildren</code>: Automatically collapse children. type: <code>boolean</code></summary>
+<summary><code>explorer.autoExpandMaxDepth</code>: Automatically expand maximum depth of one time. type: <code>boolean</code></summary>
+Default: <pre><code>20</code></pre>
+</details>
+<details>
+<summary><code>explorer.autoExpandCompactOrUncompact</code>: Single child folders will be compressed in a combined node. type: <code>boolean</code></summary>
+Default: <pre><code>true</code></pre>
+</details>
+<details>
+<summary><code>explorer.autoCollapseRecursive</code>: Automatically collapse recursive. type: <code>boolean</code></summary>
 Default: <pre><code>true</code></pre>
 </details>
 <details>
