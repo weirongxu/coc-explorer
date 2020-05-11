@@ -1,15 +1,17 @@
 import { Disposable, workspace } from 'coc.nvim';
-import { conditionActionRules } from './actions';
+import { conditionActionRules } from './actions/condition';
 import { Explorer } from './explorer';
-import { Action, getMappings } from './mappings';
+import { getMappings } from './mappings';
 import {
   HighlightPosition,
   HighlightPositionWithLine,
   hlGroupManager,
 } from './source/highlightManager';
-import { ActionMap, BaseTreeNode, ExplorerSource } from './source/source';
+import { BaseTreeNode, ExplorerSource } from './source/source';
 import { ViewPainter, ViewRowPainter } from './source/viewPainter';
 import { DrawBlock, Notifier } from './util';
+import { Action, ActionExp } from './actions/mapping';
+import { RegisteredAction } from './actions/registered';
 
 const hl = hlGroupManager.linkGroup.bind(hlGroupManager);
 const helpHightlights = {
@@ -29,7 +31,7 @@ export class HelpPainter {
     highlightPositions: HighlightPosition[];
     content: string;
   }[] = [];
-  registeredActions: ActionMap<BaseTreeNode<any>>;
+  registeredActions: RegisteredAction.Map<BaseTreeNode<any>>;
 
   constructor(
     private explorer: Explorer,
@@ -78,6 +80,74 @@ export class HelpPainter {
     }
   }
 
+  private anyAction(
+    actionExp: ActionExp,
+    callback: (action: Action) => boolean,
+  ): boolean {
+    if (Array.isArray(actionExp)) {
+      return actionExp.some((action) => this.anyAction(action, callback));
+    } else {
+      return callback(actionExp);
+    }
+  }
+
+  private async drawActionExp(
+    actionExp: ActionExp,
+    indent: string,
+    drawBlocks: DrawBlock[] = [],
+  ) {
+    if (Array.isArray(actionExp)) {
+      for (var i = 0; i < actionExp.length; i++) {
+        const action = actionExp[i];
+        if (Array.isArray(action)) {
+          await this.drawActionExp(action, indent, drawBlocks);
+        } else {
+          const rule = conditionActionRules[action.name];
+          if (rule) {
+            drawBlocks.push((row) => {
+              row.add(indent);
+              row.add('if ' + rule.getDescription(action.args) + ' ', {
+                hl: helpHightlights.conditional,
+              });
+            });
+            await this.drawActionExp(
+              actionExp[i + 1],
+              indent + '  ',
+              drawBlocks,
+            );
+            drawBlocks.push((row) => {
+              row.add(indent);
+              row.add('else ', { hl: helpHightlights.conditional });
+            });
+            await this.drawActionExp(
+              actionExp[i + 2],
+              indent + '  ',
+              drawBlocks,
+            );
+            i += 2;
+          } else {
+            await this.drawActionExp(action, indent, drawBlocks);
+          }
+        }
+      }
+    } else {
+      drawBlocks.push((row) => {
+        row.add(indent);
+        this.drawActionForMapping(row, actionExp);
+      });
+    }
+    return drawBlocks;
+  }
+
+  /**
+   * <cr> -> if expandable?
+   *           if expanded?
+   *             expand() expand a directory
+   *           else
+   *             collapse() collapse a directory
+   *         else
+   *           open() open file or directory
+   */
   async drawMappings() {
     await this.drawRow((row) => {
       row.add(`Mappings for source(${this.source.sourceType})`, {
@@ -86,38 +156,34 @@ export class HelpPainter {
     });
 
     const mappings = await getMappings();
-    for (const [key, actions] of Object.entries(mappings)) {
-      if (!actions.some((action) => action.name in this.registeredActions)) {
+    for (const [key, actionExp] of Object.entries(mappings)) {
+      if (
+        !this.anyAction(
+          actionExp,
+          (action) => action.name in this.registeredActions,
+        )
+      ) {
         continue;
       }
-      const indent = ' '.repeat(key.length + 4);
-      for (let i = 0; i < actions.length; i++) {
-        let row = new ViewRowPainter(this.painter);
-        if (i === 0) {
-          row.add(' ');
-          row.add(key, { hl: helpHightlights.mappingKey });
-          row.add(' - ');
-        } else {
+      const drawBlocks = await this.drawActionExp(actionExp, '');
+
+      if (!drawBlocks.length) {
+        continue;
+      }
+
+      await this.drawRow(async (row) => {
+        row.add(' ');
+        row.add(key, { hl: helpHightlights.mappingKey });
+        row.add(' -> ');
+        await drawBlocks[0](row);
+      });
+
+      const indent = ' '.repeat(key.length + 5);
+      for (const drawBlock of drawBlocks.slice(1)) {
+        await this.drawRow((row) => {
           row.add(indent);
-        }
-        const action = actions[i];
-        const rule = conditionActionRules[action.name];
-        if (rule) {
-          row.add('if ' + rule.getDescription(action.args) + ' ', {
-            hl: helpHightlights.conditional,
-          });
-          this.drawActionForMapping(row, actions[i + 1]);
-          this.drawnResults.push(await row.draw());
-          row = new ViewRowPainter(this.painter);
-          row.add(indent);
-          row.add('else ', { hl: helpHightlights.conditional });
-          this.drawActionForMapping(row, actions[i + 2]);
-          this.drawnResults.push(await row.draw());
-          i += 2;
-        } else {
-          this.drawActionForMapping(row, action);
-          this.drawnResults.push(await row.draw());
-        }
+          drawBlock(row);
+        });
       }
     }
   }
@@ -135,14 +201,16 @@ export class HelpPainter {
       row.add(name, { hl: helpHightlights.action });
       row.add(' ');
       row.add(action.description, { hl: helpHightlights.description });
-      if (action.options.menu) {
-        for (const [menuName, menu] of Object.entries(action.options.menu)) {
+      if (action.options.menus) {
+        for (const menu of RegisteredAction.getNormalizeMenus(
+          action.options.menus,
+        )) {
           this.drawnResults.push(await row.draw());
           row = new ViewRowPainter(this.painter);
           row.add('   ');
-          row.add(`${name}:${menuName}`, { hl: helpHightlights.action });
+          row.add(`${name}:${menu.args}`, { hl: helpHightlights.action });
           row.add(' ');
-          row.add(menu, { hl: helpHightlights.description });
+          row.add(menu.description, { hl: helpHightlights.description });
         }
       }
       this.drawnResults.push(await row.draw());
@@ -164,13 +232,13 @@ export class HelpPainter {
       if (drawn.highlightPositions) {
         highlightPositions.push(
           ...drawn.highlightPositions.map((hl) => ({
-            line: i,
+            lineIndex: i,
             ...hl,
           })),
         );
       }
     }
-    this.explorer.replaceHighlightsNotify(
+    this.explorer.addHighlightsNotify(
       this.explorer.helpHlSrcId,
       highlightPositions,
     );

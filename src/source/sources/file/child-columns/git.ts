@@ -2,8 +2,9 @@ import commandExists from 'command-exists';
 import { fileColumnRegistrar } from '../fileColumnRegistrar';
 import { GitFormat, gitManager, GitMixedStatus } from '../../../../gitManager';
 import pathLib from 'path';
-import { debounce, onEvents } from '../../../../util';
+import { debounce } from '../../../../util';
 import { fileHighlights } from '../fileSource';
+import { onEvents } from '../../../../events';
 
 fileColumnRegistrar.registerColumn(
   'child',

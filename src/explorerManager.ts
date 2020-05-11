@@ -3,16 +3,12 @@ import { Explorer } from './explorer';
 import { Args } from './parseArgs';
 import { onError } from './logger';
 import { getMappings } from './mappings';
-import {
-  onBufEnter,
-  supportedNvimFloating,
-  compactI,
-  configLocal,
-  buildExplorerConfig,
-} from './util';
+import { supportedNvimFloating, compactI } from './util';
 import { GlobalContextVars } from './contextVariables';
 import { BufManager } from './bufManager';
 import { argOptions } from './argOptions';
+import { configLocal, buildExplorerConfig } from './config';
+import { onBufEnter } from './events';
 
 export type TabContainer = {
   left: Explorer[];
@@ -177,8 +173,13 @@ export class ExplorerManager {
   async registerMappings() {
     this.mappings = {};
     const mappings = await getMappings();
-    Object.entries(mappings).forEach(([key, actions]) => {
-      if (actions.length === 1 && actions[0].name === 'unmap') {
+    Object.entries(mappings).forEach(([key, actionExp]) => {
+      if (!Array.isArray(actionExp) && actionExp.name === 'unmap') {
+        // tslint:disable-next-line: ban
+        workspace.showMessage(
+          'Deprecated, use false instead of unmap',
+          'warning',
+        );
         return;
       }
 
@@ -199,7 +200,7 @@ export class ExplorerManager {
               const count = (await this.nvim.eval('v:count')) as number;
               const explorer = this.currentExplorer();
               explorer
-                ?.doActionsWithCount(actions, mode, count || 1)
+                ?.doActionsWithCount(actionExp, mode, count || 1)
                 .catch(onError);
             },
             { sync: true },

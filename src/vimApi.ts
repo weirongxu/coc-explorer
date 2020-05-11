@@ -1,5 +1,5 @@
 import { ExtensionContext, commands, workspace } from 'coc.nvim';
-import { ActionMode, parseAction, OriginalAction } from './mappings';
+import { MappingMode, parseActionExp } from './mappings';
 import { ExplorerManager } from './explorerManager';
 import { getFileIcon, getDirectoryIcon } from './icons';
 import pathLib from 'path';
@@ -8,6 +8,7 @@ import { BaseTreeNode, ExplorerSource } from './source/source';
 import { compactI, asyncCatchError } from './util';
 import { WinLayoutFinder } from './winLayoutFinder';
 import pLocate from 'p-locate';
+import { OriginalActionExp } from './actions/mapping';
 
 export function registerApi(
   id: string,
@@ -114,9 +115,9 @@ export function registerVimApi(
       'explorer.doAction',
       async (
         explorerFinder: ExplorerFinder,
-        actions: OriginalAction[],
+        actionExp: OriginalActionExp,
         positions: Position[] = ['current'],
-        mode: ActionMode = 'n',
+        mode: MappingMode = 'n',
         count: number = 1,
       ) => {
         const explorer = await getExplorer(explorerFinder, explorerManager);
@@ -132,7 +133,7 @@ export function registerVimApi(
           ),
         );
         return explorer.doActionsWithCount(
-          actions.map((action) => parseAction(action)),
+          parseActionExp(actionExp),
           mode,
           count,
           lines,

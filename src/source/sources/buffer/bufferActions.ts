@@ -20,7 +20,7 @@ export function initBufferActions(buffer: BufferSource) {
       if (node.expandable && buffer.expandStore.isExpanded(node)) {
         await buffer.collapseNode(node);
       } else if (node.parent) {
-        await buffer.collapseNode(node.parent!);
+        await buffer.collapseNode(node.parent);
       }
     },
     'collapse node',
@@ -49,7 +49,7 @@ export function initBufferActions(buffer: BufferSource) {
       });
     },
     'open buffer',
-    { multi: true, menu: buffer.openActionMenu },
+    { multi: true, menus: buffer.openActionMenu },
   );
   buffer.addNodeAction(
     'drop',

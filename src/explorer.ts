@@ -1,50 +1,46 @@
 import { Buffer, ExtensionContext, Window, workspace } from 'coc.nvim';
-import { conditionActionRules } from './actions';
+import { conditionActionRules } from './actions/condition';
 import { argOptions } from './argOptions';
 import { BuffuerContextVars } from './contextVariables';
 import { ExplorerManager } from './explorerManager';
 import { FloatingPreview } from './floating/floatingPreview';
 import { IndexesManager } from './indexesManager';
-import { Action, ActionMode } from './mappings';
+import { MappingMode } from './mappings';
 import { ArgContentWidthTypes, Args } from './parseArgs';
 import {
   HighlightPositionWithLine,
   hlGroupManager,
 } from './source/highlightManager';
 import './source/load';
-import {
-  ActionOptions,
-  BaseTreeNode,
-  ExplorerSource,
-  ActionMap,
-} from './source/source';
+import { BaseTreeNode, ExplorerSource } from './source/source';
 import { sourceManager } from './source/sourceManager';
 import {
   closeWinByBufnrNotifier,
-  doCocExplorerOpenPost,
-  doCocExplorerOpenPre,
-  doCocExplorerQuitPost,
-  doCocExplorerQuitPre,
   enableWrapscan,
-  ExplorerConfig,
   flatten,
-  getEnableDebug,
   Notifier,
-  onBufEnter,
-  onCursorMoved,
-  onEvents,
   partition,
-  PreviewStrategy,
   queueAsyncFunction,
   winByWinid,
   winidByWinnr,
   winnrByBufnr,
   scanIndexPrev,
   scanIndexNext,
-  uniq,
   sum,
 } from './util';
 import { showHelp, quitHelp } from './help';
+import { ExplorerConfig, PreviewStrategy, getEnableDebug } from './config';
+import {
+  onCursorMoved,
+  onBufEnter,
+  onEvents,
+  doCocExplorerOpenPre,
+  doCocExplorerOpenPost,
+  doCocExplorerQuitPre,
+  doCocExplorerQuitPost,
+} from './events';
+import { ActionExp } from './actions/mapping';
+import { RegisteredAction } from './actions/registered';
 
 export class Explorer {
   nvim = workspace.nvim;
@@ -54,7 +50,7 @@ export class Explorer {
   indexesManager = new IndexesManager(this);
   inited = new BuffuerContextVars<boolean>('inited', this);
   sourceWinid = new BuffuerContextVars<number>('sourceWinid', this);
-  globalActions: ActionMap<BaseTreeNode<any>> = {};
+  globalActions: RegisteredAction.Map<BaseTreeNode<any>> = {};
   context: ExtensionContext;
   floatingWindow: FloatingPreview;
   contentWidth = 0;
@@ -206,7 +202,7 @@ export class Explorer {
       },
       'previous node',
       {
-        menu: moveActionMenu,
+        menus: moveActionMenu,
       },
     );
     this.addGlobalAction(
@@ -228,7 +224,7 @@ export class Explorer {
       },
       'next node',
       {
-        menu: moveActionMenu,
+        menus: moveActionMenu,
       },
     );
     this.addGlobalAction(
@@ -273,7 +269,7 @@ export class Explorer {
       },
       'previous expandable node',
       {
-        menu: moveActionMenu,
+        menus: moveActionMenu,
       },
     );
     this.addGlobalAction(
@@ -318,7 +314,7 @@ export class Explorer {
       },
       'next expandable node',
       {
-        menu: moveActionMenu,
+        menus: moveActionMenu,
       },
     );
     this.addGlobalAction(
@@ -329,6 +325,11 @@ export class Explorer {
         }
       },
       'execute vim normal mode commands',
+      {
+        menus: {
+          zz: 'execute normal zz',
+        },
+      },
     );
     this.addGlobalAction(
       'quit',
@@ -348,7 +349,7 @@ export class Explorer {
       },
       'preview',
       {
-        menu: ExplorerSource.prototype.previewActionMenu,
+        menus: ExplorerSource.prototype.previewActionMenu,
       },
     );
 
@@ -516,28 +517,18 @@ export class Explorer {
     return bufnr;
   }
 
-  replaceHighlightsNotify(
-    hlSrcId: number,
-    highlights: HighlightPositionWithLine[],
-  ) {
-    uniq(highlights.map((hl) => hl.line)).forEach((line) =>
-      this.clearHighlightsNotify(hlSrcId, line, line),
-    );
-    this.executeHighlightsNotify(hlSrcId, highlights);
-  }
-
   clearHighlightsNotify(hlSrcId: number, lineStart?: number, lineEnd?: number) {
     hlGroupManager.clearHighlightsNotify(this, hlSrcId, lineStart, lineEnd);
   }
 
-  executeHighlightsNotify(
+  addHighlightsNotify(
     hlSrcId: number,
     highlights: HighlightPositionWithLine[],
   ) {
-    hlGroupManager.executeHighlightsNotify(this, hlSrcId, highlights);
+    hlGroupManager.addHighlightsNotify(this, hlSrcId, highlights);
   }
 
-  async executeHighlightSyntax() {
+  async addHighlightSyntax() {
     const winnr = await this.winnr;
     const curWinnr = await this.nvim.call('winnr');
     if (winnr) {
@@ -545,7 +536,7 @@ export class Explorer {
       if (winnr !== curWinnr) {
         this.nvim.command(`${winnr}wincmd w`, true);
       }
-      hlGroupManager.executeHighlightSyntaxNotify();
+      hlGroupManager.addHighlightSyntaxNotify();
       if (winnr !== curWinnr) {
         this.nvim.command(`${curWinnr}wincmd w`, true);
       }
@@ -643,7 +634,7 @@ export class Explorer {
       await this.quitHelp();
     }
 
-    await this.executeHighlightSyntax();
+    await this.addHighlightSyntax();
 
     await this.initArgs(args);
 
@@ -733,10 +724,10 @@ export class Explorer {
     callback: (options: {
       nodes: BaseTreeNode<any>[];
       args: string[];
-      mode: ActionMode;
+      mode: MappingMode;
     }) => void | Promise<void>,
     description: string,
-    options: Partial<ActionOptions> = {},
+    options: Partial<RegisteredAction.Options> = {},
   ) {
     this.globalActions[name] = {
       callback,
@@ -745,7 +736,7 @@ export class Explorer {
     };
   }
 
-  async getSelectedLineIndexes(mode: ActionMode) {
+  async getSelectedLineIndexes(mode: MappingMode) {
     const { nvim } = this;
     const lineIndexes = new Set<number>();
     const document = await workspace.document;
@@ -768,22 +759,22 @@ export class Explorer {
   }
 
   private _doActionsWithCount?: (
-    actions: Action[],
-    mode: ActionMode,
+    actionExp: ActionExp,
+    mode: MappingMode,
     count?: number,
     lineIndexes?: number[] | Set<number> | null,
   ) => Promise<void>;
   async doActionsWithCount(
-    actions: Action[],
-    mode: ActionMode,
+    actionExp: ActionExp,
+    mode: MappingMode,
     count: number = 1,
     lineIndexes: number[] | Set<number> | null = null,
   ) {
     if (!this._doActionsWithCount) {
       this._doActionsWithCount = queueAsyncFunction(
         async (
-          actions: Action[],
-          mode: ActionMode,
+          actionExp: ActionExp,
+          mode: MappingMode,
           count: number = 1,
           lineIndexes: number[] | Set<number> | null = null,
         ) => {
@@ -798,7 +789,7 @@ export class Explorer {
               c === 0
                 ? firstLineIndexes
                 : await this.getSelectedLineIndexes(mode);
-            await this.doActions(selectedLineIndexes, actions, mode);
+            await this.doActionExp(selectedLineIndexes, actionExp, mode);
           }
           const notifiers = await Promise.all(
             this.sources.map((source) =>
@@ -808,25 +799,26 @@ export class Explorer {
           await Notifier.runAll(notifiers);
 
           if (getEnableDebug()) {
-            const actionDisplay = actions.map((a) =>
-              [a.name, ...a.args].join(':'),
-            );
+            const actionDisplay = (actionExp: ActionExp): string =>
+              Array.isArray(actionExp)
+                ? '[' + actionExp.map(actionDisplay).join(',') + ']'
+                : [actionExp.name, ...actionExp.args].join(':');
             // tslint:disable-next-line: ban
             workspace.showMessage(
-              `action(${actionDisplay}): ${Date.now() - now}ms`,
+              `action(${actionDisplay(actionExp)}): ${Date.now() - now}ms`,
               'more',
             );
           }
         },
       );
     }
-    return this._doActionsWithCount(actions, mode, count, lineIndexes);
+    return this._doActionsWithCount(actionExp, mode, count, lineIndexes);
   }
 
-  async doActions(
+  async doActionExp(
     selectedLineIndexes: Set<number>,
-    actions: Action[],
-    mode: ActionMode,
+    actionExp: ActionExp,
+    mode: MappingMode,
   ) {
     await this.refreshLineIndex();
     const nodesGroup: Map<ExplorerSource<any>, BaseTreeNode<any>[]> = new Map();
@@ -841,35 +833,42 @@ export class Explorer {
     }
 
     for (const [source, nodes] of nodesGroup.entries()) {
-      for (let i = 0; i < actions.length; i++) {
-        const action = actions[i];
-        const rule = conditionActionRules[action.name];
-        if (rule) {
-          const [trueNodes, falseNodes] = partition(nodes, (n) =>
-            rule.filter(n, action.args),
-          );
-          const [trueAction, falseAction] = [actions[i + 1], actions[i + 2]];
-          i += 2;
-          if (trueNodes.length) {
-            await source.doAction(
-              trueAction.name,
-              trueNodes,
-              trueAction.args,
-              mode,
-            );
-          }
-          if (falseNodes.length) {
-            await source.doAction(
-              falseAction.name,
-              falseNodes,
-              falseAction.args,
-              mode,
-            );
+      async function doActionExp(
+        actionExp: ActionExp,
+        nodes: BaseTreeNode<any>[],
+      ) {
+        if (Array.isArray(actionExp)) {
+          for (let i = 0; i < actionExp.length; i++) {
+            const action = actionExp[i];
+            if (Array.isArray(action)) {
+              await doActionExp(actionExp, nodes);
+            } else {
+              const rule = conditionActionRules[action.name];
+              if (rule) {
+                const [trueNodes, falseNodes] = partition(nodes, (node) =>
+                  rule.filter(source, node, action.args),
+                );
+                const [trueAction, falseAction] = [
+                  actionExp[i + 1],
+                  actionExp[i + 2],
+                ];
+                i += 2;
+                if (trueNodes.length) {
+                  await doActionExp(trueAction, trueNodes);
+                }
+                if (falseNodes.length) {
+                  await doActionExp(falseAction, falseNodes);
+                }
+              } else {
+                await doActionExp(action, nodes);
+              }
+            }
           }
         } else {
-          await source.doAction(action.name, nodes, action.args, mode);
+          await source.doAction(actionExp.name, nodes, actionExp.args, mode);
         }
       }
+      await doActionExp(actionExp, nodes);
     }
   }
 

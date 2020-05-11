@@ -639,6 +639,8 @@ Default: <pre><code>false</code></pre>
 
 ## Custom mappings example
 
+You can use `?` to view all actions of current source
+
 ```jsonc
 // coc-settings.json
 {
@@ -659,7 +661,12 @@ Default: <pre><code>false</code></pre>
     "K": ["toggleSelection", "nodePrev"],
     "gl": "expandRecursive",
     "gh": "collapseRecursive",
-    "o": "expandOrCollapse",
+    "<2-LeftMouse>": [
+      "expandable?",
+      ["expanded?", "collapse", "expand"],
+      "open"
+    ],
+    "o": ["expanded?", "collapse", "expand"],
     "<cr>": ["expandable?", "cd", "open"],
     "e": "open",
     "s": "open:split",

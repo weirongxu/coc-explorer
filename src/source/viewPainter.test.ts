@@ -4,9 +4,9 @@ import { ExplorerManager } from '../explorerManager';
 import { BaseTreeNode, ExplorerSource } from './source';
 import { ColumnRegistrar } from './columnRegistrar';
 import helper from '../tests/helpTest';
-import { config, buildExplorerConfig } from '../util';
 import { SourcePainters } from './sourcePainters';
 import { workspace } from 'coc.nvim';
+import { buildExplorerConfig, config } from '../config';
 
 let explorer: Explorer;
 

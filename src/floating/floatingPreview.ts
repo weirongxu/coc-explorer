@@ -7,11 +7,11 @@ import {
   debouncePromise,
   Drawn,
   flatten,
-  PreviewStrategy,
   supportedFloat,
 } from '../util';
 import { FloatingFactory2 } from './floatingFactory2';
 import { FloatingFactory3 } from './floatingFactory3';
+import { PreviewStrategy } from '../config';
 
 export class FloatingPreview {
   nvim = workspace.nvim;

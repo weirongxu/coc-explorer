@@ -1,6 +1,7 @@
 import pathLib from 'path';
 import { onError } from './logger';
-import { config, execCli } from './util';
+import { execCli } from './util';
+import { config } from './config';
 
 const showIgnored = config.get<boolean>('file.column.git.showIgnored')!;
 

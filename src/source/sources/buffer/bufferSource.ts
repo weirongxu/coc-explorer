@@ -1,5 +1,5 @@
 import { workspace } from 'coc.nvim';
-import { onBufEnter, debounce, config, uniq } from '../../../util';
+import { debounce, uniq } from '../../../util';
 import { hlGroupManager } from '../../highlightManager';
 import { ExplorerSource, BaseTreeNode } from '../../source';
 import { sourceManager } from '../../sourceManager';
@@ -8,6 +8,7 @@ import './load';
 import { initBufferActions } from './bufferActions';
 import { SourcePainters } from '../../sourcePainters';
 import { argOptions } from '../../../argOptions';
+import { onBufEnter } from '../../../events';
 
 export interface BufferNode extends BaseTreeNode<BufferNode, 'root' | 'child'> {
   bufnr: number;
@@ -42,11 +43,10 @@ export const bufferHighlights = {
 
 export class BufferSource extends ExplorerSource<BufferNode> {
   hlSrcId = workspace.createNameSpace('coc-explorer-buffer');
-  showHidden: boolean = config.get<boolean>('file.showHiddenBuffers')!;
+  showHidden: boolean = this.config.get<boolean>('file.showHiddenBuffers')!;
   rootNode: BufferNode = {
     type: 'root',
     isRoot: true,
-    level: 0,
     expandable: true,
     uid: this.helper.getUid('0'),
     bufnr: 0,
@@ -116,26 +116,21 @@ export class BufferSource extends ExplorerSource<BufferNode> {
       await this.bufManager.reload();
     }
     const list = this.bufManager.list;
-    const tabOnly = config.get<boolean>('buffer.tabOnly')!;
-    let newList: BufferNode[];
+    const tabOnly = this.config.get<boolean>('buffer.tabOnly')!;
     if (this.showHidden) {
-      newList = [...list];
+      return [...list];
     } else {
       if (tabOnly) {
         const tabBuflist: number[] = uniq(
           await this.nvim.call('tabpagebuflist', []),
         );
-        newList = list.filter(
+        return list.filter(
           (it) => tabBuflist.includes(it.bufnr) && !it.unlisted,
         );
       } else {
-        newList = list.filter((it) => !it.unlisted);
+        return list.filter((it) => !it.unlisted);
       }
     }
-    return newList.map((it) => ({
-      ...it,
-      parent: this.rootNode,
-    }));
   }
 }
 

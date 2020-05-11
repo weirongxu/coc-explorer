@@ -1,6 +1,7 @@
 import nerdfontJson from './icons.nerdfont.json';
 import { hlGroupManager, HighlightCommand } from './source/highlightManager';
-import { config, getExtensions } from './util';
+import { getExtensions } from './util';
+import { config } from './config';
 
 export interface NerdFontOption {
   icons?: Record<

@@ -8,7 +8,7 @@ export interface HighlightPosition {
 }
 
 export interface HighlightPositionWithLine extends HighlightPosition {
-  line: number;
+  lineIndex: number;
 }
 
 export type HighlightCommand = {
@@ -51,7 +51,7 @@ class HighlightManager {
     explorer.buffer.clearNamespace(hlSrcId, lineStart, lineEnd);
   }
 
-  executeHighlightsNotify(
+  addHighlightsNotify(
     explorer: Explorer,
     hlSrcId: number,
     highlights: HighlightPositionWithLine[],
@@ -61,7 +61,7 @@ class HighlightManager {
         .addHighlight({
           srcId: hlSrcId,
           hlGroup: hl.group,
-          line: hl.line,
+          line: hl.lineIndex,
           colStart: hl.start,
           colEnd: hl.start + hl.size,
         })
@@ -69,7 +69,7 @@ class HighlightManager {
     }
   }
 
-  executeHighlightSyntaxNotify() {
+  addHighlightSyntaxNotify() {
     const commands: string[] = [];
     for (const highlight of this.highlights) {
       this.nvim.command(`silent! syntax clear ${highlight.group}`, true);

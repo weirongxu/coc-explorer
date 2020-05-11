@@ -56,6 +56,12 @@
               "type": "string"
             },
             {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            {
               "type": "object",
               "properties": {
                 "name": {
@@ -272,13 +278,23 @@
           "type": "string",
           "default": "coc-explorer"
         },
-        "explorer.autoExpandSingleNode": {
-          "description": "Automatically expand next node when it's a single node",
+        "explorer.autoExpandRecursiveSingle": {
+          "description": "Automatically expand single child folder recursively",
           "type": "boolean",
           "default": true
         },
-        "explorer.autoCollapseChildren": {
-          "description": "Automatically collapse children",
+        "explorer.autoExpandMaxDepth": {
+          "description": "Automatically expand maximum depth of one time",
+          "type": "boolean",
+          "default": 20
+        },
+        "explorer.autoExpandCompactOrUncompact": {
+          "description": "Single child folders will be compressed in a combined node",
+          "type": "boolean",
+          "default": true
+        },
+        "explorer.autoCollapseRecursive": {
+          "description": "Automatically collapse recursive",
           "type": "boolean",
           "default": true
         },

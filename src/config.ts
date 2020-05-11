@@ -1,5 +1,5 @@
 import { workspace, WorkspaceConfiguration } from 'coc.nvim';
-import { generateUri } from './uri';
+import { generateUri } from './util';
 
 export const config = workspace.getConfiguration('explorer');
 
@@ -23,6 +23,18 @@ export function buildExplorerConfig(config: WorkspaceConfiguration) {
     },
     get autoReveal() {
       return this.config.get<boolean>('file.autoReveal')!;
+    },
+    get autoExpandRecursiveSingle() {
+      return this.config.get<boolean>('autoExpandRecursiveSingle')!;
+    },
+    get autoExpandMaxDepth() {
+      return this.config.get<number>('autoExpandMaxDepth')!;
+    },
+    get autoExpandCompactOrUncompact() {
+      return this.config.get<boolean>('autoExpandCompactOrUncompact')!;
+    },
+    get autoCollapseChildren() {
+      return this.config.get<boolean>('autoCollapseChildren')!;
     },
     get openActionForDirectory() {
       return this.config.get<string>('openAction.for.directory')!;
@@ -58,4 +70,3 @@ export function buildExplorerConfig(config: WorkspaceConfiguration) {
 }
 
 export type ExplorerConfig = ReturnType<typeof buildExplorerConfig>;
-

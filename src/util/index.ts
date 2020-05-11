@@ -6,8 +6,6 @@ export * from './symbol';
 export * from './number';
 export * from './collection';
 export * from './async';
-export * from './config';
-export * from './events';
 export * from './fs';
 export * from './path';
 export * from './neovimNotify';

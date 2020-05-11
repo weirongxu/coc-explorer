@@ -1,7 +1,8 @@
 import { fileColumnRegistrar } from '../fileColumnRegistrar';
 import { diagnosticManager } from '../../../../diagnosticManager';
-import { config, debounce, onEvents } from '../../../../util';
+import { debounce } from '../../../../util';
 import { fileHighlights } from '../fileSource';
+import { onEvents } from '../../../../events';
 
 fileColumnRegistrar.registerColumn(
   'child',
@@ -15,7 +16,7 @@ fileColumnRegistrar.registerColumn(
           onEvents(
             'BufWritePost',
             debounce(1000, async () => {
-              const diagnosticCountMax = config.get<number>(
+              const diagnosticCountMax = source.config.get<number>(
                 'file.diagnosticCountMax',
                 99,
               );

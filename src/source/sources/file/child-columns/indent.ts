@@ -54,7 +54,7 @@ fileColumnRegistrar.registerColumn('child', 'indent', ({ source }) => ({
           row.add(
             source
               .getColumnConfig<string>('indent.chars')
-              .repeat(node.level - 1),
+              .repeat((node.level ?? 0) - 1),
           );
         }
       },

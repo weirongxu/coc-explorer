@@ -1,30 +1,25 @@
-import { config } from './util';
+import { config } from './config';
 import { workspace } from 'coc.nvim';
+import {
+  OriginalMappings,
+  ActionExp,
+  OriginalActionExp,
+  OriginalAction,
+  Action,
+} from './actions/mapping';
 
-enum MappingMode {
+enum KeyMappingMode {
   none = 'none',
   default = 'default',
 }
 
-export const mappingMode = config.get<MappingMode>(
+export const keyMappingMode = config.get<KeyMappingMode>(
   'keyMappingMode',
-  MappingMode.default,
+  KeyMappingMode.default,
 );
 
-export type Action = {
-  name: string;
-  args: string[];
-};
-
-export type OriginalAction = string | Action;
-
-export type OriginalMappings = Record<
-  string,
-  false | OriginalAction | OriginalAction[]
->;
-
 const defaultMappingGroups: Record<
-  keyof typeof MappingMode,
+  keyof typeof KeyMappingMode,
   OriginalMappings
 > = {
   none: {},
@@ -40,10 +35,14 @@ const defaultMappingGroups: Record<
     l: ['expandable?', 'expand', 'open'],
     J: ['toggleSelection', 'nodeNext'],
     K: ['toggleSelection', 'nodePrev'],
-    gl: 'expandRecursive',
-    gh: 'collapseRecursive',
-    '<2-LeftMouse>': ['expandable?', 'expandOrCollapse', 'open'],
-    o: 'expandOrCollapse',
+    gl: 'expand:recursive',
+    gh: 'collapse:recursive',
+    '<2-LeftMouse>': [
+      'expandable?',
+      ['expanded?', 'collapse', 'expand'],
+      'open',
+    ],
+    o: ['expanded?', 'collapse', 'expand'],
     '<cr>': ['expandable?', 'cd', 'open'],
     e: 'open',
     s: 'open:split',
@@ -96,27 +95,35 @@ const defaultMappingGroups: Record<
   },
 };
 
-export type ActionMode = 'n' | 'v';
+export type MappingMode = 'n' | 'v';
 
-export type Mappings = Record<string, Action[]>;
+export type Mappings = Record<string, ActionExp>;
 
 export async function getMappings(): Promise<Mappings> {
   const mappings: Mappings = {};
-  const defaultMappings = defaultMappingGroups[mappingMode];
+  const defaultMappings = defaultMappingGroups[keyMappingMode];
   if (workspace.isVim && !(await workspace.nvim.call('has', ['gui_running']))) {
     delete defaultMappings['<esc>'];
   }
   Object.entries({
     ...(defaultMappings || {}),
     ...config.get<OriginalMappings>('keyMappings', {}),
-  }).forEach(([key, actions]) => {
-    if (actions !== false) {
-      mappings[key] = Array.isArray(actions)
-        ? actions.map((action) => parseAction(action))
-        : [parseAction(actions)];
+  }).forEach(([key, actionExp]) => {
+    if (actionExp !== false) {
+      mappings[key] = parseActionExp(actionExp);
     }
   });
   return mappings;
+}
+
+export function parseActionExp(
+  originalActionExp: OriginalActionExp,
+): ActionExp {
+  if (Array.isArray(originalActionExp)) {
+    return originalActionExp.map(parseActionExp);
+  } else {
+    return parseAction(originalActionExp);
+  }
 }
 
 /**
@@ -135,12 +142,23 @@ export function parseAction(originalAction: OriginalAction): Action {
   };
 }
 
+function singleAction(actionExp: ActionExp): Action | false {
+  if (!Array.isArray(actionExp)) {
+    return actionExp;
+  } else if (actionExp.length === 1) {
+    return singleAction(actionExp[0]);
+  } else {
+    return false;
+  }
+}
+
 export async function getReverseMappings() {
-  const mappings = getMappings();
+  const mappings = await getMappings();
   const reverseMappings: Record<string, string> = {};
-  Object.entries(mappings).find(([key, actions]) => {
-    if (actions.length === 1) {
-      reverseMappings[actions[0].name] = key;
+  Object.entries(mappings).find(([key, actionExp]) => {
+    const action = singleAction(actionExp);
+    if (action) {
+      reverseMappings[action.name] = key;
     }
   });
   return reverseMappings;

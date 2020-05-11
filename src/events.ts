@@ -1,7 +1,12 @@
-import { events, workspace, Disposable, commands } from 'coc.nvim';
+import {
+  commands,
+  Disposable,
+  events,
+  workspace,
+  ExtensionContext,
+} from 'coc.nvim';
 import { getEnableDebug } from './config';
-import { throttle } from './throttleDebounce';
-import { asyncCatchError } from './function';
+import { asyncCatchError, throttle } from './util';
 
 type OnEvent = typeof events.on;
 type EventResult = void | Promise<void>;
@@ -102,22 +107,24 @@ export function onCursorMoved(
   return disposable;
 }
 
-export function registerBufDeleteEvents() {
-  commands.registerCommand(
-    'explorer.internal.didVimEvent',
-    asyncCatchError((event, ...args: any[]) => {
-      if (event === 'BufDelete') {
-        onBufDeleteHandlers.forEach((handler) => {
-          handler(...(args as [number]));
-        });
-      } else if (event === 'BufWipeout') {
-        onBufWipeoutHandlers.forEach((handler) => {
-          handler(...(args as [number]));
-        });
-      }
-    }),
-    undefined,
-    true,
+export function registerBufDeleteEvents(context: ExtensionContext) {
+  context.subscriptions.push(
+    commands.registerCommand(
+      'explorer.internal.didVimEvent',
+      asyncCatchError((event, ...args: any[]) => {
+        if (event === 'BufDelete') {
+          onBufDeleteHandlers.forEach((handler) => {
+            handler(...(args as [number]));
+          });
+        } else if (event === 'BufWipeout') {
+          onBufWipeoutHandlers.forEach((handler) => {
+            handler(...(args as [number]));
+          });
+        }
+      }),
+      undefined,
+      true,
+    ),
   );
 }
 

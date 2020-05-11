@@ -3,8 +3,6 @@ import fs from 'fs';
 import pathLib from 'path';
 import { onError } from '../../../logger';
 import {
-  config,
-  onBufEnter,
   fsAccess,
   fsReaddir,
   fsLstat,
@@ -27,28 +25,8 @@ import { initFileActions } from './fileActions';
 import { homedir } from 'os';
 import { SourcePainters } from '../../sourcePainters';
 import { argOptions } from '../../../argOptions';
-
-const getHiddenRules = () =>
-  config.get<{
-    extensions: string[];
-    filenames: string[];
-    patternMatches: string[];
-  }>('file.hiddenRules')!;
-
-function isHidden(filename: string) {
-  const hiddenRules = getHiddenRules();
-
-  const { basename, extensions } = getExtensions(filename);
-  const extname = extensions[extensions.length - 1];
-
-  return (
-    hiddenRules.filenames.includes(basename) ||
-    hiddenRules.extensions.includes(extname) ||
-    hiddenRules.patternMatches.some((pattern) =>
-      new RegExp(pattern).test(filename),
-    )
-  );
-}
+import { onBufEnter } from '../../../events';
+import { clone } from 'lodash-es';
 
 export interface FileNode extends BaseTreeNode<FileNode, 'root' | 'child'> {
   name: string;
@@ -92,7 +70,7 @@ export const fileHighlights = {
 export class FileSource extends ExplorerSource<FileNode> {
   scheme = 'file';
   hlSrcId = workspace.createNameSpace('coc-explorer-file');
-  showHidden: boolean = config.get<boolean>('file.showHiddenFiles')!;
+  showHidden: boolean = this.config.get<boolean>('file.showHiddenFiles')!;
   copiedNodes: Set<FileNode> = new Set();
   cutNodes: Set<FileNode> = new Set();
   rootNode: FileNode = {
@@ -100,7 +78,6 @@ export class FileSource extends ExplorerSource<FileNode> {
     isRoot: true,
     uid: this.helper.getUid('/'),
     uri: generateUri('/'),
-    level: 0,
     name: 'root',
     fullpath: homedir(),
     expandable: true,
@@ -127,6 +104,29 @@ export class FileSource extends ExplorerSource<FileNode> {
     this.rootNode.uid = this.helper.getUid(root);
     this.rootNode.fullpath = root;
     this.rootNode.children = undefined;
+  }
+
+  getHiddenRules() {
+    return this.config.get<{
+      extensions: string[];
+      filenames: string[];
+      patternMatches: string[];
+    }>('file.hiddenRules')!;
+  }
+
+  isHidden(filename: string) {
+    const hiddenRules = this.getHiddenRules();
+
+    const { basename, extensions } = getExtensions(filename);
+    const extname = extensions[extensions.length - 1];
+
+    return (
+      hiddenRules.filenames.includes(basename) ||
+      hiddenRules.extensions.includes(extname) ||
+      hiddenRules.patternMatches.some((pattern) =>
+        new RegExp(pattern).test(filename),
+      )
+    );
   }
 
   getColumnConfig<T>(name: string, defaultValue?: T): T {
@@ -206,7 +206,7 @@ export class FileSource extends ExplorerSource<FileNode> {
   async cd(fullpath: string) {
     const { nvim } = this;
     const escapePath = (await nvim.call('fnameescape', fullpath)) as string;
-    if (config.get<boolean>('file.tabCD')) {
+    if (this.config.get<boolean>('file.tabCD')) {
       if (workspace.isNvim || (await nvim.call('exists', [':tcd']))) {
         await nvim.command('tcd ' + escapePath);
         // tslint:disable-next-line: ban
@@ -217,6 +217,12 @@ export class FileSource extends ExplorerSource<FileNode> {
       // tslint:disable-next-line: ban
       workspace.showMessage(`CWD is: ${fullpath}`);
     }
+  }
+
+  async updateCompactNode(compactedNode: FileNode) {
+    compactedNode.name = (compactedNode.compactedNodes ?? [])
+      .map((n) => n.name)
+      .join('/');
   }
 
   async revealPath() {
@@ -372,7 +378,7 @@ export class FileSource extends ExplorerSource<FileNode> {
     const files = await Promise.all(
       filenames.map(async (filename) => {
         try {
-          const hidden = isHidden(filename);
+          const hidden = this.isHidden(filename);
           if (!this.showHidden && hidden) {
             return null;
           }
@@ -394,8 +400,6 @@ export class FileSource extends ExplorerSource<FileNode> {
             type: 'child',
             uid: this.helper.getUid(fullpath),
             uri: generateUri(fullpath),
-            level: parentNode ? parentNode.level + 1 : 1,
-            parent: parentNode || this.rootNode,
             expandable: directory,
             name: filename,
             fullpath,

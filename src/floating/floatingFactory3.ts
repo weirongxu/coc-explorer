@@ -13,18 +13,12 @@ import {
   Buffer,
 } from 'coc.nvim';
 import { WindowConfig } from 'coc.nvim/lib/model/floatFactory';
-import {
-  onEvents,
-  debounce,
-  Cancellable,
-  delay,
-  supportedFloat,
-  onBufEnter,
-} from '../util';
+import { debounce, Cancellable, delay, supportedFloat } from '../util';
 import { Explorer } from '../explorer';
 import { BufferHighlight } from '@chemzqm/neovim';
 import { log, onError } from '../logger';
 import { argOptions } from '../argOptions';
+import { onBufEnter, onEvents } from '../events';
 
 // factory class for floating window
 export class FloatingFactory3 implements Disposable {

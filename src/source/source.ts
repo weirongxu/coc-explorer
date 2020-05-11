@@ -10,44 +10,28 @@ import { argOptions } from '../argOptions';
 import { Explorer } from '../explorer';
 import { explorerActionList } from '../lists/actions';
 import { onError } from '../logger';
-import { ActionMode, getReverseMappings } from '../mappings';
+import { MappingMode, getReverseMappings } from '../mappings';
 import { OpenStrategy } from '../types';
-import {
-  drawnToRange,
-  flatten,
-  generateUri,
-  Notifier,
-  onEvents,
-  PreviewStrategy,
-} from '../util';
+import { drawnToRange, flatten, generateUri, Notifier } from '../util';
 import { WinLayoutFinder } from '../winLayoutFinder';
 import { HighlightPositionWithLine } from './highlightManager';
 import { SourcePainters } from './sourcePainters';
-
-export type ActionOptions = {
-  multi: boolean;
-  render: boolean;
-  reload: boolean;
-  select: boolean;
-  menu: Record<string, string>;
-};
-
-export type ActionMap<TreeNode extends BaseTreeNode<TreeNode>> = Record<
-  string,
-  {
-    description: string;
-    options: Partial<ActionOptions>;
-    callback: (options: {
-      nodes: TreeNode[];
-      args: string[];
-      mode: ActionMode;
-    }) => void | Promise<void>;
-  }
->;
+import { PreviewStrategy } from '../config';
+import { onEvents } from '../events';
+import { clone } from 'lodash-es';
+import { RegisteredAction } from '../actions/registered';
 
 export type RenderOptions<TreeNode extends BaseTreeNode<any>> = {
   node?: TreeNode;
   force?: boolean;
+};
+
+export type ExpandNodeOptions = {
+  recursive?: boolean;
+  compact?: boolean;
+  uncompact?: boolean;
+  recursiveSingle?: boolean;
+  depth?: number;
 };
 
 export type NodeUid = string;
@@ -59,7 +43,9 @@ export interface BaseTreeNode<
   type: Type;
   isRoot?: boolean;
   uid: NodeUid;
-  level: number;
+  level?: number;
+  compactStatus?: 'compact' | 'compacted' | 'uncompact' | 'uncompacted';
+  compactedNodes?: TreeNode[];
   expandable?: boolean;
   parent?: TreeNode;
   children?: TreeNode[];
@@ -82,7 +68,6 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>> {
   showHidden: boolean = false;
   selectedNodes: Set<TreeNode> = new Set();
   defaultExpanded = false;
-  hlIds: number[] = []; // hightlight match ids for vim8.0
   nvim = workspace.nvim;
   context: ExtensionContext;
   bufManager = this.explorer.explorerManager.bufManager;
@@ -143,7 +128,7 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>> {
     },
   }))(this);
 
-  actions: ActionMap<TreeNode> = {};
+  actions: RegisteredAction.Map<TreeNode> = {};
 
   constructor(public sourceType: string, public explorer: Explorer) {
     this.context = this.explorer.context;
@@ -254,10 +239,10 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>> {
     callback: (options: {
       nodes: TreeNode[];
       args: string[];
-      mode: ActionMode;
+      mode: MappingMode;
     }) => void | Promise<void>,
     description: string,
-    options: Partial<Omit<ActionOptions, 'multi'>> = {},
+    options: Partial<Omit<RegisteredAction.Options, 'multi'>> = {},
   ) {
     this.actions[name] = {
       callback,
@@ -274,10 +259,10 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>> {
     callback: (options: {
       node: TreeNode;
       args: string[];
-      mode: ActionMode;
+      mode: MappingMode;
     }) => void | Promise<void>,
     description: string,
-    options: Partial<ActionOptions> = {},
+    options: Partial<RegisteredAction.Options> = {},
   ) {
     this.actions[name] = {
       callback: async ({ nodes, args, mode }) => {
@@ -294,7 +279,7 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>> {
     name: string,
     nodes: TreeNode | TreeNode[],
     args: string[] = [],
-    mode: ActionMode = 'n',
+    mode: MappingMode = 'n',
   ) {
     const action = this.actions[name] || this.explorer.globalActions[name];
     if (!action) {
@@ -507,12 +492,14 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>> {
 
   async previewAction(node: TreeNode, previewStrategy?: PreviewStrategy) {
     const nodeIndex = this.getLineByNode(node);
-    await this.explorer.floatingWindow.previewNode(
-      previewStrategy ?? this.config.previewStrategy,
-      this,
-      node,
-      nodeIndex,
-    );
+    if (nodeIndex !== null) {
+      await this.explorer.floatingWindow.previewNode(
+        previewStrategy ?? this.config.previewStrategy,
+        this,
+        node,
+        nodeIndex,
+      );
+    }
   }
 
   addIndexes(name: string, relativeIndex: number) {
@@ -595,20 +582,20 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>> {
                 },
               },
             ];
-            if (options.menu) {
+            if (options.menus) {
               list.push(
-                ...Object.entries(options.menu).map(
-                  ([subActionName, subDescription]) => {
-                    const fullActionName = actionName + ':' + subActionName;
+                ...RegisteredAction.getNormalizeMenus(options.menus).map(
+                  (menu) => {
+                    const fullActionName = actionName + ':' + menu.args;
                     return {
                       name: fullActionName,
                       key: reverseMappings[fullActionName],
-                      description: description + ' ' + subDescription,
+                      description: description + ' ' + menu.description,
                       async callback() {
                         await task.waitShow();
                         callback({
                           nodes,
-                          args: subActionName.split(/:/),
+                          args: await menu.actionArgs(),
                           mode: 'n',
                         });
                       },
@@ -640,9 +627,10 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>> {
   /**
    * Get relative line index for source by node
    */
-  getLineByNode(node: TreeNode): number {
+  getLineByNode(node: TreeNode): null | number {
     if (node) {
-      return this.flattenedNodes.findIndex((it) => it.uid === node.uid);
+      const line = this.flattenedNodes.findIndex((it) => it.uid === node.uid);
+      return line === -1 ? null : line;
     } else {
       return 0;
     }
@@ -762,7 +750,7 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>> {
         return flatten(
           drawnList.map((d) =>
             d.highlightPositions.map((hl) => ({
-              line: startLineIndex + d.nodeIndex,
+              lineIndex: startLineIndex + d.nodeIndex,
               ...hl,
             })),
           ),
@@ -771,31 +759,80 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>> {
     };
   }
 
-  flattenByNode(node: TreeNode) {
-    return [node, ...(node.children ? this.flattenByNodes(node.children) : [])];
-  }
+  async flattenByNode(node: TreeNode): Promise<TreeNode[]> {
+    const stack = [node];
+    const result: TreeNode[] = [];
 
-  flattenByNodes(nodes: TreeNode[]) {
-    const stack = [...nodes];
-    const res = [];
+    function replaceNodeInSibling<TreeNode extends BaseTreeNode<TreeNode>>(
+      oldNode: TreeNode,
+      newNode: TreeNode,
+    ) {
+      if (oldNode.parent?.children) {
+        const index = oldNode.parent.children.indexOf(oldNode);
+        if (index !== -1) {
+          oldNode.parent.children.splice(index, 1, newNode);
+        }
+      }
+    }
+
     while (stack.length) {
-      const node = stack.shift()!;
-      res.push(node);
-      if (
-        node.children &&
-        Array.isArray(node.children) &&
-        this.expandStore.isExpanded(node)
-      ) {
+      let node: TreeNode = stack.shift()!;
+      if (!node.isRoot) {
+        if (
+          node.compactStatus === 'compact' &&
+          node.children?.length === 1 &&
+          node.children[0].expandable
+        ) {
+          // Compact node
+          let tail = node.children[0];
+          const compactedNodes = [node, tail];
+          while (tail.children?.length === 1 && tail.children[0].expandable) {
+            tail = tail.children[0];
+            compactedNodes.push(tail);
+          }
+          const compactedNode = clone(tail);
+          compactedNode.level = node.level;
+          compactedNode.parent = node.parent;
+          compactedNode.compactStatus = 'compacted';
+          compactedNode.compactedNodes = compactedNodes;
+          await this.updateCompactNode(compactedNode);
+          replaceNodeInSibling(node, compactedNode);
+          node = compactedNode;
+        } else if (node.compactStatus === 'uncompact') {
+          // Reset compact
+          const compactedNode = node;
+          const nodes = compactedNode.compactedNodes!;
+          let cur = nodes.shift()!;
+          cur.level = compactedNode.level;
+          cur.compactStatus = 'uncompacted';
+          replaceNodeInSibling(compactedNode, cur);
+          while (nodes.length) {
+            const n = nodes.shift()!;
+            result.push(cur);
+            cur.children = [n];
+            n.parent = cur;
+            n.level = (cur.level ?? 0) + 1;
+            cur = n;
+            cur.compactStatus = 'uncompacted';
+          }
+          node = cur;
+          node.children = compactedNode.children;
+        }
+      }
+      result.push(node);
+      if (node.children && this.expandStore.isExpanded(node)) {
         for (let i = node.children.length - 1; i >= 0; i--) {
+          node.children[i].parent = node;
+          node.children[i].level = (node.level ?? 0) + 1;
           stack.unshift(node.children[i]);
         }
       }
     }
-    return res;
+    return result;
   }
 
-  replaceHighlightsNotify(highlights: HighlightPositionWithLine[]) {
-    this.explorer.replaceHighlightsNotify(this.hlSrcId, highlights);
+  addHighlightsNotify(highlights: HighlightPositionWithLine[]) {
+    this.explorer.addHighlightsNotify(this.hlSrcId, highlights);
   }
 
   clearHighlightsNotify(lineStart?: number, lineEnd?: number) {
@@ -850,6 +887,11 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>> {
     );
   }
 
+  /**
+   * Compact node and child
+   */
+  async updateCompactNode(_compatedNode: TreeNode) {}
+
   private nodeAndChildrenRange(
     node: TreeNode,
   ): { startIndex: number; endIndex: number } | null {
@@ -859,14 +901,14 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>> {
     if (startIndex === -1) {
       return null;
     }
-    const parentLevel = node.level;
+    const parentLevel = node.level ?? 0;
     let endIndex = this.flattenedNodes.length - 1;
     for (
       let i = startIndex + 1, len = this.flattenedNodes.length;
       i < len;
       i++
     ) {
-      if (this.flattenedNodes[i].level <= parentLevel) {
+      if ((this.flattenedNodes[i].level ?? 0) <= parentLevel) {
         endIndex = i - 1;
         break;
       }
@@ -883,7 +925,7 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>> {
       return;
     }
     const { startIndex, endIndex } = range;
-    const needDrawNodes = this.flattenByNode(node);
+    const needDrawNodes = await this.flattenByNode(node);
 
     await this.sourcePainters.beforeDraw(needDrawNodes, {
       draw: async () => {
@@ -899,7 +941,7 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>> {
 
         this.nvim.pauseNotification();
         this.setLinesNotifier(contents, startIndex, endIndex + 1).notify();
-        this.replaceHighlightsNotify(highlightPositions);
+        this.addHighlightsNotify(highlightPositions);
         gotoNotifier.notify();
         await this.nvim.resumeNotification();
       },
@@ -907,27 +949,56 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>> {
     });
   }
 
-  private async expandNodeRecursive(node: TreeNode, recursive: boolean) {
+  private async expandNodeRecursive(
+    node: TreeNode,
+    options: ExpandNodeOptions,
+  ) {
+    const compact = options.compact || this.config.autoExpandCompactOrUncompact;
+    const uncompact =
+      options.uncompact || this.config.autoExpandCompactOrUncompact;
+    const recursiveSingle =
+      options.recursiveSingle ||
+      this.config.autoExpandRecursiveSingle ||
+      compact;
     if (node.expandable) {
+      const depth = options.depth ?? 1;
+      if (
+        node.compactStatus === undefined ||
+        node.compactStatus === 'uncompacted'
+      ) {
+        if (compact) {
+          node.compactStatus = 'compact';
+        }
+      } else if (
+        this.expandStore.isExpanded(node) &&
+        node.compactStatus === 'compacted'
+      ) {
+        if (uncompact) {
+          node.compactStatus = 'uncompact';
+        }
+      }
       this.expandStore.expand(node);
       node.children = await this.loadChildren(node);
-      if (
-        recursive ||
-        (node.children.length === 1 &&
-          node.children[0].expandable &&
-          this.config.get<boolean>('autoExpandSingleNode')!)
-      ) {
+      if (depth > this.config.autoExpandMaxDepth) {
+        return;
+      }
+      const singleExpandableNode =
+        node.children.length === 1 && node.children[0].expandable;
+      if (options.recursive || (singleExpandableNode && recursiveSingle)) {
         await Promise.all(
           node.children.map(async (child) => {
-            await this.expandNodeRecursive(child, recursive);
+            await this.expandNodeRecursive(child, {
+              ...options,
+              depth: depth + 1,
+            });
           }),
         );
       }
     }
   }
 
-  async expandNode(node: TreeNode, { recursive = false } = {}) {
-    await this.expandNodeRecursive(node, recursive);
+  async expandNode(node: TreeNode, options: ExpandNodeOptions = {}) {
+    await this.expandNodeRecursive(node, options);
     await this.expandNodeRender(node);
   }
 
@@ -954,8 +1025,11 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>> {
 
         this.nvim.pauseNotification();
         this.setLinesNotifier(contents, startIndex, endIndex + 1).notify();
-        this.replaceHighlightsNotify(highlightPositions);
         gotoNotifier.notify();
+        await this.nvim.resumeNotification();
+
+        this.nvim.pauseNotification();
+        this.addHighlightsNotify(highlightPositions);
         await this.nvim.resumeNotification();
       },
       drawAll: () => this.render(),
@@ -965,7 +1039,7 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>> {
   private async collapseNodeRecursive(node: TreeNode, recursive: boolean) {
     if (node.expandable) {
       this.expandStore.collapse(node);
-      if (recursive || this.config.get<boolean>('autoCollapseChildren')!) {
+      if (this.config.autoExpandRecursiveSingle || recursive) {
         if (node.children) {
           for (const child of node.children) {
             await this.collapseNodeRecursive(child, recursive);
@@ -1008,7 +1082,7 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>> {
               dr.nodeIndexEnd + 1,
             ).notify();
           });
-          this.replaceHighlightsNotify(highlightPositions);
+          this.addHighlightsNotify(highlightPositions);
         });
       },
       drawAll: () => this.renderNotifier(),
@@ -1039,7 +1113,7 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>> {
       ? range
       : { startIndex: 0, endIndex: this.flattenedNodes.length - 1 };
     const oldHeight = endIndex - nodeIndex + 1;
-    const needDrawNodes = this.flattenByNode(node);
+    const needDrawNodes = await this.flattenByNode(node);
     const newHeight = needDrawNodes.length;
     this.flattenedNodes = this.flattenedNodes
       .slice(0, nodeIndex)
@@ -1071,7 +1145,7 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>> {
             : this.startLineIndex + nodeIndex + oldHeight,
         )
         .notify();
-      this.replaceHighlightsNotify(highlightPositions);
+      this.addHighlightsNotify(highlightPositions);
 
       if (workspace.env.isVim) {
         nvim.command('redraw', true);

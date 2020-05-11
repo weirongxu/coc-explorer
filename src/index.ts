@@ -4,7 +4,7 @@ import { hlGroupManager } from './source/highlightManager';
 import { ExplorerManager } from './explorerManager';
 import { PresetList } from './lists/presets';
 import { registerVimApi } from './vimApi';
-import { registerBufDeleteEvents } from './util';
+import { registerBufDeleteEvents } from './events';
 
 export const activate = async (context: ExtensionContext) => {
   const { subscriptions, logger } = context;
@@ -28,7 +28,7 @@ export const activate = async (context: ExtensionContext) => {
     }),
   );
   registerVimApi(context, explorerManager);
-  registerBufDeleteEvents();
+  registerBufDeleteEvents(context);
 
   nvim
     .getOption('runtimepath')

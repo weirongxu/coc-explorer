@@ -85,7 +85,11 @@ export function initFileActions(file: FileSource) {
           path: async () => {
             targetPath = args[1];
             if (!targetPath) {
-              throw new Error('Please provide a path when do reveal:path');
+              targetPath = await input(
+                'Input a reveal path: ',
+                file.currentNode()?.fullpath ?? '',
+                'file',
+              );
             }
           },
         };
@@ -117,6 +121,21 @@ export function initFileActions(file: FileSource) {
       }
     },
     'reveal buffer in explorer',
+    {
+      menus: {
+        select: 'use select windows UI',
+        previousBuffer: 'use last used buffer',
+        previousWindow: 'use last used window',
+        sourceWindow: 'use the window where explorer opened',
+        path: {
+          description: 'use custom path',
+          args: 'path:<path>',
+          async actionArgs() {
+            return ['path'];
+          },
+        },
+      },
+    },
   );
   file.addNodeAction(
     'cd',
@@ -137,6 +156,23 @@ export function initFileActions(file: FileSource) {
       }
     },
     'change directory to current node',
+    {
+      menus: {
+        path: {
+          description: '',
+          args: '<path>',
+          async actionArgs() {
+            return [
+              await input(
+                'input a cd path: ',
+                file.currentNode()?.fullpath ?? '',
+                'file',
+              ),
+            ];
+          },
+        },
+      },
+    },
   );
   file.addNodeAction(
     'workspaceFolders',
@@ -166,7 +202,7 @@ export function initFileActions(file: FileSource) {
     'open file or directory',
     {
       multi: true,
-      menu: file.openActionMenu,
+      menus: file.openActionMenu,
     },
   );
   file.addNodeAction(
@@ -177,56 +213,89 @@ export function initFileActions(file: FileSource) {
         await file.explorer.tryQuitOnOpen();
       }
     },
-    'open file via drop command',
+    'open file by drop command',
     { multi: true },
   );
   file.addNodeAction(
     'expand',
-    async ({ node }) => {
+    async ({ node, args }) => {
       if (node.directory) {
-        await file.expandNode(node);
+        const recursive = args.includes('recursive');
+        const compact = args.includes('compact');
+        const uncompact = args.includes('uncompact');
+        const recursiveSingle = args.includes('recursiveSingle');
+        await file.expandNode(node, {
+          recursive,
+          compact,
+          uncompact,
+          recursiveSingle,
+        });
       }
     },
-    'expand directory or open file',
-    { multi: true },
+    'expand directory',
+    {
+      multi: true,
+      menus: {
+        recursive: 'recursively',
+        compact: 'single child folders will be compressed in a combined node',
+        uncompact: 'reset the combined node',
+        'compact:uncompact': 'compact or uncompact',
+        recursiveSingle: 'expand single child folder recursively',
+      },
+    },
   );
   file.addNodeAction(
     'expandRecursive',
     async ({ node }) => {
-      if (node.directory) {
-        await file.expandNode(node, { recursive: true });
-      }
+      // tslint:disable-next-line: ban
+      workspace.showMessage(
+        'Deprecated, use expand:recursive instead of it',
+        'warning',
+      );
+      return file.doAction('expand', [node], ['recursive']);
     },
-    'expand directory recursively',
+    'expand directory recursively (deprecated)',
     { multi: true },
   );
   file.addNodeAction(
     'collapse',
-    async ({ node }) => {
+    async ({ node, args }) => {
+      const recursive = args.includes('recursive');
       if (node.directory && file.expandStore.isExpanded(node)) {
-        await file.collapseNode(node);
+        await file.collapseNode(node, { recursive });
       } else if (node.parent) {
-        await file.collapseNode(node.parent!);
+        await file.collapseNode(node.parent, { recursive });
       }
     },
     'collapse directory',
-    { multi: true },
+    {
+      multi: true,
+      menus: {
+        recursive: 'recursively',
+      },
+    },
   );
   file.addNodeAction(
     'collapseRecursive',
     async ({ node }) => {
-      if (node.directory && file.expandStore.isExpanded(node)) {
-        await file.collapseNode(node, { recursive: true });
-      } else if (node.parent) {
-        await file.collapseNode(node.parent!, { recursive: true });
-      }
+      // tslint:disable-next-line: ban
+      workspace.showMessage(
+        'Deprecated, use collapse:recursive instead of it',
+        'warning',
+      );
+      return file.doAction('collapse', [node], ['recursive']);
     },
-    'collapse directory recursively',
+    'collapse directory recursively (deprecated)',
     { multi: true },
   );
   file.addNodeAction(
     'expandOrCollapse',
     async ({ node }) => {
+      // tslint:disable-next-line: ban
+      workspace.showMessage(
+        'Deprecated, use ["expanded?", "expand", "collapse"] instead of it',
+        'warning',
+      );
       if (node.directory) {
         if (file.expandStore.isExpanded(node)) {
           await file.doAction('collapse', node);

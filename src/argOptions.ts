@@ -1,4 +1,4 @@
-import { config, normalizePath } from './util';
+import { normalizePath } from './util';
 import {
   Args,
   ArgsSource,
@@ -8,6 +8,7 @@ import {
 } from './parseArgs';
 import { OpenStrategy } from './types';
 import { workspace } from 'coc.nvim';
+import { config } from './config';
 
 export const argOptions = {
   rootUri: Args.registerOption('root-uri', {
