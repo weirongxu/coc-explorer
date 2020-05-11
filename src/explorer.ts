@@ -42,6 +42,8 @@ import {
 import { ActionExp } from './actions/mapping';
 import { RegisteredAction } from './actions/registered';
 
+type MoveStrategy = 'default' | 'insideSource';
+
 export class Explorer {
   nvim = workspace.nvim;
   isHelpUI: boolean = false;
@@ -179,7 +181,6 @@ export class Explorer {
       }),
     );
 
-    type MoveStrategy = 'default' | 'insideSource';
     const moveActionMenu = {
       insideSource: 'move inside current source',
     };
@@ -230,42 +231,10 @@ export class Explorer {
     this.addGlobalAction(
       'expandablePrev',
       async ({ args }) => {
-        const moveStrategy = args[0] as MoveStrategy;
-
-        const gotoPrevExpandable = async (
-          nodes: BaseTreeNode<any>[],
-          lineIndex: number,
-          startLineIndex: number,
-        ) => {
-          const relativeIndex = scanIndexPrev(
-            nodes,
-            lineIndex,
-            await enableWrapscan(),
-            (n) => !!n.expandable,
-          );
-          if (relativeIndex === null) {
-            return;
-          }
-          await this.gotoLineIndex(startLineIndex + relativeIndex);
-        };
-
-        if (moveStrategy === 'insideSource') {
-          const source = await this.currentSource();
-          if (!source) {
-            return;
-          }
-          await gotoPrevExpandable(
-            source.flattenedNodes,
-            source.currentLineIndex,
-            source.startLineIndex,
-          );
-        } else {
-          await gotoPrevExpandable(
-            this.flattenedNodes,
-            this.currentLineIndex,
-            0,
-          );
-        }
+        await this.nodePrev(
+          args[0] as MoveStrategy,
+          (node) => !!node.expandable,
+        );
       },
       'previous expandable node',
       {
@@ -275,44 +244,42 @@ export class Explorer {
     this.addGlobalAction(
       'expandableNext',
       async ({ args }) => {
-        const moveStrategy = args[0] as MoveStrategy;
-
-        const gotoNextExpandable = async (
-          nodes: BaseTreeNode<any>[],
-          lineIndex: number,
-          startLineIndex: number,
-        ) => {
-          const relativeIndex = scanIndexNext(
-            nodes,
-            lineIndex,
-            await enableWrapscan(),
-            (n) => !!n.expandable,
-          );
-          if (relativeIndex === null) {
-            return;
-          }
-          await this.gotoLineIndex(startLineIndex + relativeIndex);
-        };
-
-        if (moveStrategy === 'insideSource') {
-          const source = await this.currentSource();
-          if (!source) {
-            return;
-          }
-          await gotoNextExpandable(
-            source.flattenedNodes,
-            source.currentLineIndex,
-            source.startLineIndex,
-          );
-        } else {
-          await gotoNextExpandable(
-            this.flattenedNodes,
-            this.currentLineIndex,
-            0,
-          );
-        }
+        await this.nodeNext(
+          args[0] as MoveStrategy,
+          (node) => !!node.expandable,
+        );
       },
       'next expandable node',
+      {
+        menus: moveActionMenu,
+      },
+    );
+    this.addGlobalAction(
+      'indentPrev',
+      async ({ args }) => {
+        const node = await this.currentNode();
+        const level = node?.level ?? 0;
+        await this.nodePrev(
+          args[0] as MoveStrategy,
+          (node) => node.level !== level,
+        );
+      },
+      'previous indent node',
+      {
+        menus: moveActionMenu,
+      },
+    );
+    this.addGlobalAction(
+      'indentNext',
+      async ({ args }) => {
+        const node = await this.currentNode();
+        const level = node?.level ?? 0;
+        await this.nodeNext(
+          args[0] as MoveStrategy,
+          (node) => node.level !== level,
+        );
+      },
+      'next indent node',
       {
         menus: moveActionMenu,
       },
@@ -541,6 +508,78 @@ export class Explorer {
         this.nvim.command(`${curWinnr}wincmd w`, true);
       }
       await this.nvim.resumeNotification();
+    }
+  }
+
+  private async nodePrev(
+    moveStrategy: MoveStrategy = 'default',
+    condition: (it: BaseTreeNode<any>) => boolean,
+  ) {
+    const gotoPrev = async (
+      nodes: BaseTreeNode<any>[],
+      lineIndex: number,
+      startLineIndex: number,
+    ) => {
+      const relativeIndex = scanIndexPrev(
+        nodes,
+        lineIndex,
+        await enableWrapscan(),
+        condition,
+      );
+      if (relativeIndex === null) {
+        return;
+      }
+      await this.gotoLineIndex(startLineIndex + relativeIndex);
+    };
+
+    if (moveStrategy === 'insideSource') {
+      const source = await this.currentSource();
+      if (!source) {
+        return;
+      }
+      await gotoPrev(
+        source.flattenedNodes,
+        source.currentLineIndex,
+        source.startLineIndex,
+      );
+    } else {
+      await gotoPrev(this.flattenedNodes, this.currentLineIndex, 0);
+    }
+  }
+
+  private async nodeNext(
+    moveStrategy: MoveStrategy = 'default',
+    condition: (it: BaseTreeNode<any>) => boolean,
+  ) {
+    const gotoNext = async (
+      nodes: BaseTreeNode<any>[],
+      lineIndex: number,
+      startLineIndex: number,
+    ) => {
+      const relativeIndex = scanIndexNext(
+        nodes,
+        lineIndex,
+        await enableWrapscan(),
+        condition,
+      );
+      if (relativeIndex === null) {
+        return;
+      }
+      await this.gotoLineIndex(startLineIndex + relativeIndex);
+    };
+
+    if (moveStrategy === 'insideSource') {
+      const source = await this.currentSource();
+      if (!source) {
+        return;
+      }
+      await gotoNext(
+        source.flattenedNodes,
+        source.currentLineIndex,
+        source.startLineIndex,
+      );
+    } else {
+      await gotoNext(this.flattenedNodes, this.currentLineIndex, 0);
     }
   }
 

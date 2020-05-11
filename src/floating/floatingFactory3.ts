@@ -232,7 +232,7 @@ export class FloatingFactory3 implements Disposable {
     if (!config) {
       return;
     }
-    if (!config.width || !config.height) {
+    if (config.width <= 0 || config.height <= 0) {
       this.close();
       return;
     }
