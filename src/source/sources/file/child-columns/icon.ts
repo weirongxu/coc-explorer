@@ -39,7 +39,7 @@ fileColumnRegistrar.registerColumn('child', 'icon', ({ source }) => ({
     return {
       async drawNode(row, { node }) {
         if (node.directory) {
-          const hl = source.nodeStores.isExpanded(node)
+          const hl = source.isExpanded(node)
             ? fileHighlights.directoryExpanded
             : fileHighlights.directoryCollapsed;
           if (enabledVimDevicons) {
@@ -50,7 +50,7 @@ fileColumnRegistrar.registerColumn('child', 'icon', ({ source }) => ({
               row.add(icon.code, { hl });
             } else {
               row.add(
-                source.nodeStores.isExpanded(node)
+                source.isExpanded(node)
                   ? nerdfont.icons.folderOpened.code
                   : nerdfont.icons.folderClosed.code,
                 { hl },
@@ -58,7 +58,7 @@ fileColumnRegistrar.registerColumn('child', 'icon', ({ source }) => ({
             }
           } else {
             row.add(
-              source.nodeStores.isExpanded(node)
+              source.isExpanded(node)
                 ? source.icons.expanded
                 : source.icons.collapsed,
               { hl: fileHighlights.directory },

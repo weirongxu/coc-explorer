@@ -259,7 +259,7 @@ export class FileSource extends ExplorerSource<FileNode> {
   getPutTargetNode(node: FileNode) {
     if (node.isRoot) {
       return this.rootNode;
-    } else if (node.expandable && this.nodeStores.isExpanded(node)) {
+    } else if (node.expandable && this.isExpanded(node)) {
       return node;
     } else if (node.parent) {
       return node.parent;
@@ -310,7 +310,7 @@ export class FileSource extends ExplorerSource<FileNode> {
         path.startsWith(node.fullpath + pathLib.sep)
       ) {
         let foundNode: FileNode | null = null;
-        const isRender = render && !this.nodeStores.isExpanded(node);
+        const isRender = render && !this.isExpanded(node);
         if (!node.children) {
           node.children = await this.load(node);
         }

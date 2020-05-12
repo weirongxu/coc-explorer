@@ -74,7 +74,7 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>> {
   private requestedRenderNodes: Set<TreeNode> = new Set();
   subscriptions: Disposable[];
 
-  readonly nodeStores = (() => {
+  private readonly nodeStores = (() => {
     type CompactStore =
       | undefined
       | { status: 'compact' }
@@ -799,6 +799,14 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>> {
         );
       },
     };
+  }
+
+  isExpanded(node: TreeNode) {
+    return this.nodeStores.isExpanded(node);
+  }
+
+  getCompact(node: TreeNode) {
+    return this.nodeStores.getCompact(node);
   }
 
   async flattenByNode(node: TreeNode): Promise<TreeNode[]> {

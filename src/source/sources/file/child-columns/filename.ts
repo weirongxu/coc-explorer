@@ -6,7 +6,7 @@ fileColumnRegistrar.registerColumn('child', 'filename', ({ source }) => ({
     return {
       async drawNode(row, { node }) {
         if (node.directory) {
-          const compactStore = source.nodeStores.getCompact(node);
+          const compactStore = source.getCompact(node);
           if (compactStore?.status === 'compacted') {
             row.add(compactStore.nodes.map((n) => n.name).join('/'), {
               hl: fileHighlights.directory,

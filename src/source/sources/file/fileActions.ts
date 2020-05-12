@@ -264,7 +264,7 @@ export function initFileActions(file: FileSource) {
     async ({ node, args }) => {
       const options = (args[0] ?? '').split('|');
       const recursive = options.includes('recursive');
-      if (node.directory && file.nodeStores.isExpanded(node)) {
+      if (node.directory && file.isExpanded(node)) {
         await file.collapseNode(node, { recursive });
       } else if (node.parent) {
         await file.collapseNode(node.parent, { recursive });
@@ -300,7 +300,7 @@ export function initFileActions(file: FileSource) {
         'warning',
       );
       if (node.directory) {
-        if (file.nodeStores.isExpanded(node)) {
+        if (file.isExpanded(node)) {
           await file.doAction('collapse', node);
         } else {
           await file.doAction('expand', node);
