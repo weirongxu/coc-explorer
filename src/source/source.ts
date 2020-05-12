@@ -11,12 +11,11 @@ import { Explorer } from '../explorer';
 import { explorerActionList } from '../lists/actions';
 import { onError } from '../logger';
 import { MappingMode, getReverseMappings } from '../mappings';
-import { OpenStrategy } from '../types';
+import { OpenStrategy, PreviewStrategy, openStrategyList } from '../types';
 import { drawnToRange, flatten, generateUri, Notifier } from '../util';
 import { WinLayoutFinder } from '../winLayoutFinder';
 import { HighlightPositionWithLine } from './highlightManager';
 import { SourcePainters } from './sourcePainters';
-import { PreviewStrategy } from '../config';
 import { onEvents } from '../events';
 import { clone } from 'lodash-es';
 import { RegisteredAction } from '../actions/registered';
@@ -357,6 +356,13 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>> {
       await this.render();
     }
   }
+
+  readonly openActionArgs = [
+    {
+      name: 'open strategy',
+      description: openStrategyList.join(' | '),
+    },
+  ];
 
   readonly openActionMenu = {
     select: 'use select window UI',

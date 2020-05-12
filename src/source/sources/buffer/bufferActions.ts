@@ -1,6 +1,6 @@
 import { BufferSource } from './bufferSource';
 import { prompt } from '../../../util';
-import { OpenStrategy } from '../../../types';
+import { OpenStrategy, openStrategyList } from '../../../types';
 
 export function initBufferActions(buffer: BufferSource) {
   const { nvim } = buffer;
@@ -49,7 +49,11 @@ export function initBufferActions(buffer: BufferSource) {
       });
     },
     'open buffer',
-    { multi: true, menus: buffer.openActionMenu },
+    {
+      multi: true,
+      args: buffer.openActionArgs,
+      menus: buffer.openActionMenu,
+    },
   );
   buffer.addNodeAction(
     'drop',

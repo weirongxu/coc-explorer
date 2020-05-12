@@ -11,7 +11,7 @@ import {
 } from '../util';
 import { FloatingFactory2 } from './floatingFactory2';
 import { FloatingFactory3 } from './floatingFactory3';
-import { PreviewStrategy } from '../config';
+import { PreviewStrategy } from '../types';
 
 export class FloatingPreview {
   nvim = workspace.nvim;

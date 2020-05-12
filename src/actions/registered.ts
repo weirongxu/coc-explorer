@@ -16,6 +16,7 @@ export namespace RegisteredAction {
     render: boolean;
     reload: boolean;
     select: boolean;
+    args: { name: string; description?: string }[];
     menus: RegisteredAction.OptionMenus;
   };
 

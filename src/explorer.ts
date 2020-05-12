@@ -29,7 +29,7 @@ import {
   sum,
 } from './util';
 import { showHelp, quitHelp } from './help';
-import { ExplorerConfig, PreviewStrategy, getEnableDebug } from './config';
+import { ExplorerConfig, getEnableDebug } from './config';
 import {
   onCursorMoved,
   onBufEnter,
@@ -41,8 +41,7 @@ import {
 } from './events';
 import { ActionExp } from './actions/mapping';
 import { RegisteredAction } from './actions/registered';
-
-type MoveStrategy = 'default' | 'insideSource';
+import { PreviewStrategy, previewStrategyList, MoveStrategy, moveStrategyList } from './types';
 
 export class Explorer {
   nvim = workspace.nvim;
@@ -181,6 +180,12 @@ export class Explorer {
       }),
     );
 
+    const moveActionArgs = [
+      {
+        name: 'move action options',
+        description: moveStrategyList.join(' | '),
+      },
+    ];
     const moveActionMenu = {
       insideSource: 'move inside current source',
     };
@@ -203,6 +208,7 @@ export class Explorer {
       },
       'previous node',
       {
+        args: moveActionArgs,
         menus: moveActionMenu,
       },
     );
@@ -225,6 +231,7 @@ export class Explorer {
       },
       'next node',
       {
+        args: moveActionArgs,
         menus: moveActionMenu,
       },
     );
@@ -238,6 +245,7 @@ export class Explorer {
       },
       'previous expandable node',
       {
+        args: moveActionArgs,
         menus: moveActionMenu,
       },
     );
@@ -251,6 +259,7 @@ export class Explorer {
       },
       'next expandable node',
       {
+        args: moveActionArgs,
         menus: moveActionMenu,
       },
     );
@@ -266,6 +275,7 @@ export class Explorer {
       },
       'previous indent node',
       {
+        args: moveActionArgs,
         menus: moveActionMenu,
       },
     );
@@ -281,6 +291,7 @@ export class Explorer {
       },
       'next indent node',
       {
+        args: moveActionArgs,
         menus: moveActionMenu,
       },
     );
@@ -293,6 +304,11 @@ export class Explorer {
       },
       'execute vim normal mode commands',
       {
+        args: [
+          {
+            name: 'normal commands',
+          },
+        ],
         menus: {
           zz: 'execute normal zz',
         },
@@ -316,6 +332,12 @@ export class Explorer {
       },
       'preview',
       {
+        args: [
+          {
+            name: 'preview strategy',
+            description: previewStrategyList.join(' | '),
+          },
+        ],
         menus: ExplorerSource.prototype.previewActionMenu,
       },
     );

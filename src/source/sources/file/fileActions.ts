@@ -19,7 +19,7 @@ import { workspace, listManager } from 'coc.nvim';
 import open from 'open';
 import { driveList } from '../../../lists/drives';
 import { gitManager } from '../../../gitManager';
-import { RevealStrategy, OpenStrategy } from '../../../types';
+import { RevealStrategy, OpenStrategy, revealStrategyList } from '../../../types';
 import { explorerWorkspaceFolderList } from '../../../lists/workspaceFolders';
 
 export function initFileActions(file: FileSource) {
@@ -122,6 +122,12 @@ export function initFileActions(file: FileSource) {
     },
     'reveal buffer in explorer',
     {
+      args: [
+        {
+          name: 'target',
+          description: `bufnr number | ${revealStrategyList.join(' | ')}`,
+        },
+      ],
       menus: {
         '0': 'use current buffer',
         '0:compact': 'use current buffer and compact',
@@ -158,6 +164,11 @@ export function initFileActions(file: FileSource) {
     },
     'change directory to current node',
     {
+      args: [
+        {
+          name: 'path',
+        },
+      ],
       menus: {
         path: {
           description: '',
@@ -203,6 +214,7 @@ export function initFileActions(file: FileSource) {
     'open file or directory',
     {
       multi: true,
+      args: file.openActionArgs,
       menus: file.openActionMenu,
     },
   );
@@ -237,11 +249,16 @@ export function initFileActions(file: FileSource) {
     'expand directory',
     {
       multi: true,
+      args: [
+        {
+          name: 'expand options',
+        },
+      ],
       menus: {
         recursive: 'recursively',
         compact: 'single child folders will be compressed in a combined node',
         uncompact: 'reset the combined node',
-        'compact:uncompact': 'compact or uncompact',
+        'compact|uncompact': 'compact or uncompact',
         recursiveSingle: 'expand single child folder recursively',
       },
     },
@@ -273,6 +290,11 @@ export function initFileActions(file: FileSource) {
     'collapse directory',
     {
       multi: true,
+      args: [
+        {
+          name: 'collapse options',
+        },
+      ],
       menus: {
         recursive: 'recursively',
       },

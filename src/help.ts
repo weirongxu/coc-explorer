@@ -18,6 +18,7 @@ const helpHightlights = {
   line: hl('HelpLine', 'Operator'),
   hint: hl('HelpHint', 'Comment'),
   title: hl('HelpTitle', 'Boolean'),
+  subtitle: hl('HelpSubTitle', 'Label'),
   mappingKey: hl('HelpMappingKey', 'PreProc'),
   action: hl('HelpAction', 'Identifier'),
   arg: hl('HelpArg', 'Identifier'),
@@ -140,13 +141,13 @@ export class HelpPainter {
   }
 
   /**
-   * <cr> -> if expandable?
-   *           if expanded?
-   *             expand() expand a directory
-   *           else
-   *             collapse() collapse a directory
-   *         else
-   *           open() open file or directory
+   * <cr> - if expandable?
+   *          if expanded?
+   *            expand() expand a directory
+   *          else
+   *            collapse() collapse a directory
+   *        else
+   *          open() open file or directory
    */
   async drawMappings() {
     await this.drawRow((row) => {
@@ -174,11 +175,11 @@ export class HelpPainter {
       await this.drawRow(async (row) => {
         row.add(' ');
         row.add(key, { hl: helpHightlights.mappingKey });
-        row.add(' -> ');
+        row.add(' - ');
         await drawBlocks[0](row);
       });
 
-      const indent = ' '.repeat(key.length + 5);
+      const indent = ' '.repeat(key.length + 4);
       for (const drawBlock of drawBlocks.slice(1)) {
         await this.drawRow((row) => {
           row.add(indent);
@@ -196,24 +197,49 @@ export class HelpPainter {
     });
 
     for (const [name, action] of Object.entries(this.registeredActions)) {
-      let row = new ViewRowPainter(this.painter);
-      row.add(' ');
-      row.add(name, { hl: helpHightlights.action });
-      row.add(' ');
-      row.add(action.description, { hl: helpHightlights.description });
+      await this.drawRow((row) => {
+        row.add(' ');
+        row.add(name, { hl: helpHightlights.action });
+        row.add(' ');
+        row.add(action.description, { hl: helpHightlights.description });
+      });
+
+      // draw args
+      if (action.options.args) {
+        await this.drawRow((row) => {
+          row.add('   ');
+          row.add('args:', { hl: helpHightlights.subtitle });
+        });
+        for (let i = 0; i < action.options.args.length; i++) {
+          const arg = action.options.args[i];
+          await this.drawRow((row) => {
+            row.add('     - ');
+            row.add(arg.name, { hl: helpHightlights.arg });
+            if (arg.description) {
+              row.add(' ');
+              row.add(arg.description, { hl: helpHightlights.description });
+            }
+          });
+        }
+      }
+
+      // draw menus
       if (action.options.menus) {
+        await this.drawRow((row) => {
+          row.add('   ');
+          row.add('menus:', { hl: helpHightlights.subtitle });
+        });
         for (const menu of RegisteredAction.getNormalizeMenus(
           action.options.menus,
         )) {
-          this.drawnResults.push(await row.draw());
-          row = new ViewRowPainter(this.painter);
-          row.add('   ');
-          row.add(`${name}:${menu.args}`, { hl: helpHightlights.action });
-          row.add(' ');
-          row.add(menu.description, { hl: helpHightlights.description });
+          await this.drawRow((row) => {
+            row.add('     - ');
+            row.add(`${name}:${menu.args}`, { hl: helpHightlights.action });
+            row.add(' ');
+            row.add(menu.description, { hl: helpHightlights.description });
+          });
         }
       }
-      this.drawnResults.push(await row.draw());
     }
   }
 

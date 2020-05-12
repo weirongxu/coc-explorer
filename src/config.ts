@@ -1,5 +1,6 @@
 import { workspace, WorkspaceConfiguration } from 'coc.nvim';
 import { generateUri } from './util';
+import { PreviewStrategy } from './types';
 
 export const config = workspace.getConfiguration('explorer');
 
@@ -7,8 +8,6 @@ export const configLocal = (resource: string = generateUri(workspace.cwd)) =>
   workspace.getConfiguration('explorer', resource);
 
 export const getEnableDebug = () => config.get<boolean>('debug')!;
-
-export type PreviewStrategy = 'labeling';
 
 export function buildExplorerConfig(config: WorkspaceConfiguration) {
   return {
