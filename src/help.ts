@@ -297,7 +297,7 @@ export async function showHelp(
         key,
         async () => {
           disposables.forEach((d) => d.dispose());
-          await explorer.quitHelp();
+          await quitHelp(explorer);
           await Notifier.runAll([
             await explorer.renderAllNotifier(),
             await source.gotoNodeNotifier(storeNode),

@@ -334,7 +334,10 @@ function coc_explorer#buf_set_lines(bufnr, start, end, strict_indexing, lines)
   endif
   call nvim_buf_set_lines(a:bufnr, a:start, a:end, a:strict_indexing, a:lines)
   if winid >= 0
-    call nvim_win_set_cursor(winid, cursor)
+    try
+      call nvim_win_set_cursor(winid, cursor)
+    catch
+    endtry
   endif
 endfunction
 

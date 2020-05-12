@@ -41,7 +41,12 @@ import {
 } from './events';
 import { ActionExp } from './actions/mapping';
 import { RegisteredAction } from './actions/registered';
-import { PreviewStrategy, previewStrategyList, MoveStrategy, moveStrategyList } from './types';
+import {
+  PreviewStrategy,
+  previewStrategyList,
+  MoveStrategy,
+  moveStrategyList,
+} from './types';
 
 export class Explorer {
   nvim = workspace.nvim;

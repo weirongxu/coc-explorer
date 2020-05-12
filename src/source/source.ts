@@ -1106,11 +1106,8 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>> {
 
         this.nvim.pauseNotification();
         this.setLinesNotifier(contents, startIndex, endIndex + 1).notify();
-        gotoNotifier.notify();
-        await this.nvim.resumeNotification();
-
-        this.nvim.pauseNotification();
         this.addHighlightsNotify(highlightPositions);
+        gotoNotifier.notify();
         await this.nvim.resumeNotification();
       },
       drawAll: () => this.render(),
