@@ -143,6 +143,12 @@ export class FileSource extends ExplorerSource<FileNode> {
               if (bufnr === this.explorer.bufnr) {
                 return;
               }
+              const position = await this.explorer.args.value(
+                argOptions.position,
+              );
+              if (position === 'floating') {
+                return;
+              }
               const fullpath: string = await workspace.nvim.call('expand', [
                 `#${bufnr}:p`,
               ]);
