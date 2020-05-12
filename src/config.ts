@@ -33,8 +33,8 @@ export function buildExplorerConfig(config: WorkspaceConfiguration) {
     get autoExpandCompactOrUncompact() {
       return this.config.get<boolean>('autoExpandCompactOrUncompact')!;
     },
-    get autoCollapseChildren() {
-      return this.config.get<boolean>('autoCollapseChildren')!;
+    get autoCollapseRecursive() {
+      return this.config.get<boolean>('autoCollapseRecursive')!;
     },
     get openActionForDirectory() {
       return this.config.get<string>('openAction.for.directory')!;

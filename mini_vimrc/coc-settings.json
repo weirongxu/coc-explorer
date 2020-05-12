@@ -19,5 +19,6 @@
   },
   "explorer.icon.enableNerdfont": true,
   "explorer.buffer.tabOnly": true,
-  "explorer.debug": true
+  "explorer.debug": true,
+  "explorer.autoCollapseRecursive": false
 }

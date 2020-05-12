@@ -38,8 +38,7 @@ export function initFileActions(file: FileSource) {
         file.root = pathLib.dirname(file.root);
         await file.cd(file.root);
       }
-      file.expandStore.expand(file.rootNode);
-      await file.reload(file.rootNode);
+      await file.expandNode(file.rootNode);
       if (nodeUri) {
         await file.gotoNodeUid(nodeUri);
       }
@@ -109,11 +108,12 @@ export function initFileActions(file: FileSource) {
         return;
       }
 
+      const expandOptions = args[1] ?? '';
+      const compact = expandOptions.includes('compact');
       const [revealNode, notifiers] = await file.revealNodeByPathNotifier(
         targetPath,
         {
-          render: true,
-          goto: true,
+          compact,
         },
       );
       if (revealNode) {
@@ -123,6 +123,8 @@ export function initFileActions(file: FileSource) {
     'reveal buffer in explorer',
     {
       menus: {
+        '0': 'use current buffer',
+        '0:compact': 'use current buffer and compact',
         select: 'use select windows UI',
         previousBuffer: 'use last used buffer',
         previousWindow: 'use last used window',
@@ -143,8 +145,7 @@ export function initFileActions(file: FileSource) {
       const cdTo = async (fullpath: string) => {
         await file.cd(fullpath);
         file.root = fullpath;
-        file.expandStore.expand(file.rootNode);
-        await file.reload(file.rootNode);
+        await file.expandNode(file.rootNode);
       };
       const path = args[0];
       if (path !== undefined) {
@@ -220,10 +221,11 @@ export function initFileActions(file: FileSource) {
     'expand',
     async ({ node, args }) => {
       if (node.directory) {
-        const recursive = args.includes('recursive');
-        const compact = args.includes('compact');
-        const uncompact = args.includes('uncompact');
-        const recursiveSingle = args.includes('recursiveSingle');
+        const options = (args[0] ?? '').split('|');
+        const recursive = options.includes('recursive');
+        const compact = options.includes('compact');
+        const uncompact = options.includes('uncompact');
+        const recursiveSingle = options.includes('recursiveSingle');
         await file.expandNode(node, {
           recursive,
           compact,
@@ -260,8 +262,9 @@ export function initFileActions(file: FileSource) {
   file.addNodeAction(
     'collapse',
     async ({ node, args }) => {
-      const recursive = args.includes('recursive');
-      if (node.directory && file.expandStore.isExpanded(node)) {
+      const options = (args[0] ?? '').split('|');
+      const recursive = options.includes('recursive');
+      if (node.directory && file.nodeStores.isExpanded(node)) {
         await file.collapseNode(node, { recursive });
       } else if (node.parent) {
         await file.collapseNode(node.parent, { recursive });
@@ -297,7 +300,7 @@ export function initFileActions(file: FileSource) {
         'warning',
       );
       if (node.directory) {
-        if (file.expandStore.isExpanded(node)) {
+        if (file.nodeStores.isExpanded(node)) {
           await file.doAction('collapse', node);
         } else {
           await file.doAction('expand', node);
@@ -476,8 +479,6 @@ export function initFileActions(file: FileSource) {
       await file.reload(putTargetNode);
       const [, notifiers] = await file.revealNodeByPathNotifier(targetPath, {
         node: putTargetNode,
-        render: true,
-        goto: true,
       });
       await Notifier.runAll(notifiers);
     },
@@ -510,8 +511,6 @@ export function initFileActions(file: FileSource) {
         targetPath,
         {
           node: putTargetNode,
-          render: true,
-          goto: true,
         },
       );
       await Notifier.runAll([reloadNotifier, ...revealNotifiers]);
@@ -577,8 +576,7 @@ export function initFileActions(file: FileSource) {
             name: drive,
             callback: async (drive) => {
               file.root = drive;
-              file.expandStore.expand(file.rootNode);
-              await file.reload(file.rootNode);
+              await file.expandNode(file.rootNode);
             },
           })),
         );

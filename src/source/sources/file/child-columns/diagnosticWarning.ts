@@ -58,7 +58,7 @@ fileColumnRegistrar.registerColumn(
           labelVisible: ({ node }) => node.fullpath in cacheWarningMap,
           drawNode(row, { node, nodeIndex }) {
             if (node.fullpath in cacheWarningMap) {
-              if (node.directory && source.expandStore.isExpanded(node)) {
+              if (node.directory && source.nodeStores.isExpanded(node)) {
                 source.removeIndexes('diagnosticWarning', nodeIndex);
               } else {
                 const count = cacheWarningMap[node.fullpath];

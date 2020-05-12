@@ -26,7 +26,6 @@ import { homedir } from 'os';
 import { SourcePainters } from '../../sourcePainters';
 import { argOptions } from '../../../argOptions';
 import { onBufEnter } from '../../../events';
-import { clone } from 'lodash-es';
 
 export interface FileNode extends BaseTreeNode<FileNode, 'root' | 'child'> {
   name: string;
@@ -153,10 +152,7 @@ export class FileSource extends ExplorerSource<FileNode> {
               const [
                 revealNode,
                 notifiers,
-              ] = await this.revealNodeByPathNotifier(fullpath, {
-                render: true,
-                goto: true,
-              });
+              ] = await this.revealNodeByPathNotifier(fullpath);
               if (revealNode) {
                 await Notifier.runAll(notifiers);
               }
@@ -200,7 +196,6 @@ export class FileSource extends ExplorerSource<FileNode> {
 
     const args = this.explorer.args;
     this.root = await args.value(argOptions.rootUri);
-    this.expandStore.expanded(this.rootNode, this.defaultExpanded);
   }
 
   async cd(fullpath: string) {
@@ -217,12 +212,6 @@ export class FileSource extends ExplorerSource<FileNode> {
       // tslint:disable-next-line: ban
       workspace.showMessage(`CWD is: ${fullpath}`);
     }
-  }
-
-  async updateCompactNode(compactedNode: FileNode) {
-    compactedNode.name = (compactedNode.compactedNodes ?? [])
-      .map((n) => n.name)
-      .join('/');
   }
 
   async revealPath() {
@@ -253,10 +242,6 @@ export class FileSource extends ExplorerSource<FileNode> {
     if (this.config.autoReveal || hasRevealPath) {
       const [revealNode, notifiers] = await this.revealNodeByPathNotifier(
         revealPath,
-        {
-          render: true,
-          goto: true,
-        },
       );
       if (revealNode !== null) {
         return Notifier.combine(notifiers);
@@ -274,7 +259,7 @@ export class FileSource extends ExplorerSource<FileNode> {
   getPutTargetNode(node: FileNode) {
     if (node.isRoot) {
       return this.rootNode;
-    } else if (node.expandable && this.expandStore.isExpanded(node)) {
+    } else if (node.expandable && this.nodeStores.isExpanded(node)) {
       return node;
     } else if (node.parent) {
       return node.parent;
@@ -295,10 +280,6 @@ export class FileSource extends ExplorerSource<FileNode> {
       await task.waitShow();
       const [, notifiers] = await this.revealNodeByPathNotifier(
         Uri.parse(loc.uri).fsPath,
-        {
-          render: true,
-          goto: true,
-        },
       );
       await Notifier.runAll(notifiers);
     };
@@ -309,51 +290,62 @@ export class FileSource extends ExplorerSource<FileNode> {
 
   async revealNodeByPathNotifier(
     path: string,
-    {
-      node = this.rootNode,
-      goto = false,
-      render = false,
-      notifiers = [] as Notifier[],
-    } = {},
+    { node = this.rootNode, goto = true, render = true, compact = false } = {},
   ): Promise<[FileNode | null, Notifier[]]> {
     path = normalizePath(path);
-    if (path === node.fullpath) {
-      return [node, notifiers];
-    } else if (node.directory && path.startsWith(node.fullpath + pathLib.sep)) {
-      let foundNode: FileNode | null = null;
-      const isRender = render && !this.expandStore.isExpanded(node);
-      if (!node.children) {
-        node.children = await this.loadChildren(node);
-      }
-      for (const child of node.children) {
-        const [childFoundNode] = await this.revealNodeByPathNotifier(path, {
-          node: child,
-          render: isRender ? false : render,
-          notifiers,
-          goto: false,
-        });
-        foundNode = childFoundNode;
-        if (foundNode) {
-          this.expandStore.expand(node);
-          break;
+    const notifiers: Notifier[] = [];
+
+    const revealRecursive = async (
+      path: string,
+      {
+        node,
+        goto,
+        render,
+      }: { node: FileNode; goto: boolean; render: boolean },
+    ): Promise<FileNode | null> => {
+      if (path === node.fullpath) {
+        return node;
+      } else if (
+        node.directory &&
+        path.startsWith(node.fullpath + pathLib.sep)
+      ) {
+        let foundNode: FileNode | null = null;
+        const isRender = render && !this.nodeStores.isExpanded(node);
+        if (!node.children) {
+          node.children = await this.load(node);
         }
-      }
-      if (foundNode) {
-        if (isRender) {
-          const renderNotifier = await this.renderNotifier({
-            node,
+        for (const child of node.children) {
+          const childFoundNode = await revealRecursive(path, {
+            node: child,
+            goto: false,
+            render: isRender ? false : render,
           });
-          if (renderNotifier) {
-            notifiers.push(renderNotifier);
+          foundNode = childFoundNode;
+          if (foundNode) {
+            await this.expandNode(node, { compact, render: false });
+            break;
           }
         }
-        if (goto) {
-          notifiers.push(await this.gotoNodeNotifier(foundNode));
+        if (foundNode) {
+          if (isRender) {
+            const renderNotifier = await this.renderNotifier({
+              node,
+            });
+            if (renderNotifier) {
+              notifiers.push(renderNotifier);
+            }
+          }
+          if (goto) {
+            notifiers.push(await this.gotoNodeNotifier(foundNode));
+          }
         }
+        return foundNode;
       }
-      return [foundNode, notifiers];
-    }
-    return [null, notifiers];
+      return null;
+    };
+
+    const foundNode = await revealRecursive(path, { node, goto, render });
+    return [foundNode, notifiers];
   }
 
   sortFiles(files: FileNode[]) {
@@ -412,9 +404,6 @@ export class FileSource extends ExplorerSource<FileNode> {
             symbolicLink: lstat ? lstat.isSymbolicLink() : false,
             lstat: lstat || null,
           };
-          if (this.expandStore.isExpanded(child)) {
-            child.children = await this.loadChildren(child);
-          }
           return child;
         } catch (error) {
           onError(error);

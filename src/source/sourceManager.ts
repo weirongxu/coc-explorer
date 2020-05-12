@@ -17,7 +17,7 @@ class SourceManager {
   createSource(name: string, explorer: Explorer, expanded: boolean) {
     if (this.registeredSources[name]) {
       const source = new this.registeredSources[name](name, explorer);
-      source.boot(expanded);
+      source.bootInit(expanded);
       return source;
     } else {
       // tslint:disable-next-line: ban

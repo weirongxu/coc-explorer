@@ -9,7 +9,7 @@ fileColumnRegistrar.registerColumn('child', 'modified', ({ source }) => ({
       drawNode(row, { node, nodeIndex }) {
         let modified: boolean = false;
         if (node.directory) {
-          if (!source.expandStore.isExpanded(node)) {
+          if (!source.nodeStores.isExpanded(node)) {
             modified = source.bufManager.modifiedPrefix(node.fullpath);
           }
         } else {

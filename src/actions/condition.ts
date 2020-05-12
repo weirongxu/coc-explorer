@@ -16,7 +16,7 @@ export const conditionActionRules: Record<
     getDescription: () => 'expandable?',
   },
   'expanded?': {
-    filter: (s, n) => s.expandStore.isExpanded(n),
+    filter: (s, n) => s.nodeStores.isExpanded(n),
     getDescription: () => 'expanded?',
   },
   'type?': {
