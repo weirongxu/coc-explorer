@@ -12,7 +12,6 @@ import {
   Notifier,
   listDrive,
   isWindows,
-  debounce,
   generateUri,
 } from '../../../util';
 import { hlGroupManager } from '../../highlightManager';
@@ -165,14 +164,6 @@ export class FileSource extends ExplorerSource<FileNode> {
             }, 200),
           );
         }
-
-        this.subscriptions.push(
-          this.bufManager.onModified(
-            debounce(500, async (fullpath) => {
-              await this.renderPaths([fullpath]);
-            }),
-          ),
-        );
       } else {
         this.subscriptions.push(
           onBufEnter(async (bufnr) => {

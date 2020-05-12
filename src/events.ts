@@ -8,66 +8,86 @@ import {
 import { getEnableDebug } from './config';
 import { asyncCatchError, throttle } from './util';
 
+type Arguments<F extends Function> = F extends (...args: infer Args) => any
+  ? Args
+  : never;
+
+class EventListener<
+  F extends (...args: A) => void | Promise<void>,
+  A extends any[] = Arguments<F>
+> {
+  listeners: F[] = [];
+
+  on(func: F, disposables?: Disposable[]) {
+    this.listeners.push(func);
+    const disposable = Disposable.create(() => {
+      const index = this.listeners.indexOf(func);
+      if (index !== -1) {
+        this.listeners.splice(index, 1);
+      }
+    });
+    if (disposables) {
+      disposables.push(disposable);
+    }
+    return disposable;
+  }
+
+  fire(...args: A) {
+    this.listeners.forEach((listener) => {
+      listener(...args);
+    });
+  }
+}
+
 type OnEvent = typeof events.on;
 type EventResult = void | Promise<void>;
-type BufEventHandler = (bufnr: number) => EventResult;
+type BufEventListener = (bufnr: number) => EventResult;
 
 export const onEvents: OnEvent = (
   event: any,
-  handler: any,
+  listener: any,
   disposables?: Disposable[],
-) => events.on(event, asyncCatchError(handler), disposables);
+) => events.on(event, asyncCatchError(listener), disposables);
 
 // onBufEnter
-const onBufEnterHandlers: BufEventHandler[] = [];
-let onBufEnterTriggerCount = 0;
+let bufEnterTriggerCount = 0;
+const bufEnterListener = new EventListener<BufEventListener, [number]>();
 
 onEvents('BufEnter', (bufnr) => {
   if (getEnableDebug()) {
     // tslint:disable-next-line: ban
     workspace.showMessage(
-      `BufEnter: Bufnr(${bufnr}), Count(${onBufEnterTriggerCount})`,
+      `BufEnter: Bufnr(${bufnr}), Count(${bufEnterTriggerCount})`,
       'more',
     );
-    onBufEnterTriggerCount += 1;
+    bufEnterTriggerCount += 1;
   }
 
-  onBufEnterHandlers.forEach((handler) => {
-    handler(bufnr);
-  });
+  bufEnterListener.fire(bufnr);
 });
 
 export function onBufEnter(
-  handler: BufEventHandler,
+  listener: BufEventListener,
   delay?: number,
   disposables?: Disposable[],
 ) {
-  const handler2 = (bufnr: number) => {
+  const listener2 = (bufnr: number) => {
     let prevBufnr = 0;
     if (bufnr !== prevBufnr) {
       prevBufnr = bufnr;
-      handler(bufnr);
+      listener(bufnr);
     }
   };
   const fn =
     delay !== undefined
-      ? throttle(delay, handler2, { leading: false, trailing: true })
-      : handler2;
+      ? throttle(delay, listener2, { leading: false, trailing: true })
+      : listener2;
 
-  const disposable = Disposable.create(() => {
-    const index = onBufEnterHandlers.indexOf(fn);
-    if (index !== -1) {
-      onBufEnterHandlers.splice(index, 1);
-    }
-  });
-  disposables?.push(disposable);
-
-  onBufEnterHandlers.push(fn);
-  return disposable;
+  return bufEnterListener.on(fn, disposables);
 }
 
 // onCursorMoved
-const onCursorMovedHandlers: BufEventHandler[] = [];
+const cursorMovedListener = new EventListener<BufEventListener>();
 let onCursorMovedTriggerCount = 0;
 
 onEvents('CursorMoved', (bufnr) => {
@@ -80,87 +100,70 @@ onEvents('CursorMoved', (bufnr) => {
     onCursorMovedTriggerCount += 1;
   }
 
-  onCursorMovedHandlers.forEach((handler) => {
-    handler(bufnr);
-  });
+  cursorMovedListener.fire(bufnr);
 });
 
 export function onCursorMoved(
-  handler: BufEventHandler,
+  listener: BufEventListener,
   delay?: number,
   disposables?: Disposable[],
 ) {
   const fn =
     delay !== undefined
-      ? throttle(delay, handler, { leading: false, trailing: true })
-      : handler;
+      ? throttle(delay, listener, { leading: false, trailing: true })
+      : listener;
 
-  const disposable = Disposable.create(() => {
-    const index = onCursorMovedHandlers.indexOf(fn);
-    if (index !== -1) {
-      onCursorMovedHandlers.splice(index, 1);
-    }
-  });
-  disposables?.push(disposable);
-
-  onCursorMovedHandlers.push(fn);
-  return disposable;
+  return cursorMovedListener.on(fn, disposables);
 }
+
+// Internal events
+const bufDeleteListener = new EventListener<(bufnr: number) => void>();
+const bufWipeoutListener = new EventListener<(bufnr: number) => void>();
+const CocDiagnosticChangeListener = new EventListener<() => EventResult>();
+
+const internalEventHanders: Record<
+  'BufDelete' | 'BufWipeout' | 'CocDiagnosticChange',
+  (...args: any[]) => void
+> = {
+  BufDelete(args: [number]) {
+    bufDeleteListener.fire(...args);
+  },
+  BufWipeout(args: [number]) {
+    bufWipeoutListener.fire(...args);
+  },
+  CocDiagnosticChange() {
+    CocDiagnosticChangeListener.fire();
+  },
+};
 
 export function registerBufDeleteEvents(context: ExtensionContext) {
   context.subscriptions.push(
     commands.registerCommand(
       'explorer.internal.didVimEvent',
-      asyncCatchError((event, ...args: any[]) => {
-        if (event === 'BufDelete') {
-          onBufDeleteHandlers.forEach((handler) => {
-            handler(...(args as [number]));
-          });
-        } else if (event === 'BufWipeout') {
-          onBufWipeoutHandlers.forEach((handler) => {
-            handler(...(args as [number]));
-          });
-        }
-      }),
+      asyncCatchError(
+        async (event: keyof typeof internalEventHanders, ...args: any[]) => {
+          await internalEventHanders[event](args);
+        },
+      ),
       undefined,
       true,
     ),
   );
 }
 
-const onBufDeleteHandlers: BufEventHandler[] = [];
-const onBufWipeoutHandlers: BufEventHandler[] = [];
-
-export function onBufDelete(handler: BufEventHandler) {
-  onBufDeleteHandlers.push(handler);
-
-  const disposable = Disposable.create(() => {
-    const index = onBufDeleteHandlers.indexOf(handler);
-    if (index !== -1) {
-      onBufDeleteHandlers.splice(index, 1);
-    }
-  });
-
-  onBufDeleteHandlers.push(handler);
-
-  return disposable;
+export function onBufDelete(listener: BufEventListener) {
+  return bufDeleteListener.on(listener);
 }
 
-export function onBufWipeout(handler: BufEventHandler) {
-  onBufWipeoutHandlers.push(handler);
-
-  const disposable = Disposable.create(() => {
-    const index = onBufWipeoutHandlers.indexOf(handler);
-    if (index !== -1) {
-      onBufWipeoutHandlers.splice(index, 1);
-    }
-  });
-
-  onBufWipeoutHandlers.push(handler);
-
-  return disposable;
+export function onBufWipeout(listener: BufEventListener) {
+  return bufWipeoutListener.on(listener);
 }
 
+export function onCocDiagnosticChange(listener: () => EventResult) {
+  return CocDiagnosticChangeListener.on(listener);
+}
+
+// User events
 export async function doCocExplorerOpenPre() {
   await workspace.nvim.command('doautocmd User CocExplorerOpenPre');
 }
