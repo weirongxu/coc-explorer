@@ -397,20 +397,21 @@ Default: <pre><code>[
 Default: <pre><code>"coc-explorer"</code></pre>
 </details>
 <details>
-<summary><code>explorer.autoExpandRecursiveSingle</code>: Automatically expand single child folder recursively. type: <code>boolean</code></summary>
-Default: <pre><code>true</code></pre>
-</details>
-<details>
-<summary><code>explorer.autoExpandMaxDepth</code>: Automatically expand maximum depth of one time. type: <code>boolean</code></summary>
+<summary><code>explorer.autoExpandMaxDepth</code>: Automatically expand maximum depth of one time. type: <code>undefined</code></summary>
 Default: <pre><code>20</code></pre>
 </details>
 <details>
-<summary><code>explorer.autoExpandCompactOrUncompact</code>: Single child folders will be compressed in a combined node. type: <code>boolean</code></summary>
-Default: <pre><code>true</code></pre>
+<summary><code>explorer.autoExpandOptions</code>: Automatically expand options. type: <code>array</code></summary>
+Default: <pre><code>[
+  "compact",
+  "uncompact"
+]</code></pre>
 </details>
 <details>
-<summary><code>explorer.autoCollapseRecursive</code>: Automatically collapse recursive. type: <code>boolean</code></summary>
-Default: <pre><code>true</code></pre>
+<summary><code>explorer.autoCollapseOptions</code>: Automatically collapse options. type: <code>array</code></summary>
+Default: <pre><code>[
+  "recursive"
+]</code></pre>
 </details>
 <details>
 <summary><code>explorer.activeMode</code>: Render explorer when after open or save buffer. type: <code>boolean</code></summary>
