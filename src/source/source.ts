@@ -12,12 +12,7 @@ import { explorerActionList } from '../lists/actions';
 import { onError } from '../logger';
 import { MappingMode, getReverseMappings } from '../mappings';
 import { OpenStrategy, PreviewStrategy, openStrategyList } from '../types';
-import {
-  drawnToRange,
-  flatten,
-  generateUri,
-  Notifier,
-} from '../util';
+import { drawnToRange, flatten, generateUri, Notifier } from '../util';
 import { WinLayoutFinder } from '../winLayoutFinder';
 import { HighlightPositionWithLine } from './highlightManager';
 import { SourcePainters } from './sourcePainters';
@@ -1026,12 +1021,13 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>> {
     node: TreeNode,
     options: ExpandNodeOptions,
   ) {
-    const compact = options.compact || this.config.autoExpandCompactOrUncompact;
+    const autoExpandOptions = this.config.autoExpandOptions;
+    const compact = options.compact || autoExpandOptions.includes('compact');
     const uncompact =
-      options.uncompact || this.config.autoExpandCompactOrUncompact;
+      options.uncompact || autoExpandOptions.includes('uncompact');
     const recursiveSingle =
       options.recursiveSingle ||
-      this.config.autoExpandRecursiveSingle ||
+      autoExpandOptions.includes('recursiveSingle') ||
       compact;
     if (node.expandable) {
       const depth = options.depth ?? 1;
@@ -1122,7 +1118,7 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>> {
   private async collapseNodeRecursive(node: TreeNode, recursive: boolean) {
     if (node.expandable) {
       this.nodeStores.collapse(node);
-      if (this.config.autoCollapseRecursive || recursive) {
+      if (recursive || this.config.autoCollapseOptions.includes('recursive')) {
         if (node.children) {
           for (const child of node.children) {
             await this.collapseNodeRecursive(child, recursive);

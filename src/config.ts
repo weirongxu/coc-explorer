@@ -1,6 +1,6 @@
 import { workspace, WorkspaceConfiguration } from 'coc.nvim';
 import { generateUri } from './util';
-import { PreviewStrategy } from './types';
+import { PreviewStrategy, ExpandOption, CollapseOption } from './types';
 
 export const config = workspace.getConfiguration('explorer');
 
@@ -23,17 +23,14 @@ export function buildExplorerConfig(config: WorkspaceConfiguration) {
     get autoReveal() {
       return this.config.get<boolean>('file.autoReveal')!;
     },
-    get autoExpandRecursiveSingle() {
-      return this.config.get<boolean>('autoExpandRecursiveSingle')!;
-    },
     get autoExpandMaxDepth() {
       return this.config.get<number>('autoExpandMaxDepth')!;
     },
-    get autoExpandCompactOrUncompact() {
-      return this.config.get<boolean>('autoExpandCompactOrUncompact')!;
+    get autoExpandOptions() {
+      return this.config.get<ExpandOption[]>('autoExpandOptions')!;
     },
-    get autoCollapseRecursive() {
-      return this.config.get<boolean>('autoCollapseRecursive')!;
+    get autoCollapseOptions() {
+      return this.config.get<CollapseOption[]>('autoCollapseOptions')!;
     },
     get openActionForDirectory() {
       return this.config.get<string>('openAction.for.directory')!;

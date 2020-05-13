@@ -19,7 +19,13 @@ import { workspace, listManager } from 'coc.nvim';
 import open from 'open';
 import { driveList } from '../../../lists/drives';
 import { gitManager } from '../../../gitManager';
-import { RevealStrategy, OpenStrategy, revealStrategyList } from '../../../types';
+import {
+  RevealStrategy,
+  OpenStrategy,
+  revealStrategyList,
+  expandOptionList,
+  collapseOptionList,
+} from '../../../types';
 import { explorerWorkspaceFolderList } from '../../../lists/workspaceFolders';
 
 export function initFileActions(file: FileSource) {
@@ -252,6 +258,7 @@ export function initFileActions(file: FileSource) {
       args: [
         {
           name: 'expand options',
+          description: expandOptionList.join(' | '),
         },
       ],
       menus: {
@@ -293,6 +300,7 @@ export function initFileActions(file: FileSource) {
       args: [
         {
           name: 'collapse options',
+          description: collapseOptionList.join(' | '),
         },
       ],
       menus: {

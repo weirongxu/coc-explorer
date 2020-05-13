@@ -278,25 +278,46 @@
           "type": "string",
           "default": "coc-explorer"
         },
-        "explorer.autoExpandRecursiveSingle": {
-          "description": "Automatically expand single child folder recursively",
-          "type": "boolean",
-          "default": true
-        },
         "explorer.autoExpandMaxDepth": {
           "description": "Automatically expand maximum depth of one time",
-          "type": "boolean",
           "default": 20
         },
-        "explorer.autoExpandCompactOrUncompact": {
-          "description": "Single child folders will be compressed in a combined node",
-          "type": "boolean",
-          "default": true
+        "explorer.autoExpandOptions": {
+          "description": "Automatically expand options",
+          "type": "array",
+          "items": {
+            "enum": [
+              "recursive",
+              "compact",
+              "uncompact",
+              "recursiveSingle"
+            ],
+            "enumDescriptions": [
+              "Recursively",
+              "Single child folders will be compressed in a combined node",
+              "Reset the combined node",
+              "Expand single child folder recursively"
+            ]
+          },
+          "default": [
+            "compact",
+            "uncompact"
+          ]
         },
-        "explorer.autoCollapseRecursive": {
-          "description": "Automatically collapse recursive",
-          "type": "boolean",
-          "default": true
+        "explorer.autoCollapseOptions": {
+          "description": "Automatically collapse options",
+          "type": "array",
+          "items": {
+            "enum": [
+              "recursive"
+            ],
+            "enumDescriptions": [
+              "Recursively"
+            ]
+          },
+          "default": [
+            "recursive"
+          ]
         },
         "explorer.activeMode": {
           "description": "Render explorer when after open or save buffer",

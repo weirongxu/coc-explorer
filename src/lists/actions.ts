@@ -41,7 +41,10 @@ export class ExplorerActionList extends BasicList {
   doHighlight() {
     const { nvim } = this;
     nvim.pauseNotification();
-    nvim.command('syntax match CocExplorerActionName /\\v^(\\w|:)+/', true);
+    nvim.command(
+      'syntax match CocExplorerActionName /\\v^[a-zA-Z0-9:|<>]+/',
+      true,
+    );
     nvim.command('syntax match CocExplorerActionKey /\\v\\[.*\\]/', true);
     nvim.command(
       'syntax match CocExplorerActionDescription /\\v\\] \\zs.*/',

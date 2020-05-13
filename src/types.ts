@@ -27,3 +27,16 @@ export type OpenStrategy = typeof openStrategyList[number];
 export const previewStrategyList = ['labeling'] as const;
 
 export type PreviewStrategy = typeof previewStrategyList[number];
+
+export const expandOptionList = [
+  'recursive',
+  'compact',
+  'uncompact',
+  'recursiveSingle',
+] as const;
+
+export type ExpandOption = typeof expandOptionList[number];
+
+export const collapseOptionList = ['recursive'] as const;
+
+export type CollapseOption = typeof collapseOptionList[number];
