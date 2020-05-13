@@ -4,6 +4,9 @@ import { bufferHighlights } from '../bufferSource';
 bufferColumnRegistrar.registerColumn('child', 'modified', ({ source }) => ({
   draw() {
     return {
+      labelVisible({ node }) {
+        return node.modified || !node.modifiable;
+      },
       drawNode(row, { node, nodeIndex }) {
         const ch = node.modified ? '+' : node.modifiable ? '' : '-';
         if (ch) {

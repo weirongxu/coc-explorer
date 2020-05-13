@@ -2,11 +2,11 @@ import { fileColumnRegistrar } from '../fileColumnRegistrar';
 import { fileHighlights } from '../fileSource';
 
 fileColumnRegistrar.registerColumn('child', 'readonly', ({ source }) => ({
-  labelOnly: true,
   draw() {
     const enabledNerdFont = source.config.enableNerdfont;
 
     return {
+      labelOnly: true,
       labelVisible: ({ node }) => node.readonly,
       drawNode(row, { node }) {
         if (node.readonly) {

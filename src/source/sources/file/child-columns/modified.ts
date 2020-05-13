@@ -8,7 +8,6 @@ fileColumnRegistrar.registerColumn(
   'modified',
   ({ source, subscriptions }) => {
     return {
-      labelOnly: true,
       async init() {
         const position = await source.explorer.args.value(argOptions.position);
         if (position !== 'floating') {
@@ -23,6 +22,7 @@ fileColumnRegistrar.registerColumn(
       },
       draw() {
         return {
+          labelOnly: true,
           labelVisible: ({ node }) => source.bufManager.modified(node.fullpath),
           drawNode(row, { node, nodeIndex }) {
             let modified: boolean = false;
