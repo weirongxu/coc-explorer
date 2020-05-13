@@ -218,7 +218,7 @@ export class FileSource extends ExplorerSource<FileNode> {
     } else {
       const bufnr = await this.explorer.sourceBufnrBySourceWinid();
       if (bufnr) {
-        return (await this.nvim.call('expand', `#${bufnr}:p`)) as string;
+        return (await this.nvim.call('expand', [`#${bufnr}:p`, 1])) as string;
       }
       return null;
     }

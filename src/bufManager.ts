@@ -118,6 +118,7 @@ export class BufManager {
           const bufname = matches[3];
           const fullpath: string = await workspace.nvim.call('expand', [
             `#${bufnr}:p`,
+            1,
           ]);
           return {
             type: 'child' as const,

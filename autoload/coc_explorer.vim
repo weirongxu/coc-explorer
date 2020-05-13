@@ -1,4 +1,4 @@
-let s:explorer_root = expand('<sfile>:p:h:h')
+let s:explorer_root = expand('<sfile>:p:h:h', 1)
 
 " Buffer & window manage
 function! coc_explorer#create(
