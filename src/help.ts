@@ -21,6 +21,7 @@ const helpHightlights = {
   subtitle: hl('HelpSubTitle', 'Label'),
   mappingKey: hl('HelpMappingKey', 'PreProc'),
   action: hl('HelpAction', 'Identifier'),
+  column: hl('HelpColumn', 'Identifier'),
   arg: hl('HelpArg', 'Identifier'),
   description: hl('HelpDescription', 'Comment'),
   conditional: hl('HelpConditional', 'Conditional'),
@@ -243,6 +244,27 @@ export class HelpPainter {
     }
   }
 
+  async drawColumns() {
+    await this.drawRow((row) => {
+      row.add(`Columns for source(${this.source.sourceType})`, {
+        hl: helpHightlights.title,
+      });
+    });
+    const allColumns = this.source.sourcePainters.columnRegistrar
+      .registeredColumns;
+    for (const [type, columns] of allColumns) {
+      await this.drawRow((row) => {
+        row.add(`  Type: ${type}`, { hl: helpHightlights.subtitle });
+      });
+      for (const [name] of columns) {
+        await this.drawRow((row) => {
+          row.add('   - ');
+          row.add(name, { hl: helpHightlights.column });
+        });
+      }
+    }
+  }
+
   async render() {
     this.explorer.nvim.pauseNotification();
     this.explorer
@@ -285,6 +307,8 @@ export async function showHelp(
   await helpPainter.drawMappings();
   await helpPainter.drawHr();
   await helpPainter.drawActions();
+  await helpPainter.drawHr();
+  await helpPainter.drawColumns();
   await helpPainter.render();
 
   await explorer.explorerManager.clearMappings();
