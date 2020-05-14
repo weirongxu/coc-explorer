@@ -275,7 +275,7 @@ export function initFileActions(file: FileSource) {
     async ({ node }) => {
       // tslint:disable-next-line: ban
       workspace.showMessage(
-        'Deprecated, use expand:recursive instead of it',
+        'The action expandRecursive has been deprecated, use expand:recursive instead of it',
         'warning',
       );
       return file.doAction('expand', [node], ['recursive']);
@@ -313,7 +313,7 @@ export function initFileActions(file: FileSource) {
     async ({ node }) => {
       // tslint:disable-next-line: ban
       workspace.showMessage(
-        'Deprecated, use collapse:recursive instead of it',
+        'The action collapseRecursive has been deprecated, use collapse:recursive instead of it',
         'warning',
       );
       return file.doAction('collapse', [node], ['recursive']);

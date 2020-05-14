@@ -177,7 +177,7 @@ export class ExplorerManager {
       if (!Array.isArray(actionExp) && actionExp.name === 'unmap') {
         // tslint:disable-next-line: ban
         workspace.showMessage(
-          'Deprecated, use false instead of unmap',
+          'The "unmap" option of explorer.keyMappings has been deprecated, use false instead of "unmap"',
           'warning',
         );
         return;
