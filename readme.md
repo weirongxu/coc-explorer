@@ -332,7 +332,7 @@ Explorer will expand to this filepath, default: `current buffer`
 
 </details>
 <details>
-<summary><code>explorer.keyMappingMode</code>: Keymapping mode. type: <code>none | default</code></summary>
+<summary><code>explorer.keyMappingMode</code>: Keymapping mode. type: <code>"none" | "default"</code></summary>
 Default: <pre><code>"default"</code></pre>
 </details>
 <details>
@@ -344,11 +344,11 @@ Default: <pre><code>{}</code></pre>
 Default: <pre><code>true</code></pre>
 </details>
 <details>
-<summary><code>explorer.position</code>: Explorer position. type: <code>left | right | tab | floating</code></summary>
+<summary><code>explorer.position</code>: Explorer position. type: <code>"left" | "right" | "tab" | "floating"</code></summary>
 Default: <pre><code>"left"</code></pre>
 </details>
 <details>
-<summary><code>explorer.width</code>: Width of explorer window for open in left or right side. type: <code>number</code></summary>
+<summary><code>explorer.width</code>: Width of explorer window for open in left or right side. type: <code>integer</code></summary>
 Default: <pre><code>40</code></pre>
 </details>
 <details>
@@ -356,11 +356,11 @@ Default: <pre><code>40</code></pre>
 Default: <pre><code>0</code></pre>
 </details>
 <details>
-<summary><code>explorer.contentWidthType</code>: Type of content width. type: <code>win-width | vim-width</code></summary>
+<summary><code>explorer.contentWidthType</code>: Type of content width. type: <code>"win-width" | "vim-width"</code></summary>
 Default: <pre><code>"vim-width"</code></pre>
 </details>
 <details>
-<summary><code>explorer.floating.position</code>: Position of Explorer for floating window. type: <code>undefined</code></summary>
+<summary><code>explorer.floating.position</code>: Position of Explorer for floating window. type: <code>"left-center" | "right-center" | "center" | integer</code></summary>
 Default: <pre><code>"center"</code></pre>
 </details>
 <details>
@@ -380,7 +380,7 @@ Default: <pre><code>0</code></pre>
 Default: <pre><code>true</code></pre>
 </details>
 <details>
-<summary><code>explorer.floating.border.chars</code>: Border chars for floating window, Their order is left-top, top, right-top, right, right-bottom, bottom, left-bottom, left. type: <code>array</code></summary>
+<summary><code>explorer.floating.border.chars</code>: Border chars for floating window, Their order is left-top, top, right-top, right, right-bottom, bottom, left-bottom, left. type: <code>string</code></summary>
 Default: <pre><code>[
   "┌",
   "─",
@@ -397,18 +397,18 @@ Default: <pre><code>[
 Default: <pre><code>"coc-explorer"</code></pre>
 </details>
 <details>
-<summary><code>explorer.autoExpandMaxDepth</code>: Automatically expand maximum depth of one time. type: <code>undefined</code></summary>
+<summary><code>explorer.autoExpandMaxDepth</code>: Automatically expand maximum depth of one time. type: <code>integer</code></summary>
 Default: <pre><code>20</code></pre>
 </details>
 <details>
-<summary><code>explorer.autoExpandOptions</code>: Automatically expand options. type: <code>array</code></summary>
+<summary><code>explorer.autoExpandOptions</code>: Automatically expand options. type: <code>"recursive" | "compact" | "uncompact" | "recursiveSingle"</code></summary>
 Default: <pre><code>[
   "compact",
   "uncompact"
 ]</code></pre>
 </details>
 <details>
-<summary><code>explorer.autoCollapseOptions</code>: Automatically collapse options. type: <code>array</code></summary>
+<summary><code>explorer.autoCollapseOptions</code>: Automatically collapse options. type: <code>"recursive"</code></summary>
 Default: <pre><code>[
   "recursive"
 ]</code></pre>
@@ -422,7 +422,7 @@ Default: <pre><code>true</code></pre>
 Default: <pre><code>false</code></pre>
 </details>
 <details>
-<summary><code>explorer.previewAction.strategy</code>: Strategy for preview action. type: <code>labeling</code></summary>
+<summary><code>explorer.previewAction.strategy</code>: Strategy for preview action. type: <code>"labeling"</code></summary>
 Default: <pre><code>"labeling"</code></pre>
 </details>
 <details>
@@ -430,7 +430,7 @@ Default: <pre><code>"labeling"</code></pre>
 Default: <pre><code>true</code></pre>
 </details>
 <details>
-<summary><code>explorer.openAction.strategy</code>: Strategy for open action. type: <code>select | vsplit | split | tab | previousBuffer | previousWindow | sourceWindow</code></summary>
+<summary><code>explorer.openAction.strategy</code>: Strategy for open action. type: <code>"select" | "vsplit" | "split" | "tab" | "previousBuffer" | "previousWindow" | "sourceWindow"</code></summary>
 Default: <pre><code>"select"</code></pre>
 </details>
 <details>
@@ -459,7 +459,7 @@ Default: <pre><code>"cd"</code></pre>
 Default: <pre><code>false</code></pre>
 </details>
 <details>
-<summary><code>explorer.sources</code>: Explorer sources. type: <code>array</code></summary>
+<summary><code>explorer.sources</code>: Explorer sources. type: <code>object</code></summary>
 Default: <pre><code>[
   {
     "name": "buffer",
@@ -535,7 +535,7 @@ Default: <pre><code>"yy/MM/dd HH:mm:ss"</code></pre>
 Default: <pre><code>true</code></pre>
 </details>
 <details>
-<summary><code>explorer.file.diagnosticCountMax</code>: Maximum count of diagnostic column. type: <code>number</code></summary>
+<summary><code>explorer.file.diagnosticCountMax</code>: Maximum count of diagnostic column. type: <code>integer</code></summary>
 Default: <pre><code>99</code></pre>
 </details>
 <details>

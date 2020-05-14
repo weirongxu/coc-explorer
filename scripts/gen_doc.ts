@@ -1,6 +1,7 @@
 import Pkg from '../package.json';
 import fs from 'fs';
 import { JSONSchema7, JSONSchema7Type } from 'json-schema';
+import util from 'util';
 
 const fsp = fs.promises;
 
@@ -105,6 +106,28 @@ function genCommandDoc() {
   return rows;
 }
 
+function genType(
+  property: string,
+  def: Definition & {
+    default_doc?: string;
+  },
+): string {
+  if (def.enum) {
+    return def.enum.map((e) => `"${e}"`).join(' | ');
+  } else if (def.type) {
+    if (Array.isArray(def.type)) {
+      return def.type.join(' | ');
+    } else if (def.type === 'array') {
+      return genType(property, def.items as Definition);
+    } else {
+      return def.type;
+    }
+  } else if (def.anyOf) {
+    return def.anyOf.map((d) => genType(property, d as Definition)).join(' | ');
+  }
+  throw new Error(`${property} definition not supported ${util.inspect(def)}`);
+}
+
 function genConfigurationDoc() {
   const conf = Pkg.contributes.configuration.properties;
   const rows: Row[] = [];
@@ -116,13 +139,7 @@ function genConfigurationDoc() {
       key: property,
       description: def.description ?? '',
     };
-    if (def.enum) {
-      row.type = def.enum.join(' | ');
-    } else if (typeof def.type === 'string') {
-      row.type = def.type;
-    } else {
-      row.type = def.type;
-    }
+    row.type = genType(property, def);
     if (def.default_doc) {
       if (typeof def.default_doc === 'string') {
         row.default = def.default_doc === '' ? '`[empty]`' : def.default_doc;
@@ -143,9 +160,9 @@ function genConfigurationDoc() {
 
 async function main() {
   // await attach(2, 'Commands', 'readme.md', genCommandDoc());
-  // console.log('attach to Commands');
+  // console.log('Attach to Commands header');
   await attach(2, 'Configuration', 'readme.md', genConfigurationDoc());
-  console.log('attach to Configuration');
+  console.log('Attach to Configuration header');
 }
 
 main().catch((error) => console.error(error));
