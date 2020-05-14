@@ -82,6 +82,9 @@ const defaultMappingGroups: Record<
     '[[': 'sourcePrev',
     ']]': 'sourceNext',
 
+    '[i': 'indentPrev',
+    ']i': 'indentNext',
+
     '[m': 'modifiedPrev',
     ']m': 'modifiedNext',
 
