@@ -4,7 +4,8 @@ import { GitFormat, gitManager, GitMixedStatus } from '../../../../gitManager';
 import pathLib from 'path';
 import { debounce } from '../../../../util';
 import { fileHighlights } from '../fileSource';
-import { onEvents } from '../../../../events';
+import { onEvents, onCocGitStatusChange } from '../../../../events';
+import { workspace } from 'coc.nvim';
 
 fileColumnRegistrar.registerColumn(
   'child',
@@ -32,6 +33,36 @@ fileColumnRegistrar.registerColumn(
       return a.x === b.x && a.y === b.y;
     };
 
+    const reload = async (directory: string, reloadAll: boolean) => {
+      await gitManager.reload(directory);
+      const statuses = await gitManager.getStatuses(directory);
+
+      const updatePaths: Set<string> = new Set();
+      if (reloadAll) {
+        for (const fullpath of Object.keys(statuses)) {
+          updatePaths.add(fullpath);
+        }
+        for (const fullpath of Object.keys(prevStatuses)) {
+          updatePaths.add(fullpath);
+        }
+      } else {
+        for (const [fullpath, status] of Object.entries(statuses)) {
+          if (fullpath in prevStatuses) {
+            if (statusEqual(prevStatuses[fullpath], status)) {
+              continue;
+            }
+            delete prevStatuses[fullpath];
+          }
+          updatePaths.add(fullpath);
+        }
+        for (const fullpath of Object.keys(prevStatuses)) {
+          updatePaths.add(fullpath);
+        }
+      }
+      await source.renderPaths(updatePaths);
+      prevStatuses = statuses;
+    };
+
     return {
       init() {
         subscriptions.push(
@@ -42,34 +73,13 @@ fileColumnRegistrar.registerColumn(
               if (fullpath) {
                 const filename = pathLib.basename(fullpath);
                 const dirname = pathLib.dirname(fullpath);
-                await gitManager.reload(dirname);
-                const statuses = await gitManager.getStatuses(dirname);
-
-                const updatePaths: Set<string> = new Set();
-                if (filename === '.gitignore') {
-                  for (const fullpath of Object.keys(statuses)) {
-                    updatePaths.add(fullpath);
-                  }
-                  for (const fullpath of Object.keys(prevStatuses)) {
-                    updatePaths.add(fullpath);
-                  }
-                } else {
-                  for (const [fullpath, status] of Object.entries(statuses)) {
-                    if (fullpath in prevStatuses) {
-                      if (statusEqual(prevStatuses[fullpath], status)) {
-                        continue;
-                      }
-                      delete prevStatuses[fullpath];
-                    }
-                    updatePaths.add(fullpath);
-                  }
-                  for (const fullpath of Object.keys(prevStatuses)) {
-                    updatePaths.add(fullpath);
-                  }
-                }
-                await source.renderPaths(updatePaths);
-                prevStatuses = statuses;
+                await reload(dirname, filename === '.gitignore');
               }
+            }),
+          ),
+          onCocGitStatusChange(
+            debounce(1000, async () => {
+              await reload(workspace.cwd, false);
             }),
           ),
         );

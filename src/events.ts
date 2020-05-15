@@ -120,9 +120,10 @@ export function onCursorMoved(
 const bufDeleteListener = new EventListener<(bufnr: number) => void>();
 const bufWipeoutListener = new EventListener<(bufnr: number) => void>();
 const CocDiagnosticChangeListener = new EventListener<() => EventResult>();
+const CocGitStatusChangeListener = new EventListener<() => EventResult>();
 
 const internalEventHanders: Record<
-  'BufDelete' | 'BufWipeout' | 'CocDiagnosticChange',
+  'BufDelete' | 'BufWipeout' | 'CocDiagnosticChange' | 'CocGitStatusChange',
   (...args: any[]) => void
 > = {
   BufDelete(args: [number]) {
@@ -133,6 +134,9 @@ const internalEventHanders: Record<
   },
   CocDiagnosticChange() {
     CocDiagnosticChangeListener.fire();
+  },
+  CocGitStatusChange() {
+    CocGitStatusChangeListener.fire();
   },
 };
 
@@ -160,6 +164,10 @@ export function onBufWipeout(listener: BufEventListener) {
 
 export function onCocDiagnosticChange(listener: () => EventResult) {
   return CocDiagnosticChangeListener.on(listener);
+}
+
+export function onCocGitStatusChange(listener: () => EventResult) {
+  return CocGitStatusChangeListener.on(listener);
 }
 
 // User events
