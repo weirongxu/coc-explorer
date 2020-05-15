@@ -41,6 +41,7 @@ export const activate = async (context: ExtensionContext) => {
             "''",
           )}')`,
         );
+        await nvim.command('runtime plugin/coc_explorer.vim');
       }
       explorerManager.emitterDidAutoload.fire();
     })
