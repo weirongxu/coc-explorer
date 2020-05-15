@@ -224,34 +224,34 @@ class GitManager {
    **/
   private mixedStatusCache: Record<string, Record<string, GitMixedStatus>> = {};
 
-  async getGitRoot(folderPath: string): Promise<string | undefined> {
-    if (folderPath in this.rootCache) {
-      return this.rootCache[folderPath];
+  async getGitRoot(directory: string): Promise<string | undefined> {
+    if (directory in this.rootCache) {
+      return this.rootCache[directory];
     }
 
-    const parts = folderPath.split(pathLib.sep);
+    const parts = directory.split(pathLib.sep);
     const idx = parts.indexOf('.git');
     if (idx !== -1) {
       const root = parts.slice(0, idx).join(pathLib.sep);
-      this.rootCache[folderPath] = root;
+      this.rootCache[directory] = root;
     } else {
       try {
-        const gitRoot = await this.cmd.getRoot(folderPath);
+        const gitRoot = await this.cmd.getRoot(directory);
         if (pathLib.isAbsolute(gitRoot)) {
-          this.rootCache[folderPath] = gitRoot;
+          this.rootCache[directory] = gitRoot;
         } else {
-          pathLib.join(folderPath, gitRoot);
+          pathLib.join(directory, gitRoot);
         }
       } catch (error) {
         onError(error);
         return;
       }
     }
-    return this.rootCache[folderPath];
+    return this.rootCache[directory];
   }
 
-  async reload(path: string) {
-    const root = await this.getGitRoot(path);
+  async reload(directory: string) {
+    const root = await this.getGitRoot(directory);
     if (root) {
       this.statusCache[root] = await this.cmd.status(root);
       this.mixedStatusCache[root] = {};
@@ -302,8 +302,8 @@ class GitManager {
       | undefined;
   }
 
-  async getStatuses(path: string) {
-    const root = await this.getGitRoot(path);
+  async getStatuses(directory: string) {
+    const root = await this.getGitRoot(directory);
     if (root) {
       return this.getRootStatuses(root) || {};
     } else {
@@ -311,12 +311,12 @@ class GitManager {
     }
   }
 
-  getStatus(path: string): GitMixedStatus | null {
+  getStatus(directory: string): GitMixedStatus | null {
     for (const [, directoryStatusCache] of Object.entries(
       this.mixedStatusCache,
     )) {
-      if (path in directoryStatusCache) {
-        return directoryStatusCache[path];
+      if (directory in directoryStatusCache) {
+        return directoryStatusCache[directory];
       }
     }
     return null;

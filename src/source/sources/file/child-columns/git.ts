@@ -38,13 +38,12 @@ fileColumnRegistrar.registerColumn(
           onEvents(
             'BufWritePost',
             debounce(1000, async (bufnr) => {
-              const bufinfo = await source.nvim.call('getbufinfo', [bufnr]);
-              if (bufinfo[0] && bufinfo[0].name) {
-                const name: string = bufinfo[0].name;
-                const filename = pathLib.basename(name);
-                const path = pathLib.dirname(name);
-                await gitManager.reload(path);
-                const statuses = await gitManager.getStatuses(path);
+              const fullpath = source.bufManager.getBufferNode(bufnr)?.fullpath;
+              if (fullpath) {
+                const filename = pathLib.basename(fullpath);
+                const dirname = pathLib.dirname(fullpath);
+                await gitManager.reload(dirname);
+                const statuses = await gitManager.getStatuses(dirname);
 
                 const updatePaths: Set<string> = new Set();
                 if (filename === '.gitignore') {

@@ -102,6 +102,14 @@ export class BufManager {
     return false;
   }
 
+  getBufferNode(bufnrOrFullpath: number | string) {
+    if (typeof bufnrOrFullpath === 'number') {
+      return this.bufferNodeMapById.get(bufnrOrFullpath);
+    } else {
+      return this.bufferNodeMapByFullpath.get(bufnrOrFullpath);
+    }
+  }
+
   async reload() {
     const lsCommand = 'ls!';
     const content = (await this.nvim.call('execute', lsCommand)) as string;

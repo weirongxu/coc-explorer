@@ -148,9 +148,7 @@ export class FileSource extends ExplorerSource<FileNode> {
               if (position === 'floating') {
                 return;
               }
-              const fullpath: string = await workspace.nvim.call('expand', [
-                `#${bufnr}:p`,
-              ]);
+              const fullpath = this.bufManager.getBufferNode(bufnr)?.fullpath;
               if (!fullpath) {
                 return;
               }
@@ -218,7 +216,7 @@ export class FileSource extends ExplorerSource<FileNode> {
     } else {
       const bufnr = await this.explorer.sourceBufnrBySourceWinid();
       if (bufnr) {
-        return (await this.nvim.call('expand', [`#${bufnr}:p`, 1])) as string;
+        return this.bufManager.getBufferNode(bufnr)?.fullpath ?? null;
       }
       return null;
     }
