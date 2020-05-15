@@ -14,7 +14,8 @@
   },
   "files": [
     "lib",
-    "autoload"
+    "autoload",
+    "plugin"
   ],
   "keywords": [
     "coc.nvim",
