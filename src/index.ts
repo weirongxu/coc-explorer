@@ -1,10 +1,17 @@
-import { ExtensionContext, commands, workspace, listManager } from 'coc.nvim';
+import {
+  ExtensionContext,
+  commands,
+  workspace,
+  listManager,
+  Disposable,
+} from 'coc.nvim';
 import { registerLogger, onError } from './logger';
 import { hlGroupManager } from './source/highlightManager';
 import { ExplorerManager } from './explorerManager';
 import { PresetList } from './lists/presets';
 import { registerVimApi } from './vimApi';
 import { registerBufDeleteEvents } from './events';
+import { asyncCatchError } from './util';
 
 export const activate = async (context: ExtensionContext) => {
   const { subscriptions, logger } = context;
@@ -30,20 +37,25 @@ export const activate = async (context: ExtensionContext) => {
   registerVimApi(context, explorerManager);
   registerBufDeleteEvents(context);
 
-  nvim
-    .getOption('runtimepath')
-    .then(async (rtp) => {
-      const paths = (rtp as string).split(',');
-      if (!paths.includes(context.extensionPath)) {
-        await nvim.command(
-          `execute 'noa set rtp^='.fnameescape('${context.extensionPath.replace(
-            /'/g,
-            "''",
-          )}')`,
-        );
-        await nvim.command('runtime plugin/coc_explorer.vim');
-      }
-      explorerManager.emitterDidAutoload.fire();
-    })
-    .catch(onError);
+  (async () => {
+    const rtp = (await nvim.getOption('runtimepath')) as string;
+    const paths = rtp.split(',');
+    if (!paths.includes(context.extensionPath)) {
+      await nvim.command(
+        `execute 'noa set rtp^='.fnameescape('${context.extensionPath.replace(
+          /'/g,
+          "''",
+        )}')`,
+      );
+    }
+    await nvim.command('runtime plugin/coc_explorer.vim');
+    subscriptions.push(
+      Disposable.create(
+        asyncCatchError(() => {
+          return nvim.call('CocExplorerDeactivate');
+        }),
+      ),
+    );
+    explorerManager.emitterDidAutoload.fire();
+  })().catch(onError);
 };

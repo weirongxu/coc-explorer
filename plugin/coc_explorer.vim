@@ -6,6 +6,12 @@ function! CocExplorerActionAsync(name, ...)
   return call('CocActionAsync', extend(['runCommand', 'explorer.' . a:name], a:000))
 endfunction
 
+function CocExplorerDeactivate()
+  augroup CocExplorerInternal
+    autocmd!
+  augroup END
+endfunction
+
 augroup CocExplorerInternal
   autocmd!
   autocmd BufDelete  * call CocExplorerAction('internal.didVimEvent', 'BufDelete', +expand('<abuf>'))
