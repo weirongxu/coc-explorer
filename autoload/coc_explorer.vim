@@ -19,11 +19,11 @@ function! coc_explorer#create(
     execute 'silent keepalt tabnew '.name
   elseif a:position ==# 'left'
     wincmd t
-    execute 'silent keepalt leftabove vsplit '.name
+    execute 'silent keepalt vertical topleft vsplit '.name
     call coc_explorer#resize_win(a:position, a:width)
   elseif a:position ==# 'right'
     wincmd b
-    execute 'silent keepalt rightbelow vsplit '.name
+    execute 'silent keepalt bot vsplit '.name
     call coc_explorer#resize_win(a:position, a:width)
   elseif a:position ==# 'floating'
     let floating_winid = v:null
@@ -73,11 +73,11 @@ function! coc_explorer#resume(
       \)
   if a:position ==# 'left'
     wincmd t
-    execute 'silent keepalt leftabove vertical sb '.a:bufnr
+    execute 'silent keepalt vertical topleft sb '.a:bufnr
     call coc_explorer#resize_win(a:position, a:width)
   elseif a:position ==# 'right'
     wincmd b
-    execute 'silent keepalt rightbelow vertical sb '.a:bufnr
+    execute 'silent keepalt bot vertical sb '.a:bufnr
     call coc_explorer#resize_win(a:position, a:width)
   elseif a:position ==# 'floating'
     if a:floating_border_enable && a:floating_border_bufnr isnot v:null
