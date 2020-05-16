@@ -14,8 +14,8 @@ endfunction
 
 augroup CocExplorerInternal
   autocmd!
-  autocmd BufDelete  * call CocExplorerAction('internal.didVimEvent', 'BufDelete', +expand('<abuf>'))
-  autocmd BufWipeout * call CocExplorerAction('internal.didVimEvent', 'BufWipeout', +expand('<abuf>'))
-  autocmd User CocDiagnosticChange call CocExplorerAction('internal.didVimEvent', 'CocDiagnosticChange')
-  autocmd User CocGitStatusChange call CocExplorerAction('internal.didVimEvent', 'CocGitStatusChange')
+  autocmd BufDelete  * call CocExplorerActionAsync('internal.didVimEvent', 'BufDelete', +expand('<abuf>'))
+  autocmd BufWipeout * call CocExplorerActionAsync('internal.didVimEvent', 'BufWipeout', +expand('<abuf>'))
+  autocmd User CocDiagnosticChange call CocExplorerActionAsync('internal.didVimEvent', 'CocDiagnosticChange')
+  autocmd User CocGitStatusChange call CocExplorerActionAsync('internal.didVimEvent', 'CocGitStatusChange')
 augroup END
