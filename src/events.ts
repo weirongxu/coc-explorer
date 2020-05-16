@@ -144,10 +144,8 @@ export function registerBufDeleteEvents(context: ExtensionContext) {
   context.subscriptions.push(
     commands.registerCommand(
       'explorer.internal.didVimEvent',
-      asyncCatchError(
-        (event: keyof typeof internalEventHanders, ...args: any[]) =>
-          internalEventHanders[event](args),
-      ),
+      (event: keyof typeof internalEventHanders, ...args: any[]) =>
+        internalEventHanders[event](args),
       undefined,
       true,
     ),
