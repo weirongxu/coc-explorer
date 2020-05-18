@@ -23,7 +23,7 @@ function! coc_explorer#create(
     call coc_explorer#resize_win(a:position, a:width)
   elseif a:position ==# 'right'
     wincmd b
-    execute 'silent keepalt bot vsplit '.name
+    execute 'silent keepalt vertical botright vsplit '.name
     call coc_explorer#resize_win(a:position, a:width)
   elseif a:position ==# 'floating'
     let floating_winid = v:null
@@ -77,7 +77,7 @@ function! coc_explorer#resume(
     call coc_explorer#resize_win(a:position, a:width)
   elseif a:position ==# 'right'
     wincmd b
-    execute 'silent keepalt bot vertical sb '.a:bufnr
+    execute 'silent keepalt vertical botright sb '.a:bufnr
     call coc_explorer#resize_win(a:position, a:width)
   elseif a:position ==# 'floating'
     if a:floating_border_enable && a:floating_border_bufnr isnot v:null
