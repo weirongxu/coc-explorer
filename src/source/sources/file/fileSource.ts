@@ -285,7 +285,17 @@ export class FileSource extends ExplorerSource<FileNode> {
 
   async revealNodeByPathNotifier(
     path: string,
-    { node = this.rootNode, goto = true, render = true, compact = false } = {},
+    {
+      node = this.rootNode,
+      goto = true,
+      render = true,
+      compact,
+    }: {
+      node?: FileNode;
+      goto?: boolean;
+      render?: boolean;
+      compact?: boolean;
+    } = {},
   ): Promise<[FileNode | null, Notifier[]]> {
     path = normalizePath(path);
     const notifiers: Notifier[] = [];
@@ -317,7 +327,11 @@ export class FileSource extends ExplorerSource<FileNode> {
           });
           foundNode = childFoundNode;
           if (foundNode) {
-            await this.expandNode(node, { compact, render: false });
+            await this.expandNode(node, {
+              compact,
+              uncompact: false,
+              render: false,
+            });
             break;
           }
         }

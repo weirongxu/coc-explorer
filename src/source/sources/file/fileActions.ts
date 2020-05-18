@@ -115,7 +115,7 @@ export function initFileActions(file: FileSource) {
       }
 
       const expandOptions = args[1] ?? '';
-      const compact = expandOptions.includes('compact');
+      const compact = expandOptions.includes('compact') || undefined;
       const [revealNode, notifiers] = await file.revealNodeByPathNotifier(
         targetPath,
         {
@@ -240,10 +240,11 @@ export function initFileActions(file: FileSource) {
     async ({ node, args }) => {
       if (node.directory) {
         const options = (args[0] ?? '').split('|');
-        const recursive = options.includes('recursive');
-        const compact = options.includes('compact');
-        const uncompact = options.includes('uncompact');
-        const recursiveSingle = options.includes('recursiveSingle');
+        const recursive = options.includes('recursive') || undefined;
+        const compact = options.includes('compact') || undefined;
+        const uncompact = options.includes('uncompact') || undefined;
+        const recursiveSingle =
+          options.includes('recursiveSingle') || undefined;
         await file.expandNode(node, {
           recursive,
           compact,

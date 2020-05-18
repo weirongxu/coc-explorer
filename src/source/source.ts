@@ -49,6 +49,7 @@ export interface BaseTreeNode<
   children?: TreeNode[];
   prevSiblingNode?: TreeNode;
   nextSiblingNode?: TreeNode;
+  compacted?: boolean;
 }
 
 export type ExplorerSourceClass = {
@@ -121,8 +122,16 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>> {
       isExpanded(node: TreeNode) {
         return inner.get(node, 'expanded');
       },
-      setCompact(node: TreeNode, status: CompactStore) {
-        inner.set(node, 'compact', status);
+      setCompact(node: TreeNode, compact: CompactStore) {
+        if (
+          compact?.status === 'compacted' ||
+          compact?.status === 'uncompact'
+        ) {
+          node.compacted = true;
+        } else {
+          node.compacted = false;
+        }
+        inner.set(node, 'compact', compact);
       },
       getCompact(node: TreeNode): CompactStore {
         return inner.get(node, 'compact');
@@ -836,7 +845,8 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>> {
       if (!node.isRoot) {
         const compactStore = this.nodeStores.getCompact(node);
         if (
-          ['compact', 'compacted'].includes(compactStore?.status as string) &&
+          (compactStore?.status === 'compact' ||
+            (compactStore?.status === 'compacted' && !node.compacted)) &&
           node.children?.length === 1 &&
           node.children[0].expandable
         ) {
@@ -859,7 +869,7 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>> {
           });
           replaceNodeInSibling(node, compactedNode);
           node = compactedNode;
-        } else if (compactStore?.status === 'uncompact') {
+        } else if (node.compacted && compactStore?.status === 'uncompact') {
           // Reset compact
           const compactedNode = node;
           this.nodeStores.setCompact(compactedNode, { status: 'uncompacted' });
@@ -1022,21 +1032,21 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>> {
     options: ExpandNodeOptions,
   ) {
     const autoExpandOptions = this.config.autoExpandOptions;
-    const compact = options.compact || autoExpandOptions.includes('compact');
+    const compact = options.compact ?? autoExpandOptions.includes('compact');
     const uncompact =
-      options.uncompact || autoExpandOptions.includes('uncompact');
+      options.uncompact ?? autoExpandOptions.includes('uncompact');
     const recursiveSingle =
-      options.recursiveSingle ||
-      autoExpandOptions.includes('recursiveSingle') ||
-      compact;
+      options.recursiveSingle ??
+      (autoExpandOptions.includes('recursiveSingle') || compact);
     if (node.expandable) {
       const depth = options.depth ?? 1;
       const compactStore = this.nodeStores.getCompact(node);
 
       // uncompact
       if (
-        this.nodeStores.isExpanded(node) &&
-        compactStore?.status === 'compacted'
+        node.compacted &&
+        compactStore?.status === 'compacted' &&
+        this.nodeStores.isExpanded(node)
       ) {
         if (uncompact) {
           this.nodeStores.setCompact(node, {
@@ -1056,7 +1066,10 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>> {
         node.children.length === 1 && node.children[0].expandable;
 
       // compact
-      if (compactStore === undefined || compactStore.status === 'uncompacted') {
+      if (
+        !node.compacted &&
+        (compactStore === undefined || compactStore.status === 'uncompacted')
+      ) {
         if (compact && singleExpandableNode) {
           this.nodeStores.setCompact(node, {
             status: 'compact',
