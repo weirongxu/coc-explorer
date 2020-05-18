@@ -27,8 +27,6 @@ const defaultMappingGroups: Record<
     '*': 'toggleSelection',
     '<tab>': 'actionMenu',
 
-    k: 'nodePrev',
-    j: 'nodeNext',
     gk: 'expandablePrev',
     gj: 'expandableNext',
     h: 'collapse',

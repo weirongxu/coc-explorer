@@ -545,26 +545,32 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>> {
 
   readonly previewActionMenu = {
     labeling: 'preview for node labeling',
+    'labeling:200': 'preview for node labeling with debounce',
   };
 
-  async previewAction(node: TreeNode, previewStrategy?: PreviewStrategy) {
+  async previewAction(
+    node: TreeNode,
+    previewStrategy: PreviewStrategy,
+    debounceTimeout: number,
+  ) {
     const nodeIndex = this.getLineByNode(node);
     if (nodeIndex !== null) {
       await this.explorer.floatingWindow.previewNode(
-        previewStrategy ?? this.config.previewStrategy,
+        previewStrategy,
         this,
         node,
         nodeIndex,
+        debounceTimeout,
       );
     }
   }
 
-  addIndexes(name: string, relativeIndex: number) {
-    this.explorer.addIndexes(name, relativeIndex + this.startLineIndex);
+  addIndexing(name: string, relativeLineIndex: number) {
+    this.explorer.addIndexing(name, this.startLineIndex + relativeLineIndex);
   }
 
-  removeIndexes(name: string, relativeIndex: number) {
-    this.explorer.removeIndexes(name, relativeIndex + this.startLineIndex);
+  removeIndexing(name: string, relativeLineIndex: number) {
+    this.explorer.removeIndexing(name, this.startLineIndex + relativeLineIndex);
   }
 
   async copyToClipboard(content: string) {
@@ -949,7 +955,7 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>> {
   }
 
   private offsetAfterLine(offset: number, afterLine: number) {
-    this.explorer.indexesManager.offsetLines(
+    this.explorer.indexingManager.offsetLines(
       offset,
       this.startLineIndex + afterLine + 1,
     );
@@ -1110,7 +1116,7 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>> {
       draw: async () => {
         const { startIndex, endIndex } = range;
         this.flattenedNodes.splice(startIndex + 1, endIndex - startIndex);
-        this.explorer.indexesManager.removeLines(
+        this.explorer.indexingManager.removeLines(
           this.startLineIndex + startIndex + 1,
           this.startLineIndex + endIndex,
         );
@@ -1213,7 +1219,7 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>> {
       .concat(this.flattenedNodes.slice(endIndex + 1));
 
     if (newHeight < oldHeight) {
-      this.explorer.indexesManager.removeLines(
+      this.explorer.indexingManager.removeLines(
         this.startLineIndex + newHeight + 1,
         this.startLineIndex + oldHeight + 1,
       );

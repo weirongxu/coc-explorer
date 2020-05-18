@@ -1,7 +1,7 @@
 import { Explorer } from './explorer';
 import { enableWrapscan } from './util';
 
-export class IndexesManager {
+export class IndexingManager {
   linesMap: Map<string, Set<number>> = new Map();
 
   constructor(public explorer: Explorer) {}

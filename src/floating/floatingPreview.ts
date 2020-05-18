@@ -1,14 +1,7 @@
 import { FloatBuffer, workspace } from 'coc.nvim';
 import { Explorer } from '../explorer';
 import { BaseTreeNode, ExplorerSource } from '../source/source';
-import {
-  Cancellable,
-  Cancelled,
-  debouncePromise,
-  Drawn,
-  flatten,
-  supportedFloat,
-} from '../util';
+import { Drawn, flatten, supportedFloat } from '../util';
 import { FloatingFactory2 } from './floatingFactory2';
 import { FloatingFactory3 } from './floatingFactory3';
 import { PreviewStrategy } from '../types';
@@ -24,85 +17,67 @@ export class FloatingPreview {
       : FloatingFactory2)(this.explorer, this.nvim, workspace.env, false);
   }
 
-  async previewNode(
+  private _previewNodeTimeout?: NodeJS.Timeout;
+
+  private async _previewNode(
     previewStrategy: PreviewStrategy,
     source: ExplorerSource<any>,
     node: BaseTreeNode<any>,
     nodeIndex: number,
   ) {
-    if (!supportedFloat()) {
-      return;
-    }
+    if (previewStrategy === 'labeling') {
+      const drawnList:
+        | Drawn[]
+        | undefined = await source.sourcePainters?.drawNodeLabeling(
+        node,
+        nodeIndex,
+      );
+      if (!drawnList || !this.explorer.explorerManager.inExplorer()) {
+        return;
+      }
 
-    const drawnList:
-      | Drawn[]
-      | undefined = await source.sourcePainters?.drawNodeLabeling(
-      node,
-      nodeIndex,
-    );
-    if (!drawnList || !this.explorer.explorerManager.inExplorer()) {
-      return;
-    }
-
-    await this.floatFactory.create(
-      [
-        {
-          content: drawnList.map((d) => d.content).join('\n'),
-          filetype: 'coc-explorer-preview',
-        },
-      ],
-      flatten(
-        drawnList.map((d, index) =>
-          d.highlightPositions.map((hl) => ({
-            hlGroup: hl.group,
-            line: index,
-            colStart: hl.start,
-            colEnd: hl.start + hl.size,
-          })),
+      await this.floatFactory.create(
+        [
+          {
+            content: drawnList.map((d) => d.content).join('\n'),
+            filetype: 'coc-explorer-preview',
+          },
+        ],
+        flatten(
+          drawnList.map((d, index) =>
+            d.highlightPositions.map((hl) => ({
+              hlGroup: hl.group,
+              line: index,
+              colStart: hl.start,
+              colEnd: hl.start + hl.size,
+            })),
+          ),
         ),
-      ),
-    );
+      );
+    }
   }
 
-  _hoverPreview?: Cancellable<() => Promise<void | Cancelled>>;
-  async hoverPreview() {
+  async previewNode(
+    previewStrategy: PreviewStrategy,
+    source: ExplorerSource<any>,
+    node: BaseTreeNode<any>,
+    nodeIndex: number,
+    debounceTimeout: number = 0,
+  ) {
     if (!supportedFloat()) {
       return;
     }
 
-    if (!this._hoverPreview) {
-      this._hoverPreview = debouncePromise(200, async () => {
-        if (!this.explorer.explorerManager.inExplorer()) {
-          return;
-        }
-        const source = await this.explorer.currentSource();
-        if (!source) {
-          return;
-        }
-        const nodeIndex = source.currentLineIndex;
-        if (nodeIndex === null) {
-          return;
-        }
-        const node = source.flattenedNodes[nodeIndex];
-        if (!node) {
-          return;
-        }
-        await this.previewNode(
-          this.explorer.config.previewStrategy,
-          source,
-          node,
-          nodeIndex,
-        );
-      });
-    }
-    return this._hoverPreview();
-  }
-
-  hoverPreviewCancel() {
-    if (!supportedFloat()) {
-      return;
+    if (this._previewNodeTimeout) {
+      clearTimeout(this._previewNodeTimeout);
     }
 
-    this._hoverPreview?.cancel();
+    if (debounceTimeout) {
+      this._previewNodeTimeout = setTimeout(async () => {
+        await this._previewNode(previewStrategy, source, node, nodeIndex);
+      }, debounceTimeout);
+    } else {
+      await this._previewNode(previewStrategy, source, node, nodeIndex);
+    }
   }
 }

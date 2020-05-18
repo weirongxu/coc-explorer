@@ -68,7 +68,7 @@ async function getLineIndexByPosition(
   explorer: Explorer,
 ): Promise<number | null> {
   if (position === 'current') {
-    return ((await workspace.nvim.call('line', ['.'])) as number) - 1;
+    return explorer.currentLineIndex;
   } else if (typeof position === 'number') {
     return position;
   } else if (Array.isArray(position)) {
@@ -124,6 +124,7 @@ export function registerVimApi(
         if (!explorer) {
           return;
         }
+        await explorer.refreshLineIndex();
         const lines = compactI(
           await Promise.all(
             positions.map(
@@ -150,6 +151,7 @@ export function registerVimApi(
         if (!explorer) {
           return null;
         }
+        await explorer.refreshLineIndex();
         const [, node] = await getSourceAndNodeByPosition(position, explorer);
         if (!node) {
           return null;

@@ -54,14 +54,14 @@ fileColumnRegistrar.registerColumn(
           drawNode(row, { node, nodeIndex }) {
             if (node.fullpath in cache.warningMap) {
               if (node.directory && source.isExpanded(node)) {
-                source.removeIndexes('diagnosticWarning', nodeIndex);
+                source.removeIndexing('diagnosticWarning', nodeIndex);
               } else {
                 const count = cache.warningMap[node.fullpath];
                 row.add(count, { hl: fileHighlights.diagnosticWarning });
-                source.addIndexes('diagnosticWarning', nodeIndex);
+                source.addIndexing('diagnosticWarning', nodeIndex);
               }
             } else {
-              source.removeIndexes('diagnosticWarning', nodeIndex);
+              source.removeIndexing('diagnosticWarning', nodeIndex);
             }
           },
         };

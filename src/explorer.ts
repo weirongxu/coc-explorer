@@ -4,7 +4,7 @@ import { argOptions } from './argOptions';
 import { BuffuerContextVars } from './contextVariables';
 import { ExplorerManager } from './explorerManager';
 import { FloatingPreview } from './floating/floatingPreview';
-import { IndexesManager } from './indexesManager';
+import { IndexingManager } from './indexingManager';
 import { MappingMode } from './mappings';
 import { ArgContentWidthTypes, Args } from './parseArgs';
 import {
@@ -53,7 +53,7 @@ export class Explorer {
   isHelpUI: boolean = false;
   currentLineIndex = 0;
   helpHlSrcId = workspace.createNameSpace('coc-explorer-help');
-  indexesManager = new IndexesManager(this);
+  indexingManager = new IndexingManager(this);
   inited = new BuffuerContextVars<boolean>('inited', this);
   sourceWinid = new BuffuerContextVars<number>('sourceWinid', this);
   globalActions: RegisteredAction.Map<BaseTreeNode<any>> = {};
@@ -157,14 +157,24 @@ export class Explorer {
       this.context.subscriptions.push(
         onCursorMoved(async (bufnr) => {
           if (bufnr === this.bufnr) {
-            await this.floatingWindow.hoverPreview();
+            await this.doActionsWithCount(
+              {
+                name: 'preview',
+                args: ['labeling', '200'],
+              },
+              'n',
+            );
           }
         }),
         onBufEnter(async (bufnr) => {
           if (bufnr === this.bufnr) {
-            await this.floatingWindow.hoverPreview();
-          } else {
-            this.floatingWindow.hoverPreviewCancel();
+            await this.doActionsWithCount(
+              {
+                name: 'preview',
+                args: ['labeling', '200'],
+              },
+              'n',
+            );
           }
         }),
       );
@@ -175,12 +185,6 @@ export class Explorer {
         if (bufnr === this.bufnr) {
           await this.quitFloatingBorderWin();
           await this.floatingWindow.floatFactory.close();
-        }
-      }),
-      onCursorMoved(async (bufnr: number) => {
-        if (bufnr === this.bufnr) {
-          this.currentLineIndex =
-            ((await this.nvim.call('line', ['.'])) as number) - 1;
         }
       }),
     );
@@ -332,7 +336,10 @@ export class Explorer {
         const source = await this.currentSource();
         if (nodes && nodes[0] && source) {
           const node = nodes[0];
-          return source.previewAction(node, args[0] as PreviewStrategy);
+          const previewStrategy =
+            (args[0] as PreviewStrategy) ?? this.config.previewStrategy;
+          const debounceTimeout = args[1] ? parseInt(args[1]) : 0;
+          return source.previewAction(node, previewStrategy, debounceTimeout);
         }
       },
       'preview',
@@ -385,14 +392,14 @@ export class Explorer {
     this.addGlobalAction(
       'modifiedPrev',
       async () => {
-        await this.gotoPrevLineIndex('modified');
+        await this.gotoPrevIndexing('modified');
       },
       'go to previous modified',
     );
     this.addGlobalAction(
       'modifiedNext',
       async () => {
-        await this.gotoNextLineIndex('modified');
+        await this.gotoNextIndexing('modified');
       },
       'go to next modified',
     );
@@ -400,14 +407,14 @@ export class Explorer {
     this.addGlobalAction(
       'diagnosticPrev',
       async () => {
-        await this.gotoPrevLineIndex('diagnosticError', 'diagnosticWarning');
+        await this.gotoPrevIndexing('diagnosticError', 'diagnosticWarning');
       },
       'go to previous diagnostic',
     );
     this.addGlobalAction(
       'diagnosticNext',
       async () => {
-        await this.gotoNextLineIndex('diagnosticError', 'diagnosticWarning');
+        await this.gotoNextIndexing('diagnosticError', 'diagnosticWarning');
       },
       'go to next diagnostic',
     );
@@ -415,14 +422,14 @@ export class Explorer {
     this.addGlobalAction(
       'gitPrev',
       async () => {
-        await this.gotoPrevLineIndex('git');
+        await this.gotoPrevIndexing('git');
       },
       'go to previous git changed',
     );
     this.addGlobalAction(
       'gitNext',
       async () => {
-        await this.gotoNextLineIndex('git');
+        await this.gotoNextIndexing('git');
       },
       'go to next git changed',
     );
@@ -938,16 +945,16 @@ export class Explorer {
     }
   }
 
-  addIndexes(name: string, index: number) {
-    this.indexesManager.addLine(name, index);
+  addIndexing(name: string, lineIndex: number) {
+    this.indexingManager.addLine(name, lineIndex);
   }
 
-  removeIndexes(name: string, index: number) {
-    this.indexesManager.removeLine(name, index);
+  removeIndexing(name: string, lineIndex: number) {
+    this.indexingManager.removeLine(name, lineIndex);
   }
 
-  async gotoPrevLineIndex(...names: string[]) {
-    const lineIndex = await this.indexesManager.prevLineIndex(...names);
+  async gotoPrevIndexing(...names: string[]) {
+    const lineIndex = await this.indexingManager.prevLineIndex(...names);
     if (lineIndex) {
       await this.gotoLineIndex(lineIndex);
       return true;
@@ -955,8 +962,8 @@ export class Explorer {
     return false;
   }
 
-  async gotoNextLineIndex(...names: string[]) {
-    const lineIndex = await this.indexesManager.nextLineIndex(...names);
+  async gotoNextIndexing(...names: string[]) {
+    const lineIndex = await this.indexingManager.nextLineIndex(...names);
     if (lineIndex) {
       await this.gotoLineIndex(lineIndex);
       return true;

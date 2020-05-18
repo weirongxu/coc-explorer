@@ -54,14 +54,14 @@ fileColumnRegistrar.registerColumn(
           drawNode(row, { node, nodeIndex }) {
             if (node.fullpath in cache.errorMap) {
               if (node.directory && source.isExpanded(node)) {
-                source.removeIndexes('diagnosticError', nodeIndex);
+                source.removeIndexing('diagnosticError', nodeIndex);
               } else {
                 const count = cache.errorMap[node.fullpath];
                 row.add(count, { hl: fileHighlights.diagnosticError });
-                source.addIndexes('diagnosticError', nodeIndex);
+                source.addIndexing('diagnosticError', nodeIndex);
               }
             } else {
-              source.removeIndexes('diagnosticError', nodeIndex);
+              source.removeIndexing('diagnosticError', nodeIndex);
             }
           },
         };

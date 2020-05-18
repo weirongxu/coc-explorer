@@ -37,8 +37,8 @@ fileColumnRegistrar.registerColumn(
               hl: fileHighlights.readonly,
             });
             modified
-              ? source.addIndexes('modified', nodeIndex)
-              : source.removeIndexes('modified', nodeIndex);
+              ? source.addIndexing('modified', nodeIndex)
+              : source.removeIndexing('modified', nodeIndex);
           },
         };
       },

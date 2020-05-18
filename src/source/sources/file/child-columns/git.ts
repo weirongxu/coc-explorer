@@ -116,9 +116,9 @@ fileColumnRegistrar.registerColumn(
             if (status) {
               showFormat(statusIcons[status.x], true);
               showFormat(statusIcons[status.y], false);
-              source.addIndexes('git', nodeIndex);
+              source.addIndexing('git', nodeIndex);
             } else {
-              source.removeIndexes('git', nodeIndex);
+              source.removeIndexing('git', nodeIndex);
             }
           },
         };
