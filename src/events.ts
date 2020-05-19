@@ -71,8 +71,8 @@ export function onBufEnter(
   delay?: number,
   disposables?: Disposable[],
 ) {
+  let prevBufnr = 0;
   const listener2 = (bufnr: number) => {
-    let prevBufnr = 0;
     if (bufnr !== prevBufnr) {
       prevBufnr = bufnr;
       listener(bufnr);

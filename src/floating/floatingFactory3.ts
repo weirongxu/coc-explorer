@@ -63,7 +63,7 @@ export class FloatingFactory3 implements Disposable {
           }
           await this.close();
         },
-        undefined,
+        200,
         this.disposables,
       ),
       onEvents(

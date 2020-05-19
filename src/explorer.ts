@@ -176,7 +176,7 @@ export class Explorer {
               'n',
             );
           }
-        }),
+        }, 200),
       );
     }
 
