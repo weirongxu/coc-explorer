@@ -656,8 +656,6 @@ You can use `?` to view all actions of current source
   "explorer.keyMappings": {
     "i": false, // cancel default mapkey
 
-    "k": "nodePrev",
-    "j": "nodeNext",
     "gk": "expandablePrev",
     "gj": "expandableNext",
 

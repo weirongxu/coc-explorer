@@ -31,8 +31,8 @@ const defaultMappingGroups: Record<
     gj: 'expandableNext',
     h: 'collapse',
     l: ['expandable?', 'expand', 'open'],
-    J: ['toggleSelection', 'nodeNext'],
-    K: ['toggleSelection', 'nodePrev'],
+    J: ['toggleSelection', 'normal:j'],
+    K: ['toggleSelection', 'normal:k'],
     gl: 'expand:recursive',
     gh: 'collapse:recursive',
     '<2-LeftMouse>': [
