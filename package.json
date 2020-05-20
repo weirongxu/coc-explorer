@@ -1,6 +1,6 @@
 {
   "name": "coc-explorer",
-  "version": "0.7.4",
+  "version": "0.7.5",
   "description": "explorer for coc.nvim",
   "main": "lib/index.js",
   "types": "lib/index.d.ts",
