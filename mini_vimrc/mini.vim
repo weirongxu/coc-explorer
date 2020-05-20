@@ -12,8 +12,10 @@ hi CocExplorerNormalFloatBorder guifg=#414347 guibg=#272B34
 hi CocExplorerNormalFloat guibg=#272B34
 
 let mapleader = "\<Space>"
-nmap <Leader>e :CocCommand explorer<CR>
-nmap <Leader>E :CocCommand explorer --position=right<CR>
+nmap <Leader>ee :CocCommand explorer<CR>
+nmap <Leader>eE :CocCommand explorer --position=right<CR>
+nmap <Leader>er :call CocAction('runCommand', 'explorer.doAction', 'closest', ['reveal:0'], [['relative', 0, 'file']])<CR>
+
 execute "nmap <Leader>r :CocCommand explorer --reveal=".expand('<sfile>:h')."/package.json<CR>"
 nmap <Leader>ff :CocCommand explorer --position=floating<CR>
 nmap <Leader>fl :CocCommand explorer --position=floating --floating-position=left-center --floating-width=50 --floating-height=-10<CR>

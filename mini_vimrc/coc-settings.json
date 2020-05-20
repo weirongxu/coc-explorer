@@ -1,8 +1,8 @@
 {
   "explorer.sources": [
     {
-       "name": "buffer",
-       "expand": false
+      "name": "buffer",
+      "expand": false
     },
     {
       "name": "file",
@@ -19,5 +19,6 @@
   },
   "explorer.icon.enableNerdfont": true,
   "explorer.buffer.tabOnly": true,
+  "explorer.file.autoReveal": false,
   "explorer.debug": true
 }
