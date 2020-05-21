@@ -8,7 +8,7 @@ const loggerQueue: {
   type: LoggerType;
   data: any;
 }[] = [];
-let logger: null | Logger = null;
+let logger: undefined | Logger;
 const loggerLog = (type: LoggerType, data: string | Error) => {
   if (logger) {
     if (type !== 'info') {

@@ -33,7 +33,7 @@ export class FloatingFactory3 implements Disposable {
   private bufnr = 0;
   private disposables: Disposable[] = [];
   private floatBuffer!: FloatBuffer;
-  private tokenSource: CancellationTokenSource | null = null;
+  private tokenSource: CancellationTokenSource | undefined;
   private alignTop = false;
   private pumAlignTop = false;
   private onCursorMoved!: Cancellable<() => void>;
@@ -74,11 +74,11 @@ export class FloatingFactory3 implements Disposable {
             await this.close();
           }
         },
-        null,
+        undefined,
         this.disposables,
       ),
-      onEvents('CursorMoved', this.onCursorMoved, null, this.disposables),
-      onEvents('CursorMovedI', this.onCursorMoved, null, this.disposables),
+      onEvents('CursorMoved', this.onCursorMoved, undefined, this.disposables),
+      onEvents('CursorMovedI', this.onCursorMoved, undefined, this.disposables),
     );
   }
 
@@ -322,7 +322,7 @@ export class FloatingFactory3 implements Disposable {
     const { tokenSource } = this;
     if (tokenSource) {
       tokenSource.cancel();
-      this.tokenSource = null;
+      this.tokenSource = undefined;
     }
   }
 

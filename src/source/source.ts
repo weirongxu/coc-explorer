@@ -554,7 +554,7 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>> {
     debounceTimeout: number,
   ) {
     const nodeIndex = this.getLineByNode(node);
-    if (nodeIndex !== null) {
+    if (nodeIndex !== undefined) {
       await this.explorer.floatingWindow.previewNode(
         previewStrategy,
         this,
@@ -690,10 +690,10 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>> {
   /**
    * Get relative line index for source by node
    */
-  getLineByNode(node: TreeNode): null | number {
+  getLineByNode(node: TreeNode): undefined | number {
     if (node) {
       const line = this.flattenedNodes.findIndex((it) => it.uid === node.uid);
-      return line === -1 ? null : line;
+      return line === -1 ? undefined : line;
     } else {
       return 0;
     }
@@ -978,12 +978,12 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>> {
 
   private nodeAndChildrenRange(
     node: TreeNode,
-  ): { startIndex: number; endIndex: number } | null {
+  ): { startIndex: number; endIndex: number } | undefined {
     const startIndex = this.flattenedNodes.findIndex(
       (it) => it.uid === node.uid,
     );
     if (startIndex === -1) {
-      return null;
+      return;
     }
     const parentLevel = node.level ?? 0;
     let endIndex = this.flattenedNodes.length - 1;

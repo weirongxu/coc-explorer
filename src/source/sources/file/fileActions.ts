@@ -55,8 +55,8 @@ export function initFileActions(file: FileSource) {
     'reveal',
     async ({ args }) => {
       const target = args[0];
-      let targetBufnr: number | null = null;
-      let targetPath: string | null = null;
+      let targetBufnr: number | undefined;
+      let targetPath: string | undefined;
       if (/\d+/.test(target)) {
         targetBufnr = parseInt(target, 10);
         if (targetBufnr === 0) {
@@ -67,7 +67,7 @@ export function initFileActions(file: FileSource) {
 
         const actions: Record<
           RevealStrategy,
-          null | ((args?: string[]) => void | Promise<void>)
+          undefined | ((args?: string[]) => void | Promise<void>)
         > = {
           select: async () => {
             await file.explorer.selectWindowsUI(async (winnr) => {
@@ -499,7 +499,7 @@ export function initFileActions(file: FileSource) {
       await overwritePrompt(
         [
           {
-            source: null,
+            source: undefined,
             target: targetPath,
           },
         ],
@@ -529,7 +529,7 @@ export function initFileActions(file: FileSource) {
       await overwritePrompt(
         [
           {
-            source: null,
+            source: undefined,
             target: targetPath,
           },
         ],

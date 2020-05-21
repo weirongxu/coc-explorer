@@ -119,7 +119,7 @@ export class BufManager {
         content.split(/\n/).map(async (line) => {
           const matches = line.match(regex);
           if (!matches) {
-            return null;
+            return;
           }
           const bufnr = matches[1];
           const flags = matches[2];

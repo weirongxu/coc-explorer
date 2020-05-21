@@ -55,19 +55,33 @@ import { gitManager, GitFormat } from './gitManager';
   },
   {
     args: ['MM path/to/file with space'],
-    returns: [GitFormat.modified, GitFormat.modified, '/root/path/to/file with space'],
+    returns: [
+      GitFormat.modified,
+      GitFormat.modified,
+      '/root/path/to/file with space',
+    ],
   },
   {
     args: ['R  "path/to/file" -> "path/to/file"'],
-    returns: [GitFormat.renamed, GitFormat.unmodified, '/root/path/to/file', '/root/path/to/file'],
+    returns: [
+      GitFormat.renamed,
+      GitFormat.unmodified,
+      '/root/path/to/file',
+      '/root/path/to/file',
+    ],
   },
   {
     args: ['C  "path to/file" -> "path to/file"'],
-    returns: [GitFormat.copied, GitFormat.unmodified, '/root/path to/file', '/root/path to/file'],
+    returns: [
+      GitFormat.copied,
+      GitFormat.unmodified,
+      '/root/path to/file',
+      '/root/path to/file',
+    ],
   },
 ] as {
   args: [string];
-  returns: [GitFormat, GitFormat, string, string | null];
+  returns: [GitFormat, GitFormat, string, string | undefined];
 }[]).forEach((it, index) => {
   test('gitManager parseStatusLine ' + index, () => {
     // @ts-ignore

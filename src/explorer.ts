@@ -117,7 +117,7 @@ export class Explorer {
     const { width, height, top, left } = await this.genExplorerPosition(args);
     const [bufnr, floatingBorderBufnr]: [
       number,
-      number | null,
+      number | undefined,
     ] = await workspace.nvim.call('coc_explorer#create', [
       explorerManager.bufferName,
       explorerManager.maxExplorerID,
@@ -147,7 +147,7 @@ export class Explorer {
     public explorerID: number,
     public explorerManager: ExplorerManager,
     public bufnr: number,
-    public floatingBorderBufnr: number | null,
+    public floatingBorderBufnr: number | undefined,
     public config: ExplorerConfig,
   ) {
     this.context = explorerManager.context;
@@ -210,9 +210,7 @@ export class Explorer {
           await source.gotoLineIndex(source.currentLineIndex - 1);
         } else {
           const line = this.currentLineIndex;
-          if (line !== null) {
-            await this.gotoLineIndex(line - 1);
-          }
+          await this.gotoLineIndex(line - 1);
         }
       },
       'previous node',
@@ -233,9 +231,7 @@ export class Explorer {
           await source.gotoLineIndex(source.currentLineIndex + 1);
         } else {
           const line = this.currentLineIndex;
-          if (line !== null) {
-            await this.gotoLineIndex(line + 1);
-          }
+          await this.gotoLineIndex(line + 1);
         }
       },
       'next node',
@@ -464,25 +460,25 @@ export class Explorer {
     return sum(this.sources.map((s) => s.height));
   }
 
-  get win(): Promise<Window | null> {
+  get win(): Promise<Window | undefined> {
     return this.winid.then(winByWinid);
   }
 
   /**
    * vim winnr of explorer
    */
-  get winnr(): Promise<number | null> {
+  get winnr(): Promise<number | undefined> {
     return winnrByBufnr(this.bufnr);
   }
 
   /**
    * vim winid of explorer
    */
-  get winid(): Promise<number | null> {
+  get winid(): Promise<number | undefined> {
     return this.winnr.then(winidByWinnr);
   }
 
-  get floatingBorderWin(): Promise<Window | null> {
+  get floatingBorderWin(): Promise<Window | undefined> {
     return this.floatingBorderWinid.then(winByWinid);
   }
 
@@ -497,11 +493,11 @@ export class Explorer {
   async sourceWinnr() {
     const winid = await this.sourceWinid.get();
     if (!winid) {
-      return null;
+      return undefined;
     }
     const winnr = (await this.nvim.call('win_id2win', [winid])) as number;
     if (winnr <= 0 || (await this.explorerManager.winnrs()).includes(winnr)) {
-      return null;
+      return;
     }
     return winnr;
   }
@@ -509,11 +505,11 @@ export class Explorer {
   async sourceBufnrBySourceWinid() {
     const winid = await this.sourceWinid.get();
     if (!winid) {
-      return null;
+      return;
     }
     const bufnr = (await this.nvim.call('winbufnr', [winid])) as number;
     if (bufnr <= 0) {
-      return null;
+      return;
     }
     return bufnr;
   }
@@ -560,7 +556,7 @@ export class Explorer {
         await enableWrapscan(),
         condition,
       );
-      if (relativeIndex === null) {
+      if (relativeIndex === undefined) {
         return;
       }
       await this.gotoLineIndex(startLineIndex + relativeIndex);
@@ -596,7 +592,7 @@ export class Explorer {
         await enableWrapscan(),
         condition,
       );
-      if (relativeIndex === null) {
+      if (relativeIndex === undefined) {
         return;
       }
       await this.gotoLineIndex(startLineIndex + relativeIndex);
@@ -784,7 +780,9 @@ export class Explorer {
         .map((sourceArg) =>
           sourceManager.createSource(sourceArg.name, this, sourceArg.expand),
         )
-        .filter((source): source is ExplorerSource<any> => source !== null);
+        .filter(
+          (source): source is ExplorerSource<any> => source !== undefined,
+        );
     }
 
     this.explorerManager.rootPathRecords.add(
@@ -835,13 +833,13 @@ export class Explorer {
     actionExp: ActionExp,
     mode: MappingMode,
     count?: number,
-    lineIndexes?: number[] | Set<number> | null,
+    lineIndexes?: number[] | Set<number> | undefined,
   ) => Promise<void>;
   async doActionsWithCount(
     actionExp: ActionExp,
     mode: MappingMode,
     count: number = 1,
-    lineIndexes: number[] | Set<number> | null = null,
+    lineIndexes: number[] | Set<number> | undefined = undefined,
   ) {
     if (!this._doActionsWithCount) {
       this._doActionsWithCount = queueAsyncFunction(
@@ -849,7 +847,7 @@ export class Explorer {
           actionExp: ActionExp,
           mode: MappingMode,
           count: number = 1,
-          lineIndexes: number[] | Set<number> | null = null,
+          lineIndexes: number[] | Set<number> | undefined = undefined,
         ) => {
           const now = Date.now();
 

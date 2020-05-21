@@ -138,12 +138,12 @@ async function drawColumn(names: string[], width: number) {
           return '';
         },
         storagePath: '',
-        workspaceState: null as any,
-        globalState: null as any,
-        logger: null as any,
+        workspaceState: undefined as any,
+        globalState: undefined as any,
+        logger: undefined as any,
       }),
       0,
-      null,
+      undefined,
       buildExplorerConfig(config),
     );
   }

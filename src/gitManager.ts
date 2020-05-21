@@ -311,7 +311,7 @@ class GitManager {
     }
   }
 
-  getStatus(directory: string): GitMixedStatus | null {
+  getStatus(directory: string): GitMixedStatus | undefined {
     for (const [, directoryStatusCache] of Object.entries(
       this.mixedStatusCache,
     )) {
@@ -319,7 +319,6 @@ class GitManager {
         return directoryStatusCache[directory];
       }
     }
-    return null;
   }
 }
 

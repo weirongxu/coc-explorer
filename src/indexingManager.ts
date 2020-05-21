@@ -22,7 +22,7 @@ export class IndexingManager {
     lines.delete(lineIndex);
   }
 
-  async prevLineIndex(...names: string[]): Promise<number | null> {
+  async prevLineIndex(...names: string[]): Promise<number | undefined> {
     let mergeLines: number[] = [];
     for (const name of names) {
       const lines = this.linesMap.get(name);
@@ -38,10 +38,9 @@ export class IndexingManager {
         return sortedLines[0];
       }
     }
-    return null;
   }
 
-  async nextLineIndex(...names: string[]): Promise<number | null> {
+  async nextLineIndex(...names: string[]): Promise<number | undefined> {
     let mergeLines: number[] = [];
     for (const name of names) {
       const lines = this.linesMap.get(name);
@@ -57,7 +56,6 @@ export class IndexingManager {
         return sortedLines[0];
       }
     }
-    return null;
   }
 
   removeLines(lines: number[]): void;

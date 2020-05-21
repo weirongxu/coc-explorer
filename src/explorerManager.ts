@@ -83,7 +83,7 @@ export class ExplorerManager {
       if (filetype !== this.filetype) {
         await this.previousBufnr.set(bufnr);
         const winid = (await this.nvim.call('win_getid')) as number;
-        await this.previousWindowID.set(winid === -1 ? null : winid);
+        await this.previousWindowID.set(winid === -1 ? undefined : winid);
       }
     }
   }
@@ -91,11 +91,11 @@ export class ExplorerManager {
   async prevWinnrByPrevBufnr() {
     const previousBufnr = await this.previousBufnr.get();
     if (!previousBufnr) {
-      return null;
+      return;
     }
     const winnr = (await this.nvim.call('bufwinnr', [previousBufnr])) as number;
     if (winnr <= 0 || (await this.winnrs()).includes(winnr)) {
-      return null;
+      return;
     }
     return winnr;
   }
@@ -103,13 +103,13 @@ export class ExplorerManager {
   async prevWinnrByPrevWindowID() {
     const previousWindowID = await this.previousWindowID.get();
     if (!previousWindowID) {
-      return null;
+      return;
     }
     const winnr = (await this.nvim.call('win_id2win', [
       previousWindowID,
     ])) as number;
     if (winnr <= 0 || (await this.winnrs()).includes(winnr)) {
-      return null;
+      return;
     }
     return winnr;
   }
@@ -136,7 +136,7 @@ export class ExplorerManager {
     const winnrs = await Promise.all(
       explorers.map((explorer) => explorer.winnr),
     );
-    return winnrs.filter((winnr) => winnr !== null);
+    return winnrs.filter((winnr) => winnr !== undefined);
   }
 
   explorers() {

@@ -24,7 +24,7 @@ describe('scanIndexPrev', () => {
       list: [false, false, true, true, true],
       start: 2,
       wrapscan: false,
-      result: null,
+      result: undefined,
     },
     {
       list: [false, false, true, true, false],
@@ -36,7 +36,7 @@ describe('scanIndexPrev', () => {
       list: [false, false, true, false, false],
       start: 2,
       wrapscan: true,
-      result: null,
+      result: undefined,
     },
     {
       list: [false, false, false, true, true],
@@ -48,7 +48,7 @@ describe('scanIndexPrev', () => {
       list: [false, false, false, true, true],
       start: 0,
       wrapscan: false,
-      result: null,
+      result: undefined,
     },
   ].forEach((it, index) => {
     test(index.toString(), () => {
@@ -83,7 +83,7 @@ describe('scanIndexNext', () => {
       list: [true, true, true, false, false],
       start: 2,
       wrapscan: false,
-      result: null,
+      result: undefined,
     },
     {
       list: [false, true, true, false, false],
@@ -95,7 +95,7 @@ describe('scanIndexNext', () => {
       list: [false, false, true, false, false],
       start: 2,
       wrapscan: true,
-      result: null,
+      result: undefined,
     },
     {
       list: [true, true, false, false, false],
@@ -107,7 +107,7 @@ describe('scanIndexNext', () => {
       list: [true, true, false, false, false],
       start: 4,
       wrapscan: false,
-      result: null,
+      result: undefined,
     },
   ].forEach((it, index) => {
     test(index.toString(), () => {

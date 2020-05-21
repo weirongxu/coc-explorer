@@ -1,9 +1,9 @@
 import { workspace, Window } from 'coc.nvim';
 import { Notifier } from '.';
 
-let _supportedSetbufline: boolean | null = null;
+let _supportedSetbufline: boolean | undefined = undefined;
 export async function supportedSetbufline() {
-  if (_supportedSetbufline === null) {
+  if (_supportedSetbufline === undefined) {
     _supportedSetbufline = Boolean(
       await workspace.nvim.call('exists', ['*setbufline']),
     );
@@ -35,7 +35,7 @@ export async function displaySlice(str: string, start: number, end?: number) {
   return (await workspace.nvim.call('coc_explorer#strdisplayslice', [
     str,
     start,
-    end ?? null,
+    end ?? undefined,
   ])) as string;
 }
 
@@ -45,75 +45,77 @@ export function closeWinByBufnrNotifier(bufnr: number) {
   });
 }
 
-export async function winnrByBufnr(bufnr: number | null) {
+export async function winnrByBufnr(bufnr: number | undefined) {
   if (!bufnr) {
-    return null;
+    return undefined;
   }
   return workspace.nvim.call('bufwinnr', bufnr).then((winnr: number) => {
     if (winnr > 0) {
       return winnr;
     } else {
-      return null;
+      return undefined;
     }
   });
 }
 
-export async function winidByWinnr(winnr: number | null) {
+export async function winidByWinnr(winnr: number | undefined) {
   if (!winnr) {
-    return null;
+    return undefined;
   }
   const winid = (await workspace.nvim.call('win_getid', winnr)) as number;
   if (winid >= 0) {
     return winid;
   } else {
-    return null;
+    return undefined;
   }
 }
 
-export async function winidByBufnr(bufnr: number | null) {
+export async function winidByBufnr(bufnr: number | undefined) {
   return winnrByBufnr(bufnr).then(async (winnr) => {
     if (winnr) {
       return winidByWinnr(winnr);
     } else {
-      return null;
+      return undefined;
     }
   });
 }
 
 export function winByWinid(winid: number): Promise<Window>;
-export function winByWinid(winid: null): Promise<null>;
-export function winByWinid(winid: number | null): Promise<Window | null>;
-export async function winByWinid(winid: number | null) {
+export function winByWinid(winid: undefined): Promise<undefined>;
+export function winByWinid(
+  winid: number | undefined,
+): Promise<Window | undefined>;
+export async function winByWinid(winid: number | undefined) {
   if (winid) {
     return workspace.nvim.createWindow(winid);
   } else {
-    return null;
+    return undefined;
   }
 }
 
-export async function bufnrByWinnrOrWinid(winnrOrWinid: number | null) {
+export async function bufnrByWinnrOrWinid(winnrOrWinid: number | undefined) {
   if (!winnrOrWinid) {
-    return null;
+    return undefined;
   }
   const bufnr = (await workspace.nvim.call('winbufnr', winnrOrWinid)) as number;
   if (bufnr >= 0) {
     return bufnr;
   } else {
-    return null;
+    return undefined;
   }
 }
 
-export async function prompt(msg: string): Promise<'yes' | 'no' | null>;
+export async function prompt(msg: string): Promise<'yes' | 'no' | undefined>;
 export async function prompt<T extends string>(
   msg: string,
   choices: T[],
   defaultChoice?: T,
-): Promise<T | null>;
+): Promise<T | undefined>;
 export async function prompt(
   msg: string,
   choices?: string[],
   defaultChoice?: string,
-): Promise<string | null> {
+): Promise<string | undefined> {
   if (!choices) {
     choices = ['yes', 'no'];
     defaultChoice = 'no';
@@ -138,9 +140,9 @@ export async function prompt(
     defaultNumber + 1,
   ])) as number;
   if (result === 0) {
-    return null;
+    return;
   } else {
-    return choices[result - 1] || null;
+    return choices[result - 1];
   }
 }
 

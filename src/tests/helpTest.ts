@@ -27,7 +27,7 @@ process.on('uncaughtException', (err) => {
 });
 export class Helper extends events.EventEmitter {
   public nvim!: Neovim;
-  public proc: cp.ChildProcess | null = null;
+  public proc: cp.ChildProcess | undefined;
   public plugin!: Plugin;
 
   constructor() {
@@ -37,16 +37,20 @@ export class Helper extends events.EventEmitter {
 
   public setup(): Promise<void> {
     const vimrc = path.resolve(__dirname, 'vimrc');
-    const proc = (this.proc = cp.spawn('nvim', ['-u', vimrc, '-i', 'NONE', '--embed'], {
-      cwd: __dirname,
-    }));
+    const proc = (this.proc = cp.spawn(
+      'nvim',
+      ['-u', vimrc, '-i', 'NONE', '--embed'],
+      {
+        cwd: __dirname,
+      },
+    ));
     const plugin = (this.plugin = attach({ proc }));
     this.nvim = plugin.nvim;
     this.nvim.uiAttach(80, 80, {}).catch((_e) => {
       // noop
     });
     proc.on('exit', () => {
-      this.proc = null;
+      this.proc = undefined;
     });
     this.nvim.on('notification', (method, args) => {
       if (method == 'redraw') {
@@ -191,7 +195,10 @@ export class Helper extends events.EventEmitter {
     configurations.updateUserConfig({ [key]: value });
   }
 
-  public async mockFunction(name: string, result: string | number | any): Promise<void> {
+  public async mockFunction(
+    name: string,
+    result: string | number | any,
+  ): Promise<void> {
     const content = `
     function! ${name}(...)
       return ${JSON.stringify(result)}

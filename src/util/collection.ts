@@ -30,9 +30,9 @@ export function scanIndexPrev<T>(
   }
   if (wrapscan && startIndex < list.length - 1) {
     const index = findLastIndex(list.slice(startIndex + 1), condition);
-    return index === -1 ? null : index + startIndex + 1;
+    return index === -1 ? undefined : index + startIndex + 1;
   }
-  return null;
+  return;
 }
 
 export function scanIndexNext<T>(
@@ -49,7 +49,7 @@ export function scanIndexNext<T>(
   }
   if (wrapscan && startIndex > 0) {
     const index = findIndex(list.slice(0, startIndex), condition);
-    return index === -1 ? null : index;
+    return index === -1 ? undefined : index;
   }
-  return null;
+  return;
 }

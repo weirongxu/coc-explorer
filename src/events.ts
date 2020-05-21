@@ -46,8 +46,9 @@ type BufEventListener = (bufnr: number) => EventResult;
 export const onEvents: OnEvent = (
   event: any,
   listener: any,
+  thisArgs: any,
   disposables?: Disposable[],
-) => events.on(event, asyncCatchError(listener), disposables);
+) => events.on(event, asyncCatchError(listener), thisArgs, disposables);
 
 // onBufEnter
 let bufEnterTriggerCount = 0;

@@ -10,7 +10,8 @@ import makeDir from 'make-dir';
 
 export const fsOpen = promisify(fs.open);
 export const fsClose = promisify(fs.close);
-export const fsTouch = async (path: string) => await fsClose(await fsOpen(path, 'w'));
+export const fsTouch = async (path: string) =>
+  await fsClose(await fsOpen(path, 'w'));
 export const fsMkdirp = makeDir;
 export const fsReaddir = promisify(fs.readdir);
 export const fsReadlink = promisify(fs.readlink);
@@ -25,10 +26,14 @@ export const fsStat = promisify(fs.stat);
 export const fsLstat = promisify(fs.lstat);
 export const fsCopyFile = promisify(fs.copyFile);
 export const fsRename = promisify(fs.rename);
-export const fsTrash = (paths: string | string[]) => trash(paths, { glob: false });
+export const fsTrash = (paths: string | string[]) =>
+  trash(paths, { glob: false });
 export const fsRimraf = promisify(rimraf);
 
-export async function fsCopyFileRecursive(sourcePath: string, targetPath: string) {
+export async function fsCopyFileRecursive(
+  sourcePath: string,
+  targetPath: string,
+) {
   const lstat = await fsLstat(sourcePath);
   if (lstat.isDirectory()) {
     await fsMkdirp(targetPath);
@@ -68,11 +73,11 @@ export async function fsMergeDirectory(
   }
 }
 
-export async function overwritePrompt<S extends string | null>(
+export async function overwritePrompt<S extends string | undefined>(
   paths: { source: S; target: string }[],
   action: (source: S, target: string) => Promise<void>,
 ) {
-  const finalAction = async (source: string | null, target: string) => {
+  const finalAction = async (source: string | undefined, target: string) => {
     await fsMkdirp(pathLib.dirname(target));
     await action(source as S, target);
   };
@@ -85,11 +90,16 @@ export async function overwritePrompt<S extends string | null>(
       continue;
     }
 
-    const sourceLstat = typeof sourcePath === 'string' ? await fsLstat(sourcePath) : null;
+    const sourceLstat =
+      typeof sourcePath === 'string' ? await fsLstat(sourcePath) : undefined;
     const targetLstat = await fsLstat(targetPath);
 
     async function rename() {
-      const newTargetPath = await input(`Rename: ${targetPath} -> `, targetPath, 'file');
+      const newTargetPath = await input(
+        `Rename: ${targetPath} -> `,
+        targetPath,
+        'file',
+      );
       if (!newTargetPath) {
         i -= 1;
         return;
@@ -104,15 +114,20 @@ export async function overwritePrompt<S extends string | null>(
       i = len;
       return;
     }
-    async function prompt_(choices: Record<string, null | (() => void | Promise<void>)> = {}) {
+    async function prompt_(
+      choices: Record<string, undefined | (() => void | Promise<void>)> = {},
+    ) {
       choices = {
-        skip: null,
+        skip: undefined,
         rename,
         'force replace': replace,
         ...choices,
         quit,
       };
-      const answer = await prompt(`${targetPath} already exists.`, Object.keys(choices));
+      const answer = await prompt(
+        `${targetPath} already exists.`,
+        Object.keys(choices),
+      );
       if (answer && answer in choices) {
         return choices[answer]?.();
       }

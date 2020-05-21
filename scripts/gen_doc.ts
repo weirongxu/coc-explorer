@@ -49,7 +49,7 @@ async function attach(
 }
 
 function printJson(obj: JSONSchema7Type, format = false) {
-  return JSON.stringify(obj, null, format ? '  ' : undefined);
+  return JSON.stringify(obj, undefined, format ? '  ' : undefined);
 }
 
 function printAsDetails(rows: Row[]) {

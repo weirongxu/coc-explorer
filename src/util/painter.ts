@@ -75,7 +75,7 @@ export function drawnToRange(
 
   const sortedDrawnList = drawnList.sort((a, b) => a.nodeIndex - b.nodeIndex);
   const drawnRangeList: DrawnWithIndexRange[] = [];
-  let drawnRangeCur: DrawnWithIndexRange | null = null;
+  let drawnRangeCur: DrawnWithIndexRange | undefined;
 
   for (let i = 0, len = sortedDrawnList.length; i < len; i++) {
     const drawn = sortedDrawnList[i];
@@ -91,7 +91,7 @@ export function drawnToRange(
     } else {
       drawnRangeList.push(drawnRangeCur);
       i--;
-      drawnRangeCur = null;
+      drawnRangeCur = undefined;
     }
   }
 
@@ -141,7 +141,7 @@ export async function fetchDisplayWidth(
               contents: await Promise.all(
                 compactI(
                   it.contents.map((c) =>
-                    c.type === 'content' ? getDrawContentWith(c) : null,
+                    c.type === 'content' ? getDrawContentWith(c) : undefined,
                   ),
                 ),
               ),

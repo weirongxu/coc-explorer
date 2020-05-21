@@ -10,9 +10,9 @@ export abstract class ContextVars<T> {
 
   abstract async write(obj: object): Promise<void>;
 
-  async set(value: T | null) {
+  async set(value: T | undefined) {
     const obj = await this.read();
-    if (value === null) {
+    if (value === undefined) {
       Reflect.deleteProperty(obj, this.name);
     } else {
       Reflect.set(obj, this.name, value);
@@ -20,9 +20,9 @@ export abstract class ContextVars<T> {
     await this.write(obj);
   }
 
-  async get(): Promise<T | null> {
+  async get(): Promise<T | undefined> {
     const obj = await this.read();
-    return Reflect.get(obj, this.name) ?? null;
+    return Reflect.get(obj, this.name);
   }
 }
 

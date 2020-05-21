@@ -117,13 +117,13 @@ export default class FileList extends BasicList {
 
   async loadItems(
     _context: ListContext,
-  ): Promise<ListItem[] | ListTask | null> {
+  ): Promise<ListItem[] | ListTask | undefined> {
     if (!this.rootPath) {
-      return null;
+      return;
     }
     const res = await this.getCommand();
     if (!res) {
-      return null;
+      return;
     }
     const task = new Task();
     const excludePatterns = this.getConfig().get<string[]>(

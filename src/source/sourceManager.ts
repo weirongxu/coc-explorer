@@ -22,7 +22,7 @@ class SourceManager {
     } else {
       // tslint:disable-next-line: ban
       workspace.showMessage(`explorer source(${name}) not found`, 'error');
-      return null;
+      return;
     }
   }
 }

@@ -30,11 +30,13 @@ export function throttlePromise<A extends Array<any>, R>(
   fn: (...args: A) => Promise<R> | R,
   { leading = true, trailing = false }: ThrottleOptions = {},
 ): Cancellable<(...args: A) => Promise<R | Cancelled>> {
-  let blockTimer: NodeJS.Timeout | null = null;
-  let trailStore: {
-    cancel: () => void;
-    invoke: () => void;
-  } | null = null;
+  let blockTimer: NodeJS.Timeout | undefined;
+  let trailStore:
+    | {
+        cancel: () => void;
+        invoke: () => void;
+      }
+    | undefined;
 
   const wrap = async (...args: A) => {
     const toTrailStore = () =>
@@ -42,7 +44,7 @@ export function throttlePromise<A extends Array<any>, R>(
         trailStore = {
           cancel() {
             resolve(cancelled);
-            trailStore = null;
+            trailStore = undefined;
           },
           async invoke() {
             try {
@@ -50,15 +52,15 @@ export function throttlePromise<A extends Array<any>, R>(
             } catch (err) {
               reject(err);
             } finally {
-              trailStore = null;
+              trailStore = undefined;
             }
           },
         };
       });
-    if (blockTimer === null) {
+    if (blockTimer === undefined) {
       blockTimer = setTimeout(() => {
         trailStore?.invoke();
-        blockTimer = null;
+        blockTimer = undefined;
       }, delay);
       if (leading) {
         return fn(...args);
@@ -93,11 +95,13 @@ export function debouncePromise<A extends Array<any>, R>(
   delay: number,
   fn: (...args: A) => Promise<R> | R,
 ): Cancellable<(...args: A) => Promise<R | Cancelled>> {
-  let timer: NodeJS.Timeout | null = null;
-  let store: {
-    cancel: () => void;
-    invoke: () => void;
-  } | null = null;
+  let timer: NodeJS.Timeout | undefined;
+  let store:
+    | {
+        cancel: () => void;
+        invoke: () => void;
+      }
+    | undefined;
   const wrap = async (...args: A) => {
     store?.cancel();
     timer = setTimeout(async () => {
@@ -108,10 +112,10 @@ export function debouncePromise<A extends Array<any>, R>(
         cancel() {
           if (timer) {
             clearTimeout(timer);
-            timer = null;
+            timer = undefined;
           }
           resolve(cancelled);
-          store = null;
+          store = undefined;
         },
         async invoke() {
           try {
@@ -119,8 +123,8 @@ export function debouncePromise<A extends Array<any>, R>(
           } catch (err) {
             reject(err);
           } finally {
-            timer = null;
-            store = null;
+            timer = undefined;
+            store = undefined;
           }
         },
       };

@@ -76,7 +76,7 @@ export class FloatingFactory2 implements Disposable {
           }
           await this.close();
         },
-        null,
+        undefined,
         this.disposables,
       ),
       onEvents(
@@ -87,7 +87,7 @@ export class FloatingFactory2 implements Disposable {
             await this.close();
           }
         },
-        null,
+        undefined,
         this.disposables,
       ),
       onEvents(
@@ -98,13 +98,13 @@ export class FloatingFactory2 implements Disposable {
           }
           await this.onCursorMoved(false, bufnr, cursor);
         }),
-        null,
+        undefined,
         this.disposables,
       ),
       onEvents(
         'CursorMovedI',
         this.onCursorMoved.bind(this, true),
-        null,
+        undefined,
         this.disposables,
       ),
     );

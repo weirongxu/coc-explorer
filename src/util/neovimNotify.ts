@@ -43,10 +43,7 @@ export class Notifier {
     if (safeNotifiers.length === 1) {
       return safeNotifiers[0];
     }
-    return safeNotifiers.reduce(
-      (ret, cur) => ret.concat(cur),
-      Notifier.noop(),
-    );
+    return safeNotifiers.reduce((ret, cur) => ret.concat(cur), Notifier.noop());
   }
 
   static noop() {

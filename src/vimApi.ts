@@ -51,7 +51,7 @@ async function getExplorer(
       const current = await explorerManager.currentTabContainer();
       return await pLocate(
         current?.floating ?? [],
-        async (e) => (await e.winnr) !== null,
+        async (e) => (await e.winnr) !== undefined,
       );
     }
   } else {
@@ -66,7 +66,7 @@ type Position = 'current' | number | ['relative', number, string?];
 async function getLineIndexByPosition(
   position: Position,
   explorer: Explorer,
-): Promise<number | null> {
+): Promise<number | undefined> {
   if (position === 'current') {
     return explorer.currentLineIndex;
   } else if (typeof position === 'number') {
@@ -82,26 +82,28 @@ async function getLineIndexByPosition(
       }
     }
   }
-  return null;
+  return;
 }
 
 async function getSourceAndNodeByPosition(
   position: Position,
   explorer: Explorer,
-): Promise<[null, null] | [ExplorerSource<any>, null | BaseTreeNode<any>]> {
+): Promise<
+  [undefined, undefined] | [ExplorerSource<any>, undefined | BaseTreeNode<any>]
+> {
   const lineIndex = await getLineIndexByPosition(position, explorer);
   if (!lineIndex) {
-    return [null, null];
+    return [undefined, undefined];
   }
   const source = explorer.sources.find(
     (source) =>
       lineIndex >= source.startLineIndex && lineIndex < source.endLineIndex,
   );
   if (!source) {
-    return [null, null];
+    return [undefined, undefined];
   }
   const nodeIndex = lineIndex - source.startLineIndex;
-  return [source, source.flattenedNodes[nodeIndex] ?? null];
+  return [source, source.flattenedNodes[nodeIndex] ?? undefined];
 }
 
 export function registerVimApi(
@@ -149,19 +151,19 @@ export function registerVimApi(
       ) => {
         const explorer = await getExplorer(explorerFinder, explorerManager);
         if (!explorer) {
-          return null;
+          return undefined;
         }
         await explorer.refreshLineIndex();
         const [, node] = await getSourceAndNodeByPosition(position, explorer);
         if (!node) {
-          return null;
+          return undefined;
         }
         return {
           ...node,
-          parent: null,
-          children: null,
-          prevSiblingNode: null,
-          nextSiblingNode: null,
+          parent: undefined,
+          children: undefined,
+          prevSiblingNode: undefined,
+          nextSiblingNode: undefined,
         };
       },
     ),

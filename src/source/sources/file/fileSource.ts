@@ -37,7 +37,7 @@ export interface FileNode extends BaseTreeNode<FileNode, 'root' | 'child'> {
   writable: boolean;
   hidden: boolean;
   symbolicLink: boolean;
-  lstat: fs.Stats | null;
+  lstat?: fs.Stats;
 }
 
 const hl = hlGroupManager.linkGroup.bind(hlGroupManager);
@@ -86,7 +86,7 @@ export class FileSource extends ExplorerSource<FileNode> {
     writable: true,
     hidden: false,
     symbolicLink: true,
-    lstat: null,
+    lstat: undefined,
   };
   sourcePainters: SourcePainters<FileNode> = new SourcePainters<FileNode>(
     this,
@@ -216,9 +216,9 @@ export class FileSource extends ExplorerSource<FileNode> {
     } else {
       const bufnr = await this.explorer.sourceBufnrBySourceWinid();
       if (bufnr) {
-        return this.bufManager.getBufferNode(bufnr)?.fullpath ?? null;
+        return this.bufManager.getBufferNode(bufnr)?.fullpath ?? undefined;
       }
-      return null;
+      return;
     }
   }
 
@@ -238,7 +238,7 @@ export class FileSource extends ExplorerSource<FileNode> {
       const [revealNode, notifiers] = await this.revealNodeByPathNotifier(
         revealPath,
       );
-      if (revealNode !== null) {
+      if (revealNode !== undefined) {
         return Notifier.combine(notifiers);
       } else if (isFirst) {
         return Notifier.combine([
@@ -296,7 +296,7 @@ export class FileSource extends ExplorerSource<FileNode> {
       render?: boolean;
       compact?: boolean;
     } = {},
-  ): Promise<[FileNode | null, Notifier[]]> {
+  ): Promise<[FileNode | undefined, Notifier[]]> {
     path = normalizePath(path);
     const notifiers: Notifier[] = [];
 
@@ -307,14 +307,14 @@ export class FileSource extends ExplorerSource<FileNode> {
         goto,
         render,
       }: { node: FileNode; goto: boolean; render: boolean },
-    ): Promise<FileNode | null> => {
+    ): Promise<FileNode | undefined> => {
       if (path === node.fullpath) {
         return node;
       } else if (
         node.directory &&
         path.startsWith(node.fullpath + pathLib.sep)
       ) {
-        let foundNode: FileNode | null = null;
+        let foundNode: FileNode | undefined = undefined;
         const isRender = render && !this.isExpanded(node);
         if (!node.children) {
           node.children = await this.load(node);
@@ -350,7 +350,7 @@ export class FileSource extends ExplorerSource<FileNode> {
         }
         return foundNode;
       }
-      return null;
+      return;
     };
 
     const foundNode = await revealRecursive(path, { node, goto, render });
@@ -381,7 +381,7 @@ export class FileSource extends ExplorerSource<FileNode> {
         try {
           const hidden = this.isHidden(filename);
           if (!this.showHidden && hidden) {
-            return null;
+            return;
           }
           const fullpath = normalizePath(
             pathLib.join(parentNode.fullpath, filename),
@@ -411,17 +411,17 @@ export class FileSource extends ExplorerSource<FileNode> {
             writable,
             hidden,
             symbolicLink: lstat ? lstat.isSymbolicLink() : false,
-            lstat: lstat || null,
+            lstat: lstat || undefined,
           };
           return child;
         } catch (error) {
           onError(error);
-          return null;
+          return;
         }
       }),
     );
 
-    return this.sortFiles(files.filter((r): r is FileNode => r !== null));
+    return this.sortFiles(files.filter((r): r is FileNode => !!r));
   }
 
   async loaded(parentNode: FileNode) {
