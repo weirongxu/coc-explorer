@@ -157,7 +157,7 @@ export class Args {
           self.optionValues.set(argName, argValue);
         }
       } else {
-        // tslint:disable-next-line: ban
+        // eslint-disable-next-line no-restricted-properties
         workspace.showMessage(`Preset(${preset}) not found`, 'warning');
       }
     }

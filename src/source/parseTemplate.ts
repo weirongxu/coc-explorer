@@ -112,7 +112,7 @@ function parseColumn(s: Source): OriginalTemplateBlock {
       parsedColumn.modifiers = parseModifiers(s);
     }
   } while (!s.end());
-  throw new ParseError(s, `Unexpected end when parse column block`);
+  throw new ParseError(s, 'Unexpected end when parse column block');
 }
 
 function parsePlainString(s: Source): string {

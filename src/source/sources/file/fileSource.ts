@@ -199,12 +199,12 @@ export class FileSource extends ExplorerSource<FileNode> {
     if (this.config.get<boolean>('file.tabCD')) {
       if (workspace.isNvim || (await nvim.call('exists', [':tcd']))) {
         await nvim.command('tcd ' + escapePath);
-        // tslint:disable-next-line: ban
+        // eslint-disable-next-line no-restricted-properties
         workspace.showMessage(`Tab's CWD is: ${fullpath}`);
       }
     } else {
       await nvim.command('cd ' + escapePath);
-      // tslint:disable-next-line: ban
+      // eslint-disable-next-line no-restricted-properties
       workspace.showMessage(`CWD is: ${fullpath}`);
     }
   }

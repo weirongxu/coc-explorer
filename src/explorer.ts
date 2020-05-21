@@ -874,7 +874,7 @@ export class Explorer {
               Array.isArray(actionExp)
                 ? '[' + actionExp.map(actionDisplay).join(',') + ']'
                 : [actionExp.name, ...actionExp.args].join(':');
-            // tslint:disable-next-line: ban
+            // eslint-disable-next-line no-restricted-properties
             workspace.showMessage(
               `action(${actionDisplay(actionExp)}): ${Date.now() - now}ms`,
               'more',
@@ -1036,7 +1036,7 @@ export class Explorer {
       this.buffer.setOption('readonly', false, true);
 
       if (workspace.isVim) {
-        this.buffer.setLines(
+        void this.buffer.setLines(
           lines,
           {
             start,

@@ -20,7 +20,7 @@ class SourceManager {
       source.bootInit(expanded);
       return source;
     } else {
-      // tslint:disable-next-line: ban
+      // eslint-disable-next-line no-restricted-properties
       workspace.showMessage(`explorer source(${name}) not found`, 'error');
       return;
     }

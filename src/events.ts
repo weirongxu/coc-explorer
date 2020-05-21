@@ -7,6 +7,7 @@ import {
 } from 'coc.nvim';
 import { getEnableDebug } from './config';
 import { asyncCatchError, throttle } from './util';
+import { onError } from './logger';
 
 type Arguments<F extends Function> = F extends (...args: infer Args) => any
   ? Args
@@ -33,8 +34,12 @@ class EventListener<
   }
 
   fire(...args: A) {
-    this.listeners.forEach((listener) => {
-      listener(...args);
+    this.listeners.forEach(async (listener) => {
+      try {
+        await listener(...args);
+      } catch (e) {
+        onError(e);
+      }
     });
   }
 }
@@ -56,7 +61,7 @@ const bufEnterListener = new EventListener<BufEventListener, [number]>();
 
 onEvents('BufEnter', (bufnr) => {
   if (getEnableDebug()) {
-    // tslint:disable-next-line: ban
+    // eslint-disable-next-line no-restricted-properties
     workspace.showMessage(
       `BufEnter: Bufnr(${bufnr}), Count(${bufEnterTriggerCount})`,
       'more',
@@ -76,7 +81,7 @@ export function onBufEnter(
   const listener2 = (bufnr: number) => {
     if (bufnr !== prevBufnr) {
       prevBufnr = bufnr;
-      listener(bufnr);
+      return listener(bufnr);
     }
   };
   const fn =
@@ -93,7 +98,7 @@ let onCursorMovedTriggerCount = 0;
 
 onEvents('CursorMoved', (bufnr) => {
   if (getEnableDebug()) {
-    // tslint:disable-next-line: ban
+    // eslint-disable-next-line no-restricted-properties
     workspace.showMessage(
       `CursorMoved: Bufnr(${bufnr}), Count(${onCursorMovedTriggerCount})`,
       'more',

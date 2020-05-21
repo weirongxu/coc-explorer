@@ -22,7 +22,7 @@ export interface CursorPosition {
 
 process.on('uncaughtException', (err) => {
   const msg = 'Uncaught exception: ' + err.stack;
-  // tslint:disable-next-line: no-console
+  // eslint-disable-next-line no-console
   console.error(msg);
 });
 export class Helper extends events.EventEmitter {

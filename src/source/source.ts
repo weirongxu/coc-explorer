@@ -484,10 +484,10 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>> {
                 await this.explorer.tryQuitOnOpen();
               }
             } else {
-              actions.vsplit();
+              await actions.vsplit();
             }
           } else {
-            actions.split(['plain']);
+            await actions.split(['plain']);
           }
         }
       },
@@ -641,7 +641,7 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>> {
                 description,
                 async callback() {
                   await task.waitShow();
-                  callback({ nodes, args: [], mode: 'n' });
+                  await callback({ nodes, args: [], mode: 'n' });
                 },
               },
             ];
@@ -656,7 +656,7 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>> {
                       description: description + ' ' + menu.description,
                       async callback() {
                         await task.waitShow();
-                        callback({
+                        await callback({
                           nodes,
                           args: await menu.actionArgs(),
                           mode: 'n',

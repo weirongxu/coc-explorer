@@ -175,7 +175,7 @@ export class ExplorerManager {
     const mappings = await getMappings();
     Object.entries(mappings).forEach(([key, actionExp]) => {
       if (!Array.isArray(actionExp) && actionExp.name === 'unmap') {
-        // tslint:disable-next-line: ban
+        // eslint-disable-next-line no-restricted-properties
         workspace.showMessage(
           'The "unmap" option of explorer.keyMappings has been deprecated, use false instead of "unmap"',
           'warning',

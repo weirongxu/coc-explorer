@@ -291,7 +291,7 @@ export class FloatingFactory2 implements Disposable {
     allowSelection = false,
   ): Promise<void> {
     if (!supportedFloat()) {
-      // tslint:disable-next-line: ban
+      // eslint-disable-next-line no-restricted-syntax
       log('error', 'Floating window & textprop not supported!');
       return;
     }
@@ -382,14 +382,14 @@ export class FloatingFactory2 implements Disposable {
         // for (const [option, value] of winOpts) {
         //   this.window.setVar('&' + option, value, true);
         // }
-        nvim.command(`setl nospell nolist wrap linebreak foldcolumn=1`, true);
+        nvim.command('setl nospell nolist wrap linebreak foldcolumn=1', true);
         nvim.command(
-          `setl nonumber norelativenumber nocursorline nocursorcolumn colorcolumn=`,
+          'setl nonumber norelativenumber nocursorline nocursorcolumn colorcolumn=',
           true,
         );
-        nvim.command(`setl signcolumn=no conceallevel=2 concealcursor=n`, true);
+        nvim.command('setl signcolumn=no conceallevel=2 concealcursor=n', true);
         nvim.command(
-          `setl winhl=Normal:CocFloating,NormalNC:CocFloating,FoldColumn:CocFloating`,
+          'setl winhl=Normal:CocFloating,NormalNC:CocFloating,FoldColumn:CocFloating',
           true,
         );
         nvim.call('coc#util#do_autocmd', ['CocOpenFloat'], true);

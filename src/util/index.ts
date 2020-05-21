@@ -24,6 +24,6 @@ export function prettyPrint(...data: any[]) {
   for (const d of data) {
     s += typeof d === 'string' ? d : util.inspect(d);
   }
-  // tslint:disable-next-line: ban
+  // eslint-disable-next-line no-restricted-properties
   workspace.showMessage(s);
 }

@@ -32,7 +32,8 @@ class Task extends EventEmitter implements ListTask {
       const range = Range.create(0, 0, 0, 0);
       const hasPattern = patterns.length > 0;
       process.stderr.on('data', (chunk) => {
-        console.error(chunk.toString('utf8')); // tslint:disable-line
+        // eslint-disable-next-line no-console
+        console.error(chunk.toString('utf8'));
       });
 
       rl.on('line', (line) => {
@@ -79,7 +80,7 @@ export default class FileList extends BasicList {
     this.addAction('reveal', async (item) => {
       const loc = await this.convertLocation(item.location!);
       if (this.revealCallback) {
-        this.revealCallback(loc);
+        await this.revealCallback(loc);
       }
     });
   }

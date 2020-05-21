@@ -199,7 +199,7 @@ export class FloatingFactory3 implements Disposable {
     allowSelection = false,
   ): Promise<void> {
     if (!supportedFloat()) {
-      // tslint:disable-next-line: ban
+      // eslint-disable-next-line no-restricted-syntax
       log('error', 'Floating window & textprop not supported!');
       return;
     }
@@ -212,7 +212,7 @@ export class FloatingFactory3 implements Disposable {
     try {
       await this.createPopup(docs, highlights, allowSelection);
     } catch (e) {
-      // tslint:disable-next-line: ban
+      // eslint-disable-next-line no-restricted-syntax
       log('error', `Error on create popup: ${e.message}`);
       await this.close();
     }

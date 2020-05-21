@@ -274,7 +274,7 @@ export function initFileActions(file: FileSource) {
   file.addNodeAction(
     'expandRecursive',
     async ({ node }) => {
-      // tslint:disable-next-line: ban
+      // eslint-disable-next-line no-restricted-properties
       workspace.showMessage(
         'The action expandRecursive has been deprecated, use expand:recursive instead of it',
         'warning',
@@ -312,7 +312,7 @@ export function initFileActions(file: FileSource) {
   file.addNodeAction(
     'collapseRecursive',
     async ({ node }) => {
-      // tslint:disable-next-line: ban
+      // eslint-disable-next-line no-restricted-properties
       workspace.showMessage(
         'The action collapseRecursive has been deprecated, use collapse:recursive instead of it',
         'warning',
@@ -325,7 +325,7 @@ export function initFileActions(file: FileSource) {
   file.addNodeAction(
     'expandOrCollapse',
     async ({ node }) => {
-      // tslint:disable-next-line: ban
+      // eslint-disable-next-line no-restricted-properties
       workspace.showMessage(
         'Deprecated, use ["expanded?", "expand", "collapse"] instead of it',
         'warning',
@@ -348,7 +348,7 @@ export function initFileActions(file: FileSource) {
       await file.copyToClipboard(
         nodes ? nodes.map((it) => it.fullpath).join('\n') : file.root,
       );
-      // tslint:disable-next-line: ban
+      // eslint-disable-next-line no-restricted-properties
       workspace.showMessage('Copy filepath to clipboard');
     },
     'copy full filepath to clipboard',
@@ -361,7 +361,7 @@ export function initFileActions(file: FileSource) {
           ? nodes.map((it) => it.name).join('\n')
           : pathLib.basename(file.root),
       );
-      // tslint:disable-next-line: ban
+      // eslint-disable-next-line no-restricted-properties
       workspace.showMessage('Copy filename to clipboard');
     },
     'copy filename to clipboard',
@@ -420,7 +420,7 @@ export function initFileActions(file: FileSource) {
         file.cutNodes.clear();
         await file.reload(file.rootNode);
       } else {
-        // tslint:disable-next-line: ban
+        // eslint-disable-next-line no-restricted-properties
         workspace.showMessage('Copied files or cut files is empty', 'error');
       }
     },

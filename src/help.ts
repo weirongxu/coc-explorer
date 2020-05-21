@@ -182,9 +182,9 @@ export class HelpPainter {
 
       const indent = ' '.repeat(key.length + 4);
       for (const drawBlock of drawBlocks.slice(1)) {
-        await this.drawRow((row) => {
+        await this.drawRow(async (row) => {
           row.add(indent);
-          drawBlock(row);
+          await drawBlock(row);
         });
       }
     }

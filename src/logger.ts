@@ -13,7 +13,7 @@ const loggerLog = (type: LoggerType, data: string | Error) => {
   if (logger) {
     if (type !== 'info') {
       const mtype = type === 'warn' ? 'warning' : type;
-      // tslint:disable-next-line: ban
+      // eslint-disable-next-line no-restricted-properties
       workspace.showMessage(data.toString(), mtype);
     }
     logger[type](data);
@@ -44,6 +44,6 @@ export const registerLogger = (logger_: Logger) => {
 };
 
 export const onError = (error: Error) => {
-  // tslint:disable-next-line: ban
+  // eslint-disable-next-line no-restricted-syntax
   log('error', error);
 };
