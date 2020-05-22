@@ -1018,7 +1018,6 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>> {
           .concat(needDrawNodes)
           .concat(this.flattenedNodes.slice(endIndex + 1));
         this.offsetAfterLine(needDrawNodes.length - 1, startIndex);
-        const gotoNotifier = await this.gotoLineIndexNotifier(startIndex, 0);
         const { contents, highlightPositions } = await this.drawNodes(
           needDrawNodes,
         );
@@ -1026,7 +1025,6 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>> {
         this.nvim.pauseNotification();
         this.setLinesNotifier(contents, startIndex, endIndex + 1).notify();
         this.addHighlightsNotify(highlightPositions);
-        gotoNotifier.notify();
         await this.nvim.resumeNotification();
       },
       drawAll: () => this.render(),
