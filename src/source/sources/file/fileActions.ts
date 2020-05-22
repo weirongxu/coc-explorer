@@ -327,7 +327,7 @@ export function initFileActions(file: FileSource) {
     async ({ node }) => {
       // eslint-disable-next-line no-restricted-properties
       workspace.showMessage(
-        'Deprecated, use ["expanded?", "expand", "collapse"] instead of it',
+        'The action expandOrCollapse has been deprecated, use ["expanded?", "collapse", "expand"] instead of it',
         'warning',
       );
       if (node.directory) {

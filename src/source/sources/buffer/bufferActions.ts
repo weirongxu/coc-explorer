@@ -1,6 +1,6 @@
 import { BufferSource } from './bufferSource';
 import { prompt } from '../../../util';
-import { OpenStrategy, openStrategyList } from '../../../types';
+import { OpenStrategy } from '../../../types';
 
 export function initBufferActions(buffer: BufferSource) {
   const { nvim } = buffer;
