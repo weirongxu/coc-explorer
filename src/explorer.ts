@@ -165,7 +165,7 @@ export class Explorer {
               'n',
             );
           }
-        }),
+        }, 200),
         onBufEnter(async (bufnr) => {
           if (bufnr === this.bufnr) {
             await this.doActionsWithCount(
