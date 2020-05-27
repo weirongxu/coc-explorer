@@ -187,12 +187,36 @@ function! coc_explorer#is_float_window(winnr)
   endif
 endfunction
 
-function! coc_explorer#close_win_by_bufnr(bufnr)
-  let winnr = bufwinnr(a:bufnr)
-  if winnr >= 0
-    execute winnr . 'wincmd q'
+" doautocmd
+function! coc_explorer#do_autocmd(name) abort
+  if exists('#User#'.a:name)
+    exe 'doautocmd User '.a:name
   endif
 endfunction
+
+" Close win
+if exists('*nvim_win_close')
+  function! coc_explorer#close_win_by_bufnr(bufnr)
+    let winid = bufwinid(a:bufnr)
+    if winid >= 0
+      call nvim_win_close(winid, v:true)
+    endif
+  endfunction
+elseif has('nvim')
+  function! coc_explorer#close_win_by_bufnr(bufnr)
+    let winnr = bufwinnr(a:bufnr)
+    if winnr >= 0
+      execute winnr . 'wincmd c!'
+    endif
+  endfunction
+else
+  function! coc_explorer#close_win_by_bufnr(bufnr)
+    let winnr = bufwinnr(a:bufnr)
+    if winnr >= 0
+      execute winnr . 'wincmd c'
+    endif
+  endfunction
+endif
 
 " Select action
 let s:select_wins_chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'

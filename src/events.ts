@@ -175,18 +175,22 @@ export function onCocGitStatusChange(listener: () => EventResult) {
 }
 
 // User events
+export async function doAutocmd(name: string) {
+  await workspace.nvim.call('coc_explorer#do_autocmd', [name]);
+}
+
 export async function doCocExplorerOpenPre() {
-  await workspace.nvim.command('doautocmd User CocExplorerOpenPre');
+  return doAutocmd('CocExplorerOpenPre');
 }
 
 export async function doCocExplorerOpenPost() {
-  await workspace.nvim.command('doautocmd User CocExplorerOpenPost');
+  return doAutocmd('CocExplorerOpenPost');
 }
 
 export async function doCocExplorerQuitPre() {
-  await workspace.nvim.command('doautocmd User CocExplorerQuitPre');
+  return doAutocmd('CocExplorerQuitPre');
 }
 
 export async function doCocExplorerQuitPost() {
-  await workspace.nvim.command('doautocmd User CocExplorerQuitPost');
+  return doAutocmd('CocExplorerQuitPost');
 }

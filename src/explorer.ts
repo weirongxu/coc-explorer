@@ -753,8 +753,6 @@ export class Explorer {
       this.nvim.command(`${sourceWinnr}wincmd w`, true);
     }
     closeWinByBufnrNotifier(this.bufnr).notify();
-    // win.close() not work in nvim 3.8
-    // await win.close(true);
     await this.nvim.resumeNotification();
     if (!isHide) {
       await doCocExplorerQuitPost();
