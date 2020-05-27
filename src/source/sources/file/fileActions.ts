@@ -563,7 +563,7 @@ export function initFileActions(file: FileSource) {
         node.fullpath,
         'file',
       );
-      if (targetPath.length == 0) {
+      if (targetPath.length === 0) {
         return;
       }
 

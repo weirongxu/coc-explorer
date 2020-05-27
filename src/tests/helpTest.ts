@@ -53,7 +53,7 @@ export class Helper extends events.EventEmitter {
       this.proc = undefined;
     });
     this.nvim.on('notification', (method, args) => {
-      if (method == 'redraw') {
+      if (method === 'redraw') {
         for (const arg of args) {
           const event = arg[0];
           this.emit(event, arg.slice(1));
@@ -112,7 +112,7 @@ export class Helper extends events.EventEmitter {
 
   public async pumvisible(): Promise<boolean> {
     const res = (await this.nvim.call('pumvisible', [])) as number;
-    return res == 1;
+    return res === 1;
   }
 
   public wait(ms = 30): Promise<void> {
@@ -130,7 +130,7 @@ export class Helper extends events.EventEmitter {
     if (!items) {
       return false;
     }
-    const item = items.find((o: { word: string }) => o.word == word);
+    const item = items.find((o: { word: string }) => o.word === word);
     if (!item || !item.user_data) {
       return false;
     }
@@ -147,7 +147,7 @@ export class Helper extends events.EventEmitter {
 
   public async notVisible(word: string): Promise<boolean> {
     const items = await this.getItems();
-    return items.findIndex((o) => o.word == word) == -1;
+    return items.findIndex((o) => o.word === word) === -1;
   }
 
   public async getItems(): Promise<VimCompleteItem[]> {
@@ -182,7 +182,7 @@ export class Helper extends events.EventEmitter {
     let str = '';
     for (let i = 1, l = 70; i < l; i++) {
       const ch = await this.nvim.call('screenchar', [79, i]);
-      if (ch == -1) {
+      if (ch === -1) {
         break;
       }
       str += String.fromCharCode(ch);

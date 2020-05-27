@@ -54,10 +54,10 @@ export class FloatingFactory2 implements Disposable {
     this.explorer.context.subscriptions.push(
       onBufEnter(
         async (bufnr) => {
-          if (this.buffer && bufnr == this.buffer.id) {
+          if (this.buffer && bufnr === this.buffer.id) {
             return;
           }
-          if (bufnr == this.targetBufnr) {
+          if (bufnr === this.targetBufnr) {
             return;
           }
           await this.close();
@@ -68,7 +68,7 @@ export class FloatingFactory2 implements Disposable {
       onEvents(
         'InsertLeave',
         async (bufnr) => {
-          if (this.buffer && bufnr == this.buffer.id) {
+          if (this.buffer && bufnr === this.buffer.id) {
             return;
           }
           if (snippetManager.isActived(bufnr)) {
@@ -83,7 +83,7 @@ export class FloatingFactory2 implements Disposable {
         'MenuPopupChanged',
         async (ev, cursorline) => {
           const pumAlignTop = (this.pumAlignTop = cursorline > ev.row);
-          if (pumAlignTop == this.alignTop) {
+          if (pumAlignTop === this.alignTop) {
             await this.close();
           }
         },
@@ -115,10 +115,10 @@ export class FloatingFactory2 implements Disposable {
     bufnr: number,
     cursor: [number, number],
   ): Promise<void> {
-    if (!this.window || (this.buffer && bufnr == this.buffer.id)) {
+    if (!this.window || (this.buffer && bufnr === this.buffer.id)) {
       return;
     }
-    if (bufnr == this.targetBufnr && equals(cursor, this.cursor)) {
+    if (bufnr === this.targetBufnr && equals(cursor, this.cursor)) {
       return;
     }
     if (this.autoHide) {
@@ -127,8 +127,8 @@ export class FloatingFactory2 implements Disposable {
     }
     if (
       !insertMode ||
-      bufnr != this.targetBufnr ||
-      (this.cursor && cursor[0] != this.cursor[0])
+      bufnr !== this.targetBufnr ||
+      (this.cursor && cursor[0] !== this.cursor[0])
     ) {
       await this.close();
       return;
@@ -309,7 +309,7 @@ export class FloatingFactory2 implements Disposable {
     if (this.tokenSource) {
       this.tokenSource.cancel();
     }
-    if (docs.length == 0) {
+    if (docs.length === 0) {
       return false;
     }
     this.createTs = Date.now();
@@ -322,7 +322,7 @@ export class FloatingFactory2 implements Disposable {
       '[mode(),line("."),col("."),pumvisible()]',
     )) as [string, number, number, number];
     this.cursor = [line, col];
-    if (visible && this.alignTop == this.pumAlignTop) {
+    if (visible && this.alignTop === this.pumAlignTop) {
       return false;
     }
     if (!config || token.isCancellationRequested) {
@@ -332,7 +332,7 @@ export class FloatingFactory2 implements Disposable {
       return false;
     }
     const { nvim, alignTop } = this;
-    if (mode == 's') {
+    if (mode === 's') {
       await nvim.call('feedkeys', ['\x1b', 'in']);
     }
     // helps to fix undo issue, don't know why.
@@ -405,7 +405,7 @@ export class FloatingFactory2 implements Disposable {
       nvim.command('noa wincmd p', true);
     } else {
       const filetypes = distinct(docs.map((d) => d.filetype));
-      if (filetypes.length == 1) {
+      if (filetypes.length === 1) {
         this.popup.setFiletype(filetypes[0]);
       }
       this.popup.move({
@@ -431,17 +431,17 @@ export class FloatingFactory2 implements Disposable {
     }
     await nvim.resumeNotification();
 
-    if (mode == 's') {
+    if (mode === 's') {
       await snippetManager.selectCurrentPlaceholder(false);
     }
     return true;
   }
 
   private checkMode(mode: string, allowSelection: boolean): boolean {
-    if (mode == 's' && allowSelection) {
+    if (mode === 's' && allowSelection) {
       return true;
     }
-    return ['i', 'n', 'ic'].indexOf(mode) != -1;
+    return ['i', 'n', 'ic'].indexOf(mode) !== -1;
   }
 
   /**
@@ -494,7 +494,7 @@ export class FloatingFactory2 implements Disposable {
 }
 
 function cursorPostion(n: number): string {
-  if (n == 0) {
+  if (n === 0) {
     return 'cursor';
   }
   if (n < 0) {

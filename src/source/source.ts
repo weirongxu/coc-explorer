@@ -1229,7 +1229,7 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>> {
     );
 
     const sourceIndex = this.currentSourceIndex();
-    const isLastSource = this.explorer.sources.length - 1 == sourceIndex;
+    const isLastSource = this.explorer.sources.length - 1 === sourceIndex;
 
     return Notifier.create(() => {
       this.explorer

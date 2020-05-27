@@ -58,7 +58,7 @@ export class FloatingFactory3 implements Disposable {
     this.explorer.context.subscriptions.push(
       onBufEnter(
         async (bufnr) => {
-          if (bufnr == this.bufnr || bufnr == this.targetBufnr) {
+          if (bufnr === this.bufnr || bufnr === this.targetBufnr) {
             return;
           }
           await this.close();
@@ -70,7 +70,7 @@ export class FloatingFactory3 implements Disposable {
         'MenuPopupChanged',
         async (ev, cursorline) => {
           const pumAlignTop = (this.pumAlignTop = cursorline > ev.row);
-          if (pumAlignTop == this.alignTop) {
+          if (pumAlignTop === this.alignTop) {
             await this.close();
           }
         },
@@ -84,14 +84,14 @@ export class FloatingFactory3 implements Disposable {
 
   private async _onCursorMoved(): Promise<void> {
     const { bufnr, insertMode } = workspace;
-    if (bufnr == this.bufnr) {
+    if (bufnr === this.bufnr) {
       return;
     }
     if (this.autoHide) {
       await this.close();
       return;
     }
-    if (!insertMode || bufnr != this.targetBufnr) {
+    if (!insertMode || bufnr !== this.targetBufnr) {
       await this.close();
       return;
     }
@@ -204,7 +204,7 @@ export class FloatingFactory3 implements Disposable {
       return;
     }
     this.onCursorMoved.cancel();
-    if (docs.length == 0 || docs.every((d) => d.content.length === 0)) {
+    if (docs.length === 0 || docs.every((d) => d.content.length === 0)) {
       await this.close();
       return;
     }
@@ -294,7 +294,7 @@ export class FloatingFactory3 implements Disposable {
     if (err) {
       throw new Error(`Error on ${err[0]}: ${err[1]} - ${err[2]}`);
     }
-    if (mode == 's' && !token.isCancellationRequested) {
+    if (mode === 's' && !token.isCancellationRequested) {
       await snippetManager.selectCurrentPlaceholder(false);
       await delay(50);
     }

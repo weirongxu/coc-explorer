@@ -49,7 +49,7 @@ class Task extends EventEmitter implements ListTask {
       });
       rl.on('close', () => {
         remain = remain - 1;
-        if (remain == 0) {
+        if (remain === 0) {
           this.emit('end');
         }
       });
