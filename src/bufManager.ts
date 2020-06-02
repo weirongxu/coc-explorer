@@ -20,16 +20,16 @@ export class BufManager {
   constructor(public context: ExtensionContext) {
     context.subscriptions.push(
       onEvents(
-        [
-          'BufCreate',
-          'BufHidden',
-          'BufUnload',
-          'BufWinEnter',
-          'BufWinLeave',
-          'BufWritePost',
-        ],
+        ['BufCreate', 'BufHidden', 'BufUnload', 'BufWinEnter', 'BufWinLeave'],
         () => this.reload(),
       ),
+      onEvents('BufWritePost', async (bufnr) => {
+        await this.reload();
+        const node = this.bufferNodeMapById.get(bufnr);
+        if (node) {
+          this.modifiedEvent.fire(node.fullpath);
+        }
+      }),
       onBufDelete(() => this.reload()),
       onBufWipeout(() => this.reload()),
       ...(['TextChanged', 'TextChangedI', 'TextChangedP'] as const).map(
