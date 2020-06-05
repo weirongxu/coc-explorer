@@ -202,13 +202,6 @@ if exists('*nvim_win_close')
       call nvim_win_close(winid, v:true)
     endif
   endfunction
-elseif has('nvim')
-  function! coc_explorer#close_win_by_bufnr(bufnr)
-    let winnr = bufwinnr(a:bufnr)
-    if winnr >= 0
-      execute winnr . 'wincmd c!'
-    endif
-  endfunction
 else
   function! coc_explorer#close_win_by_bufnr(bufnr)
     let winnr = bufwinnr(a:bufnr)
