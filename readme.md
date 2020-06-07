@@ -88,6 +88,10 @@ let g:coc_explorer_global_presets = {
 \   'floating': {
 \      'position': 'floating',
 \   },
+\   'floatingTop': {
+\     'position': 'floating',
+\     'floating-position': 'center-top',
+\   },
 \   'floatingLeftside': {
 \      'position': 'floating',
 \      'floating-position': 'left-center',

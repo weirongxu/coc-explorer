@@ -27,7 +27,11 @@ let g:coc_explorer_global_presets = {
 \     'root-uri': '~/.vim',
 \   },
 \   'floating': {
-\     'position': "floating",
+\     'position': 'floating',
+\   },
+\   'floatingTop': {
+\     'position': 'floating',
+\     'floating-position': 'center-top',
 \   },
 \   'floatingLeftside': {
 \     'position': 'floating',
@@ -57,6 +61,7 @@ let g:coc_explorer_global_presets = {
 
 nmap <Leader>v  :CocCommand explorer --preset .vim<CR>
 nmap <Leader>ff :CocCommand explorer --preset floating<CR>
+nmap <Leader>ft :CocCommand explorer --preset floatingTop<CR>
 nmap <Leader>fl :CocCommand explorer --preset floatingLeftside<CR>
 nmap <Leader>fr :CocCommand explorer --preset floatingRightside<CR>
 nmap <Leader>s  :CocCommand explorer --preset simplify<CR>
