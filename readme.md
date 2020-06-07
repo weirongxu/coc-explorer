@@ -173,6 +173,7 @@ Explorer position for floating window, positions:
 - `left-center`
 - `center`
 - `right-center`
+- `center-top`
 - `<number for left>,<number for top>`
 
 default: `center`
@@ -360,7 +361,7 @@ Default: <pre><code>0</code></pre>
 Default: <pre><code>"vim-width"</code></pre>
 </details>
 <details>
-<summary><code>explorer.floating.position</code>: Position of Explorer for floating window. type: <code>"left-center" | "right-center" | "center" | integer</code></summary>
+<summary><code>explorer.floating.position</code>: Position of Explorer for floating window. type: <code>"left-center" | "right-center" | "center" | "center-top" | integer</code></summary>
 Default: <pre><code>"center"</code></pre>
 </details>
 <details>

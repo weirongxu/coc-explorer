@@ -99,6 +99,9 @@ export class Explorer {
       } else if (floatingPosition === 'right-center') {
         left = vimWidth - width;
         top = (vimHeight - height) / 2;
+      } else if (floatingPosition === 'center-top') {
+        left = (vimWidth - width) / 2;
+        top = 1;
       } else {
         [left, top] = floatingPosition;
       }

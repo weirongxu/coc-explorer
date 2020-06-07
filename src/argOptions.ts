@@ -83,7 +83,7 @@ export const argOptions = {
     ArgFloatingPositions | [number, number]
   >('floating-position', {
     parseArg: (s) => {
-      if (['left-center', 'right-center', 'center'].includes(s)) {
+      if (['left-center', 'right-center', 'center', 'center-top'].includes(s)) {
         return s as ArgFloatingPositions;
       } else {
         return s.split(',').map((i) => parseInt(i, 10)) as [number, number];
