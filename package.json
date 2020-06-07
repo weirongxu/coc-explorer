@@ -225,7 +225,8 @@
               "enum": [
                 "left-center",
                 "right-center",
-                "center"
+                "center",
+                "center-top"
               ]
             },
             {
