@@ -280,6 +280,11 @@
           "type": "string",
           "default": "coc-explorer"
         },
+        "explorer.floating.hideForActionList": {
+          "description": "Hide floating window, when opening action list",
+          "type": "boolean",
+          "default": true
+        },
         "explorer.autoExpandMaxDepth": {
           "description": "Automatically expand maximum depth of one time",
           "type": "integer",
