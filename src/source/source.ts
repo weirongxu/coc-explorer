@@ -581,11 +581,14 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>> {
   async startCocList(list: IList) {
     const isFloating =
       (await this.explorer.args.value(argOptions.position)) === 'floating';
-    if (isFloating) {
+    const floatingHideOnCocList = this.config.get('floating.hideOnCocList', true);
+
+    let isShown = true;
+    if (isFloating && floatingHideOnCocList) {
       await this.explorer.hide();
+      isShown = false;
     }
 
-    let isShown = isFloating ? false : true;
     const shownExplorerEmitter = new Emitter<void>();
     const disposable = listManager.registerList(list);
     await listManager.start([list.name]);

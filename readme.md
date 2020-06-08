@@ -398,6 +398,10 @@ Default: <pre><code>[
 Default: <pre><code>"coc-explorer"</code></pre>
 </details>
 <details>
+<summary><code>explorer.floating.hideOnCocList</code>: Hide floating window, when opening CocList. type: <code>boolean</code></summary>
+Default: <pre><code>true</code></pre>
+</details>
+<details>
 <summary><code>explorer.autoExpandMaxDepth</code>: Automatically expand maximum depth of one time. type: <code>integer</code></summary>
 Default: <pre><code>20</code></pre>
 </details>
