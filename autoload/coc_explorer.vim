@@ -124,10 +124,18 @@ function s:floating_border_buffer_render(
         \  s:floating_win_config(a:width, a:height, a:left, a:top)
         \)
   let repeat_width = a:width - 2
+  let title = a:title
+  let title_width = strdisplaywidth(title)
+ 
+  " if title is not empty, pad it from both sides
+  if strlen(a:title)
+      let title = ' ' . a:title . ' ' 
+      let title_width -= 2
+  endif
   let content = [
         \ a:chars[0]
-        \ . ' ' . a:title . ' '
-        \ . repeat(a:chars[1], repeat_width - strdisplaywidth(a:title) - 2)
+        \ . title
+        \ . repeat(a:chars[1], repeat_width - title_width)
         \ . a:chars[2]]
   let content += repeat([a:chars[7] . repeat(' ', repeat_width) . a:chars[3]], a:height - 2)
   let content += [a:chars[6] . repeat(a:chars[5], repeat_width) . a:chars[4]]
