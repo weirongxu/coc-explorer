@@ -175,6 +175,7 @@ function! coc_explorer#init_buf(is_border)
               \ noswapfile noundofile
               \ nomodeline
               \ signcolumn=no
+              \ nocursorline
               \ nocursorcolumn
               \ nofoldenable foldcolumn=0
               \ nonumber norelativenumber
