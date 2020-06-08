@@ -583,11 +583,12 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>> {
       (await this.explorer.args.value(argOptions.position)) === 'floating';
     const floatingHideForActionList = this.config.get('floating.hideForActionList', true);
 
+    let isShown = true;
     if (isFloating && floatingHideForActionList) {
       await this.explorer.hide();
+      isShown = false;
     }
 
-    let isShown = isFloating ? false : true;
     const shownExplorerEmitter = new Emitter<void>();
     const disposable = listManager.registerList(list);
     await listManager.start([list.name]);
