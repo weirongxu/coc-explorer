@@ -581,7 +581,9 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>> {
   async startCocList(list: IList) {
     const isFloating =
       (await this.explorer.args.value(argOptions.position)) === 'floating';
-    if (isFloating) {
+    const floatingHideForActionList = this.config.get('floating.hideForActionList', true);
+
+    if (isFloating && floatingHideForActionList) {
       await this.explorer.hide();
     }
 
