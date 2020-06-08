@@ -101,7 +101,7 @@ export class Explorer {
         top = (vimHeight - height) / 2;
       } else if (floatingPosition === 'center-top') {
         left = (vimWidth - width) / 2;
-        top = 1;
+        top = 0;
       } else {
         [left, top] = floatingPosition;
       }
