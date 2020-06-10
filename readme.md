@@ -103,7 +103,7 @@ let g:coc_explorer_global_presets = {
 \      'floating-width': 50,
 \   },
 \   'simplify': {
-\     'file.child.template': '[selection | clip | 1] [indent][icon | 1] [filename omitCenter 1]'
+\     'file-child-template': '[selection | clip | 1] [indent][icon | 1] [filename omitCenter 1]'
 \   }
 \ }
 
