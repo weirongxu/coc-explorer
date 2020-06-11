@@ -44,7 +44,7 @@ const hl = hlGroupManager.linkGroup.bind(hlGroupManager);
 export const fileHighlights = {
   title: hl('FileRoot', 'Constant'),
   rootName: hl('FileRootName', 'Identifier'),
-  expandIcon: hl('FileExpandIcon', 'Direcoty'),
+  expandIcon: hl('FileExpandIcon', 'Directory'),
   fullpath: hl('FileFullpath', 'Comment'),
   filename: hl('FileFilename', 'Ignore'),
   directory: hl('FileDirectory', 'Directory'),
