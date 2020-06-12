@@ -20,8 +20,8 @@ function nodeSymbol(node: FileNode) {
 
 fileColumnRegistrar.registerColumn('child', 'icon', ({ source }) => ({
   async draw(nodes): Promise<ColumnDrawHandle<FileNode>> {
-    const enabledVimDevicons = source.config.enableVimDevicons;
-    const enabledNerdFont = source.config.enableNerdfont;
+    const enabledVimDevicons = source.config.get('icon.enableVimDevicons');
+    const enabledNerdFont = source.config.get('icon.enableNerdfont');
 
     if (enabledVimDevicons) {
       await Promise.all(

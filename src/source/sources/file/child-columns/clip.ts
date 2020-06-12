@@ -6,7 +6,7 @@ fileColumnRegistrar.registerColumn('child', 'clip', ({ source }) => ({
     let copy = source.getColumnConfig<string>('clip.copy');
     let cut = source.getColumnConfig<string>('clip.cut');
 
-    if (source.config.enableNerdfont) {
+    if (source.config.get('icon.enableNerdfont')) {
       copy = copy ?? '';
       cut = cut ?? '';
     } else {

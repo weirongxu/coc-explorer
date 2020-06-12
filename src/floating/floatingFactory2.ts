@@ -197,7 +197,9 @@ export class FloatingFactory2 implements Disposable {
     ];
     const position = await this.explorer.args.value(argOptions.position);
     const isFloating = position === 'floating';
-    const enabledFloatingBorder = this.explorer.config.enableFloatingBorder;
+    const enabledFloatingBorder = this.explorer.config.get(
+      'floating.border.enable',
+    );
     const containerWin =
       isFloating && enabledFloatingBorder
         ? await this.explorer.floatingBorderWin

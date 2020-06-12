@@ -9,7 +9,7 @@ bufferColumnRegistrar.registerColumn('child', 'readonly', ({ source }) => ({
       drawNode(row, { node }) {
         if (node.readonly) {
           row.add(
-            node.readonly ? (source.config.enableNerdfont ? '' : 'RO') : '',
+            node.readonly ? (source.config.get('icon.enableNerdfont') ? '' : 'RO') : '',
             {
               hl: bufferHighlights.readonly,
             },

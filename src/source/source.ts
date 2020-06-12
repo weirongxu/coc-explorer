@@ -150,13 +150,13 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>> {
     get expanded() {
       return (
         source.config.get<string>('icon.expanded') ||
-        (source.config.enableNerdfont ? '' : '-')
+        (source.config.get('icon.enableNerdfont') ? '' : '-')
       );
     },
     get collapsed() {
       return (
         source.config.get<string>('icon.collapsed') ||
-        (source.config.enableNerdfont ? '' : '+')
+        (source.config.get('icon.enableNerdfont') ? '' : '+')
       );
     },
     get selected() {
@@ -412,7 +412,7 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>> {
     const { nvim } = this;
     const getEscapePath = async () => {
       let path = await getFullpath();
-      if (this.config.openActionRelativePath) {
+      if (this.config.get('openActionRelativePath')) {
         path = await this.nvim.call('fnamemodify', [path, ':.']);
       }
       return await this.nvim.call('fnameescape', [path]);
@@ -1065,7 +1065,7 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>> {
     node: TreeNode,
     options: ExpandNodeOptions,
   ) {
-    const autoExpandOptions = this.config.autoExpandOptions;
+    const autoExpandOptions = this.config.get('autoExpandOptions');
     const compact = options.compact ?? autoExpandOptions.includes('compact');
     const uncompact =
       options.uncompact ?? autoExpandOptions.includes('uncompact');
@@ -1093,7 +1093,7 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>> {
       this.nodeStores.expand(node);
       node.children = await this.load(node);
 
-      if (depth > this.config.autoExpandMaxDepth) {
+      if (depth > this.config.get('autoExpandMaxDepth')) {
         return;
       }
       const singleExpandableNode =
@@ -1165,7 +1165,10 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>> {
   private async collapseNodeRecursive(node: TreeNode, recursive: boolean) {
     if (node.expandable) {
       this.nodeStores.collapse(node);
-      if (recursive || this.config.autoCollapseOptions.includes('recursive')) {
+      if (
+        recursive ||
+        this.config.get('autoCollapseOptions').includes('recursive')
+      ) {
         if (node.children) {
           for (const child of node.children) {
             await this.collapseNodeRecursive(child, recursive);

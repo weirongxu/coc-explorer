@@ -134,9 +134,9 @@ export class FileSource extends ExplorerSource<FileNode> {
   async init() {
     const { nvim } = this;
 
-    if (this.config.activeMode) {
+    if (this.config.get('activeMode')) {
       if (workspace.isNvim) {
-        if (this.config.autoReveal) {
+        if (this.config.get('autoReveal')) {
           this.subscriptions.push(
             onBufEnter(async (bufnr) => {
               if (bufnr === this.explorer.bufnr) {
@@ -234,7 +234,7 @@ export class FileSource extends ExplorerSource<FileNode> {
 
     const hasRevealPath = args.has(argOptions.reveal);
 
-    if (this.config.autoReveal || hasRevealPath) {
+    if (this.config.get('autoReveal') || hasRevealPath) {
       const [revealNode, notifiers] = await this.revealNodeByPathNotifier(
         revealPath,
       );

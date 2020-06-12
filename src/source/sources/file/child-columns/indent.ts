@@ -34,7 +34,7 @@ function printIndentLine(node: FileNode) {
 
 fileColumnRegistrar.registerColumn('child', 'indent', ({ source }) => ({
   draw() {
-    const enabledNerdFont = source.config.enableNerdfont;
+    const enabledNerdFont = source.config.get('icon.enableNerdfont');
     return {
       drawNode(row, { node }) {
         const enableIndentLine = (() => {

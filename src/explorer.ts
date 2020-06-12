@@ -127,9 +127,9 @@ export class Explorer {
       height,
       left,
       top,
-      config.enableFloatingBorder,
-      config.floatingBorderChars,
-      config.floatingBorderTitle,
+      config.get('floating.border.enable'),
+      config.get('floating.border.chars'),
+      config.get('floating.border.title'),
     ]);
 
     const explorer = new Explorer(
@@ -154,7 +154,7 @@ export class Explorer {
     this.context = explorerManager.context;
     this.floatingWindow = new FloatingPreview(this);
 
-    if (this.config.previewActionOnHover) {
+    if (this.config.get('previewAction.onHover')) {
       this.context.subscriptions.push(
         onCursorMoved(async (bufnr) => {
           if (bufnr === this.bufnr) {
@@ -334,7 +334,8 @@ export class Explorer {
         if (nodes && nodes[0] && source) {
           const node = nodes[0];
           const previewStrategy =
-            (args[0] as PreviewStrategy) ?? this.config.previewStrategy;
+            (args[0] as PreviewStrategy) ??
+            this.config.get('previewAction.strategy');
           const debounceTimeout = args[1] ? parseInt(args[1]) : 0;
           return source.previewAction(node, previewStrategy, debounceTimeout);
         }
@@ -690,9 +691,9 @@ export class Explorer {
         left,
         top,
         this.floatingBorderBufnr,
-        this.config.enableFloatingBorder,
-        this.config.floatingBorderChars,
-        this.config.floatingBorderTitle,
+        this.config.get('floating.border.enable'),
+        this.config.get('floating.border.chars'),
+        this.config.get('floating.border.title'),
       ]);
     }
   }

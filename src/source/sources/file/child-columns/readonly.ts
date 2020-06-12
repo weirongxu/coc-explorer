@@ -3,7 +3,7 @@ import { fileHighlights } from '../fileSource';
 
 fileColumnRegistrar.registerColumn('child', 'readonly', ({ source }) => ({
   draw() {
-    const enabledNerdFont = source.config.enableNerdfont;
+    const enabledNerdFont = source.config.get('icon.enableNerdfont');
 
     return {
       labelOnly: true,

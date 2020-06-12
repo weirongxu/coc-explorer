@@ -7,9 +7,12 @@ fileColumnRegistrar.registerColumn('child', 'timeCreated', ({ source }) => ({
     return {
       drawNode(row, { node }) {
         if (node.lstat) {
-          row.add(format(node.lstat.ctime, source.config.datetimeFormat), {
-            hl: fileHighlights.timeCreated,
-          });
+          row.add(
+            format(node.lstat.ctime, source.config.get('datetime.format')),
+            {
+              hl: fileHighlights.timeCreated,
+            },
+          );
         }
       },
     };

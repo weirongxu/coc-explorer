@@ -7,9 +7,12 @@ fileColumnRegistrar.registerColumn('child', 'timeAccessed', ({ source }) => ({
     return {
       drawNode(row, { node }) {
         if (node.lstat) {
-          row.add(format(node.lstat.atime, source.config.datetimeFormat), {
-            hl: fileHighlights.timeAccessed,
-          });
+          row.add(
+            format(node.lstat.atime, source.config.get('datetime.format')),
+            {
+              hl: fileHighlights.timeAccessed,
+            },
+          );
         } else {
           row.add('                 ');
         }

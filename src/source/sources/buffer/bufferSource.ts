@@ -71,7 +71,7 @@ export class BufferSource extends ExplorerSource<BufferNode> {
   );
 
   async init() {
-    if (this.config.activeMode) {
+    if (this.config.get('activeMode')) {
       if (workspace.isNvim) {
         this.subscriptions.push(
           this.bufManager.onReload(
