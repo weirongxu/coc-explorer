@@ -45,7 +45,6 @@ import {
   MoveStrategy,
   moveStrategyList,
 } from './types';
-import pFilter from 'p-filter';
 
 export class Explorer {
   nvim = workspace.nvim;

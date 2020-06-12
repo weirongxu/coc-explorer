@@ -1,5 +1,5 @@
 import { workspace, extensions } from 'coc.nvim';
-import { debounce, prettyPrint } from '../../../util';
+import { debounce } from '../../../util';
 import { fsExists } from '../../../util';
 import { hlGroupManager } from '../../highlightManager';
 import { ExplorerSource, BaseTreeNode } from '../../source';
