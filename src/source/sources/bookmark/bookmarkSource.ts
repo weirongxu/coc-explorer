@@ -1,5 +1,5 @@
-import { workspace } from 'coc.nvim';
-import { debounce } from '../../../util';
+import { workspace, extensions } from 'coc.nvim';
+import { debounce, prettyPrint } from '../../../util';
 import { fsExists } from '../../../util';
 import { hlGroupManager } from '../../highlightManager';
 import { ExplorerSource, BaseTreeNode } from '../../source';
@@ -15,7 +15,8 @@ import BookmarkDB from './util/db';
 import { decode } from './util/fp';
 import { onCocBookmarkChange } from '../../../events';
 
-export interface BookmarkNode extends BaseTreeNode<BookmarkNode, 'root' | 'child'> {
+export interface BookmarkNode
+  extends BaseTreeNode<BookmarkNode, 'root' | 'child'> {
   fullpath: string;
   filename: string;
   lnum: number;
@@ -54,10 +55,13 @@ export class BookmarkSource extends ExplorerSource<BookmarkNode> {
     line: '',
     annotation: undefined,
   };
-  sourcePainters: SourcePainters<BookmarkNode> = new SourcePainters<BookmarkNode>(
-    this,
-    bookmarkColumnRegistrar,
-  );
+  sourcePainters: SourcePainters<BookmarkNode> = new SourcePainters<
+    BookmarkNode
+  >(this, bookmarkColumnRegistrar);
+
+  static get enabled(): boolean | Promise<boolean> {
+    return extensions.getExtensionState('coc-bookmark') === 'activated';
+  }
 
   async init() {
     if (this.config.get('activeMode')) {
@@ -65,8 +69,8 @@ export class BookmarkSource extends ExplorerSource<BookmarkNode> {
         onCocBookmarkChange(
           debounce(500, async () => {
             await this.reload(this.rootNode);
-          })
-        )
+          }),
+        ),
       );
     }
 
@@ -92,13 +96,18 @@ export class BookmarkSource extends ExplorerSource<BookmarkNode> {
     const extRoot = workspace.env.extensionRoot;
     const bookmarkPath = path.join(extRoot, 'coc-bookmark-data/bookmark.json');
     const db = new BookmarkDB(bookmarkPath);
-    const data = await db.load() as Object;
+    const data = (await db.load()) as Object;
 
     const bookmarkNodes = [] as BookmarkNode[];
     for (const [filepath, bookmarks] of Object.entries(data)) {
       const fullpath = decode(filepath);
-      if (fullpath.startsWith(parentNode.fullpath) && await fsExists(fullpath)) {
-        for (const lnum of Object.keys(bookmarks).sort((l1, l2) => Number(l1) - Number(l2))) {
+      if (
+        fullpath.startsWith(parentNode.fullpath) &&
+        (await fsExists(fullpath))
+      ) {
+        for (const lnum of Object.keys(bookmarks).sort(
+          (l1, l2) => Number(l1) - Number(l2),
+        )) {
           const bookmark: BookmarkItem = bookmarks[lnum];
           bookmarkNodes.push({
             type: 'child',

@@ -37,7 +37,7 @@ Explorer extension for [coc.nvim](https://github.com/neoclide/coc.nvim)
 - [x] File tree source
   - [x] Basic actions
     - [x] Open file in select / vsplit / tab
-           `explorer.openAction.strategy` options:
+          `explorer.openAction.strategy` options:
       - select: Open action use selection UI
       - vsplit: Open action use vsplit
       - split: Open action use split
@@ -59,6 +59,7 @@ Explorer extension for [coc.nvim](https://github.com/neoclide/coc.nvim)
   - [ ] Exrename, like [defx](https://github.com/Shougo/defx.nvim)
   - [ ] Archive file (use `lsar / unar`)
   - [ ] SSH
+- [x] Bookmark source (require [coc-bookmark](https://github.com/voldikss/coc-bookmark))
 - [ ] Git source
   - [ ] Git actions
 - [x] Show help

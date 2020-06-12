@@ -45,6 +45,7 @@ import {
   MoveStrategy,
   moveStrategyList,
 } from './types';
+import pFilter from 'p-filter';
 
 export class Explorer {
   nvim = workspace.nvim;
@@ -778,20 +779,21 @@ export class Explorer {
 
   private async initArgs(args: Args) {
     this._args = args;
-    const sources = await args.value(argOptions.sources);
-    if (!sources) {
+    const argSources = await args.value(argOptions.sources);
+    if (!argSources) {
       return;
     }
-    if (!this.lastArgSources || this.lastArgSources !== sources.toString()) {
-      this.lastArgSources = sources.toString();
+    if (!this.lastArgSources || this.lastArgSources !== argSources.toString()) {
+      this.lastArgSources = argSources.toString();
 
-      this._sources = sources
-        .map((sourceArg) =>
+      const sources = await Promise.all(
+        argSources.map((sourceArg) =>
           sourceManager.createSource(sourceArg.name, this, sourceArg.expand),
-        )
-        .filter(
-          (source): source is ExplorerSource<any> => source !== undefined,
-        );
+        ),
+      );
+      this._sources = sources.filter(
+        (source): source is ExplorerSource<any> => source !== undefined,
+      );
     }
 
     this.explorerManager.rootPathRecords.add(
