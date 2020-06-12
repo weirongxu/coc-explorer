@@ -422,6 +422,10 @@
           "type": "array",
           "default": [
             {
+              "name": "bookmark",
+              "expand": false
+            },
+            {
               "name": "buffer",
               "expand": false
             },
@@ -441,8 +445,9 @@
                 "description": "Explorer source name",
                 "type": "string",
                 "enum": [
-                  "file",
-                  "buffer"
+                  "bookmark",
+                  "buffer",
+                  "file"
                 ]
               },
               "expand": {
@@ -538,6 +543,21 @@
           "description": "Icon for hidden status",
           "type": "string",
           "default": "I"
+        },
+        "explorer.bookmark.root.template": {
+          "description": "Template for root node of buffer source",
+          "type": "string",
+          "default": "[icon] [title]"
+        },
+        "explorer.bookmark.child.template": {
+          "description": "Template for child node of buffer source",
+          "type": "string",
+          "default": "[selection | 1] [filename] [position] "
+        },
+        "explorer.bookmark.child.labelingTemplate": {
+          "description": "Labeling template for child node of buffer source",
+          "type": "string",
+          "default": "[filename][fullpath][position][line][annotation]"
         },
         "explorer.buffer.showHiddenBuffers": {
           "description": "Default show hidden buffers",
