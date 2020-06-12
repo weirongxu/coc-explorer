@@ -371,6 +371,10 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>> {
       name: 'open strategy',
       description: openStrategyList.join(' | '),
     },
+    {
+      name: 'open with position',
+      description: 'line-number,column-number',
+    },
   ];
 
   readonly openActionMenu = {
@@ -391,10 +395,15 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>> {
       openByWinnr: originalOpenByWinnr,
       openStrategy,
       args = [],
+      position,
     }: {
       openByWinnr?: (winnr: number) => void | Promise<void>;
       openStrategy?: OpenStrategy;
       args?: string[];
+      position?: {
+        lineIndex: number;
+        columnIndex?: number;
+      };
     },
   ) {
     if (node.expandable) {
@@ -408,17 +417,28 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>> {
       }
       return await this.nvim.call('fnameescape', [path]);
     };
+    const jumpToNotify = () => {
+      if (position) {
+        this.nvim.call(
+          'cursor',
+          [position.lineIndex + 1, (position.columnIndex ?? 0) + 1],
+          true,
+        );
+      }
+    };
     const openByWinnr =
       originalOpenByWinnr ??
       (async (winnr: number) => {
         nvim.pauseNotification();
         nvim.command(`${winnr}wincmd w`, true);
         nvim.command(`edit ${await getEscapePath()}`, true);
+        jumpToNotify();
         if (workspace.isVim) {
           // Avoid vim highlight not working,
           // https://github.com/weirongxu/coc-explorer/issues/113
           nvim.command('redraw', true);
         }
+        (await this.explorer.tryQuitOnOpenNotifier()).notify();
         await nvim.resumeNotification();
       });
     const actions: Record<
@@ -433,7 +453,6 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>> {
         await this.explorer.selectWindowsUI(
           async (winnr) => {
             await openByWinnr(winnr);
-            await this.explorer.tryQuitOnOpen();
           },
           async () => {
             await actions.vsplit();
@@ -449,8 +468,11 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>> {
         type Mode = 'intelligent' | 'plain';
         const mode: Mode = (args[0] ?? 'intelligent') as Mode;
         if (mode === 'plain') {
-          await nvim.command(`split ${await getEscapePath()}`);
-          await this.explorer.tryQuitOnOpen();
+          nvim.pauseNotification();
+          nvim.command(`split ${await getEscapePath()}`, true);
+          jumpToNotify();
+          (await this.explorer.tryQuitOnOpenNotifier()).notify();
+          await nvim.resumeNotification();
         } else {
           const position = await this.explorer.args.value(argOptions.position);
           if (position === 'floating') {
@@ -480,8 +502,9 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>> {
                 nvim.pauseNotification();
                 nvim.call('win_gotoid', [targetWinid], true);
                 nvim.command(`split ${await getEscapePath()}`, true);
+                jumpToNotify();
+                (await this.explorer.tryQuitOnOpenNotifier()).notify();
                 await nvim.resumeNotification();
-                await this.explorer.tryQuitOnOpen();
               }
             } else {
               await actions.vsplit();
@@ -502,12 +525,16 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>> {
         } else if (position === 'tab') {
           nvim.command('wincmd L', true);
         }
+        jumpToNotify();
+        (await this.explorer.tryQuitOnOpenNotifier()).notify();
         await nvim.resumeNotification();
-        await this.explorer.tryQuitOnOpen();
       },
       tab: async () => {
         await this.explorer.tryQuitOnOpen();
-        await nvim.command(`tabedit ${await getEscapePath()}`);
+        nvim.pauseNotification();
+        nvim.command(`tabedit ${await getEscapePath()}`, true);
+        jumpToNotify();
+        await nvim.resumeNotification();
       },
       previousBuffer: async () => {
         const prevWinnr = await this.explorer.explorerManager.prevWinnrByPrevBufnr();
@@ -516,7 +543,6 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>> {
         } else {
           await actions.vsplit();
         }
-        await this.explorer.tryQuitOnOpen();
       },
       previousWindow: async () => {
         const prevWinnr = await this.explorer.explorerManager.prevWinnrByPrevWindowID();
@@ -525,7 +551,6 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>> {
         } else {
           await actions.vsplit();
         }
-        await this.explorer.tryQuitOnOpen();
       },
       sourceWindow: async () => {
         const srcWinnr = await this.explorer.sourceWinnr();
@@ -534,7 +559,6 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>> {
         } else {
           await actions.vsplit();
         }
-        await this.explorer.tryQuitOnOpen();
       },
     };
     const openStrategyOption = await this.explorer.args.value(
@@ -581,7 +605,10 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>> {
   async startCocList(list: IList) {
     const isFloating =
       (await this.explorer.args.value(argOptions.position)) === 'floating';
-    const floatingHideOnCocList = this.config.get('floating.hideOnCocList', true);
+    const floatingHideOnCocList = this.config.get(
+      'floating.hideOnCocList',
+      true,
+    );
 
     let isShown = true;
     if (isFloating && floatingHideOnCocList) {

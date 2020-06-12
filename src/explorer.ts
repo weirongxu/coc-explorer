@@ -34,10 +34,8 @@ import {
   onCursorMoved,
   onBufEnter,
   onEvents,
-  doCocExplorerOpenPre,
-  doCocExplorerOpenPost,
-  doCocExplorerQuitPre,
-  doCocExplorerQuitPost,
+  doUserAutocmd,
+  doUserAutocmdNotifier,
 } from './events';
 import { ActionExp } from './actions/mapping';
 import { RegisteredAction } from './actions/registered';
@@ -700,7 +698,7 @@ export class Explorer {
   }
 
   async open(args: Args, isFirst: boolean) {
-    await doCocExplorerOpenPre();
+    await doUserAutocmd('CocExplorerOpenPre');
 
     if (this.isHelpUI) {
       await this.quitHelp();
@@ -721,17 +719,22 @@ export class Explorer {
       )),
     ]);
 
-    await doCocExplorerOpenPost();
+    await doUserAutocmd('CocExplorerOpenPost');
   }
 
-  async tryQuitOnOpen() {
+  async tryQuitOnOpenNotifier() {
     const quitonOpen = await this.args.value(argOptions.quitOnOpen);
     if (
       quitonOpen ||
       (await this.args.value(argOptions.position)) === 'floating'
     ) {
-      await this.quit();
+      return this.quitNotifier();
     }
+    return Notifier.noop();
+  }
+
+  async tryQuitOnOpen() {
+    return Notifier.run(this.tryQuitOnOpenNotifier());
   }
 
   async hide() {
@@ -746,20 +749,24 @@ export class Explorer {
     }
   }
 
-  async quit(isHide = false) {
+  async quitNotifier(isHide = false) {
     if (!isHide) {
-      await doCocExplorerQuitPre();
+      await doUserAutocmd('CocExplorerQuitPre');
     }
     const sourceWinnr = await this.sourceWinnr();
-    this.nvim.pauseNotification();
-    if (sourceWinnr && this.bufnr === workspace.bufnr) {
-      this.nvim.command(`${sourceWinnr}wincmd w`, true);
-    }
-    closeWinByBufnrNotifier(this.bufnr).notify();
-    await this.nvim.resumeNotification();
-    if (!isHide) {
-      await doCocExplorerQuitPost();
-    }
+    return Notifier.create(() => {
+      if (sourceWinnr && this.bufnr === workspace.bufnr) {
+        this.nvim.command(`${sourceWinnr}wincmd w`, true);
+      }
+      closeWinByBufnrNotifier(this.bufnr).notify();
+      if (!isHide) {
+        doUserAutocmdNotifier('CocExplorerQuitPost').notify();
+      }
+    });
+  }
+
+  async quit(isHide = false) {
+    return Notifier.run(await this.quitNotifier(isHide));
   }
 
   async quitFloatingBorderWin() {

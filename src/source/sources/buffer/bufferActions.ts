@@ -62,15 +62,19 @@ export function initBufferActions(buffer: BufferSource) {
         const info = (await nvim.call('getbufinfo', node.bufnr)) as any[];
         if (info.length && info[0].windows.length) {
           const winid = info[0].windows[0];
-          await nvim.call('win_gotoid', winid);
-          await buffer.explorer.tryQuitOnOpen();
+          nvim.pauseNotification();
+          nvim.call('win_gotoid', winid, true);
+          (await buffer.explorer.tryQuitOnOpenNotifier()).notify();
+          await nvim.resumeNotification();
           return;
         }
       }
-      await nvim.command(`buffer ${node.bufnr}`);
-      await buffer.explorer.tryQuitOnOpen();
+      nvim.pauseNotification();
+      nvim.command(`buffer ${node.bufnr}`, true);
+      (await buffer.explorer.tryQuitOnOpenNotifier()).notify();
+      await nvim.resumeNotification();
     },
-    'open buffer via drop command',
+    'open buffer by drop command',
     { multi: true },
   );
   buffer.addNodeAction(

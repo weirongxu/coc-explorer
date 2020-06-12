@@ -6,8 +6,9 @@ import {
   ExtensionContext,
 } from 'coc.nvim';
 import { getEnableDebug } from './config';
-import { asyncCatchError, throttle } from './util';
+import { asyncCatchError, throttle, Notifier } from './util';
 import { onError } from './logger';
+import { LiteralUnion } from 'type-fest';
 
 type Arguments<F extends Function> = F extends (...args: infer Args) => any
   ? Args
@@ -175,22 +176,20 @@ export function onCocGitStatusChange(listener: () => EventResult) {
 }
 
 // User events
-export async function doAutocmd(name: string) {
-  await workspace.nvim.call('coc_explorer#do_autocmd', [name]);
+export type CocExplorerUserEvents = LiteralUnion<
+  | 'CocExplorerOpenPre'
+  | 'CocExplorerOpenPost'
+  | 'CocExplorerQuitPre'
+  | 'CocExplorerQuitPost',
+  string
+>;
+
+export function doUserAutocmdNotifier(name: CocExplorerUserEvents) {
+  return Notifier.create(() => {
+    workspace.nvim.call('coc_explorer#do_autocmd', [name], true);
+  });
 }
 
-export async function doCocExplorerOpenPre() {
-  return doAutocmd('CocExplorerOpenPre');
-}
-
-export async function doCocExplorerOpenPost() {
-  return doAutocmd('CocExplorerOpenPost');
-}
-
-export async function doCocExplorerQuitPre() {
-  return doAutocmd('CocExplorerQuitPre');
-}
-
-export async function doCocExplorerQuitPost() {
-  return doAutocmd('CocExplorerQuitPost');
+export async function doUserAutocmd(name: CocExplorerUserEvents) {
+  await doUserAutocmdNotifier(name).run();
 }

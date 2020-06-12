@@ -228,8 +228,10 @@ export function initFileActions(file: FileSource) {
     'drop',
     async ({ node }) => {
       if (!node.directory) {
+        nvim.pauseNotification();
         await nvim.command(`drop ${node.fullpath}`);
-        await file.explorer.tryQuitOnOpen();
+        (await file.explorer.tryQuitOnOpenNotifier()).notify();
+        await nvim.resumeNotification();
       }
     },
     'open file by drop command',

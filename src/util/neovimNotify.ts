@@ -32,7 +32,7 @@ export class Notifier {
     const notifiers = await Promise.all(notifierPromises);
     workspace.nvim.pauseNotification();
     this.notifyAll(notifiers);
-    return workspace.nvim.resumeNotification();
+    return workspace.nvim.resumeNotification() as Promise<unknown>;
   }
 
   static combine(notifiers: NotifierCell[]) {
