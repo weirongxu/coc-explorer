@@ -34,11 +34,14 @@ const hl = hlGroupManager.linkGroup.bind(hlGroupManager);
 
 export const bookmarkHighlights = {
   title: hl('BookmarkRoot', 'Constant'),
-  expandIcon: hl('BookmarkExpandIcon', 'Special'),
+  expandIcon: hl('BookmarkExpandIcon', 'Directory'),
   filename: hl('BookmarkFilename', 'String'),
-  fullpath: hl('BookmarkFullpath', 'Directory'),
-  position: hl('BookmarkPosition', 'Special'),
-  line: hl('BookmarkLine', 'Statement'),
+  fullpath: hl('BookmarkFullpath', 'Special'),
+  position: hl('BookmarkPosition', 'Comment'),
+  line: hlGroupManager.group(
+    'BookmarkLine',
+    'ctermbg=27 ctermfg=0 guibg=#1593e5 guifg=#ffffff',
+  ),
   annotation: hl('BookmarkAnnotation', 'Comment'),
 };
 
