@@ -1,6 +1,7 @@
 import { BufferSource } from './bufferSource';
 import { prompt } from '../../../util';
 import { OpenStrategy } from '../../../types';
+import { workspace } from 'coc.nvim';
 
 export function initBufferActions(buffer: BufferSource) {
   const { nvim } = buffer;
@@ -29,6 +30,11 @@ export function initBufferActions(buffer: BufferSource) {
   buffer.addNodeAction(
     'expandOrCollapse',
     async ({ node }) => {
+      // eslint-disable-next-line no-restricted-properties
+      workspace.showMessage(
+        'The action expandOrCollapse has been deprecated, use ["expanded?", "collapse", "expand"] instead of it',
+        'warning',
+      );
       if (node.expandable) {
         if (buffer.isExpanded(node)) {
           await buffer.doAction('collapse', node);
