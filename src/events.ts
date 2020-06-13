@@ -128,9 +128,10 @@ const bufDeleteListener = new EventListener<(bufnr: number) => void>();
 const bufWipeoutListener = new EventListener<(bufnr: number) => void>();
 const CocDiagnosticChangeListener = new EventListener<() => EventResult>();
 const CocGitStatusChangeListener = new EventListener<() => EventResult>();
+const CocBookmarkChangeListener = new EventListener<() => EventResult>();
 
 const internalEventHanders: Record<
-  'BufDelete' | 'BufWipeout' | 'CocDiagnosticChange' | 'CocGitStatusChange',
+  'BufDelete' | 'BufWipeout' | 'CocDiagnosticChange' | 'CocGitStatusChange' | 'CocBookmarkChange',
   (...args: any[]) => void
 > = {
   BufDelete(args: [number]) {
@@ -144,6 +145,9 @@ const internalEventHanders: Record<
   },
   CocGitStatusChange() {
     CocGitStatusChangeListener.fire();
+  },
+  CocBookmarkChange() {
+    CocBookmarkChangeListener.fire();
   },
 };
 
@@ -173,6 +177,10 @@ export function onCocDiagnosticChange(listener: () => EventResult) {
 
 export function onCocGitStatusChange(listener: () => EventResult) {
   return CocGitStatusChangeListener.on(listener);
+}
+
+export function onCocBookmarkChange(listener: () => EventResult) {
+  return CocBookmarkChangeListener.on(listener);
 }
 
 // User events

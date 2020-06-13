@@ -36,8 +36,8 @@ Explorer extension for [coc.nvim](https://github.com/neoclide/coc.nvim)
   - [x] Highlight visible buffers in real time (neovim only)
 - [x] File tree source
   - [x] Basic actions
-    - [x] Open file in select / vsplit / tab  
-           `explorer.openAction.strategy` options:
+    - [x] Open file in select / vsplit / tab
+          `explorer.openAction.strategy` options:
       - select: Open action use selection UI
       - vsplit: Open action use vsplit
       - split: Open action use split
@@ -59,6 +59,7 @@ Explorer extension for [coc.nvim](https://github.com/neoclide/coc.nvim)
   - [ ] Exrename, like [defx](https://github.com/Shougo/defx.nvim)
   - [ ] Archive file (use `lsar / unar`)
   - [ ] SSH
+- [x] Bookmark source (require [coc-bookmark](https://github.com/voldikss/coc-bookmark))
 - [ ] Git source
   - [ ] Git actions
 - [x] Show help
@@ -471,6 +472,10 @@ Default: <pre><code>false</code></pre>
 <summary><code>explorer.sources</code>: Explorer sources. type: <code>object</code></summary>
 Default: <pre><code>[
   {
+    "name": "bookmark",
+    "expand": false
+  },
+  {
     "name": "buffer",
     "expand": false
   },
@@ -514,6 +519,18 @@ Default: <pre><code>"✓"</code></pre>
 <details>
 <summary><code>explorer.icon.hidden</code>: Icon for hidden status. type: <code>string</code></summary>
 Default: <pre><code>"I"</code></pre>
+</details>
+<details>
+<summary><code>explorer.bookmark.root.template</code>: Template for root node of buffer source. type: <code>string</code></summary>
+Default: <pre><code>"[icon] [title]"</code></pre>
+</details>
+<details>
+<summary><code>explorer.bookmark.child.template</code>: Template for child node of buffer source. type: <code>string</code></summary>
+Default: <pre><code>"[selection | 1] [filename] [position] "</code></pre>
+</details>
+<details>
+<summary><code>explorer.bookmark.child.labelingTemplate</code>: Labeling template for child node of buffer source. type: <code>string</code></summary>
+Default: <pre><code>"[filename][fullpath][position][line][annotation]"</code></pre>
 </details>
 <details>
 <summary><code>explorer.buffer.showHiddenBuffers</code>: Default show hidden buffers. type: <code>boolean</code></summary>

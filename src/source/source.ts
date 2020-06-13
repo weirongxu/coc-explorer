@@ -19,6 +19,7 @@ import { SourcePainters } from './sourcePainters';
 import { onEvents } from '../events';
 import { clone } from 'lodash-es';
 import { RegisteredAction } from '../actions/registered';
+import { Class } from 'type-fest';
 
 export type RenderOptions<TreeNode extends BaseTreeNode<any>> = {
   node?: TreeNode;
@@ -52,8 +53,8 @@ export interface BaseTreeNode<
   compacted?: boolean;
 }
 
-export type ExplorerSourceClass = {
-  new (name: string, explorer: Explorer): ExplorerSource<any>;
+export type ExplorerSourceClass = Class<ExplorerSource<any>> & {
+  enabled: boolean | Promise<boolean>;
 };
 
 export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>> {
@@ -174,6 +175,10 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>> {
   }))(this);
 
   actions: RegisteredAction.Map<TreeNode> = {};
+
+  static get enabled(): boolean | Promise<boolean> {
+    return true;
+  }
 
   constructor(public sourceType: string, public explorer: Explorer) {
     this.context = this.explorer.context;

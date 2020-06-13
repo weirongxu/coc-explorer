@@ -18,4 +18,5 @@ augroup CocExplorerInternal
   autocmd BufWipeout * call CocExplorerActionAsync('internal.didVimEvent', 'BufWipeout', +expand('<abuf>'))
   autocmd User CocDiagnosticChange call CocExplorerActionAsync('internal.didVimEvent', 'CocDiagnosticChange')
   autocmd User CocGitStatusChange call CocExplorerActionAsync('internal.didVimEvent', 'CocGitStatusChange')
+  autocmd User CocBookmarkChange call CocExplorerActionAsync('internal.didVimEvent', 'CocBookmarkChange')
 augroup END

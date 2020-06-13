@@ -32,7 +32,7 @@ const hl = hlGroupManager.linkGroup.bind(hlGroupManager);
 
 export const bufferHighlights = {
   title: hl('BufferRoot', 'Constant'),
-  expandIcon: hl('BufferExpandIcon', 'Special'),
+  expandIcon: hl('BufferExpandIcon', 'Directory'),
   nameVisible: hl('BufferNameVisible', 'String'),
   bufname: hl('BufferBufname', 'Comment'),
   modified: hl('BufferModified', 'Operator'),

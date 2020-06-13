@@ -104,6 +104,18 @@ export const argOptions = {
     parseArg: (s) => parseInt(s, 10),
     getDefault: () => config.get<number>('floating.contentWidth')!,
   }),
+  bookmarkRootTemplate: Args.registerOption<string>('bookmark-root-template', {
+    getDefault: () => config.get<string>('bookmark.root.template')!,
+  }),
+  bookmarkChildTemplate: Args.registerOption<string>('bookmark-child-template', {
+    getDefault: () => config.get<string>('bookmark.child.template')!,
+  }),
+  bookmarkChildLabelingTemplate: Args.registerOption<string>(
+    'bookmark-child-labeling-template',
+    {
+      getDefault: () => config.get<string>('bookmark.child.labelingTemplate')!,
+    },
+  ),
   bufferRootTemplate: Args.registerOption<string>('buffer-root-template', {
     getDefault: () => config.get<string>('buffer.root.template')!,
   }),

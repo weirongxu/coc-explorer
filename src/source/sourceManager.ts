@@ -14,16 +14,18 @@ class SourceManager {
     });
   }
 
-  createSource(name: string, explorer: Explorer, expanded: boolean) {
-    if (this.registeredSources[name]) {
-      const source = new this.registeredSources[name](name, explorer);
-      source.bootInit(expanded);
-      return source;
-    } else {
+  async createSource(name: string, explorer: Explorer, expanded: boolean) {
+    if (!this.registeredSources[name]) {
       // eslint-disable-next-line no-restricted-properties
       workspace.showMessage(`explorer source(${name}) not found`, 'error');
       return;
     }
+    if (!(await this.registeredSources[name].enabled)) {
+      return;
+    }
+    const source = new this.registeredSources[name](name, explorer);
+    source.bootInit(expanded);
+    return source;
   }
 }
 
