@@ -417,7 +417,7 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>> {
     const { nvim } = this;
     const getEscapePath = async () => {
       let path = await getFullpath();
-      if (this.config.get('openActionRelativePath')) {
+      if (this.config.get('openAction.relativePath')) {
         path = await this.nvim.call('fnamemodify', [path, ':.']);
       }
       return await this.nvim.call('fnameescape', [path]);

@@ -206,7 +206,7 @@ export function initFileActions(file: FileSource) {
     'open',
     async ({ node, args: [openStrategy, ...args] }) => {
       if (node.directory) {
-        const directoryAction = file.config.get('openActionForDirectory');
+        const directoryAction = file.config.get('openAction.for.directory');
         if (directoryAction) {
           await file.doAction(directoryAction, node);
         }

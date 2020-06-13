@@ -12,12 +12,12 @@ export const getEnableDebug = () => config.get<boolean>('debug')!;
 export interface ExplorerConfig {
   config: WorkspaceConfiguration;
   get(section: 'activeMode'): boolean;
-  get(section: 'autoReveal'): boolean;
+  get(section: 'file.autoReveal'): boolean;
   get(section: 'autoExpandMaxDepth'): number;
   get(section: 'autoExpandOptions'): ExpandOption[];
   get(section: 'autoCollapseOptions'): CollapseOption[];
-  get(section: 'openActionForDirectory'): string;
-  get(section: 'openActionRelativePath'): boolean;
+  get(section: 'openAction.for.directory'): string;
+  get(section: 'openAction.relativePath'): boolean;
   get(section: 'previewAction.strategy'): PreviewStrategy;
   get(section: 'previewAction.onHover'): boolean;
   get(section: 'datetime.format'): string;
