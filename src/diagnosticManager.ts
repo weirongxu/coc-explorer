@@ -2,20 +2,22 @@ import {
   Uri,
   diagnosticManager as cocDiagnosticManager,
   Emitter,
+  ExtensionContext,
 } from 'coc.nvim';
 import pathLib from 'path';
-import { onCocDiagnosticChange } from './events';
+import { internalEvents } from './events';
 import { throttle } from './util';
 
-class DiagnosticManager {
+export class DiagnosticManager {
   errorPathCount: Record<string, number> = {};
   warningPathCount: Record<string, number> = {};
   onChange = (fn: () => void) => this.onChangeEvent.event(fn);
 
   private onChangeEvent = new Emitter<void>();
 
-  constructor() {
-    onCocDiagnosticChange(
+  constructor(private context: ExtensionContext) {
+    internalEvents.on(
+      'CocDiagnosticChange',
       throttle(100, () => {
         const errorPathCountNum: Record<string, number> = {};
         const warningPathCountNum: Record<string, number> = {};
@@ -90,5 +92,3 @@ class DiagnosticManager {
     return warningMixedCount;
   }
 }
-
-export const diagnosticManager = new DiagnosticManager();

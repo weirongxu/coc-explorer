@@ -1,7 +1,7 @@
 import { extensions, workspace } from 'coc.nvim';
 import pathLib from 'path';
 import { argOptions } from '../../../argOptions';
-import { onCocBookmarkChange } from '../../../events';
+import { internalEvents } from '../../../events';
 import { debounce, fsExists } from '../../../util';
 import { hlGroupManager } from '../../highlightManager';
 import { BaseTreeNode, ExplorerSource } from '../../source';
@@ -67,7 +67,8 @@ export class BookmarkSource extends ExplorerSource<BookmarkNode> {
   async init() {
     if (this.config.get('activeMode')) {
       this.disposables.push(
-        onCocBookmarkChange(
+        internalEvents.on(
+          'CocBookmarkChange',
           debounce(500, async () => {
             await this.reload(this.rootNode);
           }),

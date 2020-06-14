@@ -24,7 +24,7 @@ import { Explorer } from '../explorer';
 import { BufferHighlight } from '@chemzqm/neovim';
 import { log, onError } from '../logger';
 import { argOptions } from '../argOptions';
-import { onBufEnter, onEvents } from '../events';
+import { onBufEnter, onEvent } from '../events';
 
 // factory class for floating window
 export class FloatingFactory3 implements Disposable {
@@ -62,14 +62,14 @@ export class FloatingFactory3 implements Disposable {
         }
         await this.close();
       }, 200),
-      onEvents('MenuPopupChanged', async (ev, cursorline) => {
+      onEvent('MenuPopupChanged', async (ev, cursorline) => {
         const pumAlignTop = (this.pumAlignTop = cursorline > ev.row);
         if (pumAlignTop === this.alignTop) {
           await this.close();
         }
       }),
-      onEvents('CursorMoved', this.onCursorMoved),
-      onEvents('CursorMovedI', this.onCursorMoved),
+      onEvent('CursorMoved', this.onCursorMoved),
+      onEvent('CursorMovedI', this.onCursorMoved),
     );
   }
 

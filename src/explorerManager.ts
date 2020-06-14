@@ -1,20 +1,21 @@
 import {
-  workspace,
-  ExtensionContext,
-  Emitter,
   Disposable,
   disposeAll,
+  Emitter,
+  ExtensionContext,
+  workspace,
 } from 'coc.nvim';
+import { argOptions } from './argOptions';
+import { BufManager } from './bufManager';
+import { buildExplorerConfig, configLocal } from './config';
+import { GlobalContextVars } from './contextVariables';
+import { DiagnosticManager } from './diagnosticManager';
+import { onBufEnter } from './events';
 import { Explorer } from './explorer';
-import { Args } from './parseArgs';
 import { onError } from './logger';
 import { getMappings } from './mappings';
-import { supportedNvimFloating, compactI } from './util';
-import { GlobalContextVars } from './contextVariables';
-import { BufManager } from './bufManager';
-import { argOptions } from './argOptions';
-import { configLocal, buildExplorerConfig } from './config';
-import { onBufEnter } from './events';
+import { Args } from './parseArgs';
+import { compactI, supportedNvimFloating } from './util';
 
 export type TabContainer = {
   left: Explorer[];
@@ -34,6 +35,7 @@ export class ExplorerManager {
   rootPathRecords: Set<string> = new Set();
   nvim = workspace.nvim;
   bufManager: BufManager;
+  diagnosticManager: DiagnosticManager;
 
   /**
    * mappings[key][mode] = '<Plug>(coc-action-mode-key)'
@@ -65,7 +67,7 @@ export class ExplorerManager {
     this.context.subscriptions.push(
       onBufEnter(async (bufnr) => {
         await this.updatePrevCtxVars(bufnr);
-      }),
+      }, 0),
     );
 
     this.context.subscriptions.push(
@@ -73,6 +75,7 @@ export class ExplorerManager {
     );
 
     this.bufManager = new BufManager(this.context);
+    this.diagnosticManager = new DiagnosticManager(this.context);
   }
 
   async currentTabId() {

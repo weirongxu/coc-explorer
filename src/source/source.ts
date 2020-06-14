@@ -16,7 +16,7 @@ import { drawnToRange, flatten, generateUri, Notifier } from '../util';
 import { WinLayoutFinder } from '../winLayoutFinder';
 import { HighlightPositionWithLine } from './highlightManager';
 import { SourcePainters } from './sourcePainters';
-import { onEvents } from '../events';
+import { onEvent } from '../events';
 import { clone } from 'lodash-es';
 import { RegisteredAction } from '../actions/registered';
 import { Class } from 'type-fest';
@@ -72,6 +72,7 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>>
   nvim = workspace.nvim;
   context: ExtensionContext;
   bufManager = this.explorer.explorerManager.bufManager;
+  diagnosticManager = this.explorer.explorerManager.diagnosticManager;
 
   private requestedRenderNodes: Set<TreeNode> = new Set();
   protected disposables: Disposable[] = [];
@@ -633,7 +634,7 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>>
 
     listManager.ui.onDidClose(async () => {
       await new Promise((resolve) => {
-        const disposable = onEvents('BufEnter', () => {
+        const disposable = onEvent('BufEnter', () => {
           if (listManager.ui.window?.id === undefined) {
             disposable.dispose();
             resolve();

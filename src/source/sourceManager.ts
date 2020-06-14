@@ -1,4 +1,4 @@
-import { Disposable, workspace } from 'coc.nvim';
+import { Disposable } from 'coc.nvim';
 import { ExplorerSourceClass } from './source';
 import { Explorer } from '../explorer';
 
@@ -16,8 +16,6 @@ class SourceManager {
 
   async enabled(name: string) {
     if (!this.registeredSources[name]) {
-      // eslint-disable-next-line no-restricted-properties
-      workspace.showMessage(`explorer source(${name}) not found`, 'error');
       return false;
     }
     return await this.registeredSources[name].enabled;

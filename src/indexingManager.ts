@@ -14,6 +14,10 @@ export class IndexingManager {
     lines.add(lineIndex);
   }
 
+  removeAll() {
+    this.linesMap.clear();
+  }
+
   removeLine(name: string, lineIndex: number) {
     if (!this.linesMap.has(name)) {
       this.linesMap.set(name, new Set<number>());

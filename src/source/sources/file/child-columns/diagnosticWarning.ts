@@ -1,5 +1,4 @@
 import { fileColumnRegistrar } from '../fileColumnRegistrar';
-import { diagnosticManager } from '../../../../diagnosticManager';
 import { debounce } from '../../../../util';
 import { fileHighlights } from '../fileSource';
 
@@ -17,7 +16,9 @@ fileColumnRegistrar.registerColumn(
         99,
       );
 
-      const warningMixedCount = diagnosticManager.getMixedWarning(source.root);
+      const warningMixedCount = source.diagnosticManager.getMixedWarning(
+        source.root,
+      );
       const localWarningMap: Record<string, string> = {};
       const prevWarningMap = cache.warningMap;
       const updatePaths: Set<string> = new Set();
@@ -43,7 +44,9 @@ fileColumnRegistrar.registerColumn(
 
     return {
       init() {
-        subscriptions.push(diagnosticManager.onChange(debounce(1000, reload)));
+        subscriptions.push(
+          source.diagnosticManager.onChange(debounce(1000, reload)),
+        );
       },
       reload() {
         return reload();

@@ -22,7 +22,7 @@ import { CancellationTokenSource } from 'vscode-languageserver-protocol';
 import createPopup, { Popup } from 'coc.nvim/lib/model/popup';
 import { Explorer } from '../explorer';
 import { argOptions } from '../argOptions';
-import { onBufEnter, onEvents } from '../events';
+import { onBufEnter, onEvent } from '../events';
 
 export class FloatingFactory2 implements Disposable {
   private targetBufnr?: number;
@@ -61,7 +61,7 @@ export class FloatingFactory2 implements Disposable {
         }
         await this.close();
       }, 200),
-      onEvents('InsertLeave', async (bufnr) => {
+      onEvent('InsertLeave', async (bufnr) => {
         if (this.buffer && bufnr === this.buffer.id) {
           return;
         }
@@ -70,13 +70,13 @@ export class FloatingFactory2 implements Disposable {
         }
         await this.close();
       }),
-      onEvents('MenuPopupChanged', async (ev, cursorline) => {
+      onEvent('MenuPopupChanged', async (ev, cursorline) => {
         const pumAlignTop = (this.pumAlignTop = cursorline > ev.row);
         if (pumAlignTop === this.alignTop) {
           await this.close();
         }
       }),
-      onEvents(
+      onEvent(
         'CursorMoved',
         debounce(100, async (bufnr, cursor) => {
           if (Date.now() - this.createTs < 100) {
@@ -85,7 +85,7 @@ export class FloatingFactory2 implements Disposable {
           await this.onCursorMoved(false, bufnr, cursor);
         }),
       ),
-      onEvents('CursorMovedI', this.onCursorMoved.bind(this, true)),
+      onEvent('CursorMovedI', this.onCursorMoved.bind(this, true)),
     );
   }
 

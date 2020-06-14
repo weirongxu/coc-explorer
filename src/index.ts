@@ -10,7 +10,7 @@ import { hlGroupManager } from './source/highlightManager';
 import { ExplorerManager } from './explorerManager';
 import { PresetList } from './lists/presets';
 import { registerVimApi } from './vimApi';
-import { registerBufDeleteEvents } from './events';
+import { registerInternalEvents } from './events';
 import { asyncCatchError } from './util';
 
 export const activate = async (context: ExtensionContext) => {
@@ -35,7 +35,7 @@ export const activate = async (context: ExtensionContext) => {
     }),
   );
   registerVimApi(context, explorerManager);
-  registerBufDeleteEvents(context);
+  registerInternalEvents(context);
 
   (async () => {
     const rtp = (await nvim.getOption('runtimepath')) as string;

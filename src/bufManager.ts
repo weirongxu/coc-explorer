@@ -2,7 +2,7 @@ import { workspace, ExtensionContext, Emitter } from 'coc.nvim';
 import pathLib from 'path';
 import { compactI } from './util';
 import { BufferNode } from './source/sources/buffer/bufferSource';
-import { onEvents, onBufDelete, onBufWipeout } from './events';
+import { onEvent, internalEvents } from './events';
 
 const regex = /^\s*(\d+)(.+?)"(.+?)".*/;
 
@@ -17,24 +17,24 @@ export class BufManager {
   private reloadEvent = new Emitter<void>();
   private modifiedEvent = new Emitter<string>();
 
-  constructor(public context: ExtensionContext) {
+  constructor(private context: ExtensionContext) {
     context.subscriptions.push(
-      onEvents(
+      onEvent(
         ['BufCreate', 'BufHidden', 'BufUnload', 'BufWinEnter', 'BufWinLeave'],
         () => this.reload(),
       ),
-      onEvents('BufWritePost', async (bufnr) => {
+      onEvent('BufWritePost', async (bufnr) => {
         await this.reload();
         const node = this.bufferNodeMapById.get(bufnr);
         if (node) {
           this.modifiedEvent.fire(node.fullpath);
         }
       }),
-      onBufDelete(() => this.reload()),
-      onBufWipeout(() => this.reload()),
+      internalEvents.on('BufDelete', () => this.reload()),
+      internalEvents.on('BufWipeout', () => this.reload()),
       ...(['TextChanged', 'TextChangedI', 'TextChangedP'] as const).map(
         (event) =>
-          onEvents(event, async (bufnr: number) => {
+          onEvent(event, async (bufnr: number) => {
             const bufNode = this.bufferNodeMapById.get(bufnr);
             if (!bufNode) {
               return;

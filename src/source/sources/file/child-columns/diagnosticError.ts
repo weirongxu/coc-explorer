@@ -1,5 +1,4 @@
 import { fileColumnRegistrar } from '../fileColumnRegistrar';
-import { diagnosticManager } from '../../../../diagnosticManager';
 import { debounce } from '../../../../util';
 import { fileHighlights } from '../fileSource';
 
@@ -16,7 +15,9 @@ fileColumnRegistrar.registerColumn(
         'file.diagnosticCountMax',
       )!;
 
-      const errorMixedCount = diagnosticManager.getMixedError(source.root);
+      const errorMixedCount = source.diagnosticManager.getMixedError(
+        source.root,
+      );
       const localErrorMap: Record<string, string> = {};
       const prevErrorMap = cache.errorMap;
       const updatePaths: Set<string> = new Set();
@@ -43,7 +44,9 @@ fileColumnRegistrar.registerColumn(
 
     return {
       init() {
-        subscriptions.push(diagnosticManager.onChange(debounce(1000, reload)));
+        subscriptions.push(
+          source.diagnosticManager.onChange(debounce(1000, reload)),
+        );
       },
       reload() {
         return reload();

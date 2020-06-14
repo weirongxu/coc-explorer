@@ -4,7 +4,7 @@ import { GitFormat, gitManager, GitMixedStatus } from '../../../../gitManager';
 import pathLib from 'path';
 import { debounce } from '../../../../util';
 import { fileHighlights } from '../fileSource';
-import { onEvents, onCocGitStatusChange } from '../../../../events';
+import { onEvent, internalEvents } from '../../../../events';
 import { workspace } from 'coc.nvim';
 
 fileColumnRegistrar.registerColumn(
@@ -66,7 +66,7 @@ fileColumnRegistrar.registerColumn(
     return {
       init() {
         subscriptions.push(
-          onEvents(
+          onEvent(
             'BufWritePost',
             debounce(1000, async (bufnr) => {
               const fullpath = source.bufManager.getBufferNode(bufnr)?.fullpath;
@@ -77,7 +77,8 @@ fileColumnRegistrar.registerColumn(
               }
             }),
           ),
-          onCocGitStatusChange(
+          internalEvents.on(
+            'CocGitStatusChange',
             debounce(1000, async () => {
               await reload(workspace.cwd, false);
             }),

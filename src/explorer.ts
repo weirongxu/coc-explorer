@@ -17,7 +17,7 @@ import {
   doUserAutocmdNotifier,
   onBufEnter,
   onCursorMoved,
-  onEvents,
+  onEvent,
 } from './events';
 import { ExplorerManager } from './explorerManager';
 import { FloatingPreview } from './floating/floatingPreview';
@@ -190,7 +190,7 @@ export class Explorer implements Disposable {
     }
 
     this.disposables.push(
-      onEvents('BufWinLeave', async (bufnr) => {
+      onEvent('BufWinLeave', async (bufnr) => {
         if (bufnr === this.bufnr) {
           await this.quitFloatingBorderWin();
           await this.floatingWindow.floatFactory.close();
@@ -1087,6 +1087,7 @@ export class Explorer implements Disposable {
   }
 
   async reloadAllNotifier({ render = true } = {}) {
+    this.indexingManager.removeAll();
     const notifiers = await Promise.all(
       this.sources.map((source) =>
         source.reloadNotifier(source.rootNode, { render: false }),
