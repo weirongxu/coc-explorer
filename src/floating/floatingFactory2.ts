@@ -51,45 +51,31 @@ export class FloatingFactory2 implements Disposable {
     if (!supportedFloat()) {
       return;
     }
-    this.explorer.context.subscriptions.push(
-      onBufEnter(
-        async (bufnr) => {
-          if (this.buffer && bufnr === this.buffer.id) {
-            return;
-          }
-          if (bufnr === this.targetBufnr) {
-            return;
-          }
+    this.disposables.push(
+      onBufEnter(async (bufnr) => {
+        if (this.buffer && bufnr === this.buffer.id) {
+          return;
+        }
+        if (bufnr === this.targetBufnr) {
+          return;
+        }
+        await this.close();
+      }, 200),
+      onEvents('InsertLeave', async (bufnr) => {
+        if (this.buffer && bufnr === this.buffer.id) {
+          return;
+        }
+        if (snippetManager.isActived(bufnr)) {
+          return;
+        }
+        await this.close();
+      }),
+      onEvents('MenuPopupChanged', async (ev, cursorline) => {
+        const pumAlignTop = (this.pumAlignTop = cursorline > ev.row);
+        if (pumAlignTop === this.alignTop) {
           await this.close();
-        },
-        200,
-        this.disposables,
-      ),
-      onEvents(
-        'InsertLeave',
-        async (bufnr) => {
-          if (this.buffer && bufnr === this.buffer.id) {
-            return;
-          }
-          if (snippetManager.isActived(bufnr)) {
-            return;
-          }
-          await this.close();
-        },
-        undefined,
-        this.disposables,
-      ),
-      onEvents(
-        'MenuPopupChanged',
-        async (ev, cursorline) => {
-          const pumAlignTop = (this.pumAlignTop = cursorline > ev.row);
-          if (pumAlignTop === this.alignTop) {
-            await this.close();
-          }
-        },
-        undefined,
-        this.disposables,
-      ),
+        }
+      }),
       onEvents(
         'CursorMoved',
         debounce(100, async (bufnr, cursor) => {
@@ -98,15 +84,8 @@ export class FloatingFactory2 implements Disposable {
           }
           await this.onCursorMoved(false, bufnr, cursor);
         }),
-        undefined,
-        this.disposables,
       ),
-      onEvents(
-        'CursorMovedI',
-        this.onCursorMoved.bind(this, true),
-        undefined,
-        this.disposables,
-      ),
+      onEvents('CursorMovedI', this.onCursorMoved.bind(this, true)),
     );
   }
 

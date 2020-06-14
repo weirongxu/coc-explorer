@@ -131,7 +131,11 @@ const CocGitStatusChangeListener = new EventListener<() => EventResult>();
 const CocBookmarkChangeListener = new EventListener<() => EventResult>();
 
 const internalEventHanders: Record<
-  'BufDelete' | 'BufWipeout' | 'CocDiagnosticChange' | 'CocGitStatusChange' | 'CocBookmarkChange',
+  | 'BufDelete'
+  | 'BufWipeout'
+  | 'CocDiagnosticChange'
+  | 'CocGitStatusChange'
+  | 'CocBookmarkChange',
   (...args: any[]) => void
 > = {
   BufDelete(args: [number]) {

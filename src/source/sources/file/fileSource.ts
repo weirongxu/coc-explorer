@@ -137,7 +137,7 @@ export class FileSource extends ExplorerSource<FileNode> {
     if (this.config.get('activeMode')) {
       if (workspace.isNvim) {
         if (this.config.get('file.autoReveal')) {
-          this.subscriptions.push(
+          this.disposables.push(
             onBufEnter(async (bufnr) => {
               if (bufnr === this.explorer.bufnr) {
                 return;
@@ -163,7 +163,7 @@ export class FileSource extends ExplorerSource<FileNode> {
           );
         }
       } else {
-        this.subscriptions.push(
+        this.disposables.push(
           onBufEnter(async (bufnr) => {
             if (bufnr === this.explorer.bufnr) {
               await this.reload(this.rootNode);

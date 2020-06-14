@@ -55,30 +55,21 @@ export class FloatingFactory3 implements Disposable {
       300,
       asyncCatchError(() => this._onCursorMoved()),
     );
-    this.explorer.context.subscriptions.push(
-      onBufEnter(
-        async (bufnr) => {
-          if (bufnr === this.bufnr || bufnr === this.targetBufnr) {
-            return;
-          }
+    this.disposables.push(
+      onBufEnter(async (bufnr) => {
+        if (bufnr === this.bufnr || bufnr === this.targetBufnr) {
+          return;
+        }
+        await this.close();
+      }, 200),
+      onEvents('MenuPopupChanged', async (ev, cursorline) => {
+        const pumAlignTop = (this.pumAlignTop = cursorline > ev.row);
+        if (pumAlignTop === this.alignTop) {
           await this.close();
-        },
-        200,
-        this.disposables,
-      ),
-      onEvents(
-        'MenuPopupChanged',
-        async (ev, cursorline) => {
-          const pumAlignTop = (this.pumAlignTop = cursorline > ev.row);
-          if (pumAlignTop === this.alignTop) {
-            await this.close();
-          }
-        },
-        undefined,
-        this.disposables,
-      ),
-      onEvents('CursorMoved', this.onCursorMoved, undefined, this.disposables),
-      onEvents('CursorMovedI', this.onCursorMoved, undefined, this.disposables),
+        }
+      }),
+      onEvents('CursorMoved', this.onCursorMoved),
+      onEvents('CursorMovedI', this.onCursorMoved),
     );
   }
 

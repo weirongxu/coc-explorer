@@ -1,4 +1,4 @@
-import { Disposable, workspace } from 'coc.nvim';
+import { Disposable, workspace, disposeAll } from 'coc.nvim';
 import { conditionActionRules } from './actions/condition';
 import { Explorer } from './explorer';
 import { getMappings } from './mappings';
@@ -320,7 +320,7 @@ export async function showHelp(
         'n',
         key,
         async () => {
-          disposables.forEach((d) => d.dispose());
+          disposeAll(disposables);
           await quitHelp(explorer);
           await Notifier.runAll([
             await explorer.renderAllNotifier(),

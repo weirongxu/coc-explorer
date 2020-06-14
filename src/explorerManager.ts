@@ -1,4 +1,10 @@
-import { workspace, ExtensionContext, Emitter } from 'coc.nvim';
+import {
+  workspace,
+  ExtensionContext,
+  Emitter,
+  Disposable,
+  disposeAll,
+} from 'coc.nvim';
 import { Explorer } from './explorer';
 import { Args } from './parseArgs';
 import { onError } from './logger';
@@ -60,6 +66,10 @@ export class ExplorerManager {
       onBufEnter(async (bufnr) => {
         await this.updatePrevCtxVars(bufnr);
       }),
+    );
+
+    this.context.subscriptions.push(
+      Disposable.create(() => disposeAll(this.explorers())),
     );
 
     this.bufManager = new BufManager(this.context);

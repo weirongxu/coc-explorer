@@ -1,12 +1,12 @@
 // modified from https://github.com/neoclide/coc.nvim/blob/master/src/model/db.ts
-import path from 'path';
+import pathLib from 'path';
 import { statAsync, writeFileAsync, readFileAsync, mkdirAsync } from './fs';
 
 export default class BookmarkDB {
-  constructor(private readonly filepath: string) { }
+  constructor(private readonly filepath: string) {}
 
   public async load(): Promise<any> {
-    const dir = path.dirname(this.filepath);
+    const dir = pathLib.dirname(this.filepath);
     const stat = await statAsync(dir);
     if (!stat || !stat.isDirectory()) {
       return {};
@@ -23,7 +23,7 @@ export default class BookmarkDB {
     let obj = await this.load();
     if (!key) {
       return obj;
-    };
+    }
     const parts = key.split('.');
     for (const part of parts) {
       if (typeof obj[part] === 'undefined') {
@@ -47,12 +47,12 @@ export default class BookmarkDB {
   }
 
   public async push(key: string, data: any): Promise<void> {
-    const origin = await this.load() || {};
+    const origin = (await this.load()) || {};
     let obj = origin;
     const parts = key.split('.');
     const len = parts.length;
     if (obj === null) {
-      const dir = path.dirname(this.filepath);
+      const dir = pathLib.dirname(this.filepath);
       await mkdirAsync(dir);
       obj = origin;
     }

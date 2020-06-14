@@ -5,7 +5,7 @@ import * as cp from 'child_process';
 import events from 'events';
 import fs from 'fs';
 import os from 'os';
-import path from 'path';
+import pathLib from 'path';
 import util from 'util';
 import attach from 'coc.nvim/lib/attach';
 import Document from 'coc.nvim/lib/model/document';
@@ -36,7 +36,7 @@ export class Helper extends events.EventEmitter {
   }
 
   public setup(): Promise<void> {
-    const vimrc = path.resolve(__dirname, 'vimrc');
+    const vimrc = pathLib.resolve(__dirname, 'vimrc');
     const proc = (this.proc = cp.spawn(
       'nvim',
       ['-u', vimrc, '-i', 'NONE', '--embed'],
@@ -161,7 +161,7 @@ export class Helper extends events.EventEmitter {
   }
 
   public async edit(file?: string): Promise<Buffer> {
-    file = path.join(__dirname, file ? file : `${uuid()}`);
+    file = pathLib.join(__dirname, file ? file : `${uuid()}`);
     const escaped = await this.nvim.call('fnameescape', file);
     await this.nvim.command(`edit ${escaped}`);
     await this.wait(60);
@@ -236,11 +236,11 @@ export class Helper extends events.EventEmitter {
 }
 
 export async function createTmpFile(content: string): Promise<string> {
-  const tmpFolder = path.join(os.tmpdir(), `coc-${process.pid}`);
+  const tmpFolder = pathLib.join(os.tmpdir(), `coc-${process.pid}`);
   if (!fs.existsSync(tmpFolder)) {
     fs.mkdirSync(tmpFolder);
   }
-  const filename = path.join(tmpFolder, uuid());
+  const filename = pathLib.join(tmpFolder, uuid());
   await util.promisify(fs.writeFile)(filename, content, 'utf8');
   return filename;
 }

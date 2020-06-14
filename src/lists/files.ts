@@ -12,7 +12,7 @@ import {
 } from 'coc.nvim';
 import { EventEmitter } from 'events';
 import minimatch from 'minimatch';
-import path from 'path';
+import pathLib from 'path';
 import readline from 'readline';
 import { Location, Range } from 'vscode-languageserver-protocol';
 import { executable, isWindows } from '../util';
@@ -37,7 +37,7 @@ class Task extends EventEmitter implements ListTask {
       });
 
       rl.on('line', (line) => {
-        const file = path.join(cwd, line);
+        const file = pathLib.join(cwd, line);
         if (hasPattern && patterns.some((p) => minimatch(file, p))) {
           return;
         }

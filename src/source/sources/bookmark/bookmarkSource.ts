@@ -1,19 +1,17 @@
-import { workspace, extensions } from 'coc.nvim';
-import { debounce } from '../../../util';
-import { fsExists } from '../../../util';
+import { extensions, workspace } from 'coc.nvim';
+import pathLib from 'path';
+import { argOptions } from '../../../argOptions';
+import { onCocBookmarkChange } from '../../../events';
+import { debounce, fsExists } from '../../../util';
 import { hlGroupManager } from '../../highlightManager';
-import { ExplorerSource, BaseTreeNode } from '../../source';
+import { BaseTreeNode, ExplorerSource } from '../../source';
 import { sourceManager } from '../../sourceManager';
+import { SourcePainters } from '../../sourcePainters';
+import { initBookmarkActions } from './bookmarkActions';
 import { bookmarkColumnRegistrar } from './bookmarkColumnRegistrar';
 import './load';
-import { initBookmarkActions } from './bookmarkActions';
-import { SourcePainters } from '../../sourcePainters';
-import { argOptions } from '../../../argOptions';
-import path from 'path';
-import pathLib from 'path';
 import BookmarkDB from './util/db';
 import { decode } from './util/fp';
-import { onCocBookmarkChange } from '../../../events';
 
 export interface BookmarkNode
   extends BaseTreeNode<BookmarkNode, 'root' | 'child'> {
@@ -68,7 +66,7 @@ export class BookmarkSource extends ExplorerSource<BookmarkNode> {
 
   async init() {
     if (this.config.get('activeMode')) {
-      this.subscriptions.push(
+      this.disposables.push(
         onCocBookmarkChange(
           debounce(500, async () => {
             await this.reload(this.rootNode);
@@ -97,7 +95,10 @@ export class BookmarkSource extends ExplorerSource<BookmarkNode> {
 
   async loadChildren(parentNode: BookmarkNode) {
     const extRoot = workspace.env.extensionRoot;
-    const bookmarkPath = path.join(extRoot, 'coc-bookmark-data/bookmark.json');
+    const bookmarkPath = pathLib.join(
+      extRoot,
+      'coc-bookmark-data/bookmark.json',
+    );
     const db = new BookmarkDB(bookmarkPath);
     const data = (await db.load()) as Object;
 

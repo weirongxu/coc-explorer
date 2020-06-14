@@ -73,7 +73,7 @@ export class BufferSource extends ExplorerSource<BufferNode> {
   async init() {
     if (this.config.get('activeMode')) {
       if (workspace.isNvim) {
-        this.subscriptions.push(
+        this.disposables.push(
           this.bufManager.onReload(
             debounce(500, async () => {
               await this.reload(this.rootNode);
@@ -86,7 +86,7 @@ export class BufferSource extends ExplorerSource<BufferNode> {
           ),
         );
       } else {
-        this.subscriptions.push(
+        this.disposables.push(
           onBufEnter(async (bufnr) => {
             if (bufnr === this.explorer.bufnr) {
               await this.reload(this.rootNode, { render: false });

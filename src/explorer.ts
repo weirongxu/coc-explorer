@@ -1,9 +1,27 @@
-import { Buffer, ExtensionContext, Window, workspace } from 'coc.nvim';
+import {
+  Buffer,
+  Disposable,
+  ExtensionContext,
+  Window,
+  workspace,
+} from 'coc.nvim';
+import pFilter from 'p-filter';
 import { conditionActionRules } from './actions/condition';
+import { ActionExp } from './actions/mapping';
+import { RegisteredAction } from './actions/registered';
 import { argOptions } from './argOptions';
+import { ExplorerConfig, getEnableDebug } from './config';
 import { BuffuerContextVars } from './contextVariables';
+import {
+  doUserAutocmd,
+  doUserAutocmdNotifier,
+  onBufEnter,
+  onCursorMoved,
+  onEvents,
+} from './events';
 import { ExplorerManager } from './explorerManager';
 import { FloatingPreview } from './floating/floatingPreview';
+import { quitHelp, showHelp } from './help';
 import { IndexingManager } from './indexingManager';
 import { MappingMode } from './mappings';
 import { ArgContentWidthTypes, Args } from './parseArgs';
@@ -15,38 +33,27 @@ import './source/load';
 import { BaseTreeNode, ExplorerSource } from './source/source';
 import { sourceManager } from './source/sourceManager';
 import {
+  MoveStrategy,
+  moveStrategyList,
+  PreviewStrategy,
+  previewStrategyList,
+} from './types';
+import {
   closeWinByBufnrNotifier,
   enableWrapscan,
   flatten,
   Notifier,
   partition,
   queueAsyncFunction,
+  scanIndexNext,
+  scanIndexPrev,
+  sum,
   winByWinid,
   winidByWinnr,
   winnrByBufnr,
-  scanIndexPrev,
-  scanIndexNext,
-  sum,
 } from './util';
-import { showHelp, quitHelp } from './help';
-import { ExplorerConfig, getEnableDebug } from './config';
-import {
-  onCursorMoved,
-  onBufEnter,
-  onEvents,
-  doUserAutocmd,
-  doUserAutocmdNotifier,
-} from './events';
-import { ActionExp } from './actions/mapping';
-import { RegisteredAction } from './actions/registered';
-import {
-  PreviewStrategy,
-  previewStrategyList,
-  MoveStrategy,
-  moveStrategyList,
-} from './types';
 
-export class Explorer {
+export class Explorer implements Disposable {
   nvim = workspace.nvim;
   isHelpUI: boolean = false;
   currentLineIndex = 0;
@@ -59,10 +66,11 @@ export class Explorer {
   floatingWindow: FloatingPreview;
   contentWidth = 0;
 
+  private disposables: Disposable[] = [];
   private _buffer?: Buffer;
   private _args?: Args;
   private _sources?: ExplorerSource<any>[];
-  private lastArgSources?: string;
+  private lastArgSourcesEnabledJson?: string;
   private isHide = false;
 
   private static async genExplorerPosition(args: Args) {
@@ -155,7 +163,7 @@ export class Explorer {
     this.floatingWindow = new FloatingPreview(this);
 
     if (this.config.get('previewAction.onHover')) {
-      this.context.subscriptions.push(
+      this.disposables.push(
         onCursorMoved(async (bufnr) => {
           if (bufnr === this.bufnr) {
             await this.doActionsWithCount(
@@ -181,7 +189,7 @@ export class Explorer {
       );
     }
 
-    this.context.subscriptions.push(
+    this.disposables.push(
       onEvents('BufWinLeave', async (bufnr) => {
         if (bufnr === this.bufnr) {
           await this.quitFloatingBorderWin();
@@ -431,6 +439,11 @@ export class Explorer {
       },
       'go to next git changed',
     );
+  }
+
+  dispose() {
+    this.floatingWindow.dispose();
+    this.disposables.forEach((s) => s.dispose());
   }
 
   get args(): Args {
@@ -778,25 +791,30 @@ export class Explorer {
 
   private async initArgs(args: Args) {
     this._args = args;
+    this.explorerManager.rootPathRecords.add(
+      await this.args.value(argOptions.rootUri),
+    );
+
     const argSources = await args.value(argOptions.sources);
     if (!argSources) {
       return;
     }
-    if (!this.lastArgSources || this.lastArgSources !== argSources.toString()) {
-      this.lastArgSources = argSources.toString();
 
-      const sources = await Promise.all(
-        argSources.map((sourceArg) =>
-          sourceManager.createSource(sourceArg.name, this, sourceArg.expand),
-        ),
-      );
-      this._sources = sources.filter(
-        (source): source is ExplorerSource<any> => source !== undefined,
-      );
+    const argSourcesEnabled = await pFilter(argSources, (s) =>
+      sourceManager.enabled(s.name),
+    );
+    const argSourcesEnabledJson = JSON.stringify(argSourcesEnabled);
+    if (
+      this.lastArgSourcesEnabledJson &&
+      this.lastArgSourcesEnabledJson === argSourcesEnabledJson
+    ) {
+      return;
     }
 
-    this.explorerManager.rootPathRecords.add(
-      await this.args.value(argOptions.rootUri),
+    this._sources?.forEach((s) => s.dispose());
+
+    this._sources = argSourcesEnabled.map((sourceArg) =>
+      sourceManager.createSource(sourceArg.name, this, sourceArg.expand),
     );
   }
 

@@ -5,6 +5,7 @@ import { hlGroupManager } from './highlightManager';
 import { OriginalTemplatePart, parseTemplate } from './parseTemplate';
 import { BaseTreeNode, ExplorerSource } from './source';
 import { ViewPainter } from './viewPainter';
+import { Disposable } from 'coc.nvim';
 
 export const labelHighlight = hlGroupManager.linkGroup('Label', 'Label');
 
@@ -23,7 +24,7 @@ export type TemplatePart<TreeNode extends BaseTreeNode<TreeNode>> =
 export class SourcePainter<
   TreeNode extends BaseTreeNode<TreeNode, Type>,
   Type extends string = TreeNode['type']
-> {
+> implements Disposable {
   templateStr?: string;
   labelingTemplateStr?: string;
   columns = new Set<Column<TreeNode>>();
@@ -36,6 +37,10 @@ export class SourcePainter<
     public source: ExplorerSource<TreeNode>,
     public columnRegistrar: ColumnRegistrar<TreeNode, any>,
   ) {}
+
+  dispose() {
+    this.clearParts(this.parts);
+  }
 
   private clearColumn(column: number | Column<TreeNode>) {
     if (typeof column !== 'number') {
@@ -135,7 +140,7 @@ export class SourcePainter<
 export class SourcePainters<
   TreeNode extends BaseTreeNode<TreeNode, Type>,
   Type extends string = TreeNode['type']
-> {
+> implements Disposable {
   painters = new Map<Type, SourcePainter<TreeNode, Type>>();
   readonly viewPainter = new ViewPainter(this.source.explorer);
 
@@ -143,6 +148,10 @@ export class SourcePainters<
     public source: ExplorerSource<TreeNode>,
     public columnRegistrar: ColumnRegistrar<TreeNode, any>,
   ) {}
+
+  dispose() {
+    this.painters.forEach((painter) => painter.dispose());
+  }
 
   getPainter(type: Type) {
     if (!this.painters.has(type)) {

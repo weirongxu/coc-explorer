@@ -57,7 +57,8 @@ export type ExplorerSourceClass = Class<ExplorerSource<any>> & {
   enabled: boolean | Promise<boolean>;
 };
 
-export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>> {
+export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>>
+  implements Disposable {
   abstract hlSrcId: number;
   abstract rootNode: TreeNode;
   abstract sourcePainters: SourcePainters<TreeNode>;
@@ -73,7 +74,7 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>> {
   bufManager = this.explorer.explorerManager.bufManager;
 
   private requestedRenderNodes: Set<TreeNode> = new Set();
-  subscriptions: Disposable[];
+  protected disposables: Disposable[] = [];
 
   private readonly nodeStores = (() => {
     type CompactStore =
@@ -182,7 +183,6 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>> {
 
   constructor(public sourceType: string, public explorer: Explorer) {
     this.context = this.explorer.context;
-    this.subscriptions = this.context.subscriptions;
 
     this.addNodeAction(
       'esc',
@@ -263,6 +263,11 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>> {
       'toggle node selection',
       { select: true },
     );
+  }
+
+  dispose() {
+    this.sourcePainters.dispose();
+    this.disposables.forEach((s) => s.dispose());
   }
 
   get height() {

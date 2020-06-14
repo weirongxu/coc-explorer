@@ -1,4 +1,4 @@
-import { FloatBuffer, workspace } from 'coc.nvim';
+import { FloatBuffer, workspace, Disposable } from 'coc.nvim';
 import { Explorer } from '../explorer';
 import { BaseTreeNode, ExplorerSource } from '../source/source';
 import { Drawn, flatten, supportedFloat } from '../util';
@@ -6,7 +6,7 @@ import { FloatingFactory2 } from './floatingFactory2';
 import { FloatingFactory3 } from './floatingFactory3';
 import { PreviewStrategy } from '../types';
 
-export class FloatingPreview {
+export class FloatingPreview implements Disposable {
   nvim = workspace.nvim;
   floatFactory: FloatingFactory2 | FloatingFactory3;
   shown: boolean = false;
@@ -15,6 +15,10 @@ export class FloatingPreview {
     this.floatFactory = new ('getDimension' in FloatBuffer
       ? FloatingFactory3
       : FloatingFactory2)(this.explorer, this.nvim, workspace.env, false);
+  }
+
+  dispose() {
+    this.floatFactory.dispose();
   }
 
   private _previewNodeTimeout?: NodeJS.Timeout;
