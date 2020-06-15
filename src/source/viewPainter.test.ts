@@ -14,6 +14,14 @@ beforeAll(async () => {
   await helper.setup();
 });
 
+afterAll(async () => {
+  await helper.shutdown();
+});
+
+afterEach(async () => {
+  await helper.reset();
+});
+
 interface TestNode extends BaseTreeNode<TestNode, 'root' | 'child'> {
   name: string;
   fullpath: string;

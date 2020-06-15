@@ -115,20 +115,20 @@ export class BufferSource extends ExplorerSource<BufferNode> {
     if (force) {
       await this.bufManager.reload();
     }
-    const list = this.bufManager.list;
+    const bufferNodes = this.bufManager.bufferNodes;
     const tabOnly = this.config.get<boolean>('buffer.tabOnly')!;
     if (this.showHidden) {
-      return [...list];
+      return [...bufferNodes];
     } else {
       if (tabOnly) {
         const tabBuflist: number[] = uniq(
           await this.nvim.call('tabpagebuflist', []),
         );
-        return list.filter(
+        return bufferNodes.filter(
           (it) => tabBuflist.includes(it.bufnr) && !it.unlisted,
         );
       } else {
-        return list.filter((it) => !it.unlisted);
+        return bufferNodes.filter((it) => !it.unlisted);
       }
     }
   }

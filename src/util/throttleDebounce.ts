@@ -119,12 +119,11 @@ export function debouncePromise<A extends Array<any>, R>(
         },
         async invoke() {
           try {
+            timer = undefined;
+            store = undefined;
             resolve(await fn(...args));
           } catch (err) {
             reject(err);
-          } finally {
-            timer = undefined;
-            store = undefined;
           }
         },
       };

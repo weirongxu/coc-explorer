@@ -21,6 +21,8 @@ export const fsAccess = (path: string, mode?: number) =>
       err ? resolve(false) : resolve(true);
     });
   });
+export const fsWriteFile = promisify(fs.writeFile);
+export const fsReadFile = promisify(fs.readFile);
 export const fsExists = fsAccess;
 export const fsStat = promisify(fs.stat);
 export const fsLstat = promisify(fs.lstat);

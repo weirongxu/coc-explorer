@@ -45,12 +45,15 @@ export function onBufEnter(
 ) {
   let prevBufnr = 0;
 
-  const handler = debounce(delay, (bufnr: number) => {
-    if (bufnr !== prevBufnr) {
-      prevBufnr = bufnr;
-      return listener(bufnr);
-    }
-  });
+  const handler =
+    delay !== 0
+      ? debounce(delay, (bufnr: number) => {
+          if (bufnr !== prevBufnr) {
+            prevBufnr = bufnr;
+            return listener(bufnr);
+          }
+        })
+      : listener;
 
   return onEvent('BufEnter', handler, undefined, disposables);
 }
@@ -106,14 +109,16 @@ export class InternalEventEmitter<
     }
   }
 
-  fire<E extends keyof Events>(event: E, ...args: Arguments<Events[E]>) {
-    this.listeners(event as string).forEach(async (listener) => {
-      try {
-        await listener(...args);
-      } catch (e) {
-        onError(e);
-      }
-    });
+  async fire<E extends keyof Events>(event: E, ...args: Arguments<Events[E]>) {
+    await Promise.all(
+      this.listeners(event as string).map(async (listener) => {
+        try {
+          await listener(...args);
+        } catch (e) {
+          onError(e);
+        }
+      }),
+    );
   }
 }
 
@@ -130,7 +135,9 @@ export function registerInternalEvents(context: ExtensionContext) {
   context.subscriptions.push(
     commands.registerCommand(
       'explorer.internal.didVimEvent',
-      (event: any, ...args: any[]) => internalEvents.fire(event, ...args),
+      asyncCatchError((event: any, ...args: any[]) =>
+        internalEvents.fire(event, ...args),
+      ),
       undefined,
       true,
     ),

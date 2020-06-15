@@ -1,18 +1,18 @@
 // modified from https://github.com/neoclide/coc.nvim/blob/master/src/model/db.ts
 import pathLib from 'path';
-import { statAsync, writeFileAsync, readFileAsync, mkdirAsync } from './fs';
+import { fsStat, fsWriteFile, fsReadFile, fsMkdirp } from '../../../../util';
 
 export default class BookmarkDB {
   constructor(private readonly filepath: string) {}
 
   public async load(): Promise<any> {
     const dir = pathLib.dirname(this.filepath);
-    const stat = await statAsync(dir);
+    const stat = await fsStat(dir).catch(() => null);
     if (!stat || !stat.isDirectory()) {
       return {};
     }
     try {
-      const content = await readFileAsync(this.filepath);
+      const content = await fsReadFile(this.filepath, { encoding: 'utf8' });
       return JSON.parse(content.trim());
     } catch {
       return {};
@@ -53,14 +53,14 @@ export default class BookmarkDB {
     const len = parts.length;
     if (obj === null) {
       const dir = pathLib.dirname(this.filepath);
-      await mkdirAsync(dir);
+      await fsMkdirp(dir);
       obj = origin;
     }
     for (let i = 0; i < len; i++) {
       const key = parts[i];
       if (i === len - 1) {
         obj[key] = data;
-        await writeFileAsync(this.filepath, JSON.stringify(origin, null, 2));
+        await fsWriteFile(this.filepath, JSON.stringify(origin, null, 2));
         break;
       }
       if (typeof obj[key] === 'undefined') {
@@ -83,7 +83,7 @@ export default class BookmarkDB {
       }
       if (i === len - 1) {
         delete obj[parts[i]];
-        await writeFileAsync(this.filepath, JSON.stringify(origin, null, 2));
+        await fsWriteFile(this.filepath, JSON.stringify(origin, null, 2));
         break;
       }
       obj = obj[parts[i]];
@@ -91,10 +91,10 @@ export default class BookmarkDB {
   }
 
   public async clear(): Promise<void> {
-    const stat = await statAsync(this.filepath);
+    const stat = await fsStat(this.filepath).catch(() => null);
     if (!stat || !stat.isFile()) {
       return;
     }
-    await writeFileAsync(this.filepath, '{}');
+    await fsWriteFile(this.filepath, '{}');
   }
 }

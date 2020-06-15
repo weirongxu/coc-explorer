@@ -11,7 +11,7 @@ import { initBookmarkActions } from './bookmarkActions';
 import { bookmarkColumnRegistrar } from './bookmarkColumnRegistrar';
 import './load';
 import BookmarkDB from './util/db';
-import { decode } from './util/fp';
+import { decode } from './util/encodeDecode';
 
 export interface BookmarkNode
   extends BaseTreeNode<BookmarkNode, 'root' | 'child'> {

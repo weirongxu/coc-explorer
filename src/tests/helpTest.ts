@@ -2,7 +2,7 @@
 
 import { Buffer, Neovim, Window } from '@chemzqm/neovim';
 import * as cp from 'child_process';
-import events from 'events';
+import { EventEmitter } from 'events';
 import fs from 'fs';
 import os from 'os';
 import pathLib from 'path';
@@ -25,9 +25,9 @@ process.on('uncaughtException', (err) => {
   // eslint-disable-next-line no-console
   console.error(msg);
 });
-export class Helper extends events.EventEmitter {
+export class Helper extends EventEmitter {
   public nvim!: Neovim;
-  public proc: cp.ChildProcess | undefined;
+  public proc?: cp.ChildProcess;
   public plugin!: Plugin;
 
   constructor() {
@@ -46,7 +46,7 @@ export class Helper extends events.EventEmitter {
     ));
     const plugin = (this.plugin = attach({ proc }));
     this.nvim = plugin.nvim;
-    this.nvim.uiAttach(80, 80, {}).catch((_e) => {
+    this.nvim.uiAttach(160, 80, {}).catch((_e) => {
       // noop
     });
     proc.on('exit', () => {
@@ -161,7 +161,9 @@ export class Helper extends events.EventEmitter {
   }
 
   public async edit(file?: string): Promise<Buffer> {
-    file = pathLib.join(__dirname, file ? file : `${uuid()}`);
+    if (!file || !pathLib.isAbsolute(file)) {
+      file = pathLib.join(__dirname, file ? file : `${uuid()}`);
+    }
     const escaped = await this.nvim.call('fnameescape', file);
     await this.nvim.command(`edit ${escaped}`);
     await this.wait(60);
@@ -209,8 +211,8 @@ export class Helper extends events.EventEmitter {
   }
 
   public async items(): Promise<VimCompleteItem[]> {
-    const context = await this.nvim.getVar('coc#_context');
-    return Reflect.get(context as any, 'candidates') || [];
+    const context = (await this.nvim.getVar('coc#_context')) as any;
+    return context['candidates'] || [];
   }
 
   public async screenLine(line: number): Promise<string> {

@@ -69,12 +69,15 @@ describe('throttlePromise', () => {
   });
 });
 
-describe('debouncePromise', () => {
+describe('debounce', () => {
   test('debouncePromise', async () => {
-    let sentCount = 0;
-    const fn = debouncePromise(500, () => {
-      sentCount += 1;
-    });
+    const mockFn = jest.fn();
+    const fn = debouncePromise(500, mockFn);
+    const mockFn2 = jest.fn();
+    debouncePromise(200, mockFn2);
+    debouncePromise(200, mockFn2);
+    debouncePromise(200, mockFn2);
+    debouncePromise(200, mockFn2);
     void fn();
     void fn();
     void fn();
@@ -83,17 +86,24 @@ describe('debouncePromise', () => {
     await delay(50);
     void fn();
     await delay(50);
-    expect(sentCount).toEqual(0);
+    expect(mockFn).toHaveBeenCalledTimes(0);
     await delay(480);
-    expect(sentCount).toEqual(1);
+    expect(mockFn).toHaveBeenCalledTimes(1);
 
     void fn();
     await delay(100);
-    expect(sentCount).toEqual(1);
+    expect(mockFn).toHaveBeenCalledTimes(1);
     void fn();
     await delay(100);
-    expect(sentCount).toEqual(1);
+    expect(mockFn).toHaveBeenCalledTimes(1);
     await delay(430);
-    expect(sentCount).toEqual(2);
+    expect(mockFn).toHaveBeenCalledTimes(2);
+
+    await delay(1000);
+    expect(mockFn).toHaveBeenCalledTimes(2);
+
+    void fn();
+    await delay(510);
+    expect(mockFn).toHaveBeenCalledTimes(3);
   });
 });

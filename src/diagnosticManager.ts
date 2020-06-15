@@ -15,34 +15,36 @@ export class DiagnosticManager {
 
   private onChangeEvent = new Emitter<void>();
 
-  constructor(private context: ExtensionContext) {
-    internalEvents.on(
-      'CocDiagnosticChange',
-      throttle(100, () => {
-        const errorPathCountNum: Record<string, number> = {};
-        const warningPathCountNum: Record<string, number> = {};
+  constructor(context: ExtensionContext) {
+    context.subscriptions.push(
+      internalEvents.on(
+        'CocDiagnosticChange',
+        throttle(100, () => {
+          const errorPathCountNum: Record<string, number> = {};
+          const warningPathCountNum: Record<string, number> = {};
 
-        cocDiagnosticManager.getDiagnosticList().forEach((diagnostic) => {
-          const uri = diagnostic.location.uri;
-          const path = Uri.parse(uri).fsPath;
-          if (diagnostic.severity === 'Error') {
-            if (!(path in errorPathCountNum)) {
-              errorPathCountNum[path] = 0;
+          cocDiagnosticManager.getDiagnosticList().forEach((diagnostic) => {
+            const uri = diagnostic.location.uri;
+            const path = Uri.parse(uri).fsPath;
+            if (diagnostic.severity === 'Error') {
+              if (!(path in errorPathCountNum)) {
+                errorPathCountNum[path] = 0;
+              }
+              errorPathCountNum[path] += 1;
+            } else {
+              if (!(path in warningPathCountNum)) {
+                warningPathCountNum[path] = 0;
+              }
+              warningPathCountNum[path] += 1;
             }
-            errorPathCountNum[path] += 1;
-          } else {
-            if (!(path in warningPathCountNum)) {
-              warningPathCountNum[path] = 0;
-            }
-            warningPathCountNum[path] += 1;
-          }
-        });
+          });
 
-        this.errorPathCount = errorPathCountNum;
-        this.warningPathCount = warningPathCountNum;
+          this.errorPathCount = errorPathCountNum;
+          this.warningPathCount = warningPathCountNum;
 
-        this.onChangeEvent.fire();
-      }),
+          this.onChangeEvent.fire();
+        }),
+      ),
     );
   }
 
