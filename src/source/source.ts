@@ -75,6 +75,7 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>>
   diagnosticManager = this.explorer.explorerManager.diagnosticManager;
 
   private requestedRenderNodes: Set<TreeNode> = new Set();
+  private isDisposed: boolean = false;
   protected disposables: Disposable[] = [];
 
   private readonly nodeStores = (() => {
@@ -267,6 +268,7 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>>
   }
 
   dispose() {
+    this.isDisposed = true;
     this.sourcePainters.dispose();
     this.disposables.forEach((s) => s.dispose());
   }
@@ -291,7 +293,7 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>>
 
   protected abstract open(isFirst: boolean): Promise<void>;
 
-  async openedNotifier(_isFirst: boolean): Promise<Notifier | void> {
+  async openedNotifier(_isFirst: boolean): Promise<Notifier> {
     return Notifier.noop();
   }
 
@@ -977,13 +979,16 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>>
     parentNode: TreeNode,
     options?: { render?: boolean; force?: boolean },
   ) {
-    return (await this.reloadNotifier(parentNode, options))?.run();
+    return (await this.reloadNotifier(parentNode, options)).run();
   }
 
   async reloadNotifier(
     parentNode: TreeNode,
     { render = true, force = false } = {},
   ) {
+    if (this.isDisposed) {
+      return Notifier.noop();
+    }
     await this.explorer.refreshWidth();
     this.selectedNodes = new Set();
     parentNode.children = this.nodeStores.isExpanded(parentNode)
@@ -993,6 +998,7 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>>
     if (render) {
       return this.renderNotifier({ node: parentNode, force });
     }
+    return Notifier.noop();
   }
 
   private offsetAfterLine(offset: number, afterLine: number) {
@@ -1239,14 +1245,14 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>>
     force = false,
   }: RenderOptions<TreeNode> = {}) {
     if (this.explorer.isHelpUI) {
-      return;
+      return Notifier.noop();
     }
 
     const { nvim } = this;
 
     const range = this.nodeAndChildrenRange(node);
     if (!range && !node.isRoot) {
-      return;
+      return Notifier.noop();
     }
 
     const { startIndex: nodeIndex, endIndex } = range

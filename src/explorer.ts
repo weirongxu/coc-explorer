@@ -4,6 +4,7 @@ import {
   ExtensionContext,
   Window,
   workspace,
+  disposeAll,
 } from 'coc.nvim';
 import pFilter from 'p-filter';
 import { conditionActionRules } from './actions/condition';
@@ -720,18 +721,23 @@ export class Explorer implements Disposable {
 
     await this.addHighlightSyntax();
 
-    await this.initArgs(args);
+    const sourcesChanged = await this.initArgs(args);
 
     for (const source of this.sources) {
       await source.bootOpen(isFirst);
     }
 
-    await Notifier.runAll([
+    const notifiers: Notifier[] = [];
+    if (sourcesChanged) {
+      notifiers.push(this.clearNotifier());
+    }
+    notifiers.push(
       await this.reloadAllNotifier(),
       ...(await Promise.all(
         this.sources.map((s) => s.openedNotifier(isFirst)),
       )),
-    ]);
+    );
+    await Notifier.runAll(notifiers);
 
     await doUserAutocmd('CocExplorerOpenPost');
   }
@@ -789,7 +795,12 @@ export class Explorer implements Disposable {
     }
   }
 
-  private async initArgs(args: Args) {
+  /**
+   * initialize arguments
+   *
+   * @return sources changed
+   */
+  private async initArgs(args: Args): Promise<boolean> {
     this._args = args;
     this.explorerManager.rootPathRecords.add(
       await this.args.value(argOptions.rootUri),
@@ -797,7 +808,7 @@ export class Explorer implements Disposable {
 
     const argSources = await args.value(argOptions.sources);
     if (!argSources) {
-      return;
+      return false;
     }
 
     const argSourcesEnabled = await pFilter(argSources, (s) =>
@@ -808,14 +819,17 @@ export class Explorer implements Disposable {
       this.lastArgSourcesEnabledJson &&
       this.lastArgSourcesEnabledJson === argSourcesEnabledJson
     ) {
-      return;
+      return false;
     }
+    this.lastArgSourcesEnabledJson = argSourcesEnabledJson;
 
-    this._sources?.forEach((s) => s.dispose());
+    disposeAll(this._sources ?? []);
 
     this._sources = argSourcesEnabled.map((sourceArg) =>
       sourceManager.createSource(sourceArg.name, this, sourceArg.expand),
     );
+
+    return true;
   }
 
   addGlobalAction(
@@ -1084,6 +1098,10 @@ export class Explorer implements Disposable {
       this.buffer.setOption('readonly', true, true);
       this.buffer.setOption('modifiable', false, true);
     });
+  }
+
+  clearNotifier() {
+    return this.setLinesNotifier([], 0, -1);
   }
 
   async reloadAllNotifier({ render = true } = {}) {

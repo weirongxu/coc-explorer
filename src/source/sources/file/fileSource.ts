@@ -229,7 +229,7 @@ export class FileSource extends ExplorerSource<FileNode> {
       if (isFirst) {
         return this.gotoRootNotifier({ col: 1 });
       }
-      return;
+      return Notifier.noop();
     }
 
     const hasRevealPath = args.has(argOptions.reveal);
@@ -249,6 +249,8 @@ export class FileSource extends ExplorerSource<FileNode> {
     } else if (isFirst) {
       return this.gotoRootNotifier({ col: 1 });
     }
+
+    return Notifier.noop();
   }
 
   getPutTargetNode(node: FileNode) {
