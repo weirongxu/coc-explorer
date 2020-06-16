@@ -545,17 +545,17 @@
           "default": "I"
         },
         "explorer.bookmark.root.template": {
-          "description": "Template for root node of buffer source",
+          "description": "Template for root node of bookmark source",
           "type": "string",
           "default": "[icon] [title]"
         },
         "explorer.bookmark.child.template": {
-          "description": "Template for child node of buffer source",
+          "description": "Template for child node of bookmark source",
           "type": "string",
-          "default": "[selection | 1] [filename] [position] "
+          "default": "[selection | 1] [filename] [position]"
         },
         "explorer.bookmark.child.labelingTemplate": {
-          "description": "Labeling template for child node of buffer source",
+          "description": "Labeling template for child node of bookmark source, use for preview when previewAction is labeling",
           "type": "string",
           "default": "[filename][fullpath][position][line][annotation]"
         },
@@ -580,7 +580,7 @@
           "default": "[selection | 1] [bufnr] [name][modified][readonly] [fullpath]"
         },
         "explorer.buffer.child.labelingTemplate": {
-          "description": "Labeling template for child node of buffer source",
+          "description": "Labeling template for child node of buffer source, use for preview when previewAction is labeling",
           "type": "string",
           "default": "[name][bufname][fullpath][modified][readonly]"
         },
@@ -644,7 +644,7 @@
           "default": "[icon] [title] [root] [fullpath]"
         },
         "explorer.file.root.labelingTemplate": {
-          "description": "Labeling template for root node of file source",
+          "description": "Labeling template for root node of file source, use for preview when previewAction is labeling",
           "type": "string",
           "default": "[fullpath]"
         },
@@ -654,7 +654,7 @@
           "default": "[git | 2] [selection | clip | 1] [indent][icon | 1] [diagnosticError & 1][filename omitCenter 1][modified][readonly] [linkIcon & 1][link growRight 1 omitCenter 5][size]"
         },
         "explorer.file.child.labelingTemplate": {
-          "description": "Labeling template for child node of file source",
+          "description": "Labeling template for child node of file source, use for preview when previewAction is labeling",
           "type": "string",
           "default": "[fullpath][link][diagnosticWarning][diagnosticError][size][timeAccessed][timeModified][timeCreated][readonly][modified]"
         },

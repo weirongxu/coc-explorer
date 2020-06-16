@@ -224,7 +224,7 @@ default: `[selection | 1] [bufnr] [name][modified][readonly] [fullpath]`
 
 #### `--buffer-child-labeling-template <template>`
 
-Template for child node of buffer source
+Labeling template for child node of buffer source, use for preview when previewAction is labeling
 
 Columns: same with `--buffer-child-template`
 
@@ -245,7 +245,7 @@ default: `[icon] [title] [root] [fullpath]`
 
 #### `--file-root-labeling-template <template>`
 
-Labeling template for root node of file source
+Labeling template for root node of file source, use for preview when previewAction is labeling
 
 Columns: same with `--file-root-template`
 
@@ -279,11 +279,45 @@ default: `[git | 2] [selection | clip | 1] [indent][icon | 1] [diagnosticError &
 
 #### `--file-child-labeling-template <template>`
 
-Labeling template for child node of file source
+Labeling template for child node of file source, use for preview when previewAction is labeling
 
 Columns: same with `--file-child-template`
 
 default: `[fullpath][link][diagnosticWarning][diagnosticError][size][timeAccessed][timeModified][timeCreated][readonly][modified]`
+
+#### `--bookmark-root-template <template>`
+
+Template for root node of bookmark source
+
+Columns:
+
+- icon
+- title
+
+default: `[icon] [title]`
+
+#### `--bookmark-child-template <template>`
+
+Template for child node of bookmark source
+
+Columns:
+
+- selection
+- position
+- filename
+- fullpath
+- line
+- annotation
+
+default: `[selection | 1] [filename] [position]`
+
+#### `--bookmark-child-labeling-template <template>`
+
+Labeling template for child node of bookmark source, use for preview when previewAction is labeling
+
+Columns: same with `--bookmark-child-template`
+
+default: `[filename][fullpath][position][line][annotation]`
 
 #### `--reveal <filepath>`
 
@@ -521,15 +555,15 @@ Default: <pre><code>"✓"</code></pre>
 Default: <pre><code>"I"</code></pre>
 </details>
 <details>
-<summary><code>explorer.bookmark.root.template</code>: Template for root node of buffer source. type: <code>string</code></summary>
+<summary><code>explorer.bookmark.root.template</code>: Template for root node of bookmark source. type: <code>string</code></summary>
 Default: <pre><code>"[icon] [title]"</code></pre>
 </details>
 <details>
-<summary><code>explorer.bookmark.child.template</code>: Template for child node of buffer source. type: <code>string</code></summary>
-Default: <pre><code>"[selection | 1] [filename] [position] "</code></pre>
+<summary><code>explorer.bookmark.child.template</code>: Template for child node of bookmark source. type: <code>string</code></summary>
+Default: <pre><code>"[selection | 1] [filename] [position]"</code></pre>
 </details>
 <details>
-<summary><code>explorer.bookmark.child.labelingTemplate</code>: Labeling template for child node of buffer source. type: <code>string</code></summary>
+<summary><code>explorer.bookmark.child.labelingTemplate</code>: Labeling template for child node of bookmark source, use for preview when previewAction is labeling. type: <code>string</code></summary>
 Default: <pre><code>"[filename][fullpath][position][line][annotation]"</code></pre>
 </details>
 <details>
@@ -549,7 +583,7 @@ Default: <pre><code>"[icon] [title]"</code></pre>
 Default: <pre><code>"[selection | 1] [bufnr] [name][modified][readonly] [fullpath]"</code></pre>
 </details>
 <details>
-<summary><code>explorer.buffer.child.labelingTemplate</code>: Labeling template for child node of buffer source. type: <code>string</code></summary>
+<summary><code>explorer.buffer.child.labelingTemplate</code>: Labeling template for child node of buffer source, use for preview when previewAction is labeling. type: <code>string</code></summary>
 Default: <pre><code>"[name][bufname][fullpath][modified][readonly]"</code></pre>
 </details>
 <details>
@@ -588,7 +622,7 @@ Default: <pre><code>false</code></pre>
 Default: <pre><code>"[icon] [title] [root] [fullpath]"</code></pre>
 </details>
 <details>
-<summary><code>explorer.file.root.labelingTemplate</code>: Labeling template for root node of file source. type: <code>string</code></summary>
+<summary><code>explorer.file.root.labelingTemplate</code>: Labeling template for root node of file source, use for preview when previewAction is labeling. type: <code>string</code></summary>
 Default: <pre><code>"[fullpath]"</code></pre>
 </details>
 <details>
@@ -596,7 +630,7 @@ Default: <pre><code>"[fullpath]"</code></pre>
 Default: <pre><code>"[git | 2] [selection | clip | 1] [indent][icon | 1] [diagnosticError & 1][filename omitCenter 1][modified][readonly] [linkIcon & 1][link growRight 1 omitCenter 5][size]"</code></pre>
 </details>
 <details>
-<summary><code>explorer.file.child.labelingTemplate</code>: Labeling template for child node of file source. type: <code>string</code></summary>
+<summary><code>explorer.file.child.labelingTemplate</code>: Labeling template for child node of file source, use for preview when previewAction is labeling. type: <code>string</code></summary>
 Default: <pre><code>"[fullpath][link][diagnosticWarning][diagnosticError][size][timeAccessed][timeModified][timeCreated][readonly][modified]"</code></pre>
 </details>
 <details>
