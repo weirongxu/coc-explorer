@@ -70,6 +70,13 @@ Explorer extension for [coc.nvim](https://github.com/neoclide/coc.nvim)
 :CocCommand explorer [options] [root-uri]
 ```
 
+## User events
+
+- `CocExplorerOpenPre`: triggered before open explorer
+- `CocExplorerOpenPost`: triggered after open explorer
+- `CocExplorerQuitPre`: triggered before quit explorer
+- `CocExplorerQuitPost`: triggered after quit explorer
+
 ### Example
 
 ```vim
