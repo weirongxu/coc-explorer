@@ -12,7 +12,13 @@ import { explorerActionList } from '../lists/actions';
 import { onError } from '../logger';
 import { MappingMode, getReverseMappings } from '../mappings';
 import { OpenStrategy, PreviewStrategy, openStrategyList } from '../types';
-import { drawnWithIndexRange, flatten, generateUri, Notifier } from '../util';
+import {
+  drawnWithIndexRange,
+  flatten,
+  generateUri,
+  Notifier,
+  prettyPrint,
+} from '../util';
 import { WinLayoutFinder } from '../winLayoutFinder';
 import { HighlightPositionWithLine } from './highlightManager';
 import { SourcePainters } from './sourcePainters';
@@ -1064,7 +1070,10 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>>
           .slice(0, startIndex)
           .concat(needDrawNodes)
           .concat(this.flattenedNodes.slice(endIndex + 1));
-        this.offsetAfterLine(needDrawNodes.length - 1, startIndex);
+        this.offsetAfterLine(
+          needDrawNodes.length - 1 - (endIndex - startIndex),
+          startIndex,
+        );
         const { contents, highlightPositions } = await this.drawNodes(
           needDrawNodes,
         );
