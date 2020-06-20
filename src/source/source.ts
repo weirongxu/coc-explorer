@@ -12,13 +12,7 @@ import { explorerActionList } from '../lists/actions';
 import { onError } from '../logger';
 import { MappingMode, getReverseMappings } from '../mappings';
 import { OpenStrategy, PreviewStrategy, openStrategyList } from '../types';
-import {
-  drawnWithIndexRange,
-  flatten,
-  generateUri,
-  Notifier,
-  prettyPrint,
-} from '../util';
+import { drawnWithIndexRange, flatten, generateUri, Notifier } from '../util';
 import { WinLayoutFinder } from '../winLayoutFinder';
 import { HighlightPositionWithLine } from './highlightManager';
 import { SourcePainters } from './sourcePainters';
