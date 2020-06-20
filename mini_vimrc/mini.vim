@@ -17,33 +17,30 @@ nmap <Leader>eE :CocCommand explorer --position=right<CR>
 nmap <Leader>er :call CocAction('runCommand', 'explorer.doAction', 'closest', ['reveal:0'], [['relative', 0, 'file']])<CR>
 
 execute "nmap <Leader>r :CocCommand explorer --reveal=".expand('<sfile>:h')."/package.json<CR>"
-nmap <Leader>ff :CocCommand explorer --position=floating<CR>
-nmap <Leader>fl :CocCommand explorer --position=floating --floating-position=left-center --floating-width=50 --floating-height=-10<CR>
-nmap <Leader>fr :CocCommand explorer --position=floating --floating-position=right-center --floating-width=50 --floating-height=-10<CR>
 nmap <Leader>t :CocCommand explorer --position=tab<CR>
 
 let g:coc_explorer_global_presets = {
 \   '.vim': {
 \     'root-uri': '~/.vim',
 \   },
-\   'floating': {
-\     'position': 'floating',
-\   },
 \   'floatingTop': {
 \     'position': 'floating',
 \     'floating-position': 'center-top',
+\     'open-action-strategy': 'sourceWindow',
 \   },
 \   'floatingLeftside': {
 \     'position': 'floating',
 \     'floating-position': 'left-center',
 \     'floating-width': 50,
 \     'floating-height': -10,
+\     'open-action-strategy': 'sourceWindow',
 \   },
 \   'floatingRightside': {
 \     'position': 'floating',
 \     'floating-position': 'right-center',
 \     'floating-width': 50,
 \     'floating-height': -10,
+\     'open-action-strategy': 'sourceWindow',
 \   },
 \   'simplify': {
 \     'file-child-template': '[selection | clip | 1] [indent][icon | 1] [filename omitCenter 1]'

@@ -14,7 +14,8 @@
   },
   "explorer.presets": {
     "floating": {
-      "position": "floating"
+      "position": "floating",
+      "open-action-strategy": "sourceWindow"
     }
   },
   "explorer.icon.enableNerdfont": true,
