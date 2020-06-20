@@ -1,4 +1,4 @@
-import { drawnToRange, DrawnWithNodeIndex } from './painter';
+import { drawnWithIndexRange, DrawnWithNodeIndex } from './painter';
 
 test('drawnToRange', () => {
   const drawnList: DrawnWithNodeIndex[] = [
@@ -33,7 +33,7 @@ test('drawnToRange', () => {
       highlightPositions: [],
     },
   ];
-  const drawnRangeList = drawnToRange(drawnList);
+  const drawnRangeList = drawnWithIndexRange(drawnList);
   expect(drawnRangeList).toEqual([
     {
       nodeIndexStart: 0,
