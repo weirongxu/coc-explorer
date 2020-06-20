@@ -1,6 +1,6 @@
-export const delay = (time: number) => {
+export const delay = (ms: number) => {
   return new Promise((resolve) => {
-    setTimeout(resolve, time);
+    setTimeout(resolve, ms);
   });
 };
 

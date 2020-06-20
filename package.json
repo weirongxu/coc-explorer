@@ -776,6 +776,7 @@
     "coc.nvim": "^0.0.77",
     "command-exists": "^1.2.9",
     "date-fns": "^2.13.0",
+    "dotignore": "^0.1.2",
     "eslint": "^7.0.0",
     "jest": "^25.5.4",
     "lodash-es": "^4.17.15",

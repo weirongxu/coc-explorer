@@ -2,15 +2,18 @@ import commandExists from 'command-exists';
 import { fileColumnRegistrar } from '../fileColumnRegistrar';
 import { GitFormat, gitManager, GitMixedStatus } from '../../../../gitManager';
 import pathLib from 'path';
-import { debounce } from '../../../../util';
+import { debounce, delay } from '../../../../util';
 import { fileHighlights } from '../fileSource';
 import { onEvent, internalEvents } from '../../../../events';
 import { workspace } from 'coc.nvim';
+import { onError } from '../../../../logger';
 
 fileColumnRegistrar.registerColumn(
   'child',
   'git',
   ({ source, subscriptions }) => {
+    const showIgnored = source.getColumnConfig<boolean>('git.showIgnored')!;
+
     let prevStatuses = {} as Record<string, GitMixedStatus>;
 
     const getIconConf = (name: string) =>
@@ -31,6 +34,12 @@ fileColumnRegistrar.registerColumn(
 
     const statusEqual = (a: GitMixedStatus, b: GitMixedStatus) => {
       return a.x === b.x && a.y === b.y;
+    };
+
+    const reloadIgnore = async (directory: string) => {
+      if (showIgnored) {
+        await gitManager.reloadIgnore(directory);
+      }
     };
 
     const reload = async (directory: string, reloadAll: boolean) => {
@@ -73,7 +82,11 @@ fileColumnRegistrar.registerColumn(
               if (fullpath) {
                 const filename = pathLib.basename(fullpath);
                 const dirname = pathLib.dirname(fullpath);
-                await reload(dirname, filename === '.gitignore');
+                const isReloadIgnore = filename === '.gitignore';
+                if (isReloadIgnore) {
+                  await reloadIgnore(dirname);
+                }
+                await reload(dirname, isReloadIgnore);
               }
             }),
           ),
@@ -100,8 +113,12 @@ fileColumnRegistrar.registerColumn(
             : node.directory
             ? node.fullpath
             : pathLib.dirname(node.fullpath);
-        await gitManager.reload(folderPath);
-        prevStatuses = await gitManager.getStatuses(folderPath);
+        await reloadIgnore(folderPath);
+        delay(100)
+          .then(async () => {
+            await reload(folderPath, true);
+          })
+          .catch(onError);
       },
       draw() {
         return {
@@ -118,6 +135,9 @@ fileColumnRegistrar.registerColumn(
               showFormat(statusIcons[status.x], true);
               showFormat(statusIcons[status.y], false);
               source.addIndexing('git', nodeIndex);
+            } else if (showIgnored && gitManager.shouldIgnore(node.fullpath)) {
+              showFormat(statusIcons[GitFormat.unmodified], true);
+              showFormat(statusIcons[GitFormat.ignored], true);
             } else {
               source.removeIndexing('git', nodeIndex);
             }

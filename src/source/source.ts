@@ -12,7 +12,7 @@ import { explorerActionList } from '../lists/actions';
 import { onError } from '../logger';
 import { MappingMode, getReverseMappings } from '../mappings';
 import { OpenStrategy, PreviewStrategy, openStrategyList } from '../types';
-import { drawnToRange, flatten, generateUri, Notifier } from '../util';
+import { drawnWithIndexRange, flatten, generateUri, Notifier } from '../util';
 import { WinLayoutFinder } from '../winLayoutFinder';
 import { HighlightPositionWithLine } from './highlightManager';
 import { SourcePainters } from './sourcePainters';
@@ -1219,7 +1219,7 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>>
     return await this.sourcePainters.beforeDraw(nodes, {
       draw: async () => {
         const { drawnList, highlightPositions } = await this.drawNodes(nodes);
-        const drawnRangeList = drawnToRange(drawnList);
+        const drawnRangeList = drawnWithIndexRange(drawnList);
         return Notifier.create(() => {
           drawnRangeList.forEach((dr) => {
             this.setLinesNotifier(

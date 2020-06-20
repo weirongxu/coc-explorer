@@ -66,7 +66,7 @@ export type DrawnWithIndexRange = {
   drawnList: DrawnWithNodeIndex[];
 };
 
-export function drawnToRange(
+export function drawnWithIndexRange(
   drawnList: DrawnWithNodeIndex[],
 ): DrawnWithIndexRange[] {
   if (!drawnList.length) {

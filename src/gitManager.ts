@@ -1,9 +1,8 @@
 import pathLib from 'path';
 import { onError } from './logger';
-import { execCli } from './util';
+import { execCli, fsReadFile, fsExists } from './util';
 import { config } from './config';
-
-const showIgnored = config.get<boolean>('file.column.git.showIgnored')!;
+import { createMatcher, IgnoreMatcher } from 'dotignore';
 
 export enum GitFormat {
   mixed = '*',
@@ -142,9 +141,10 @@ class GitCommand {
     const gitStatus: Record<string, GitStatus> = {};
 
     const args = ['status', '--porcelain', '-u'];
-    if (showIgnored) {
-      args.push('--ignored');
-    }
+    // // `--ignore` is too slow
+    // if (showIgnored) {
+    //   args.push('--ignored');
+    // }
     const output = await this.spawn(args, { cwd: root });
     const lines = output.split('\n');
     lines.forEach((line) => {
@@ -220,6 +220,10 @@ class GitManager {
    **/
   private statusCache: Record<string, Record<string, GitStatus>> = {};
   /**
+   * dotignoreCache[rootPath] = IgnoreMatcher | undefined
+   **/
+  private dotignoreCache: Record<string, IgnoreMatcher | undefined> = {};
+  /**
    * mixedStatusCache[rootPath][filepath] = GitStatus
    **/
   private mixedStatusCache: Record<string, Record<string, GitMixedStatus>> = {};
@@ -248,6 +252,20 @@ class GitManager {
       }
     }
     return this.rootCache[directory];
+  }
+
+  async reloadIgnore(directory: string) {
+    const root = await this.getGitRoot(directory);
+    if (root) {
+      this.dotignoreCache[root] = undefined;
+      const ignoreFilePath = pathLib.join(root, '.gitignore');
+      const hasIgnoreFile = await fsExists(ignoreFilePath);
+      if (hasIgnoreFile) {
+        this.dotignoreCache[root] = createMatcher(
+          await fsReadFile(ignoreFilePath, { encoding: 'utf8' }),
+        );
+      }
+    }
   }
 
   async reload(directory: string) {
@@ -302,8 +320,8 @@ class GitManager {
       | undefined;
   }
 
-  async getStatuses(directory: string) {
-    const root = await this.getGitRoot(directory);
+  async getStatuses(path: string) {
+    const root = await this.getGitRoot(path);
     if (root) {
       return this.getRootStatuses(root) || {};
     } else {
@@ -311,14 +329,29 @@ class GitManager {
     }
   }
 
-  getStatus(directory: string): GitMixedStatus | undefined {
-    for (const [, directoryStatusCache] of Object.entries(
-      this.mixedStatusCache,
-    )) {
-      if (directory in directoryStatusCache) {
-        return directoryStatusCache[directory];
+  getStatus(path: string): GitMixedStatus | undefined {
+    const cachePair = Object.entries(this.mixedStatusCache)
+      .sort((a, b) => b[0].localeCompare(a[0]))
+      .find(([rootPath]) => path.startsWith(rootPath));
+    if (cachePair) {
+      const pathsStatusCache = cachePair[1];
+      if (path in pathsStatusCache) {
+        return pathsStatusCache[path];
       }
     }
+  }
+
+  shouldIgnore(path: string) {
+    const cachePair = Object.entries(this.dotignoreCache)
+      .sort((a, b) => b[0].localeCompare(a[0]))
+      .find(([rootPath]) => path.startsWith(rootPath));
+    if (cachePair) {
+      const ignoreMatcher = cachePair[1];
+      if (ignoreMatcher) {
+        return ignoreMatcher.shouldIgnore(path);
+      }
+    }
+    return false;
   }
 }
 
