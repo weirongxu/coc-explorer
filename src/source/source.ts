@@ -33,6 +33,7 @@ export type ExpandNodeOptions = {
   recursiveSingle?: boolean;
   depth?: number;
   render?: boolean;
+  load?: boolean;
 };
 
 export type NodeUid = string;
@@ -68,7 +69,7 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>>
   flattenedNodes: TreeNode[] = [];
   showHidden: boolean = false;
   selectedNodes: Set<TreeNode> = new Set();
-  defaultExpanded = false;
+  rootExpanded = false;
   nvim = workspace.nvim;
   context: ExtensionContext;
   bufManager = this.explorer.explorerManager.bufManager;
@@ -277,18 +278,18 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>>
     return this.flattenedNodes.length;
   }
 
-  bootInit(expanded: boolean) {
+  bootInit(rootExpanded: boolean) {
     Promise.resolve(this.init()).catch(onError);
 
-    this.defaultExpanded = expanded;
-    this.nodeStores.setExpanded(this.rootNode, expanded);
+    this.rootExpanded = rootExpanded;
+    this.nodeStores.setExpanded(this.rootNode, rootExpanded);
   }
 
   abstract init(): Promise<void>;
 
   async bootOpen(isFirst: boolean) {
     await this.open(isFirst);
-    this.nodeStores.setExpanded(this.rootNode, this.defaultExpanded);
+    this.nodeStores.setExpanded(this.rootNode, this.rootExpanded);
   }
 
   protected abstract open(isFirst: boolean): Promise<void>;
@@ -816,6 +817,10 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>>
     }
   }
 
+  currentSourceIndex() {
+    return this.explorer.sources.indexOf(this as ExplorerSource<any>);
+  }
+
   abstract loadChildren(
     parentNode: TreeNode,
     options?: { force: boolean },
@@ -825,55 +830,70 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>>
     await this.sourcePainters.reload(parentNode);
   }
 
-  async drawNodes(nodes: TreeNode[]) {
-    const drawnList = await Promise.all(
-      nodes.map(async (node) => {
-        const nodeIndex = this.flattenedNodes.findIndex(
-          (it) => it.uid === node.uid,
-        );
-        if (nodeIndex < 0) {
-          throw new Error(`node(${node.uid}) not found`);
-        }
-        if (node.parent?.children) {
-          const siblingIndex = node.parent.children.indexOf(node);
-          if (siblingIndex !== -1) {
-            node.prevSiblingNode = node.parent.children[siblingIndex - 1];
-            node.nextSiblingNode = node.parent.children[siblingIndex + 1];
-          }
-        }
-        return this.sourcePainters.drawNode(node, nodeIndex);
-      }),
+  async load(parentNode: TreeNode, options?: { force: boolean }) {
+    const children = await this.loadChildren(parentNode, options);
+    for (let i = 0; i < children.length; i++) {
+      const child = children[i];
+      child.level = (parentNode.level ?? 0) + 1;
+      child.parent = parentNode;
+      child.prevSiblingNode = children[i - 1];
+      child.nextSiblingNode = children[i + 1];
+      if (this.isExpanded(child)) {
+        child.children = await this.load(child, options);
+      }
+    }
+    return children;
+  }
+
+  async reload(
+    parentNode: TreeNode,
+    options?: { render?: boolean; force?: boolean },
+  ) {
+    return (await this.reloadNotifier(parentNode, options)).run();
+  }
+
+  async reloadNotifier(
+    parentNode: TreeNode,
+    { render = true, force = false } = {},
+  ) {
+    if (this.isDisposed) {
+      return Notifier.noop();
+    }
+    await this.explorer.refreshWidth();
+    this.selectedNodes = new Set();
+    parentNode.children = this.isExpanded(parentNode)
+      ? await this.load(parentNode, { force })
+      : [];
+    await this.loaded(parentNode);
+    if (render) {
+      return this.renderNotifier({ node: parentNode, force });
+    }
+    return Notifier.noop();
+  }
+
+  private offsetAfterLine(offset: number, afterLine: number) {
+    this.explorer.indexingManager.offsetLines(
+      offset,
+      this.startLineIndex + afterLine + 1,
     );
-
-    const startLineIndex = this.startLineIndex;
-
-    return {
-      drawnList,
-      get contents() {
-        return drawnList.map((d) => d.content);
-      },
-      get highlightPositions(): HighlightPositionWithLine[] {
-        return flatten(
-          drawnList.map((d) =>
-            d.highlightPositions.map((hl) => ({
-              lineIndex: startLineIndex + d.nodeIndex,
-              ...hl,
-            })),
-          ),
-        );
-      },
-    };
+    this.endLineIndex += offset;
+    this.explorer.sources
+      .slice(this.currentSourceIndex() + 1)
+      .forEach((source) => {
+        source.startLineIndex += offset;
+        source.endLineIndex += offset;
+      });
   }
 
-  isExpanded(node: TreeNode) {
-    return this.nodeStores.isExpanded(node);
+  setLinesNotifier(lines: string[], startIndex: number, endIndex: number) {
+    return this.explorer.setLinesNotifier(
+      lines,
+      this.startLineIndex + startIndex,
+      this.startLineIndex + endIndex,
+    );
   }
 
-  getCompact(node: TreeNode) {
-    return this.nodeStores.getCompact(node);
-  }
-
-  async flattenByNode(node: TreeNode): Promise<TreeNode[]> {
+  flattenByNode(node: TreeNode): TreeNode[] {
     const stack = [node];
     const result: TreeNode[] = [];
 
@@ -940,7 +960,7 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>>
         }
       }
       result.push(node);
-      if (node.children && this.nodeStores.isExpanded(node)) {
+      if (node.children && this.isExpanded(node)) {
         for (let i = node.children.length - 1; i >= 0; i--) {
           node.children[i].parent = node;
           node.children[i].level = (node.level ?? 0) + 1;
@@ -949,78 +969,6 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>>
       }
     }
     return result;
-  }
-
-  addHighlightsNotify(highlights: HighlightPositionWithLine[]) {
-    this.explorer.addHighlightsNotify(this.hlSrcId, highlights);
-  }
-
-  clearHighlightsNotify(lineStart?: number, lineEnd?: number) {
-    this.explorer.clearHighlightsNotify(this.hlSrcId, lineStart, lineEnd);
-  }
-
-  currentSourceIndex() {
-    return this.explorer.sources.indexOf(this as ExplorerSource<any>);
-  }
-
-  async load(parentNode: TreeNode, options?: { force: boolean }) {
-    const children = await this.loadChildren(parentNode, options);
-    for (const child of children) {
-      child.level = (parentNode.level ?? 0) + 1;
-      child.parent = parentNode;
-      if (this.nodeStores.isExpanded(child)) {
-        child.children = await this.load(child, options);
-      }
-    }
-    return children;
-  }
-
-  async reload(
-    parentNode: TreeNode,
-    options?: { render?: boolean; force?: boolean },
-  ) {
-    return (await this.reloadNotifier(parentNode, options)).run();
-  }
-
-  async reloadNotifier(
-    parentNode: TreeNode,
-    { render = true, force = false } = {},
-  ) {
-    if (this.isDisposed) {
-      return Notifier.noop();
-    }
-    await this.explorer.refreshWidth();
-    this.selectedNodes = new Set();
-    parentNode.children = this.nodeStores.isExpanded(parentNode)
-      ? await this.load(parentNode, { force })
-      : [];
-    await this.loaded(parentNode);
-    if (render) {
-      return this.renderNotifier({ node: parentNode, force });
-    }
-    return Notifier.noop();
-  }
-
-  private offsetAfterLine(offset: number, afterLine: number) {
-    this.explorer.indexingManager.offsetLines(
-      offset,
-      this.startLineIndex + afterLine + 1,
-    );
-    this.endLineIndex += offset;
-    this.explorer.sources
-      .slice(this.currentSourceIndex() + 1)
-      .forEach((source) => {
-        source.startLineIndex += offset;
-        source.endLineIndex += offset;
-      });
-  }
-
-  setLinesNotifier(lines: string[], startIndex: number, endIndex: number) {
-    return this.explorer.setLinesNotifier(
-      lines,
-      this.startLineIndex + startIndex,
-      this.startLineIndex + endIndex,
-    );
   }
 
   private nodeAndChildrenRange(
@@ -1047,8 +995,16 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>>
     return { startIndex, endIndex };
   }
 
-  private async expandNodeRender(node: TreeNode) {
-    if (!this.nodeStores.isExpanded(node) || !node.children) {
+  isExpanded(node: TreeNode) {
+    return this.nodeStores.isExpanded(node);
+  }
+
+  getCompact(node: TreeNode) {
+    return this.nodeStores.getCompact(node);
+  }
+
+  private async expandRender(node: TreeNode) {
+    if (!this.isExpanded(node) || !node.children) {
       return;
     }
     const range = this.nodeAndChildrenRange(node);
@@ -1056,7 +1012,7 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>>
       return;
     }
     const { startIndex, endIndex } = range;
-    const needDrawNodes = await this.flattenByNode(node);
+    const needDrawNodes = this.flattenByNode(node);
 
     await this.sourcePainters.beforeDraw(needDrawNodes, {
       draw: async () => {
@@ -1081,10 +1037,7 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>>
     });
   }
 
-  private async expandNodeRecursive(
-    node: TreeNode,
-    options: ExpandNodeOptions,
-  ) {
+  private async expandRecursive(node: TreeNode, options: ExpandNodeOptions) {
     const autoExpandOptions = this.config.get('autoExpandOptions');
     const compact = options.compact ?? autoExpandOptions.includes('compact');
     const uncompact =
@@ -1100,7 +1053,7 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>>
       if (
         node.compacted &&
         compactStore?.status === 'compacted' &&
-        this.nodeStores.isExpanded(node)
+        this.isExpanded(node)
       ) {
         if (uncompact) {
           this.nodeStores.setCompact(node, {
@@ -1111,7 +1064,9 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>>
       }
 
       this.nodeStores.expand(node);
-      node.children = await this.load(node);
+      if (!node.children || (options.load ?? true)) {
+        node.children = await this.load(node);
+      }
 
       if (depth > this.config.get('autoExpandMaxDepth')) {
         return;
@@ -1134,7 +1089,7 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>>
       if (options.recursive || (singleExpandableNode && recursiveSingle)) {
         await Promise.all(
           node.children.map(async (child) => {
-            await this.expandNodeRecursive(child, {
+            await this.expandRecursive(child, {
               ...options,
               depth: depth + 1,
             });
@@ -1144,15 +1099,15 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>>
     }
   }
 
-  async expandNode(node: TreeNode, options: ExpandNodeOptions = {}) {
-    await this.expandNodeRecursive(node, options);
+  async expand(node: TreeNode, options: ExpandNodeOptions = {}) {
+    await this.expandRecursive(node, options);
     if (options.render ?? true) {
-      await this.expandNodeRender(node);
+      await this.expandRender(node);
     }
   }
 
-  private async collapseNodeRender(node: TreeNode) {
-    if (this.nodeStores.isExpanded(node)) {
+  private async collapseRender(node: TreeNode) {
+    if (this.isExpanded(node)) {
       return;
     }
     const range = this.nodeAndChildrenRange(node);
@@ -1182,7 +1137,7 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>>
     });
   }
 
-  private async collapseNodeRecursive(node: TreeNode, recursive: boolean) {
+  private async collapseRecursive(node: TreeNode, recursive: boolean) {
     if (node.expandable) {
       this.nodeStores.collapse(node);
       if (
@@ -1191,16 +1146,57 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>>
       ) {
         if (node.children) {
           for (const child of node.children) {
-            await this.collapseNodeRecursive(child, recursive);
+            await this.collapseRecursive(child, recursive);
           }
         }
       }
     }
   }
 
-  async collapseNode(node: TreeNode, { recursive = false } = {}) {
-    await this.collapseNodeRecursive(node, recursive);
-    await this.collapseNodeRender(node);
+  async collapse(node: TreeNode, { recursive = false } = {}) {
+    await this.collapseRecursive(node, recursive);
+    await this.collapseRender(node);
+  }
+
+  async drawNodes(nodes: TreeNode[]) {
+    const drawnList = await Promise.all(
+      nodes.map(async (node) => {
+        const nodeIndex = this.flattenedNodes.findIndex(
+          (it) => it.uid === node.uid,
+        );
+        if (nodeIndex < 0) {
+          throw new Error(`node(${node.uid}) not found`);
+        }
+        return this.sourcePainters.drawNode(node, nodeIndex);
+      }),
+    );
+
+    const startLineIndex = this.startLineIndex;
+
+    return {
+      drawnList,
+      get contents() {
+        return drawnList.map((d) => d.content);
+      },
+      get highlightPositions(): HighlightPositionWithLine[] {
+        return flatten(
+          drawnList.map((d) =>
+            d.highlightPositions.map((hl) => ({
+              lineIndex: startLineIndex + d.nodeIndex,
+              ...hl,
+            })),
+          ),
+        );
+      },
+    };
+  }
+
+  addHighlightsNotify(highlights: HighlightPositionWithLine[]) {
+    this.explorer.addHighlightsNotify(this.hlSrcId, highlights);
+  }
+
+  clearHighlightsNotify(lineStart?: number, lineEnd?: number) {
+    this.explorer.clearHighlightsNotify(this.hlSrcId, lineStart, lineEnd);
   }
 
   requestRenderNodes(nodes: TreeNode[]) {
@@ -1262,7 +1258,7 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>>
       ? range
       : { startIndex: 0, endIndex: this.flattenedNodes.length - 1 };
     const oldHeight = endIndex - nodeIndex + 1;
-    const needDrawNodes = await this.flattenByNode(node);
+    const needDrawNodes = this.flattenByNode(node);
     const newHeight = needDrawNodes.length;
     this.flattenedNodes = this.flattenedNodes
       .slice(0, nodeIndex)

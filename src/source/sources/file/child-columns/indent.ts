@@ -35,19 +35,19 @@ function printIndentLine(node: FileNode) {
 fileColumnRegistrar.registerColumn('child', 'indent', ({ source }) => ({
   draw() {
     const enabledNerdFont = source.config.get('icon.enableNerdfont');
+    const enableIndentLine = (() => {
+      const indentLine = source.getColumnConfig<boolean | undefined>(
+        'indent.indentLine',
+      );
+      if (enabledNerdFont && indentLine === undefined) {
+        return true;
+      } else {
+        return indentLine;
+      }
+    })();
+
     return {
       drawNode(row, { node }) {
-        const enableIndentLine = (() => {
-          const indentLine = source.getColumnConfig<boolean | undefined>(
-            'indent.indentLine',
-          );
-          if (enabledNerdFont && indentLine === undefined) {
-            return true;
-          } else {
-            return indentLine;
-          }
-        })();
-
         if (enableIndentLine) {
           row.add(printIndentLine(node), { hl: fileHighlights.indentLine });
         } else {

@@ -37,16 +37,16 @@ export function initFileActions(file: FileSource) {
       if (file.root === '') {
         return;
       }
-      const nodeUri = file.currentNode()?.uri;
+      const nodeUid = file.currentNode()?.uid;
       if (/^[A-Za-z]:[\\\/]$/.test(file.root)) {
         file.root = '';
       } else {
         file.root = pathLib.dirname(file.root);
         await file.cd(file.root);
       }
-      await file.expandNode(file.rootNode);
-      if (nodeUri) {
-        await file.gotoNodeUid(nodeUri);
+      await file.expand(file.rootNode);
+      if (nodeUid) {
+        await file.gotoNodeUid(nodeUid);
       }
     },
     'change directory to parent directory',
@@ -157,7 +157,7 @@ export function initFileActions(file: FileSource) {
       const cdTo = async (fullpath: string) => {
         await file.cd(fullpath);
         file.root = fullpath;
-        await file.expandNode(file.rootNode);
+        await file.expand(file.rootNode);
       };
       const path = args[0];
       if (path !== undefined) {
@@ -247,7 +247,7 @@ export function initFileActions(file: FileSource) {
         const uncompact = options.includes('uncompact') || undefined;
         const recursiveSingle =
           options.includes('recursiveSingle') || undefined;
-        await file.expandNode(node, {
+        await file.expand(node, {
           recursive,
           compact,
           uncompact,
@@ -292,9 +292,9 @@ export function initFileActions(file: FileSource) {
       const options = (args[0] ?? '').split('|');
       const recursive = options.includes('recursive');
       if (node.directory && file.isExpanded(node)) {
-        await file.collapseNode(node, { recursive });
+        await file.collapse(node, { recursive });
       } else if (node.parent) {
-        await file.collapseNode(node.parent, { recursive });
+        await file.collapse(node.parent, { recursive });
       }
     },
     'collapse directory',
@@ -609,7 +609,7 @@ export function initFileActions(file: FileSource) {
             name: drive,
             callback: async (drive) => {
               file.root = drive;
-              await file.expandNode(file.rootNode);
+              await file.expand(file.rootNode);
             },
           })),
         );

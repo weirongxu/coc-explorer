@@ -9,7 +9,7 @@ export function initBufferActions(buffer: BufferSource) {
     'expand',
     async ({ node }) => {
       if (node.expandable) {
-        await buffer.expandNode(node);
+        await buffer.expand(node);
       }
     },
     'expand node',
@@ -19,9 +19,9 @@ export function initBufferActions(buffer: BufferSource) {
     'collapse',
     async ({ node }) => {
       if (node.expandable && buffer.isExpanded(node)) {
-        await buffer.collapseNode(node);
+        await buffer.collapse(node);
       } else if (node.parent) {
-        await buffer.collapseNode(node.parent);
+        await buffer.collapse(node.parent);
       }
     },
     'collapse node',

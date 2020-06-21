@@ -6,7 +6,7 @@ export function initBookmarkActions(bookmark: BookmarkSource) {
     'expand',
     async ({ node }) => {
       if (node.expandable) {
-        await bookmark.expandNode(node);
+        await bookmark.expand(node);
       }
     },
     'expand node',
@@ -16,9 +16,9 @@ export function initBookmarkActions(bookmark: BookmarkSource) {
     'collapse',
     async ({ node }) => {
       if (node.expandable && bookmark.isExpanded(node)) {
-        await bookmark.collapseNode(node);
+        await bookmark.collapse(node);
       } else if (node.parent) {
-        await bookmark.collapseNode(node.parent);
+        await bookmark.collapse(node.parent);
       }
     },
     'collapse node',

@@ -12,7 +12,6 @@ import {
   Notifier,
   listDrive,
   isWindows,
-  generateUri,
 } from '../../../util';
 import { hlGroupManager } from '../../highlightManager';
 import { ExplorerSource, BaseTreeNode } from '../../source';
@@ -29,7 +28,6 @@ import { onBufEnter } from '../../../events';
 export interface FileNode extends BaseTreeNode<FileNode, 'root' | 'child'> {
   name: string;
   fullpath: string;
-  uri: string;
   directory: boolean;
   readonly: boolean;
   executable: boolean;
@@ -75,7 +73,6 @@ export class FileSource extends ExplorerSource<FileNode> {
     type: 'root',
     isRoot: true,
     uid: this.helper.getUid('/'),
-    uri: generateUri('/'),
     name: 'root',
     fullpath: homedir(),
     expandable: true,
@@ -98,7 +95,6 @@ export class FileSource extends ExplorerSource<FileNode> {
   }
 
   set root(root: string) {
-    this.rootNode.uri = generateUri(root);
     this.rootNode.uid = this.helper.getUid(root);
     this.rootNode.fullpath = root;
     this.rootNode.children = undefined;
@@ -329,10 +325,11 @@ export class FileSource extends ExplorerSource<FileNode> {
           });
           foundNode = childFoundNode;
           if (foundNode) {
-            await this.expandNode(node, {
+            await this.expand(node, {
               compact,
               uncompact: false,
               render: false,
+              load: false,
             });
             break;
           }
@@ -402,7 +399,6 @@ export class FileSource extends ExplorerSource<FileNode> {
           const child: FileNode = {
             type: 'child',
             uid: this.helper.getUid(fullpath),
-            uri: generateUri(fullpath),
             expandable: directory,
             name: filename,
             fullpath,
