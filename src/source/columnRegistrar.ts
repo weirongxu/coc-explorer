@@ -23,7 +23,7 @@ export interface ColumnInitial<TreeNode extends BaseTreeNode<TreeNode>> {
 
   available?(): boolean | Promise<boolean>;
 
-  reload?(parentNode: TreeNode): void | Promise<void>;
+  load?(parentNode: TreeNode): void | Promise<void>;
 
   draw(
     nodes: TreeNode[],

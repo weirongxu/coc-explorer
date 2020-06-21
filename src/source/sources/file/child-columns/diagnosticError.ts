@@ -10,7 +10,7 @@ fileColumnRegistrar.registerColumn(
       errorMap: {} as Record<string, string>,
     };
 
-    const reload = async () => {
+    const load = () => {
       const diagnosticCountMax = source.config.get<number>(
         'file.diagnosticCountMax',
       )!;
@@ -39,7 +39,11 @@ fileColumnRegistrar.registerColumn(
         updatePaths.add(fullpath);
       }
       cache.errorMap = localErrorMap;
-      await source.renderPaths(updatePaths);
+      return updatePaths;
+    };
+
+    const reload = async () => {
+      await source.renderPaths(load());
     };
 
     return {
@@ -48,8 +52,8 @@ fileColumnRegistrar.registerColumn(
           source.diagnosticManager.onChange(debounce(1000, reload)),
         );
       },
-      reload() {
-        return reload();
+      load() {
+        load();
       },
       draw() {
         return {

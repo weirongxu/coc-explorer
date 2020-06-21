@@ -70,7 +70,7 @@ export class BookmarkSource extends ExplorerSource<BookmarkNode> {
         internalEvents.on(
           'CocBookmarkChange',
           debounce(500, async () => {
-            await this.reload(this.rootNode);
+            await this.load(this.rootNode);
           }),
         ),
       );

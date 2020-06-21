@@ -106,7 +106,7 @@ fileColumnRegistrar.registerColumn(
           return false;
         }
       },
-      async reload(node) {
+      async load(node) {
         const folderPath =
           'isRoot' in node
             ? source.root

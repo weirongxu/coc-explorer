@@ -409,7 +409,7 @@ export function initFileActions(file: FileSource) {
         );
         file.requestRenderNodes(nodes);
         file.copiedNodes.clear();
-        await file.reload(node.parent ? node.parent : node);
+        await file.load(node.parent ? node.parent : node);
       } else if (file.cutNodes.size > 0) {
         const nodes = Array.from(file.cutNodes);
         await overwritePrompt(
@@ -420,7 +420,7 @@ export function initFileActions(file: FileSource) {
           fsRename,
         );
         file.cutNodes.clear();
-        await file.reload(file.rootNode);
+        await file.load(file.rootNode);
       } else {
         // eslint-disable-next-line no-restricted-properties
         workspace.showMessage('Copied files or cut files is empty', 'error');
@@ -509,7 +509,7 @@ export function initFileActions(file: FileSource) {
           await fsTouch(target);
         },
       );
-      await file.reload(putTargetNode);
+      await file.load(putTargetNode);
       const [, notifiers] = await file.revealNodeByPathNotifier(targetPath, {
         node: putTargetNode,
       });
@@ -539,7 +539,7 @@ export function initFileActions(file: FileSource) {
           await fsMkdirp(target);
         },
       );
-      const reloadNotifier = await file.reloadNotifier(putTargetNode);
+      const reloadNotifier = await file.loadNotifier(putTargetNode);
       const [, revealNotifiers] = await file.revealNodeByPathNotifier(
         targetPath,
         {
@@ -581,7 +581,7 @@ export function initFileActions(file: FileSource) {
 
       await file.bufManager.remove(node.fullpath, true);
 
-      await file.reload(file.rootNode);
+      await file.load(file.rootNode);
     },
 
     'rename a file or directory',
@@ -648,7 +648,7 @@ export function initFileActions(file: FileSource) {
     'gitStage',
     async ({ nodes }) => {
       await gitManager.cmd.stage(...nodes.map((node) => node.fullpath));
-      await file.reload(file.rootNode);
+      await file.load(file.rootNode);
     },
     'add file to git index',
   );
@@ -657,7 +657,7 @@ export function initFileActions(file: FileSource) {
     'gitUnstage',
     async ({ nodes }) => {
       await gitManager.cmd.unstage(...nodes.map((node) => node.fullpath));
-      await file.reload(file.rootNode);
+      await file.load(file.rootNode);
     },
     'reset file from git index',
   );

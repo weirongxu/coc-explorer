@@ -170,10 +170,10 @@ export class SourcePainters<
     );
   }
 
-  async reload(parentNode: TreeNode) {
+  async load(parentNode: TreeNode) {
     for (const painter of this.painters.values()) {
       for (const column of painter.columns) {
-        await (column.reload && column.reload(parentNode));
+        await (column.load && column.load(parentNode));
       }
     }
   }

@@ -162,7 +162,7 @@ export class FileSource extends ExplorerSource<FileNode> {
         this.disposables.push(
           onBufEnter(async (bufnr) => {
             if (bufnr === this.explorer.bufnr) {
-              await this.reload(this.rootNode);
+              await this.load(this.rootNode);
             }
           }, 200),
         );
@@ -315,7 +315,7 @@ export class FileSource extends ExplorerSource<FileNode> {
         let foundNode: FileNode | undefined = undefined;
         const isRender = render && !this.isExpanded(node);
         if (!node.children) {
-          node.children = await this.load(node);
+          node.children = await this.loadInitedChildren(node);
         }
         for (const child of node.children) {
           const childFoundNode = await revealRecursive(path, {

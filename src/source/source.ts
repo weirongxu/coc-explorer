@@ -211,13 +211,13 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>>
     this.addNodeAction(
       'refresh',
       async () => {
-        const reloadNotifier = await this.reloadNotifier(this.rootNode, {
+        const loadNotifier = await this.loadNotifier(this.rootNode, {
           force: true,
         });
 
         this.nvim.pauseNotification();
         this.clearHighlightsNotify();
-        reloadNotifier?.notify();
+        loadNotifier?.notify();
         await this.nvim.resumeNotification();
       },
       'refresh',
@@ -374,7 +374,7 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>>
     }
 
     if (reload) {
-      await this.reload(this.rootNode);
+      await this.load(this.rootNode);
     } else if (render) {
       await this.render();
     }
@@ -827,10 +827,10 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>>
   ): Promise<TreeNode[]>;
 
   async loaded(parentNode: TreeNode): Promise<void> {
-    await this.sourcePainters.reload(parentNode);
+    await this.sourcePainters.load(parentNode);
   }
 
-  async load(parentNode: TreeNode, options?: { force: boolean }) {
+  async loadInitedChildren(parentNode: TreeNode, options?: { force: boolean }) {
     const children = await this.loadChildren(parentNode, options);
     for (let i = 0; i < children.length; i++) {
       const child = children[i];
@@ -838,21 +838,32 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>>
       child.parent = parentNode;
       child.prevSiblingNode = children[i - 1];
       child.nextSiblingNode = children[i + 1];
-      if (this.isExpanded(child)) {
-        child.children = await this.load(child, options);
-      }
     }
     return children;
   }
 
-  async reload(
+  async loadInitedChildrenAllExpanded(
+    parentNode: TreeNode,
+    options?: { force: boolean },
+  ) {
+    if (this.isExpanded(parentNode)) {
+      parentNode.children = await this.loadInitedChildren(parentNode, options);
+      await Promise.all(
+        parentNode.children.map(async (child) => {
+          await this.loadInitedChildrenAllExpanded(child, options);
+        }),
+      );
+    }
+  }
+
+  async load(
     parentNode: TreeNode,
     options?: { render?: boolean; force?: boolean },
   ) {
-    return (await this.reloadNotifier(parentNode, options)).run();
+    return (await this.loadNotifier(parentNode, options)).run();
   }
 
-  async reloadNotifier(
+  async loadNotifier(
     parentNode: TreeNode,
     { render = true, force = false } = {},
   ) {
@@ -861,9 +872,9 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>>
     }
     await this.explorer.refreshWidth();
     this.selectedNodes = new Set();
-    parentNode.children = this.isExpanded(parentNode)
-      ? await this.load(parentNode, { force })
-      : [];
+    await this.loadInitedChildrenAllExpanded(parentNode, {
+      force,
+    });
     await this.loaded(parentNode);
     if (render) {
       return this.renderNotifier({ node: parentNode, force });
@@ -1065,7 +1076,7 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>>
 
       this.nodeStores.expand(node);
       if (!node.children || (options.load ?? true)) {
-        node.children = await this.load(node);
+        node.children = await this.loadInitedChildren(node);
       }
 
       if (depth > this.config.get('autoExpandMaxDepth')) {

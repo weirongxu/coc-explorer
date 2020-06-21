@@ -76,12 +76,12 @@ export class BufferSource extends ExplorerSource<BufferNode> {
         this.disposables.push(
           this.bufManager.onReload(
             debounce(500, async () => {
-              await this.reload(this.rootNode);
+              await this.load(this.rootNode);
             }),
           ),
           this.bufManager.onModified(
             debounce(500, async () => {
-              await this.reload(this.rootNode);
+              await this.load(this.rootNode);
             }),
           ),
         );
@@ -89,7 +89,7 @@ export class BufferSource extends ExplorerSource<BufferNode> {
         this.disposables.push(
           onBufEnter(async (bufnr) => {
             if (bufnr === this.explorer.bufnr) {
-              await this.reload(this.rootNode, { render: false });
+              await this.load(this.rootNode, { render: false });
             }
           }, 500),
         );

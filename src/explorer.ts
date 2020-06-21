@@ -732,7 +732,7 @@ export class Explorer implements Disposable {
       notifiers.push(this.clearNotifier());
     }
     notifiers.push(
-      await this.reloadAllNotifier(),
+      await this.loadAllNotifier(),
       ...(await Promise.all(
         this.sources.map((s) => s.openedNotifier(isFirst)),
       )),
@@ -1104,11 +1104,11 @@ export class Explorer implements Disposable {
     return this.setLinesNotifier([], 0, -1);
   }
 
-  async reloadAllNotifier({ render = true } = {}) {
+  async loadAllNotifier({ render = true } = {}) {
     this.indexingManager.removeAll();
     const notifiers = await Promise.all(
       this.sources.map((source) =>
-        source.reloadNotifier(source.rootNode, { render: false }),
+        source.loadNotifier(source.rootNode, { render: false }),
       ),
     );
     if (render) {
