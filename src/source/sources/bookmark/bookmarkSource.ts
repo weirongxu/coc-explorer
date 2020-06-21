@@ -107,7 +107,7 @@ export class BookmarkSource extends ExplorerSource<BookmarkNode> {
     for (const [filepath, bookmarks] of Object.entries(data)) {
       const fullpath = decode(filepath);
       if (
-        fullpath.startsWith(parentNode.fullpath) &&
+        (this.showHidden || fullpath.startsWith(parentNode.fullpath)) &&
         (await fsExists(fullpath))
       ) {
         for (const lnum of Object.keys(bookmarks).sort(
