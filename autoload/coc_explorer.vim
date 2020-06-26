@@ -130,7 +130,7 @@ function s:floating_border_buffer_render(
   " if title is not empty, pad it from both sides
   if strlen(a:title)
       let title = ' ' . a:title . ' ' 
-      let title_width -= 2
+      let title_width += 2
   endif
   let content = [
         \ a:chars[0]
