@@ -1,6 +1,6 @@
 import pathLib from 'path';
 import { onError } from './logger';
-import { execCli, fsReadFile, fsExists } from './util';
+import { execCli, fsReadFile, fsExists, normalizePath } from './util';
 import { config } from './config';
 import { createMatcher, IgnoreMatcher } from 'dotignore';
 
@@ -50,7 +50,7 @@ class GitCommand {
     const output = await this.spawn(['rev-parse', '--show-toplevel'], {
       cwd,
     });
-    return output.trim();
+    return normalizePath(output.trim());
   }
 
   private parseStatusFormat(format: string): GitFormat {
