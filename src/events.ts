@@ -74,6 +74,8 @@ export class InternalEventEmitter<
 > {
   listenersMap = new Map<keyof Events, EventListener[]>();
 
+  constructor(public concurrent = false) {}
+
   listeners(event: keyof Events): EventListener[] {
     if (!this.listenersMap.has(event)) {
       const listeners: EventListener[] = [];
@@ -110,15 +112,25 @@ export class InternalEventEmitter<
   }
 
   async fire<E extends keyof Events>(event: E, ...args: Arguments<Events[E]>) {
-    await Promise.all(
-      this.listeners(event as string).map(async (listener) => {
+    if (this.concurrent) {
+      await Promise.all(
+        this.listeners(event as string).map(async (listener) => {
+          try {
+            await listener(...args);
+          } catch (e) {
+            onError(e);
+          }
+        }),
+      );
+    } else {
+      for (const listener of this.listeners(event as string)) {
         try {
           await listener(...args);
         } catch (e) {
           onError(e);
         }
-      }),
-    );
+      }
+    }
   }
 }
 

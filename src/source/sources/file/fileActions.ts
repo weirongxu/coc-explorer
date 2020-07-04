@@ -44,8 +44,7 @@ export function initFileActions(file: FileSource) {
         file.root = pathLib.dirname(file.root);
         await file.cd(file.root);
       }
-      await file.expand(file.rootNode, { load: false, render: false });
-      await file.load(file.rootNode);
+      await file.expand(file.rootNode);
       if (nodeUid) {
         await file.gotoNodeUid(nodeUid);
       }

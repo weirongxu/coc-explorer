@@ -16,15 +16,79 @@ import { drawnWithIndexRange, flatten, generateUri, Notifier } from '../util';
 import { WinLayoutFinder } from '../winLayoutFinder';
 import { HighlightPositionWithLine } from './highlightManager';
 import { SourcePainters } from './sourcePainters';
-import { onEvent } from '../events';
+import { onEvent, InternalEventEmitter } from '../events';
 import { clone } from 'lodash-es';
 import { RegisteredAction } from '../actions/registered';
 import { Class } from 'type-fest';
 
-export type RenderOptions<TreeNode extends BaseTreeNode<any>> = {
-  node?: TreeNode;
-  force?: boolean;
-};
+export namespace Options {
+  export interface Force {
+    /**
+     * Force
+     * @default false
+     * @type {boolean}
+     */
+    force?: boolean;
+  }
+
+  export interface RecursiveExpanded {
+    /**
+     * Recursive for expanded nodes
+     * @default false
+     * @type {boolean}
+     */
+    recursiveExpanded?: boolean;
+  }
+
+  export type Render<TreeNode extends BaseTreeNode<any>> = {
+    node?: TreeNode;
+  } & Force;
+
+  export type ExpandNode = {
+    /**
+     * Recursive
+     * @default false
+     * @type {boolean}
+     */
+    recursive?: boolean;
+    /**
+     * Single child folders will be compressed in a combined node
+     * @default Depends on "explorer.autoExpandOptions" settings
+     * @type {boolean}
+     */
+    compact?: boolean;
+    /**
+     * Reset the combined node
+     * @default Depends on "explorer.autoExpandOptions" settings
+     * @type {boolean}
+     */
+    uncompact?: boolean;
+    /**
+     * Expand single child folder recursively
+     * @default Depends on "explorer.autoExpandOptions" settings
+     * @type {boolean}
+     */
+    recursiveSingle?: boolean;
+    /**
+     * Automatically expand maximum depth of one time
+     * @default Depends on "explorer.autoExpandMaxDepth" settings
+     * @type {number}
+     */
+    depth?: number;
+    /**
+     * Render
+     * @default true
+     * @type {boolean}
+     */
+    render?: boolean;
+    /**
+     * Load children
+     * @default true
+     * @type {boolean}
+     */
+    load?: boolean;
+  };
+}
 
 export type ExpandNodeOptions = {
   recursive?: boolean;
@@ -74,6 +138,9 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>>
   context: ExtensionContext;
   bufManager = this.explorer.explorerManager.bufManager;
   diagnosticManager = this.explorer.explorerManager.diagnosticManager;
+  events = new InternalEventEmitter<{
+    loaded: (node: TreeNode) => void | Promise<void>;
+  }>();
 
   private requestedRenderNodes: Set<TreeNode> = new Set();
   private isDisposed: boolean = false;
@@ -823,37 +890,30 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>>
 
   abstract loadChildren(
     parentNode: TreeNode,
-    options?: { force: boolean },
+    options?: Options.Force,
   ): Promise<TreeNode[]>;
 
-  async loaded(parentNode: TreeNode): Promise<void> {
-    await this.sourcePainters.load(parentNode);
-  }
-
-  async loadInitedChildren(parentNode: TreeNode, options?: { force: boolean }) {
-    const children = await this.loadChildren(parentNode, options);
-    for (let i = 0; i < children.length; i++) {
-      const child = children[i];
-      child.level = (parentNode.level ?? 0) + 1;
-      child.parent = parentNode;
-      child.prevSiblingNode = children[i - 1];
-      child.nextSiblingNode = children[i + 1];
-    }
-    return children;
-  }
-
-  async loadInitedChildrenAllExpanded(
+  async loadInitedChildren(
     parentNode: TreeNode,
-    options?: { force: boolean },
+    options?: Options.Force & Options.RecursiveExpanded,
   ) {
-    if (this.isExpanded(parentNode)) {
-      parentNode.children = await this.loadInitedChildren(parentNode, options);
-      await Promise.all(
-        parentNode.children.map(async (child) => {
-          await this.loadInitedChildrenAllExpanded(child, options);
-        }),
-      );
-    }
+    const children = await this.loadChildren(parentNode, options);
+    await Promise.all(
+      children.map(async (child, i) => {
+        child.level = (parentNode.level ?? 0) + 1;
+        child.parent = parentNode;
+        child.prevSiblingNode = children[i - 1];
+        child.nextSiblingNode = children[i + 1];
+        if (
+          options?.recursiveExpanded &&
+          child.expandable &&
+          this.isExpanded(child)
+        ) {
+          child.children = await this.loadInitedChildren(child, options);
+        }
+      }),
+    );
+    return children;
   }
 
   async load(
@@ -872,10 +932,14 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>>
     }
     await this.explorer.refreshWidth();
     this.selectedNodes = new Set();
-    await this.loadInitedChildrenAllExpanded(parentNode, {
-      force,
-    });
-    await this.loaded(parentNode);
+    if (this.isExpanded(parentNode)) {
+      parentNode.children = await this.loadInitedChildren(parentNode, {
+        recursiveExpanded: true,
+        force,
+      });
+    }
+    await this.events.fire('loaded', parentNode);
+    await this.sourcePainters.load(parentNode);
     if (render) {
       return this.renderNotifier({ node: parentNode, force });
     }
@@ -1048,7 +1112,7 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>>
     });
   }
 
-  private async expandRecursive(node: TreeNode, options: ExpandNodeOptions) {
+  private async expandRecursive(node: TreeNode, options: Options.ExpandNode) {
     const autoExpandOptions = this.config.get('autoExpandOptions');
     const compact = options.compact ?? autoExpandOptions.includes('compact');
     const uncompact =
@@ -1076,7 +1140,9 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>>
 
       this.nodeStores.expand(node);
       if (!node.children || (options.load ?? true)) {
-        node.children = await this.loadInitedChildren(node);
+        node.children = await this.loadInitedChildren(node, {
+          recursiveExpanded: true,
+        });
       }
 
       if (depth > this.config.get('autoExpandMaxDepth')) {
@@ -1110,7 +1176,7 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>>
     }
   }
 
-  async expand(node: TreeNode, options: ExpandNodeOptions = {}) {
+  async expand(node: TreeNode, options: Options.ExpandNode = {}) {
     await this.expandRecursive(node, options);
     if (options.render ?? true) {
       await this.expandRender(node);
@@ -1246,14 +1312,14 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>>
     });
   }
 
-  async render(options?: RenderOptions<TreeNode>) {
+  async render(options?: Options.Render<TreeNode>) {
     return (await this.renderNotifier(options))?.run();
   }
 
   async renderNotifier({
     node = this.rootNode,
     force = false,
-  }: RenderOptions<TreeNode> = {}) {
+  }: Options.Render<TreeNode> = {}) {
     if (this.explorer.isHelpUI) {
       return Notifier.noop();
     }

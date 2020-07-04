@@ -169,6 +169,13 @@ export class FileSource extends ExplorerSource<FileNode> {
       }
     }
 
+    this.disposables.push(
+      this.events.on('loaded', () => {
+        this.copiedNodes.clear();
+        this.cutNodes.clear();
+      }),
+    );
+
     initFileActions(this);
   }
 
@@ -420,12 +427,6 @@ export class FileSource extends ExplorerSource<FileNode> {
     );
 
     return this.sortFiles(files.filter((r): r is FileNode => !!r));
-  }
-
-  async loaded(parentNode: FileNode) {
-    this.copiedNodes.clear();
-    this.cutNodes.clear();
-    await super.loaded(parentNode);
   }
 
   async renderPaths(paths: Set<string> | string[]) {
