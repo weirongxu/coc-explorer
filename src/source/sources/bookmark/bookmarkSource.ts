@@ -90,8 +90,7 @@ export class BookmarkSource extends ExplorerSource<BookmarkNode> {
       await this.explorer.args.value(argOptions.bookmarkChildLabelingTemplate),
     );
 
-    const args = this.explorer.args;
-    this.rootNode.fullpath = await args.value(argOptions.rootUri);
+    this.rootNode.fullpath = this.explorer.rootUri;
   }
 
   async loadChildren(parentNode: BookmarkNode) {

@@ -7,26 +7,11 @@ import {
   ArgFloatingPositions,
 } from './parseArgs';
 import { OpenStrategy } from './types';
-import { workspace } from 'coc.nvim';
 import { config } from './config';
 
 export const argOptions = {
-  rootUri: Args.registerOption('root-uri', {
+  rootUri: Args.registerOption<string>('root-uri', {
     position: 1,
-    getDefault: async () => {
-      let useGetcwd = false;
-      const buftype = await workspace.nvim.getVar('&buftype');
-      if (buftype === 'nofile') {
-        useGetcwd = true;
-      } else {
-        const bufname = await workspace.nvim.call('bufname', ['%']);
-        if (!bufname) {
-          useGetcwd = true;
-        }
-      }
-      return useGetcwd ? workspace.cwd : workspace.rootPath;
-    },
-    handler: (path: string) => normalizePath(path),
   }),
   toggle: Args.registerBoolOption('toggle', true),
   openActionStrategy: Args.registerOption<OpenStrategy>(
@@ -107,9 +92,12 @@ export const argOptions = {
   bookmarkRootTemplate: Args.registerOption<string>('bookmark-root-template', {
     getDefault: () => config.get<string>('bookmark.root.template')!,
   }),
-  bookmarkChildTemplate: Args.registerOption<string>('bookmark-child-template', {
-    getDefault: () => config.get<string>('bookmark.child.template')!,
-  }),
+  bookmarkChildTemplate: Args.registerOption<string>(
+    'bookmark-child-template',
+    {
+      getDefault: () => config.get<string>('bookmark.child.template')!,
+    },
+  ),
   bookmarkChildLabelingTemplate: Args.registerOption<string>(
     'bookmark-child-labeling-template',
     {

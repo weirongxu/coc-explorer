@@ -52,6 +52,7 @@ import {
   winByWinid,
   winidByWinnr,
   winnrByBufnr,
+  normalizePath,
 } from './util';
 
 export class Explorer implements Disposable {
@@ -62,6 +63,7 @@ export class Explorer implements Disposable {
   indexingManager = new IndexingManager(this);
   inited = new BuffuerContextVars<boolean>('inited', this);
   sourceWinid = new BuffuerContextVars<number>('sourceWinid', this);
+  sourceBufnr = new BuffuerContextVars<number>('sourceBufnr', this);
   globalActions: RegisteredAction.Map<BaseTreeNode<any>> = {};
   context: ExtensionContext;
   floatingWindow: FloatingPreview;
@@ -69,6 +71,7 @@ export class Explorer implements Disposable {
 
   private disposables: Disposable[] = [];
   private _buffer?: Buffer;
+  private _rootUri?: string;
   private _args?: Args;
   private _sources?: ExplorerSource<any>[];
   private lastArgSourcesEnabledJson?: string;
@@ -447,6 +450,13 @@ export class Explorer implements Disposable {
     this.disposables.forEach((s) => s.dispose());
   }
 
+  get rootUri(): string {
+    if (!this._rootUri) {
+      throw Error('Explorer rootUri not initialized yet');
+    }
+    return this._rootUri;
+  }
+
   get args(): Args {
     if (!this._args) {
       throw Error('Explorer args not initialized yet');
@@ -528,6 +538,14 @@ export class Explorer implements Disposable {
       return;
     }
     return bufnr;
+  }
+
+  async sourceBuffer() {
+    const bufnr = await this.sourceBufnr.get();
+    if (!bufnr) {
+      return;
+    }
+    return this.nvim.createBuffer(bufnr);
   }
 
   clearHighlightsNotify(hlSrcId: number, lineStart?: number, lineEnd?: number) {
@@ -712,7 +730,7 @@ export class Explorer implements Disposable {
     }
   }
 
-  async open(args: Args, isFirst: boolean) {
+  async open(args: Args, rootPath: string, isFirst: boolean) {
     await doUserAutocmd('CocExplorerOpenPre');
 
     if (this.isHelpUI) {
@@ -721,7 +739,7 @@ export class Explorer implements Disposable {
 
     await this.addHighlightSyntax();
 
-    const sourcesChanged = await this.initArgs(args);
+    const sourcesChanged = await this.initArgs(args, rootPath);
 
     for (const source of this.sources) {
       await source.bootOpen(isFirst);
@@ -796,15 +814,42 @@ export class Explorer implements Disposable {
   }
 
   /**
+   * initialize rootUri
+   */
+  private async initRootUri(args: Args, rootPath: string) {
+    const rootUri = await args.value(argOptions.rootUri);
+    if (rootUri) {
+      this._rootUri = normalizePath(rootUri);
+      return;
+    }
+    const buf = await this.sourceBuffer();
+    if (!buf) {
+      this._rootUri = normalizePath(workspace.cwd);
+      return;
+    }
+    const buftype = await buf.getVar('&buftype');
+    if (buftype === 'nofile') {
+      this._rootUri = normalizePath(workspace.cwd);
+      return;
+    }
+    const fullpath = this.explorerManager.bufManager.getBufferNode(buf.id)
+      ?.fullpath;
+    if (!fullpath) {
+      this._rootUri = normalizePath(workspace.cwd);
+      return;
+    }
+    this._rootUri = normalizePath(rootPath);
+  }
+
+  /**
    * initialize arguments
    *
    * @return sources changed
    */
-  private async initArgs(args: Args): Promise<boolean> {
+  private async initArgs(args: Args, rootPath: string): Promise<boolean> {
     this._args = args;
-    this.explorerManager.rootPathRecords.add(
-      await this.args.value(argOptions.rootUri),
-    );
+    await this.initRootUri(args, rootPath);
+    this.explorerManager.rootPathRecords.add(this.rootUri);
 
     const argSources = await args.value(argOptions.sources);
     if (!argSources) {

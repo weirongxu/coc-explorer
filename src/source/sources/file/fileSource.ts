@@ -192,8 +192,7 @@ export class FileSource extends ExplorerSource<FileNode> {
       await this.explorer.args.value(argOptions.fileChildLabelingTemplate),
     );
 
-    const args = this.explorer.args;
-    this.root = await args.value(argOptions.rootUri);
+    this.root = this.explorer.rootUri;
   }
 
   async cd(fullpath: string) {
