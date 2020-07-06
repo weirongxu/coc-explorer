@@ -54,13 +54,10 @@ class GitCommand {
   }
 
   private parseStatusFormat(format: string): GitFormat {
-    for (const name in GitFormat) {
-      const it = Reflect.get(GitFormat, name) as GitFormat;
-      if (format === it) {
-        return it as GitFormat;
-      }
-    }
-    return GitFormat.unmodified;
+    return (
+      Object.values(GitFormat).find((it) => it === format) ??
+      GitFormat.unmodified
+    );
   }
 
   private parsePath(str: string, hasArrow: boolean): string[] {

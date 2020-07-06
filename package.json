@@ -552,7 +552,7 @@
         "explorer.bookmark.child.template": {
           "description": "Template for child node of bookmark source",
           "type": "string",
-          "default": "[selection | 1] [filename] [position]"
+          "default": "[selection | 1] [filename] [position] - [annotation]"
         },
         "explorer.bookmark.child.labelingTemplate": {
           "description": "Labeling template for child node of bookmark source, use for preview when previewAction is labeling",

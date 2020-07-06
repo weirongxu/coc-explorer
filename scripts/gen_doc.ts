@@ -131,7 +131,7 @@ function genType(
 function genConfigurationDoc() {
   const conf = Pkg.contributes.configuration.properties;
   const rows: Row[] = [];
-  for (const property in conf) {
+  for (const property of Object.keys(conf)) {
     const def = Reflect.get(conf, property) as Definition & {
       default_doc?: string;
     };
