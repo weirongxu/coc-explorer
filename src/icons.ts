@@ -2,6 +2,7 @@ import nerdfontJson from './icons.nerdfont.json';
 import { hlGroupManager, HighlightCommand } from './source/highlightManager';
 import { getExtensions } from './util';
 import { config } from './config';
+import convert from 'color-convert';
 
 export interface NerdFontOption {
   icons?: Record<
@@ -30,9 +31,21 @@ Object.assign(nerdfont.dirPatternMatches, customIcon.dirPatternMatches);
 
 export const nerdfontHighlights: Record<string, HighlightCommand> = {};
 Object.entries(nerdfont.icons).forEach(([name, icon]) => {
+  const bgExprs: string[] = [];
+  const m = icon.color.slice(1).match(/.{1,2}/g);
+  if (m) {
+    const [r, g, b] = m;
+    const ansiColor = convert.rgb.ansi256([
+      parseInt(r, 16),
+      parseInt(g, 16),
+      parseInt(b, 16),
+    ]);
+    bgExprs.push(`ctermfg=${ansiColor}`);
+  }
+  bgExprs.push(`guifg=${icon.color}`);
   nerdfontHighlights[name] = hlGroupManager.group(
     `FileIconNerdfont_${name}`,
-    `guifg=${icon.color}`,
+    bgExprs.join(' '),
   );
 });
 
