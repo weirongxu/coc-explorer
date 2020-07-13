@@ -36,18 +36,12 @@ fileColumnRegistrar.registerColumn(
       return a.x === b.x && a.y === b.y;
     };
 
-    const reloadIgnore = async (directory: string) => {
-      if (showIgnored) {
-        await gitManager.reloadIgnore(directory);
-      }
-    };
-
-    const reload = async (directory: string, reloadAll: boolean) => {
-      await gitManager.reload(directory);
+    const reload = async (directory: string, isReloadAll: boolean) => {
+      await gitManager.reload(directory, showIgnored);
       const statuses = await gitManager.getStatuses(directory);
 
       const updatePaths: Set<string> = new Set();
-      if (reloadAll) {
+      if (isReloadAll) {
         for (const fullpath of Object.keys(statuses)) {
           updatePaths.add(fullpath);
         }
@@ -82,11 +76,8 @@ fileColumnRegistrar.registerColumn(
               if (fullpath) {
                 const filename = pathLib.basename(fullpath);
                 const dirname = pathLib.dirname(fullpath);
-                const isReloadIgnore = filename === '.gitignore';
-                if (isReloadIgnore) {
-                  await reloadIgnore(dirname);
-                }
-                await reload(dirname, isReloadIgnore);
+                const isReloadAll = filename === '.gitignore';
+                await reload(dirname, isReloadAll);
               }
             }),
           ),
@@ -113,31 +104,31 @@ fileColumnRegistrar.registerColumn(
             : node.directory
             ? node.fullpath
             : pathLib.dirname(node.fullpath);
-        await reloadIgnore(folderPath);
         delay(100)
           .then(async () => {
             await reload(folderPath, true);
           })
           .catch(onError);
       },
-      draw() {
+      async draw() {
         return {
           drawNode(row, { node, nodeIndex }) {
-            const showFormat = (f: string, staged: boolean) => {
-              row.add(f, {
+            const showFormat = (f: GitFormat, staged: boolean) => {
+              row.add(statusIcons[f], {
                 hl: staged
                   ? fileHighlights.gitStage
                   : fileHighlights.gitUnstage,
               });
             };
-            const status = gitManager.getStatus(node.fullpath);
+            const status = gitManager.getStatus(node.fullpath, node.directory);
             if (status) {
-              showFormat(statusIcons[status.x], true);
-              showFormat(statusIcons[status.y], false);
-              source.addIndexing('git', nodeIndex);
-            } else if (showIgnored && gitManager.shouldIgnore(node.fullpath)) {
-              showFormat(statusIcons[GitFormat.unmodified], true);
-              showFormat(statusIcons[GitFormat.ignored], true);
+              showFormat(status.x, true);
+              showFormat(status.y, false);
+              if (status.x === GitFormat.ignored) {
+                source.removeIndexing('git', nodeIndex);
+              } else {
+                source.addIndexing('git', nodeIndex);
+              }
             } else {
               source.removeIndexing('git', nodeIndex);
             }

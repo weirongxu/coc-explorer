@@ -647,7 +647,7 @@ export function initFileActions(file: FileSource) {
   file.addNodesAction(
     'gitStage',
     async ({ nodes }) => {
-      await gitManager.cmd.stage(...nodes.map((node) => node.fullpath));
+      await gitManager.cmd.stage(nodes.map((node) => node.fullpath));
       await file.load(file.rootNode);
     },
     'add file to git index',
@@ -656,7 +656,7 @@ export function initFileActions(file: FileSource) {
   file.addNodesAction(
     'gitUnstage',
     async ({ nodes }) => {
-      await gitManager.cmd.unstage(...nodes.map((node) => node.fullpath));
+      await gitManager.cmd.unstage(nodes.map((node) => node.fullpath));
       await file.load(file.rootNode);
     },
     'reset file from git index',
