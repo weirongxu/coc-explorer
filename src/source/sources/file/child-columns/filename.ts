@@ -1,3 +1,4 @@
+import pathLib from 'path';
 import { fileColumnRegistrar } from '../fileColumnRegistrar';
 import { fileHighlights } from '../fileSource';
 
@@ -8,7 +9,7 @@ fileColumnRegistrar.registerColumn('child', 'filename', ({ source }) => ({
         if (node.directory) {
           const compactStore = source.getCompact(node);
           if (node.compacted && compactStore?.status === 'compacted') {
-            row.add(compactStore.nodes.map((n) => n.name).join('/'), {
+            row.add(compactStore.nodes.map((n) => n.name).join(pathLib.sep), {
               hl: fileHighlights.directory,
               unicode: true,
             });

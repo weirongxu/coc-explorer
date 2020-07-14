@@ -1,29 +1,33 @@
-import { workspace, Uri } from 'coc.nvim';
+import { Uri, workspace } from 'coc.nvim';
 import fs from 'fs';
+import { homedir } from 'os';
 import pathLib from 'path';
+import { argOptions } from '../../../argOptions';
+import { onBufEnter } from '../../../events';
+import { fileList } from '../../../lists/files';
 import { onError } from '../../../logger';
 import {
   fsAccess,
-  fsReaddir,
   fsLstat,
+  fsReaddir,
   fsStat,
-  normalizePath,
   getExtensions,
-  Notifier,
-  listDrive,
   isWindows,
+  listDrive,
+  normalizePath,
+  Notifier,
 } from '../../../util';
 import { hlGroupManager } from '../../highlightManager';
-import { ExplorerSource, BaseTreeNode } from '../../source';
+import { BaseTreeNode, ExplorerSource } from '../../source';
 import { sourceManager } from '../../sourceManager';
+import { SourcePainters } from '../../sourcePainters';
+import { initFileActions } from './fileActions';
 import { fileColumnRegistrar } from './fileColumnRegistrar';
 import './load';
-import { fileList } from '../../../lists/files';
-import { initFileActions } from './fileActions';
-import { homedir } from 'os';
-import { SourcePainters } from '../../sourcePainters';
-import { argOptions } from '../../../argOptions';
-import { onBufEnter } from '../../../events';
+
+export type RenderPathsOptions = {
+  withParent?: boolean;
+};
 
 export interface FileNode extends BaseTreeNode<FileNode, 'root' | 'child'> {
   name: string;
@@ -72,7 +76,7 @@ export class FileSource extends ExplorerSource<FileNode> {
   rootNode: FileNode = {
     type: 'root',
     isRoot: true,
-    uid: this.helper.getUid('/'),
+    uid: this.helper.getUid(pathLib.sep),
     name: 'root',
     fullpath: homedir(),
     expandable: true,
@@ -428,16 +432,22 @@ export class FileSource extends ExplorerSource<FileNode> {
     return this.sortFiles(files.filter((r): r is FileNode => !!r));
   }
 
-  async renderPaths(paths: Set<string> | string[]) {
-    return (await this.renderPathsNotifier(paths))?.run();
+  async renderPaths(
+    paths: Set<string> | string[],
+    renderPathsOptions: RenderPathsOptions = {},
+  ) {
+    return (await this.renderPathsNotifier(paths, renderPathsOptions))?.run();
   }
 
-  async renderPathsNotifier(paths: Set<string> | string[]) {
-    const nodes = Array.from(paths)
-      .map((path) => {
-        return this.flattenedNodes.find((node) => node.fullpath === path);
-      })
-      .filter((node): node is FileNode => !!node);
+  async renderPathsNotifier(
+    paths: Set<string> | string[],
+    { withParent: withParnt = false }: RenderPathsOptions = {},
+  ) {
+    const pathArr = Array.from(paths);
+    const filterFn: (node: FileNode) => boolean = withParnt
+      ? (node) => pathArr.some((path) => path.startsWith(node.fullpath))
+      : (node) => pathArr.includes(node.fullpath);
+    const nodes = this.flattenedNodes.filter(filterFn);
     return this.renderNodesNotifier(nodes);
   }
 }

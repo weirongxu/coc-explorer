@@ -38,7 +38,7 @@ fileColumnRegistrar.registerColumn(
 
     const reload = async (directory: string, isReloadAll: boolean) => {
       await gitManager.reload(directory, showIgnored);
-      const statuses = await gitManager.getStatuses(directory);
+      const statuses = await gitManager.getMixedStatuses(directory);
 
       const updatePaths: Set<string> = new Set();
       if (isReloadAll) {
@@ -62,6 +62,7 @@ fileColumnRegistrar.registerColumn(
           updatePaths.add(fullpath);
         }
       }
+
       await source.renderPaths(updatePaths);
       prevStatuses = statuses;
     };
@@ -120,7 +121,10 @@ fileColumnRegistrar.registerColumn(
                   : fileHighlights.gitUnstage,
               });
             };
-            const status = gitManager.getStatus(node.fullpath, node.directory);
+            const status = gitManager.getMixedStatus(
+              node.fullpath,
+              node.directory,
+            );
             if (status) {
               showFormat(status.x, true);
               showFormat(status.y, false);

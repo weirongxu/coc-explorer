@@ -492,7 +492,7 @@ export function initFileActions(file: FileSource) {
       if (!filename) {
         return;
       }
-      if (filename.endsWith('/') || filename.endsWith('\\')) {
+      if (['/', '\\'].includes(filename[filename.length - 1])) {
         await file.doAction('addDirectory', node, [filename]);
         return;
       }

@@ -29,7 +29,7 @@ export type GitStatus = {
   renamed: boolean;
   copied: boolean;
 
-  stated: boolean;
+  staged: boolean;
   unmerged: boolean;
   untracked: boolean;
   ignored: boolean;
@@ -148,6 +148,9 @@ class GitCommand {
     const output = await this.spawn(args, { cwd: root });
     const lines = output.split('\n');
     lines.forEach((line) => {
+      if (!line) {
+        return;
+      }
       const [x_, y_, leftpath, rightpath] = this.parseStatusLine(root, line);
       const x = x_ === GitFormat.untracked ? GitFormat.unmodified : x_;
       const y = y_ === GitFormat.ignored ? GitFormat.unmodified : y_;
@@ -164,7 +167,7 @@ class GitCommand {
       const deleted = x === GitFormat.deleted || y === GitFormat.deleted;
       const renamed = x === GitFormat.renamed || y === GitFormat.renamed;
       const copied = x === GitFormat.copied || y === GitFormat.copied;
-      const stated = changedList.includes(x) && y === GitFormat.unmodified;
+      const staged = changedList.includes(x) && y === GitFormat.unmodified;
       const unmerged =
         (x === GitFormat.deleted && y === GitFormat.deleted) ||
         (x === GitFormat.added && y === GitFormat.added) ||
@@ -185,7 +188,7 @@ class GitCommand {
         renamed,
         copied,
 
-        stated,
+        staged,
         unmerged,
         untracked,
         ignored,
@@ -235,9 +238,12 @@ class GitManager {
    **/
   private mixedStatusCache: Record<string, Record<string, GitMixedStatus>> = {};
   /**
-   * ignoreCache[rootPath] = filepath[]
+   * ignoreCache[rootPath] = {directories: string[], files: string[]}
    **/
-  private ignoreCache: Record<string, string[]> = {};
+  private ignoreCache: Record<
+    string,
+    { directories: string[]; files: string[] }
+  > = {};
 
   async getGitRoot(directory: string): Promise<string | undefined> {
     if (directory in this.rootCache) {
@@ -270,20 +276,28 @@ class GitManager {
     if (root) {
       this.statusCache[root] = await this.cmd.status(root, showIgnored);
       this.mixedStatusCache[root] = {};
-      this.ignoreCache[root] = [];
+      this.ignoreCache[root] = {
+        directories: [],
+        files: [],
+      };
 
       // generate mixed status cache
       Object.entries(this.statusCache[root]).forEach(([fullpath, status]) => {
-        const relativePath = pathLib.relative(root, fullpath);
-        const parts = relativePath.split(pathLib.sep);
         if (status.x === GitFormat.ignored) {
-          this.ignoreCache[root].push(fullpath);
+          if (['/', '\\'].includes(fullpath[fullpath.length - 1])) {
+            this.ignoreCache[root].directories.push(fullpath);
+          } else {
+            this.ignoreCache[root].files.push(fullpath);
+          }
           return;
         }
+
+        const relativePath = pathLib.relative(root, fullpath);
+        const parts = relativePath.split(pathLib.sep);
         for (let i = 1; i <= parts.length; i++) {
           const frontalPath = pathLib.join(
             root,
-            parts.slice(0, i).join(pathLib.sep),
+            pathLib.join(...parts.slice(0, i)),
           );
           const cache = this.mixedStatusCache[root][frontalPath];
           if (cache) {
@@ -316,26 +330,19 @@ class GitManager {
     }
   }
 
-  getRootStatuses(rootPath: string) {
-    return this.mixedStatusCache[rootPath] as
-      | Record<string, GitMixedStatus>
-      | undefined;
-  }
-
-  async getStatuses(path: string) {
-    const root = await this.getGitRoot(path);
-    if (root) {
-      return this.getRootStatuses(root) || {};
+  async getMixedStatuses(path: string) {
+    const rootPath = await this.getGitRoot(path);
+    if (rootPath) {
+      return this.mixedStatusCache[rootPath] || {};
     } else {
       return {};
     }
   }
 
-  getStatus(
-    fullpath_: string,
+  getMixedStatus(
+    fullpath: string,
     isDirectory = false,
   ): GitMixedStatus | undefined {
-    const fullpath = isDirectory ? fullpath_ + '/' : fullpath_;
     const statusPair = Object.entries(this.mixedStatusCache)
       .sort((a, b) => b[0].localeCompare(a[0]))
       .find(([rootPath]) => fullpath.startsWith(rootPath));
@@ -350,9 +357,22 @@ class GitManager {
       .sort((a, b) => b[0].localeCompare(a[0]))
       .find(([rootPath]) => fullpath.startsWith(rootPath));
     if (ignorePair) {
-      const ignore = ignorePair[1].find((ignorePath) =>
-        fullpath.startsWith(ignorePath),
-      );
+      let ignore = false;
+      if (isDirectory) {
+        const directoryPath = isDirectory ? fullpath + pathLib.sep : fullpath;
+        ignore = ignorePair[1].directories.some((ignorePath) =>
+          directoryPath.startsWith(ignorePath),
+        );
+      } else {
+        ignore = ignorePair[1].files.some(
+          (ignorePath) => fullpath === ignorePath,
+        );
+        if (!ignore) {
+          ignore = ignorePair[1].directories.some((ignorePath) =>
+            fullpath.startsWith(ignorePath),
+          );
+        }
+      }
       if (ignore) {
         return { x: GitFormat.ignored, y: GitFormat.unmodified };
       }

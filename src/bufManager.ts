@@ -60,7 +60,7 @@ export class BufManager {
   }
 
   async remove(fullpath: string, skipModified: boolean) {
-    if (fullpath.endsWith('/')) {
+    if (fullpath.endsWith(pathLib.sep)) {
       return this.removePrefix(fullpath, skipModified);
     } else {
       const bufNode = this.bufferNodeMapByFullpath.get(fullpath);
@@ -80,7 +80,7 @@ export class BufManager {
   }
 
   modified(fullpath: string): boolean {
-    if (fullpath.endsWith('/')) {
+    if (fullpath.endsWith(pathLib.sep)) {
       return this.modifiedPrefix(fullpath);
     } else {
       return this.bufferNodeMapByFullpath.get(fullpath)?.modified ?? false;

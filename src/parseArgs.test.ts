@@ -2,6 +2,7 @@ import { Args } from './parseArgs';
 import { workspace } from 'coc.nvim';
 import { argOptions } from './argOptions';
 import { config } from './config';
+import { normalizePath } from './util';
 
 it('should parse args', async () => {
   const oldNvim = workspace.nvim;
@@ -17,7 +18,9 @@ it('should parse args', async () => {
     config,
   );
   expect(await args.value(argOptions.rootUri)).toEqual(rootUri);
-  expect(await args.value(argOptions.reveal)).toEqual('/reveal/path');
+  expect(await args.value(argOptions.reveal)).toEqual(
+    normalizePath('/reveal/path'),
+  );
 
   args = await Args.parse([rootUri, '--toggle'], config);
   expect(await args.value(argOptions.toggle)).toEqual(true);

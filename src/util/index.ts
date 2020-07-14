@@ -20,9 +20,9 @@ export * from './painter';
 export const outputChannel = workspace.createOutputChannel('explorer');
 
 export function prettyPrint(...data: any[]) {
-  let s = `[${format(new Date(), 'yy/MM/dd HH:mm:ss.SSS')}] `;
+  let s = `[${format(new Date(), 'yy/MM/dd HH:mm:ss.SSS')}]`;
   for (const d of data) {
-    s += typeof d === 'string' ? d : util.inspect(d);
+    s += ' ' + util.inspect(d);
   }
   // eslint-disable-next-line no-restricted-properties
   workspace.showMessage(s);

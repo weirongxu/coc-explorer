@@ -1,7 +1,7 @@
 module.exports = {
   preset: 'ts-jest',
   clearMocks: true,
-  globalSetup: './jest.js',
+  globalSetup: './jest-setup.js',
   moduleNameMapper: {
     '^lodash-es$': 'lodash',
   },
