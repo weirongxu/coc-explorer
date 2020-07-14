@@ -753,7 +753,7 @@
     "build": "webpack --mode production",
     "dev": "webpack --mode development --watch",
     "prepare": "yarn run clean && yarn run build",
-    "lint": "eslint 'src/**/*.ts'",
+    "lint": "eslint src --ext .js,.ts",
     "gen:doc": "ts-node ./scripts/gen_doc.ts",
     "test": "jest --runInBand --detectOpenHandles --forceExit"
   },
