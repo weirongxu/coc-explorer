@@ -42,7 +42,7 @@ export const activate = async (context: ExtensionContext) => {
     const paths = rtp.split(',');
     if (!paths.includes(context.extensionPath)) {
       await nvim.command(
-        `execute 'noa set rtp^='.fnameescape('${context.extensionPath.replace(
+        `execute 'noa set rtp+='.fnameescape('${context.extensionPath.replace(
           /'/g,
           "''",
         )}')`,
