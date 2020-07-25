@@ -38,6 +38,7 @@ import {
   moveStrategyList,
   PreviewStrategy,
   previewStrategyList,
+  ExplorerOpenOptions,
 } from './types';
 import {
   closeWinByBufnrNotifier,
@@ -66,7 +67,7 @@ export class Explorer implements Disposable {
   sourceBufnr = new BuffuerContextVars<number>('sourceBufnr', this);
   globalActions: RegisteredAction.Map<BaseTreeNode<any>> = {};
   context: ExtensionContext;
-  floatingWindow: FloatingPreview;
+  floatingPreview: FloatingPreview;
   contentWidth = 0;
 
   private disposables: Disposable[] = [];
@@ -128,27 +129,28 @@ export class Explorer implements Disposable {
 
     const position = await args.value(argOptions.position);
     const { width, height, top, left } = await this.genExplorerPosition(args);
-    const [bufnr, floatingBorderBufnr]: [
+    const [bufnr, borderBufnr]: [
       number,
       number | undefined,
-    ] = await workspace.nvim.call('coc_explorer#create', [
-      explorerManager.bufferName,
+    ] = await workspace.nvim.call('coc_explorer#open_explorer', [
       explorerManager.maxExplorerID,
       position,
-      width,
-      height,
-      left,
-      top,
-      config.get('floating.border.enable'),
-      config.get('floating.border.chars'),
-      config.get('floating.border.title'),
+      {
+        width,
+        height,
+        left,
+        top,
+        border_enable: config.get('floating.border.enable'),
+        border_chars: config.get('floating.border.chars'),
+        title: config.get('floating.border.title'),
+      } as ExplorerOpenOptions,
     ]);
 
     const explorer = new Explorer(
       explorerManager.maxExplorerID,
       explorerManager,
       bufnr,
-      floatingBorderBufnr,
+      borderBufnr,
       config,
     );
 
@@ -160,11 +162,11 @@ export class Explorer implements Disposable {
     public explorerID: number,
     public explorerManager: ExplorerManager,
     public bufnr: number,
-    public floatingBorderBufnr: number | undefined,
+    public borderBufnr: number | undefined,
     public config: ExplorerConfig,
   ) {
     this.context = explorerManager.context;
-    this.floatingWindow = new FloatingPreview(this);
+    this.floatingPreview = new FloatingPreview(this);
 
     if (this.config.get('previewAction.onHover')) {
       this.disposables.push(
@@ -193,14 +195,15 @@ export class Explorer implements Disposable {
       );
     }
 
-    this.disposables.push(
-      onEvent('BufWinLeave', async (bufnr) => {
-        if (bufnr === this.bufnr) {
-          await this.quitFloatingBorderWin();
-          await this.floatingWindow.floatFactory.close();
-        }
-      }),
-    );
+    if (borderBufnr) {
+      this.disposables.push(
+        onEvent('BufWinLeave', async (curBufnr) => {
+          if (curBufnr === bufnr) {
+            await closeWinByBufnrNotifier([borderBufnr]).run();
+          }
+        }),
+      );
+    }
 
     const moveActionArgs = [
       {
@@ -446,7 +449,7 @@ export class Explorer implements Disposable {
   }
 
   dispose() {
-    this.floatingWindow.dispose();
+    this.floatingPreview.dispose();
     this.disposables.forEach((s) => s.dispose());
   }
 
@@ -504,16 +507,16 @@ export class Explorer implements Disposable {
     return this.winnr.then(winidByWinnr);
   }
 
-  get floatingBorderWin(): Promise<Window | undefined> {
-    return this.floatingBorderWinid.then(winByWinid);
+  get borderWin(): Promise<Window | undefined> {
+    return this.borderWinid.then(winByWinid);
   }
 
-  get floatingBorderWinnr() {
-    return winnrByBufnr(this.floatingBorderBufnr);
+  get borderWinnr() {
+    return winnrByBufnr(this.borderBufnr);
   }
 
-  get floatingBorderWinid() {
-    return this.floatingBorderWinnr.then(winidByWinnr);
+  get borderWinid() {
+    return this.borderWinnr.then(winidByWinnr);
   }
 
   async sourceWinnr() {
@@ -668,7 +671,15 @@ export class Explorer implements Disposable {
       if (contentWidth <= 0) {
         let contentBaseWidth: number | undefined;
         if (contentWidthType === 'win-width') {
-          contentBaseWidth = await window?.width;
+          contentBaseWidth = await window.width;
+          if (
+            ((await window.getOption('relativenumber')) as boolean) ||
+            ((await window.getOption('number')) as boolean)
+          ) {
+            contentBaseWidth -= (await window.getOption(
+              'numberwidth',
+            )) as number;
+          }
         } else if (contentWidthType === 'vim-width') {
           contentBaseWidth = (await workspace.nvim.eval('&columns')) as number;
         }
@@ -704,30 +715,61 @@ export class Explorer implements Disposable {
     }
   }
 
-  async resume(args: Args) {
-    const win = await this.win;
-    if (win) {
-      // focus on explorer window
-      await this.nvim.command(`${await win.number}wincmd w`);
-    } else {
-      // resume the explorer window
-      const position = await args.value(argOptions.position);
-      const { width, height, top, left } = await Explorer.genExplorerPosition(
-        args,
-      );
-      await this.nvim.call('coc_explorer#resume', [
-        this.bufnr,
-        position,
+  async resize() {
+    const position = await this.args.value(argOptions.position);
+    const { width, height, top, left } = await Explorer.genExplorerPosition(
+      this.args,
+    );
+    await this.nvim.call('coc_explorer#resize', [
+      this.bufnr,
+      position,
+      {
         width,
         height,
         left,
         top,
-        this.floatingBorderBufnr,
-        this.config.get('floating.border.enable'),
-        this.config.get('floating.border.chars'),
-        this.config.get('floating.border.title'),
-      ]);
+        border_bufnr: this.borderBufnr,
+        border_enable: this.config.get('floating.border.enable'),
+        border_chars: this.config.get('floating.border.chars'),
+        title: this.config.get('floating.border.title'),
+      } as ExplorerOpenOptions,
+    ]);
+  }
+
+  /**
+   * Focus on explorer window
+   * @returns Whether the focus is successful
+   */
+  async focus() {
+    const win = await this.win;
+    if (win) {
+      // focus on explorer window
+      await this.nvim.command(`${await win.number}wincmd w`);
+      await this.resize();
+      return true;
     }
+    return false;
+  }
+
+  async resume(args: Args) {
+    const position = await args.value(argOptions.position);
+    const { width, height, top, left } = await Explorer.genExplorerPosition(
+      args,
+    );
+    await this.nvim.call('coc_explorer#resume', [
+      this.bufnr,
+      position,
+      {
+        width,
+        height,
+        left,
+        top,
+        border_bufnr: this.borderBufnr,
+        border_enable: this.config.get('floating.border.enable'),
+        border_chars: this.config.get('floating.border.chars'),
+        title: this.config.get('floating.border.title'),
+      } as ExplorerOpenOptions,
+    ]);
   }
 
   async open(args: Args, rootPath: string, isFirst: boolean) {
@@ -747,7 +789,7 @@ export class Explorer implements Disposable {
 
     const notifiers: Notifier[] = [];
     if (sourcesChanged) {
-      notifiers.push(this.clearNotifier());
+      notifiers.push(this.clearLinesNotifier());
     }
     notifiers.push(
       await this.loadAllNotifier(),
@@ -796,7 +838,7 @@ export class Explorer implements Disposable {
       if (sourceWinnr && this.bufnr === workspace.bufnr) {
         this.nvim.command(`${sourceWinnr}wincmd w`, true);
       }
-      closeWinByBufnrNotifier(this.bufnr).notify();
+      closeWinByBufnrNotifier([this.bufnr]).notify();
       if (!isHide) {
         doUserAutocmdNotifier('CocExplorerQuitPost').notify();
       }
@@ -805,12 +847,6 @@ export class Explorer implements Disposable {
 
   async quit(isHide = false) {
     return Notifier.run(await this.quitNotifier(isHide));
-  }
-
-  async quitFloatingBorderWin() {
-    if (this.floatingBorderBufnr) {
-      await closeWinByBufnrNotifier(this.floatingBorderBufnr).run();
-    }
   }
 
   /**
@@ -1134,7 +1170,7 @@ export class Explorer implements Disposable {
         );
       } else if (workspace.isNvim) {
         this.nvim.call(
-          'coc_explorer#buf_set_lines',
+          'coc_explorer#util#buf_set_lines_skip_cursor',
           [this.bufnr, start, end, false, lines],
           true,
         );
@@ -1145,7 +1181,7 @@ export class Explorer implements Disposable {
     });
   }
 
-  clearNotifier() {
+  clearLinesNotifier() {
     return this.setLinesNotifier([], 0, -1);
   }
 
@@ -1183,8 +1219,7 @@ export class Explorer implements Disposable {
       filetypes: string[];
       floatingWindows: boolean;
     }>('openAction.select.filter')!;
-    const winnr = await this.nvim.call('coc_explorer#select_wins', [
-      this.explorerManager.bufferName,
+    const winnr = await this.nvim.call('coc_explorer#select_wins#start', [
       filterOption.buftypes,
       filterOption.filetypes,
       filterOption.floatingWindows,

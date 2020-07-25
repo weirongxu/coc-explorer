@@ -167,7 +167,7 @@ export type CocExplorerUserEvents = LiteralUnion<
 
 export function doUserAutocmdNotifier(name: CocExplorerUserEvents) {
   return Notifier.create(() => {
-    workspace.nvim.call('coc_explorer#do_autocmd', [name], true);
+    workspace.nvim.call('coc_explorer#util#do_autocmd', [name], true);
   });
 }
 

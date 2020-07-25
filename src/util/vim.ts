@@ -32,16 +32,16 @@ export async function displayWidth(str: string) {
 }
 
 export async function displaySlice(str: string, start: number, end?: number) {
-  return (await workspace.nvim.call('coc_explorer#strdisplayslice', [
+  return (await workspace.nvim.call('coc_explorer#util#strdisplayslice', [
     str,
     start,
     end ?? undefined,
   ])) as string;
 }
 
-export function closeWinByBufnrNotifier(bufnr: number) {
+export function closeWinByBufnrNotifier(bufnrs: number[]) {
   return Notifier.create(() => {
-    workspace.nvim.call('coc_explorer#close_win_by_bufnr', [bufnr], true);
+    workspace.nvim.call('coc_explorer#util#close_win_by_bufnr', bufnrs, true);
   });
 }
 

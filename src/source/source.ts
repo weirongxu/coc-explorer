@@ -660,7 +660,7 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>>
   ) {
     const nodeIndex = this.getLineByNode(node);
     if (nodeIndex !== undefined) {
-      await this.explorer.floatingWindow.previewNode(
+      await this.explorer.floatingPreview.previewNode(
         previewStrategy,
         this,
         node,

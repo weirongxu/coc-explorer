@@ -260,20 +260,20 @@
           "default": true
         },
         "explorer.floating.border.chars": {
-          "description": "Border chars for floating window, Their order is left-top, top, right-top, right, right-bottom, bottom, left-bottom, left",
+          "description": "Border chars for floating window, their order is top/right/bottom/left/topleft/topright/botright/botleft",
           "type": "array",
           "items": {
             "type": "string"
           },
           "default": [
-            "┌",
             "─",
-            "┐",
             "│",
-            "┘",
             "─",
-            "└",
-            "│"
+            "│",
+            "┌",
+            "┐",
+            "┘",
+            "└"
           ]
         },
         "explorer.floating.border.title": {

@@ -75,7 +75,7 @@ class HighlightManager {
       this.nvim.command(`silent! syntax clear ${highlight.group}`, true);
       commands.push(...highlight.commands);
     }
-    this.nvim.call('coc_explorer#execute_commands', [commands], true);
+    this.nvim.call('coc_explorer#util#execute_commands', [commands], true);
   }
 }
 

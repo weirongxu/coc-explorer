@@ -14,18 +14,42 @@ import { onBufEnter } from './events';
 import { Explorer } from './explorer';
 import { onError } from './logger';
 import { getMappings } from './mappings';
-import { Args } from './parseArgs';
+import { Args, ArgPosition } from './parseArgs';
 import { compactI, supportedNvimFloating } from './util';
 
-export type TabContainer = {
-  left: Explorer[];
-  right: Explorer[];
-  tab: Explorer[];
-  floating: Explorer[];
-};
+export class TabContainer {
+  left?: Explorer;
+  right?: Explorer;
+  tab?: Explorer;
+  floating?: Explorer;
+
+  getExplorer(position: ArgPosition) {
+    return this[position];
+  }
+
+  setExplorer(position: ArgPosition, explorer: Explorer) {
+    this[position] = explorer;
+  }
+
+  all() {
+    const explorers = [];
+    if (this.left) {
+      explorers.push(this.left);
+    }
+    if (this.right) {
+      explorers.push(this.right);
+    }
+    if (this.tab) {
+      explorers.push(this.tab);
+    }
+    if (this.floating) {
+      explorers.push(this.floating);
+    }
+    return explorers;
+  }
+}
 
 export class ExplorerManager {
-  bufferName = '[coc-explorer]';
   filetype = 'coc-explorer';
   emitterDidAutoload = new Emitter<void>();
   previousBufnr = new GlobalContextVars<number>('previousBufnr');
@@ -79,11 +103,11 @@ export class ExplorerManager {
   }
 
   async currentTabId() {
-    return (await this.nvim.call('coc_explorer#tab_id')) as number;
+    return (await this.nvim.call('coc_explorer#tab#current_id')) as number;
   }
 
-  async currentTabIdMax() {
-    return (await this.nvim.call('coc_explorer#tab_id_max')) as number;
+  async currentTabMaxId() {
+    return (await this.nvim.call('coc_explorer#tab#max_id')) as number;
   }
 
   async currentTabContainer(): Promise<undefined | TabContainer> {
@@ -137,28 +161,29 @@ export class ExplorerManager {
     );
   }
 
+  /**
+   * Get all winnrs from explorers
+   */
   async winnrs() {
-    const tabid = await this.currentTabId();
-    const explorers: Explorer[] = [];
-    const container = this.tabContainer[tabid];
-    if (container) {
-      explorers.push(...container.left);
-      explorers.push(...container.right);
-      explorers.push(...container.tab);
+    const container = await this.currentTabContainer();
+    const explorers = container?.all();
+    if (explorers) {
+      const winnrs = await Promise.all(
+        explorers.map((explorer) => explorer.winnr),
+      );
+      return winnrs.filter((winnr): winnr is number => winnr !== undefined);
+    } else {
+      return [];
     }
-    const winnrs = await Promise.all(
-      explorers.map((explorer) => explorer.winnr),
-    );
-    return winnrs.filter((winnr) => winnr !== undefined);
   }
 
+  /**
+   * Get all explorers
+   */
   explorers() {
     const explorers: Explorer[] = [];
     for (const container of Object.values(this.tabContainer)) {
-      explorers.push(...container.left);
-      explorers.push(...container.right);
-      explorers.push(...container.tab);
-      explorers.push(...container.floating);
+      explorers.push(...container.all());
     }
     return explorers;
   }
@@ -222,17 +247,17 @@ export class ExplorerManager {
         this.mappings[key][mode] = `<Plug>(coc-${plugKey})`;
       });
     });
-    await this.nvim.call('coc_explorer#register_mappings', [this.mappings]);
+    await this.nvim.call('coc_explorer#mappings#register', [this.mappings]);
     this.registeredMapping = true;
     this.onRegisteredMapping.fire();
   }
 
   async executeMappings() {
-    await this.nvim.call('coc_explorer#execute_mappings', [this.mappings]);
+    await this.nvim.call('coc_explorer#mappings#execute', [this.mappings]);
   }
 
   async clearMappings() {
-    await this.nvim.call('coc_explorer#clear_mappings', [this.mappings]);
+    await this.nvim.call('coc_explorer#mappings#clear', [this.mappings]);
   }
 
   async rootUri(args: Args) {
@@ -266,65 +291,49 @@ export class ExplorerManager {
     const explorerConfig = buildExplorerConfig(config);
 
     const args = await Args.parse(argStrs, config);
-
-    const quit = await args.value(argOptions.quit);
     const position = await args.value(argOptions.position);
+    if (position === 'floating') {
+      if (!supportedNvimFloating()) {
+        throw new Error('not support floating position in vim');
+      }
+    }
+    const quit = await args.value(argOptions.quit);
 
     const tabid =
       position === 'tab'
-        ? (await this.currentTabIdMax()) + 1
+        ? (await this.currentTabMaxId()) + 1
         : await this.currentTabId();
     if (!(tabid in this.tabContainer)) {
-      this.tabContainer[tabid] = {
-        left: [],
-        right: [],
-        tab: [],
-        floating: [],
-      };
+      this.tabContainer[tabid] = new TabContainer();
     }
-    let explorers: Explorer[] = [];
-    if (position === 'left') {
-      explorers = this.tabContainer[tabid].left;
-    } else if (position === 'right') {
-      explorers = this.tabContainer[tabid].right;
-    } else if (position === 'tab') {
-      explorers = this.tabContainer[tabid].tab;
-    } else if (position === 'floating') {
-      if (supportedNvimFloating()) {
-        explorers = this.tabContainer[tabid].floating;
-      } else {
-        throw new Error('not support floating position in vim');
-      }
+    const tabContainer = this.tabContainer[tabid];
+
+    let explorer = tabContainer.getExplorer(position);
+    if (explorer && quit) {
+      await explorer.quit();
+      return;
     }
 
     const sourceWinid = (await this.nvim.call('win_getid')) as number;
     const sourceBufnr = workspace.bufnr;
     const rootPath = workspace.rootPath;
 
-    let explorer = explorers[0];
-
-    if (explorer && quit) {
-      await explorer.quit();
-      return;
-    }
-
-    if (!explorer) {
+    if (!explorer || !(await this.nvim.call('bufexists', [explorer.bufnr]))) {
       explorer = await Explorer.create(this, args, explorerConfig);
-      explorers.push(explorer);
-    } else if (!(await this.nvim.call('bufexists', [explorer.bufnr]))) {
-      explorer = await Explorer.create(this, args, explorerConfig);
-      explorers[0] = explorer;
+      tabContainer.setExplorer(position, explorer);
     } else if (!(await explorer.inited.get())) {
       await this.nvim.command(`bwipeout! ${explorer.bufnr}`);
       explorer = await Explorer.create(this, args, explorerConfig);
-      explorers[0] = explorer;
+      tabContainer.setExplorer(position, explorer);
     } else {
       const win = await explorer.win;
       if (win && (await args.value(argOptions.toggle))) {
         await explorer.quit();
         return;
       }
-      await explorer.resume(args);
+      if (!(await explorer.focus())) {
+        await explorer.resume(args);
+      }
       isFirst = false;
     }
     await explorer.sourceWinid.set(sourceWinid);

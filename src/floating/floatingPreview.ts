@@ -1,27 +1,199 @@
-import { FloatBuffer, workspace, Disposable } from 'coc.nvim';
+import { workspace, Disposable } from 'coc.nvim';
 import { Explorer } from '../explorer';
 import { BaseTreeNode, ExplorerSource } from '../source/source';
-import { Drawn, flatten, supportedFloat } from '../util';
-import { FloatingFactory2 } from './floatingFactory2';
-import { FloatingFactory3 } from './floatingFactory3';
-import { PreviewStrategy } from '../types';
+import { Drawn, flatten, supportedFloat, max, min, byteLength } from '../util';
+import { PreviewStrategy, FloatingOpenOptions } from '../types';
+import { argOptions } from '../argOptions';
+import { FloatingWindow } from './floatingWindow';
+import { onEvent, onBufEnter, onCursorMoved } from '../events';
 
 export class FloatingPreview implements Disposable {
   nvim = workspace.nvim;
-  floatFactory: FloatingFactory2 | FloatingFactory3;
   shown: boolean = false;
+  disposables: Disposable[] = [];
+  maxHeight = 30;
+  preferTop = false;
+
+  private _previewNodeTimeout?: NodeJS.Timeout;
+  private labelingWindow: FloatingWindow | undefined;
+  private onHover: boolean;
 
   constructor(public explorer: Explorer) {
-    this.floatFactory = new ('getDimension' in FloatBuffer
-      ? FloatingFactory3
-      : FloatingFactory2)(this.explorer, this.nvim, workspace.env, false);
+    this.onHover = this.explorer.config.get('previewAction.onHover');
+
+    this.disposables.push(
+      onEvent('BufWinLeave', async (bufnr) => {
+        if (bufnr === this.explorer.bufnr) {
+          await this.labelingWindow?.close();
+        }
+      }),
+      onBufEnter(async (bufnr) => {
+        if (bufnr !== this.explorer.bufnr) {
+          await this.labelingWindow?.close();
+        }
+      }, 300),
+      onCursorMoved(async () => {
+        if (workspace.bufnr === this.explorer.bufnr && this.onHover) {
+          return;
+        }
+        await this.close();
+      }, 300),
+    );
   }
 
   dispose() {
-    this.floatFactory.dispose();
+    this.labelingWindow?.dispose();
   }
 
-  private _previewNodeTimeout?: NodeJS.Timeout;
+  async close() {
+    await this.labelingWindow?.close();
+  }
+
+  borderOptions() {
+    return {
+      border_enable: false,
+      border_chars: [],
+      title: '',
+    };
+  }
+
+  private getDimension(
+    lines: string[],
+    maxWidth: number,
+    maxHeight: number,
+  ): { width: number; height: number } {
+    // width contains padding
+    if (maxWidth === 0 || maxHeight === 0) {
+      return { width: 0, height: 0 };
+    }
+    const lineLens: number[] = [];
+    for (const line of lines) {
+      lineLens.push(byteLength(line.replace(/\t/g, '  ')));
+    }
+    const width = min([max(lineLens), maxWidth]);
+    if (width === undefined || width === 0) {
+      return { width: 0, height: 0 };
+    }
+    let height = 0;
+    for (const lineLen of lineLens) {
+      height = height + Math.max(Math.ceil(lineLen / width), 1);
+    }
+    return { width, height: Math.min(height, maxHeight) };
+  }
+
+  private async labelingOptions(
+    lines: string[],
+  ): Promise<undefined | FloatingOpenOptions> {
+    const env = workspace.env;
+    const vimColumns = env.columns;
+    const vimLines = env.lines - env.cmdheight - 1;
+    const position = await this.explorer.args.value(argOptions.position);
+    const isFloating = position === 'floating';
+    const floatingPosition = await this.explorer.args.value(
+      argOptions.floatingPosition,
+    );
+    const win = await this.explorer.win;
+    if (!win) {
+      return;
+    }
+    let alignTop: boolean = false;
+    let [winTop, winLeft]: [
+      number,
+      number,
+    ] = await this.nvim.call('win_screenpos', [win.id]);
+    winTop -= 1;
+    winLeft -= 1;
+    const cursorIndex = this.explorer.currentLineIndex;
+    const containerWin =
+      isFloating && this.explorer.config.get('previewAction.onHover')
+        ? await this.explorer.borderWin
+        : await this.explorer.win;
+    if (!containerWin) {
+      return;
+    }
+    const containerWidth = await containerWin.width;
+    const maxWidth = vimColumns - containerWidth - (isFloating ? 0 : 1);
+    const maxHeight = min([this.maxHeight, vimLines])!;
+
+    const { width, height } = this.getDimension(lines, maxWidth, maxHeight);
+
+    if (!this.preferTop) {
+      if (vimLines - cursorIndex < height && cursorIndex > height) {
+        alignTop = true;
+      }
+    } else {
+      if (cursorIndex >= maxHeight || cursorIndex >= vimLines - cursorIndex) {
+        alignTop = true;
+      }
+    }
+
+    const top = alignTop ? cursorIndex - height + 1 : cursorIndex;
+
+    let left: number;
+    if (
+      position === 'left' ||
+      (isFloating && floatingPosition === 'left-center')
+    ) {
+      left = winLeft + containerWidth + 1;
+    } else if (
+      position === 'right' ||
+      (isFloating && floatingPosition === 'right-center')
+    ) {
+      left = winLeft - width - 1;
+    } else {
+      // TODO tab and floating other
+      return;
+    }
+
+    return {
+      top,
+      left,
+      width,
+      height,
+      filetype: 'coc-explorer-preview',
+      ...this.borderOptions(),
+    };
+  }
+
+  private async previewLabeling(
+    source: ExplorerSource<any>,
+    node: BaseTreeNode<any>,
+    nodeIndex: number,
+  ) {
+    const drawnList:
+      | Drawn[]
+      | undefined = await source.sourcePainters?.drawNodeLabeling(
+      node,
+      nodeIndex,
+    );
+    if (!drawnList || !this.explorer.explorerManager.inExplorer()) {
+      return;
+    }
+
+    if (!this.labelingWindow) {
+      this.labelingWindow = await FloatingWindow.create();
+    }
+
+    const lines = drawnList.map((d) => d.content);
+    const options = await this.labelingOptions(lines);
+    if (!options) {
+      return;
+    }
+    await this.labelingWindow.open(
+      lines,
+      flatten(
+        drawnList.map((d, index) =>
+          d.highlightPositions.map((hl) => ({
+            hlGroup: hl.group,
+            line: index,
+            colStart: hl.start,
+            colEnd: hl.start + hl.size,
+          })),
+        ),
+      ),
+      options,
+    );
+  }
 
   private async _previewNode(
     previewStrategy: PreviewStrategy,
@@ -30,34 +202,7 @@ export class FloatingPreview implements Disposable {
     nodeIndex: number,
   ) {
     if (previewStrategy === 'labeling') {
-      const drawnList:
-        | Drawn[]
-        | undefined = await source.sourcePainters?.drawNodeLabeling(
-        node,
-        nodeIndex,
-      );
-      if (!drawnList || !this.explorer.explorerManager.inExplorer()) {
-        return;
-      }
-
-      await this.floatFactory.create(
-        [
-          {
-            content: drawnList.map((d) => d.content).join('\n'),
-            filetype: 'coc-explorer-preview',
-          },
-        ],
-        flatten(
-          drawnList.map((d, index) =>
-            d.highlightPositions.map((hl) => ({
-              hlGroup: hl.group,
-              line: index,
-              colStart: hl.start,
-              colEnd: hl.start + hl.size,
-            })),
-          ),
-        ),
-      );
+      await this.previewLabeling(source, node, nodeIndex);
     }
   }
 

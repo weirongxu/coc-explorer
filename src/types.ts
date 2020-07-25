@@ -1,3 +1,5 @@
+import { SetRequired } from 'type-fest';
+
 export const moveStrategyList = ['default', 'insideSource'] as const;
 
 export type MoveStrategy = typeof moveStrategyList[number];
@@ -40,3 +42,38 @@ export type ExpandOption = typeof expandOptionList[number];
 export const collapseOptionList = ['recursive'] as const;
 
 export type CollapseOption = typeof collapseOptionList[number];
+
+export type ExplorerOpenOptions = {
+  width: number;
+  height: number;
+  /**
+   * left position
+   */
+  left: number;
+  /**
+   * top position
+   */
+  top: number;
+  border_bufnr?: number;
+  border_enable: boolean;
+  border_chars: string[];
+  /**
+   * buffer name
+   */
+  name?: string;
+  /**
+   * float win title
+   */
+  title: string;
+  filetype?: string;
+  focus?: boolean;
+};
+
+export type FloatingCreateOptions = {
+  /**
+   * buffer name
+   */
+  name?: string;
+};
+
+export type FloatingOpenOptions = SetRequired<ExplorerOpenOptions, 'filetype'>;

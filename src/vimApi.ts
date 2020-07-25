@@ -7,7 +7,6 @@ import { Explorer } from './explorer';
 import { BaseTreeNode, ExplorerSource } from './source/source';
 import { compactI, asyncCatchError } from './util';
 import { WinLayoutFinder } from './winLayoutFinder';
-import pLocate from 'p-locate';
 import { OriginalActionExp } from './actions/mapping';
 
 export function registerApi(
@@ -49,10 +48,10 @@ async function getExplorer(
       return explorerManager.explorerByWinid(node.winid);
     } else {
       const current = await explorerManager.currentTabContainer();
-      return await pLocate(
-        current?.floating ?? [],
-        async (e) => (await e.winnr) !== undefined,
-      );
+      const explorer = current?.floating;
+      if ((await explorer?.winnr) !== undefined) {
+        return explorer;
+      }
     }
   } else {
     return explorerFinder === 0

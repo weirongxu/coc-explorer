@@ -7,7 +7,16 @@ export function byteLength(str: string): number {
   return Buffer.byteLength(str);
 }
 
-export function splitCount(str: string, sep: string, count: number = 2): string[] {
+export function charIndex(content: string, byteIndex: number): number {
+  const buf = Buffer.from(content, 'utf8');
+  return buf.slice(0, byteIndex).toString('utf8').length;
+}
+
+export function splitCount(
+  str: string,
+  sep: string,
+  count: number = 2,
+): string[] {
   const ret: string[] = [];
   let remain = str;
   let idx = str.indexOf(sep);
