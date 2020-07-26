@@ -51,6 +51,11 @@ export class FloatingWindow implements Disposable {
     options: FloatingOpenOptions,
   ) {
     await this.close();
+
+    if (options.width <= 0 || options.height <= 0) {
+      return;
+    }
+
     this.nvim.pauseNotification();
     this.buffer.setOption('modifiable', true, true);
     this.buffer.setOption('readonly', false, true);
