@@ -45,6 +45,7 @@ export interface FileNode extends BaseTreeNode<FileNode, 'root' | 'child'> {
 const hl = hlGroupManager.linkGroup.bind(hlGroupManager);
 export const fileHighlights = {
   title: hl('FileRoot', 'Constant'),
+  hidden: hl('FileHidden', 'Comment'),
   rootName: hl('FileRootName', 'Identifier'),
   expandIcon: hl('FileExpandIcon', 'Directory'),
   fullpath: hl('FileFullpath', 'Comment'),

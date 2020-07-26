@@ -221,9 +221,10 @@ Template for root node of buffer source
 Columns:
 
 - icon
+- hidden
 - title
 
-default: `[icon] [title]`
+default: `[icon] [title] [hidden & 1]`
 
 #### `--buffer-child-template <template>`
 
@@ -256,11 +257,12 @@ Template for root node of file source
 Columns:
 
 - icon
+- hidden
 - title
 - root
 - fullpath
 
-default: `[icon] [title] [root] [fullpath]`
+default: `[icon] [title] [hidden & 1][root] [fullpath]`
 
 #### `--file-root-labeling-template <template>`
 
@@ -311,9 +313,10 @@ Template for root node of bookmark source
 Columns:
 
 - icon
+- hidden
 - title
 
-default: `[icon] [title]`
+default: `[icon] [title] [hidden & 1]`
 
 #### `--bookmark-child-template <template>`
 
@@ -403,6 +406,10 @@ Default: <pre><code>{}</code></pre>
 Default: <pre><code>true</code></pre>
 </details>
 <details>
+<summary><code>explorer.focus</code>: Focus to explorer when opened. type: <code>boolean</code></summary>
+Default: <pre><code>true</code></pre>
+</details>
+<details>
 <summary><code>explorer.position</code>: Explorer position. type: <code>"left" | "right" | "tab" | "floating"</code></summary>
 Default: <pre><code>"left"</code></pre>
 </details>
@@ -439,16 +446,16 @@ Default: <pre><code>0</code></pre>
 Default: <pre><code>true</code></pre>
 </details>
 <details>
-<summary><code>explorer.floating.border.chars</code>: Border chars for floating window, Their order is left-top, top, right-top, right, right-bottom, bottom, left-bottom, left. type: <code>string</code></summary>
+<summary><code>explorer.floating.border.chars</code>: Border chars for floating window, their order is top/right/bottom/left/topleft/topright/botright/botleft. type: <code>string</code></summary>
 Default: <pre><code>[
-  "┌",
   "─",
-  "┐",
   "│",
-  "┘",
   "─",
-  "└",
-  "│"
+  "│",
+  "┌",
+  "┐",
+  "┘",
+  "└"
 ]</code></pre>
 </details>
 <details>
@@ -571,15 +578,15 @@ Default: <pre><code>"✓"</code></pre>
 </details>
 <details>
 <summary><code>explorer.icon.hidden</code>: Icon for hidden status. type: <code>string</code></summary>
-Default: <pre><code>"I"</code></pre>
+Default: <pre><code>"‥"</code></pre>
 </details>
 <details>
 <summary><code>explorer.bookmark.root.template</code>: Template for root node of bookmark source. type: <code>string</code></summary>
-Default: <pre><code>"[icon] [title]"</code></pre>
+Default: <pre><code>"[icon] [title] [hidden & 1]"</code></pre>
 </details>
 <details>
 <summary><code>explorer.bookmark.child.template</code>: Template for child node of bookmark source. type: <code>string</code></summary>
-Default: <pre><code>"[selection | 1] [filename] [position]"</code></pre>
+Default: <pre><code>"[selection | 1] [filename] [position] - [annotation]"</code></pre>
 </details>
 <details>
 <summary><code>explorer.bookmark.child.labelingTemplate</code>: Labeling template for child node of bookmark source, use for preview when previewAction is labeling. type: <code>string</code></summary>
@@ -595,7 +602,7 @@ Default: <pre><code>false</code></pre>
 </details>
 <details>
 <summary><code>explorer.buffer.root.template</code>: Template for root node of buffer source. type: <code>string</code></summary>
-Default: <pre><code>"[icon] [title]"</code></pre>
+Default: <pre><code>"[icon] [title] [hidden & 1]"</code></pre>
 </details>
 <details>
 <summary><code>explorer.buffer.child.template</code>: Template for child node of buffer source. type: <code>string</code></summary>
@@ -638,7 +645,7 @@ Default: <pre><code>false</code></pre>
 </details>
 <details>
 <summary><code>explorer.file.root.template</code>: Template for root node of file source. type: <code>string</code></summary>
-Default: <pre><code>"[icon] [title] [root] [fullpath]"</code></pre>
+Default: <pre><code>"[icon] [title] [hidden & 1][root] [fullpath]"</code></pre>
 </details>
 <details>
 <summary><code>explorer.file.root.labelingTemplate</code>: Labeling template for root node of file source, use for preview when previewAction is labeling. type: <code>string</code></summary>

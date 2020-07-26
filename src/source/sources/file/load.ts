@@ -1,6 +1,7 @@
 // [icon] [title] [root] [fullpath]
 import './root-columns/icon';
 import './root-columns/title';
+import './root-columns/hidden';
 import './root-columns/root';
 import './root-columns/fullpath';
 

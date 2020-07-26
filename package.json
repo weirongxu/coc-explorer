@@ -550,12 +550,12 @@
         "explorer.icon.hidden": {
           "description": "Icon for hidden status",
           "type": "string",
-          "default": "I"
+          "default": "‥"
         },
         "explorer.bookmark.root.template": {
           "description": "Template for root node of bookmark source",
           "type": "string",
-          "default": "[icon] [title]"
+          "default": "[icon] [title] [hidden & 1]"
         },
         "explorer.bookmark.child.template": {
           "description": "Template for child node of bookmark source",
@@ -580,7 +580,7 @@
         "explorer.buffer.root.template": {
           "description": "Template for root node of buffer source",
           "type": "string",
-          "default": "[icon] [title]"
+          "default": "[icon] [title] [hidden & 1]"
         },
         "explorer.buffer.child.template": {
           "description": "Template for child node of buffer source",
@@ -649,7 +649,7 @@
         "explorer.file.root.template": {
           "description": "Template for root node of file source",
           "type": "string",
-          "default": "[icon] [title] [root] [fullpath]"
+          "default": "[icon] [title] [hidden & 1][root] [fullpath]"
         },
         "explorer.file.root.labelingTemplate": {
           "description": "Labeling template for root node of file source, use for preview when previewAction is labeling",

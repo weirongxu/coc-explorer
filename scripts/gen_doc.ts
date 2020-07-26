@@ -14,7 +14,7 @@ type Cmd = {
 type Row = {
   key: string;
   description: string;
-  type?: string | object;
+  type?: string;
   default?: JSONSchema7Type;
 };
 

@@ -32,6 +32,7 @@ const hl = hlGroupManager.linkGroup.bind(hlGroupManager);
 
 export const bookmarkHighlights = {
   title: hl('BookmarkRoot', 'Constant'),
+  hidden: hl('BookmarkHidden', 'Commment'),
   expandIcon: hl('BookmarkExpandIcon', 'Directory'),
   filename: hl('BookmarkFilename', 'String'),
   fullpath: hl('BookmarkFullpath', 'Special'),

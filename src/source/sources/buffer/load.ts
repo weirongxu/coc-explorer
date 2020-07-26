@@ -1,5 +1,6 @@
 import './root-columns/icon';
 import './root-columns/title';
+import './root-columns/hidden';
 
 import './child-columns/selection';
 import './child-columns/name';
