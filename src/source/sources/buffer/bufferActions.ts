@@ -6,28 +6,6 @@ import { workspace } from 'coc.nvim';
 export function initBufferActions(buffer: BufferSource) {
   const { nvim } = buffer;
   buffer.addNodeAction(
-    'expand',
-    async ({ node }) => {
-      if (node.expandable) {
-        await buffer.expand(node);
-      }
-    },
-    'expand node',
-    { multi: true },
-  );
-  buffer.addNodeAction(
-    'collapse',
-    async ({ node }) => {
-      if (node.expandable && buffer.isExpanded(node)) {
-        await buffer.collapse(node);
-      } else if (node.parent) {
-        await buffer.collapse(node.parent);
-      }
-    },
-    'collapse node',
-    { multi: true },
-  );
-  buffer.addNodeAction(
     'expandOrCollapse',
     async ({ node }) => {
       // eslint-disable-next-line no-restricted-properties

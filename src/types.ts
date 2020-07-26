@@ -39,7 +39,7 @@ export const expandOptionList = [
 
 export type ExpandOption = typeof expandOptionList[number];
 
-export const collapseOptionList = ['recursive'] as const;
+export const collapseOptionList = ['recursive', 'all'] as const;
 
 export type CollapseOption = typeof collapseOptionList[number];
 

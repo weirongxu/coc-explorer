@@ -11,7 +11,13 @@ import { Explorer } from '../explorer';
 import { explorerActionList } from '../lists/actions';
 import { onError } from '../logger';
 import { MappingMode, getReverseMappings } from '../mappings';
-import { OpenStrategy, PreviewStrategy, openStrategyList } from '../types';
+import {
+  OpenStrategy,
+  PreviewStrategy,
+  openStrategyList,
+  expandOptionList,
+  collapseOptionList,
+} from '../types';
 import { drawnWithIndexRange, flatten, generateUri, Notifier } from '../util';
 import { WinLayoutFinder } from '../winLayoutFinder';
 import { HighlightPositionWithLine } from './highlightManager';
@@ -254,6 +260,81 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>>
   constructor(public sourceType: string, public explorer: Explorer) {
     this.context = this.explorer.context;
 
+    this.addNodeAction(
+      'expand',
+      async ({ node, args }) => {
+        if (node.expandable) {
+          const options = (args[0] ?? '').split('|');
+          const recursive = options.includes('recursive') || undefined;
+          const compact = options.includes('compact') || undefined;
+          const uncompact = options.includes('uncompact') || undefined;
+          const recursiveSingle =
+            options.includes('recursiveSingle') || undefined;
+          await this.expand(node, {
+            recursive,
+            compact,
+            uncompact,
+            recursiveSingle,
+          });
+        }
+      },
+      'expand node',
+      {
+        multi: true,
+        args: [
+          {
+            name: 'expand options',
+            description: expandOptionList.join(' | '),
+          },
+        ],
+        menus: {
+          recursive: 'recursively',
+          compact: 'single child folders will be compressed in a combined node',
+          uncompact: 'reset the combined node',
+          'compact|uncompact': 'compact or uncompact',
+          recursiveSingle: 'expand single child folder recursively',
+        },
+      },
+    );
+    this.addNodeAction(
+      'collapse',
+      async ({ node, args }) => {
+        const options = (args[0] ?? '').split('|');
+        const all = options.includes('all');
+        const recursive = options.includes('recursive');
+        if (all && this.rootNode.children) {
+          for (const subNode of this.rootNode.children) {
+            if (subNode.expandable && this.isExpanded(subNode)) {
+              await this.doAction(
+                'collapse',
+                subNode,
+                options.filter((op) => op !== 'all'),
+              );
+            }
+          }
+        } else {
+          if (node.expandable && this.isExpanded(node)) {
+            await this.collapse(node, { recursive });
+          } else if (node.parent) {
+            await this.collapse(node.parent, { recursive });
+          }
+        }
+      },
+      'collapse node',
+      {
+        multi: true,
+        args: [
+          {
+            name: 'collapse options',
+            description: collapseOptionList.join(' | '),
+          },
+        ],
+        menus: {
+          recursive: 'recursively',
+          all: 'for all nodes',
+        },
+      },
+    );
     this.addNodeAction(
       'esc',
       async ({ mode }) => {

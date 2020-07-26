@@ -238,42 +238,6 @@ export function initFileActions(file: FileSource) {
     { multi: true },
   );
   file.addNodeAction(
-    'expand',
-    async ({ node, args }) => {
-      if (node.directory) {
-        const options = (args[0] ?? '').split('|');
-        const recursive = options.includes('recursive') || undefined;
-        const compact = options.includes('compact') || undefined;
-        const uncompact = options.includes('uncompact') || undefined;
-        const recursiveSingle =
-          options.includes('recursiveSingle') || undefined;
-        await file.expand(node, {
-          recursive,
-          compact,
-          uncompact,
-          recursiveSingle,
-        });
-      }
-    },
-    'expand directory',
-    {
-      multi: true,
-      args: [
-        {
-          name: 'expand options',
-          description: expandOptionList.join(' | '),
-        },
-      ],
-      menus: {
-        recursive: 'recursively',
-        compact: 'single child folders will be compressed in a combined node',
-        uncompact: 'reset the combined node',
-        'compact|uncompact': 'compact or uncompact',
-        recursiveSingle: 'expand single child folder recursively',
-      },
-    },
-  );
-  file.addNodeAction(
     'expandRecursive',
     async ({ node }) => {
       // eslint-disable-next-line no-restricted-properties
@@ -285,31 +249,6 @@ export function initFileActions(file: FileSource) {
     },
     'expand directory recursively (deprecated)',
     { multi: true },
-  );
-  file.addNodeAction(
-    'collapse',
-    async ({ node, args }) => {
-      const options = (args[0] ?? '').split('|');
-      const recursive = options.includes('recursive');
-      if (node.directory && file.isExpanded(node)) {
-        await file.collapse(node, { recursive });
-      } else if (node.parent) {
-        await file.collapse(node.parent, { recursive });
-      }
-    },
-    'collapse directory',
-    {
-      multi: true,
-      args: [
-        {
-          name: 'collapse options',
-          description: collapseOptionList.join(' | '),
-        },
-      ],
-      menus: {
-        recursive: 'recursively',
-      },
-    },
   );
   file.addNodeAction(
     'collapseRecursive',

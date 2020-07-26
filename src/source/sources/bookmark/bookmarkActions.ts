@@ -3,28 +3,6 @@ import { OpenStrategy } from '../../../types';
 
 export function initBookmarkActions(bookmark: BookmarkSource) {
   bookmark.addNodeAction(
-    'expand',
-    async ({ node }) => {
-      if (node.expandable) {
-        await bookmark.expand(node);
-      }
-    },
-    'expand node',
-    { multi: true },
-  );
-  bookmark.addNodeAction(
-    'collapse',
-    async ({ node }) => {
-      if (node.expandable && bookmark.isExpanded(node)) {
-        await bookmark.collapse(node);
-      } else if (node.parent) {
-        await bookmark.collapse(node.parent);
-      }
-    },
-    'collapse node',
-    { multi: true },
-  );
-  bookmark.addNodeAction(
     'open',
     async ({ node, args: [openStrategy, ...args] }) => {
       await bookmark.openAction(node, () => node.fullpath, {
