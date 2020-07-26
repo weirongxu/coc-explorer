@@ -40,7 +40,7 @@ function! coc_explorer#open_explorer(explorer_id, position, options) abort
     call s:init_buf(bufnr)
     call s:check_focus(a:options, fallback_winid)
   elseif a:position ==# 'floating'
-    let float_options = extend({'name': name, 'filetype': 'coc-explorer'}, a:options)
+    let float_options = extend(a:options, {'name': name, 'filetype': 'coc-explorer', 'focus': v:true})
     let [bufnr, border_bufnr] = coc_explorer#float#create(float_options)
     let float_options = extend({'border_bufnr': border_bufnr}, float_options)
     let [winid, border_winid] = coc_explorer#float#open(bufnr, float_options)
@@ -75,7 +75,7 @@ function! coc_explorer#resize(bufnr, position, options) abort
     return
   endif
   if a:position ==# 'floating'
-    call coc_explorer#float#resize(a:bufnr, a:position, a:options)
+    call coc_explorer#float#resize(a:bufnr, a:options)
     return
   endif
   call setbufvar(a:bufnr, '&winfixwidth', 1)

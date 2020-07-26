@@ -13,13 +13,17 @@ export const argOptions = {
   rootUri: Args.registerOption<string>('root-uri', {
     position: 1,
   }),
-  toggle: Args.registerBoolOption('toggle', true),
+  toggle: Args.registerBoolOption(
+    'toggle',
+    () => config.get<boolean>('toggle')!,
+  ),
   openActionStrategy: Args.registerOption<OpenStrategy>(
     'open-action-strategy',
     {
       getDefault: () => config.get<OpenStrategy>('openAction.strategy')!,
     },
   ),
+  focus: Args.registerBoolOption('focus', () => config.get<boolean>('focus')!),
   quit: Args.registerBoolOption('quit', false),
   quitOnOpen: Args.registerBoolOption(
     'quit-on-open',

@@ -148,6 +148,10 @@ Open explorer use presets
 
 Close the explorer if it exists, default: `--toggle`
 
+#### `--focus | --no-focus`
+
+Focus to explorer when opened, default: `--focus`
+
 #### `--open-action-strategy <strategy>`
 
 Strategy for open action, types: `select | vsplit | split | tab | previousBuffer | previousWindow | sourceWindow`, default: `select`

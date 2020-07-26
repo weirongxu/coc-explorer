@@ -94,6 +94,9 @@
               "toggle": {
                 "$ref": "#/properties/explorer.toggle"
               },
+              "focus": {
+                "$ref": "#/properties/explorer.focus"
+              },
               "open-action-strategy": {
                 "$ref": "#/properties/explorer.openAction.strategy"
               },
@@ -187,6 +190,11 @@
         },
         "explorer.toggle": {
           "description": "Close the explorer if it exists",
+          "type": "boolean",
+          "default": true
+        },
+        "explorer.focus": {
+          "description": "Focus to explorer when opened",
           "type": "boolean",
           "default": true
         },

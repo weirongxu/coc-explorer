@@ -128,6 +128,7 @@ export class Explorer implements Disposable {
     explorerManager.maxExplorerID += 1;
 
     const position = await args.value(argOptions.position);
+    const focus = await args.value(argOptions.focus);
     const { width, height, top, left } = await this.genExplorerPosition(args);
     const [bufnr, borderBufnr]: [
       number,
@@ -140,6 +141,7 @@ export class Explorer implements Disposable {
         height,
         left,
         top,
+        focus,
         border_enable: config.get('floating.border.enable'),
         border_chars: config.get('floating.border.chars'),
         title: config.get('floating.border.title'),
@@ -753,6 +755,7 @@ export class Explorer implements Disposable {
 
   async resume(args: Args) {
     const position = await args.value(argOptions.position);
+    const focus = await args.value(argOptions.focus);
     const { width, height, top, left } = await Explorer.genExplorerPosition(
       args,
     );
@@ -764,6 +767,7 @@ export class Explorer implements Disposable {
         height,
         left,
         top,
+        focus,
         border_bufnr: this.borderBufnr,
         border_enable: this.config.get('floating.border.enable'),
         border_chars: this.config.get('floating.border.chars'),

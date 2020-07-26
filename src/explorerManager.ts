@@ -327,12 +327,18 @@ export class ExplorerManager {
       tabContainer.setExplorer(position, explorer);
     } else {
       const win = await explorer.win;
-      if (win && (await args.value(argOptions.toggle))) {
-        await explorer.quit();
-        return;
-      }
-      if (!(await explorer.focus())) {
+      if (!win) {
         await explorer.resume(args);
+      } else {
+        if (await args.value(argOptions.toggle)) {
+          await explorer.quit();
+          return;
+        }
+
+        if (await args.value(argOptions.focus)) {
+          await explorer.focus();
+          return;
+        }
       }
       isFirst = false;
     }
