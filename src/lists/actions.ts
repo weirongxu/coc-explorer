@@ -1,17 +1,24 @@
-import { BasicList, Neovim, workspace } from 'coc.nvim';
+import { BasicList, Neovim, workspace, Mru } from 'coc.nvim';
 import { onError } from '../logger';
 
 interface ActionData {
   name: string;
+  score?: number;
   key?: string;
   description: string;
   callback: () => void | Promise<void>;
+}
+
+function score(list: string[], key: string): number {
+  const idx = list.indexOf(key);
+  return idx === -1 ? -1 : list.length - idx;
 }
 
 export class ExplorerActionList extends BasicList {
   readonly defaultAction = 'do';
   readonly name = 'explorerActions';
   private explorerActions: ActionData[] = [];
+  private mru = new Mru('explorer-actions');
 
   constructor(nvim: Neovim) {
     super(nvim);
@@ -20,6 +27,7 @@ export class ExplorerActionList extends BasicList {
       new Promise(async (resolve) => {
         const data = item.data as ActionData;
         await data.callback();
+        await this.mru.add(data.name);
         resolve();
       }).catch(onError);
     });
@@ -30,12 +38,18 @@ export class ExplorerActionList extends BasicList {
   }
 
   async loadItems() {
-    return this.explorerActions.map((actionData) => ({
+    const mruList = await this.mru.load();
+    const items = this.explorerActions.map((actionData) => ({
       label: `${actionData.name} [${actionData.key || ''}] ${
         actionData.description
       }`,
-      data: actionData,
+      data: {
+        ...actionData,
+        score: score(mruList, actionData.name),
+      },
     }));
+    items.sort((a, b) => b.data.score - a.data.score);
+    return items;
   }
 
   doHighlight() {
