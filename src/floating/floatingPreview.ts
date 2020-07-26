@@ -97,20 +97,20 @@ export class FloatingPreview implements Disposable {
       return;
     }
     let alignTop: boolean = false;
-    let [winTop, winLeft]: [
-      number,
-      number,
-    ] = await this.nvim.call('win_screenpos', [win.id]);
-    winTop -= 1;
-    winLeft -= 1;
     const cursorIndex = this.explorer.currentLineIndex;
     const containerWin =
-      isFloating && this.explorer.config.get('previewAction.onHover')
+      isFloating && this.explorer.config.get('floating.border.enable')
         ? await this.explorer.borderWin
         : await this.explorer.win;
     if (!containerWin) {
       return;
     }
+    let [winTop, winLeft]: [
+      number,
+      number,
+    ] = await this.nvim.call('win_screenpos', [containerWin.id]);
+    winTop -= 1;
+    winLeft -= 1;
     const containerWidth = await containerWin.width;
     const maxWidth = vimColumns - containerWidth - (isFloating ? 0 : 1);
     const maxHeight = min([this.maxHeight, vimLines])!;
@@ -127,19 +127,17 @@ export class FloatingPreview implements Disposable {
       }
     }
 
-    const top = alignTop ? cursorIndex - height + 1 : cursorIndex;
+    const top = winTop + (alignTop ? cursorIndex - height + 1 : cursorIndex);
 
     let left: number;
-    if (
-      position === 'left' ||
-      (isFloating && floatingPosition === 'left-center')
-    ) {
+    if (position === 'left') {
       left = winLeft + containerWidth + 1;
-    } else if (
-      position === 'right' ||
-      (isFloating && floatingPosition === 'right-center')
-    ) {
+    } else if (position === 'right') {
       left = winLeft - width - 1;
+    } else if (isFloating && floatingPosition === 'left-center') {
+      left = winLeft + containerWidth;
+    } else if (isFloating && floatingPosition === 'right-center') {
+      left = winLeft - width;
     } else {
       // TODO tab and floating other
       return;
