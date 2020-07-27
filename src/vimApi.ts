@@ -8,6 +8,7 @@ import { BaseTreeNode, ExplorerSource } from './source/source';
 import { compactI, asyncCatchError } from './util';
 import { WinLayoutFinder } from './winLayoutFinder';
 import { OriginalActionExp } from './actions/mapping';
+import { actionListMru } from './lists/actions';
 
 export function registerApi(
   id: string,
@@ -111,35 +112,48 @@ export function registerVimApi(
 ) {
   const { nvim } = workspace;
 
+  async function doAction(
+    explorerFinder: ExplorerFinder,
+    actionExp: OriginalActionExp,
+    positions: Position[] = ['current'],
+    mode: MappingMode = 'n',
+    count: number = 1,
+  ) {
+    const explorer = await getExplorer(explorerFinder, explorerManager);
+    if (!explorer) {
+      return;
+    }
+    await explorer.refreshLineIndex();
+    const lines = compactI(
+      await Promise.all(
+        positions.map(
+          async (position) => await getLineIndexByPosition(position, explorer),
+        ),
+      ),
+    );
+    return explorer.doActionsWithCount(
+      parseActionExp(actionExp),
+      mode,
+      count,
+      lines,
+    );
+  }
+
   context.subscriptions.push(
+    registerApi('explorer.doAction', doAction),
     registerApi(
-      'explorer.doAction',
+      'explorer.doCodeAction',
       async (
-        explorerFinder: ExplorerFinder,
-        actionExp: OriginalActionExp,
-        positions: Position[] = ['current'],
-        mode: MappingMode = 'n',
-        count: number = 1,
+        name: string,
+        action: string,
+        getArgs: () => Promise<string[]>,
       ) => {
-        const explorer = await getExplorer(explorerFinder, explorerManager);
-        if (!explorer) {
-          return;
-        }
-        await explorer.refreshLineIndex();
-        const lines = compactI(
-          await Promise.all(
-            positions.map(
-              async (position) =>
-                await getLineIndexByPosition(position, explorer),
-            ),
-          ),
-        );
-        return explorer.doActionsWithCount(
-          parseActionExp(actionExp),
-          mode,
-          count,
-          lines,
-        );
+        const result = await doAction(0, {
+          name: action,
+          args: await getArgs(),
+        });
+        await actionListMru.add(name);
+        return result;
       },
     ),
     registerApi(

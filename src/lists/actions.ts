@@ -14,11 +14,12 @@ function score(list: string[], key: string): number {
   return idx === -1 ? -1 : list.length - idx;
 }
 
+export const actionListMru = new Mru('explorer-actions');
+
 export class ExplorerActionList extends BasicList {
   readonly defaultAction = 'do';
   readonly name = 'explorerActions';
   private explorerActions: ActionData[] = [];
-  private mru = new Mru('explorer-actions');
 
   constructor(nvim: Neovim) {
     super(nvim);
@@ -27,7 +28,7 @@ export class ExplorerActionList extends BasicList {
       new Promise(async (resolve) => {
         const data = item.data as ActionData;
         await data.callback();
-        await this.mru.add(data.name);
+        await actionListMru.add(data.name);
         resolve();
       }).catch(onError);
     });
@@ -38,7 +39,7 @@ export class ExplorerActionList extends BasicList {
   }
 
   async loadItems() {
-    const mruList = await this.mru.load();
+    const mruList = await actionListMru.load();
     const items = this.explorerActions.map((actionData) => ({
       label: `${actionData.name} [${actionData.key || ''}] ${
         actionData.description

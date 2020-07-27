@@ -4,6 +4,7 @@ import {
   workspace,
   listManager,
   Disposable,
+  languages,
 } from 'coc.nvim';
 import { registerLogger, onError } from './logger';
 import { hlGroupManager } from './source/highlightManager';
@@ -12,6 +13,7 @@ import { PresetList } from './lists/presets';
 import { registerVimApi } from './vimApi';
 import { registerInternalEvents } from './events';
 import { asyncCatchError } from './util';
+import { ActionMenuCodeActionProvider } from './codeActionProider';
 
 export const activate = async (context: ExtensionContext) => {
   const { subscriptions, logger } = context;
@@ -33,10 +35,14 @@ export const activate = async (context: ExtensionContext) => {
     commands.registerCommand('explorer', (...args) => {
       explorerManager.open(args).catch(onError);
     }),
+    languages.registerCodeActionProvider(
+      ['coc-explorer'],
+      new ActionMenuCodeActionProvider(explorerManager),
+      'coc-explorer',
+    ),
   );
   registerVimApi(context, explorerManager);
   registerInternalEvents(context);
-
   (async () => {
     const rtp = (await nvim.getOption('runtimepath')) as string;
     const paths = rtp.split(',');
