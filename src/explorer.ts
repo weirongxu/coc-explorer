@@ -173,7 +173,7 @@ export class Explorer implements Disposable {
 
     onCursorMoved(async (bufnr) => {
       if (bufnr === this.bufnr) {
-        this.winline.set(await this.nvim.call('winline'));
+        await this.winline.set(await this.nvim.call('winline'));
       }
     }, 200);
 
