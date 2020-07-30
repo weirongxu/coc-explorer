@@ -97,7 +97,8 @@ export class FloatingPreview implements Disposable {
       return;
     }
     let alignTop: boolean = false;
-    const cursorIndex = this.explorer.currentLineIndex;
+    let winline = (await this.explorer.winline.get()) ?? 1;
+    winline -= 1;
     const containerWin =
       isFloating && this.explorer.config.get('floating.border.enable')
         ? await this.explorer.borderWin
@@ -118,16 +119,16 @@ export class FloatingPreview implements Disposable {
     const { width, height } = this.getDimension(lines, maxWidth, maxHeight);
 
     if (!this.preferTop) {
-      if (vimLines - cursorIndex < height && cursorIndex > height) {
+      if (vimLines - winline < height && winline > height) {
         alignTop = true;
       }
     } else {
-      if (cursorIndex >= maxHeight || cursorIndex >= vimLines - cursorIndex) {
+      if (winline >= maxHeight || winline >= vimLines - winline) {
         alignTop = true;
       }
     }
 
-    const top = winTop + (alignTop ? cursorIndex - height + 1 : cursorIndex);
+    const top = winTop + (alignTop ? winline - height + 1 : winline);
 
     let left: number;
     if (position === 'left') {

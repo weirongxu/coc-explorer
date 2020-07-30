@@ -12,7 +12,7 @@ import { ActionExp } from './actions/mapping';
 import { RegisteredAction } from './actions/registered';
 import { argOptions } from './argOptions';
 import { ExplorerConfig, getEnableDebug } from './config';
-import { BuffuerContextVars } from './contextVariables';
+import { BuffuerContextVars, WindowContextVars } from './contextVariables';
 import {
   doUserAutocmd,
   doUserAutocmdNotifier,
@@ -65,6 +65,7 @@ export class Explorer implements Disposable {
   inited = new BuffuerContextVars<boolean>('inited', this);
   sourceWinid = new BuffuerContextVars<number>('sourceWinid', this);
   sourceBufnr = new BuffuerContextVars<number>('sourceBufnr', this);
+  winline = new WindowContextVars<number>('winline', this);
   globalActions: RegisteredAction.Map<BaseTreeNode<any>> = {};
   context: ExtensionContext;
   floatingPreview: FloatingPreview;
@@ -169,6 +170,12 @@ export class Explorer implements Disposable {
   ) {
     this.context = explorerManager.context;
     this.floatingPreview = new FloatingPreview(this);
+
+    onCursorMoved(async (bufnr) => {
+      if (bufnr === this.bufnr) {
+        this.winline.set(await this.nvim.call('winline'));
+      }
+    }, 200);
 
     if (this.config.get('previewAction.onHover')) {
       this.disposables.push(

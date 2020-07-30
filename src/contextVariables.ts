@@ -40,6 +40,22 @@ export class BuffuerContextVars<T> extends ContextVars<T> {
   }
 }
 
+export class WindowContextVars<T> extends ContextVars<T> {
+  constructor(public name: string, public explorer: Explorer) {
+    super(name);
+  }
+
+  async read(): Promise<object> {
+    const win = await this.explorer.win;
+    return ((await win?.getVar(variableName)) as object) || {};
+  }
+
+  async write(obj: object) {
+    const win = await this.explorer.win;
+    await win?.setVar(variableName, obj);
+  }
+}
+
 export class GlobalContextVars<T> extends ContextVars<T> {
   nvim = workspace.nvim;
   async read(): Promise<object> {
