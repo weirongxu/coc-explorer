@@ -1187,6 +1187,9 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>>
         this.nvim.pauseNotification();
         this.setLinesNotifier(contents, startIndex, endIndex + 1).notify();
         this.addHighlightsNotify(highlightPositions);
+        if (workspace.isVim) {
+          this.nvim.command('redraw', true);
+        }
         await this.nvim.resumeNotification();
       },
       drawAll: () => this.render(),
@@ -1289,6 +1292,9 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>>
         this.setLinesNotifier(contents, startIndex, endIndex + 1).notify();
         this.addHighlightsNotify(highlightPositions);
         gotoNotifier.notify();
+        if (workspace.isVim) {
+          this.nvim.command('redraw', true);
+        }
         await this.nvim.resumeNotification();
       },
       drawAll: () => this.render(),
@@ -1386,6 +1392,9 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>>
             ).notify();
           });
           this.addHighlightsNotify(highlightPositions);
+          if (workspace.isVim) {
+            this.nvim.command('redraw', true);
+          }
         });
       },
       drawAll: () => this.renderNotifier(),
@@ -1450,7 +1459,7 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>>
         .notify();
       this.addHighlightsNotify(highlightPositions);
 
-      if (workspace.env.isVim) {
+      if (workspace.isVim) {
         nvim.command('redraw', true);
       }
     });
