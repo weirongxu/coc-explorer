@@ -13,19 +13,19 @@ function! s:init_buf(bufnr) abort
 endfunction
 
 function! coc_explorer#open_explorer(explorer_id, position, options) abort
-  let name = get(a:options, 'name', 'coc-explorer://'.a:explorer_id)
+  let name = get(a:options, 'name', '[coc-explorer]-'.a:explorer_id)
   let border_bufnr = v:null
   let border_winid = v:null
   let fallback_winid = win_getid()
   if a:position ==# 'tab'
-    execute 'silent keepalt tabnew '.name
+    execute 'silent noswapfile keepalt tabnew '.name
     let bufnr = bufnr('%')
     let winid = win_getid()
     call s:init_buf(bufnr)
     call s:check_focus(a:options, fallback_winid)
   elseif a:position ==# 'left'
     wincmd t
-    execute 'silent keepalt vertical topleft vsplit '.name
+    execute 'silent noswapfile keepalt vertical topleft vsplit '.name
     let bufnr = bufnr('%')
     let winid = win_getid()
     call coc_explorer#resize(bufnr, a:position, a:options)
@@ -33,7 +33,7 @@ function! coc_explorer#open_explorer(explorer_id, position, options) abort
     call s:check_focus(a:options, fallback_winid)
   elseif a:position ==# 'right'
     wincmd b
-    execute 'silent keepalt vertical botright vsplit '.name
+    execute 'silent noswapfile keepalt vertical botright vsplit '.name
     let bufnr = bufnr('%')
     let winid = win_getid()
     call coc_explorer#resize(bufnr, a:position, a:options)
