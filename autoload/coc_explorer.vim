@@ -9,7 +9,11 @@ function! s:init_buf(bufnr) abort
   call coc_explorer#init#win(a:bufnr)
   call setbufvar(a:bufnr, '&wrap', 0)
   call setbufvar(a:bufnr, '&cursorline', 1)
-  call setbufvar(a:bufnr, '&filetype', 'coc-explorer')
+  let filetype = 'coc-explorer'
+  call setbufvar(a:bufnr, '&filetype', filetype)
+  if exists('*CocExplorerInited')
+    call CocExplorerInited(filetype, a:bufnr)
+  endif
 endfunction
 
 function! coc_explorer#open_explorer(explorer_id, position, options) abort
@@ -40,7 +44,7 @@ function! coc_explorer#open_explorer(explorer_id, position, options) abort
     call s:init_buf(bufnr)
     call s:check_focus(a:options, fallback_winid)
   elseif a:position ==# 'floating'
-    let float_options = extend(a:options, {'name': name, 'filetype': 'coc-explorer', 'focus': v:true})
+    let float_options = extend(a:options, {'name': name, 'focus': v:true})
     let [bufnr, border_bufnr] = coc_explorer#float#create(float_options)
     let float_options = extend({'border_bufnr': border_bufnr}, float_options)
     let [winid, border_winid] = coc_explorer#float#open(bufnr, float_options)

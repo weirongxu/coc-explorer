@@ -23,8 +23,6 @@ import {
   RevealStrategy,
   OpenStrategy,
   revealStrategyList,
-  expandOptionList,
-  collapseOptionList,
 } from '../../../types';
 import { explorerWorkspaceFolderList } from '../../../lists/workspaceFolders';
 
