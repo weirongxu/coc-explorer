@@ -19,6 +19,7 @@ function! coc_explorer#init#win(bufnr) abort
 
   call setbufvar(a:bufnr, '&signcolumn', 'no')
   call setbufvar(a:bufnr, '&number', 0)
+  call setbufvar(a:bufnr, '&relativenumber', 0)
   call setbufvar(a:bufnr, '&foldenable', 0)
   call setbufvar(a:bufnr, '&foldcolumn', 0)
 
