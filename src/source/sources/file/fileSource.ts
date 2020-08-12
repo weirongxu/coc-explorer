@@ -289,6 +289,7 @@ export class FileSource extends ExplorerSource<FileNode> {
     };
 
     const task = await this.startCocList(fileList);
+    task.waitShow()?.catch(onError);
   }
 
   async revealNodeByPathNotifier(

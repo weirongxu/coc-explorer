@@ -5,6 +5,7 @@ import {
   IList,
   listManager,
   workspace,
+  events,
 } from 'coc.nvim';
 import { argOptions } from '../argOptions';
 import { Explorer } from '../explorer';
@@ -18,7 +19,13 @@ import {
   expandOptionList,
   collapseOptionList,
 } from '../types';
-import { drawnWithIndexRange, flatten, generateUri, Notifier } from '../util';
+import {
+  drawnWithIndexRange,
+  flatten,
+  generateUri,
+  Notifier,
+  delay,
+} from '../util';
 import { WinLayoutFinder } from '../winLayoutFinder';
 import { HighlightPositionWithLine } from './highlightManager';
 import { SourcePainters } from './sourcePainters';
@@ -779,20 +786,19 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>>
     }
 
     const shownExplorerEmitter = new Emitter<void>();
-    const disposable = listManager.registerList(list);
+    const listDisposable = listManager.registerList(list);
     await listManager.start([list.name]);
-    disposable.dispose();
+    listDisposable.dispose();
 
-    listManager.ui.onDidClose(async () => {
-      await new Promise((resolve) => {
-        const disposable = onEvent('BufEnter', () => {
-          if (listManager.ui.window?.id === undefined) {
-            disposable.dispose();
-            resolve();
-          }
-        });
-      });
+    const eventDisposable = events.on('BufWinLeave', async () => {
+      if (listManager.ui.shown && listManager.ui.window?.id !== undefined) {
+        return;
+      }
+
+      eventDisposable.dispose();
+
       if (isFloating && !isShown) {
+        await delay(200);
         await this.explorer.show();
         shownExplorerEmitter.fire();
       }
@@ -864,6 +870,7 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>>
       ),
     );
     const task = await this.startCocList(explorerActionList);
+    task.waitShow()?.catch(onError);
   }
 
   isSelectedAny() {
