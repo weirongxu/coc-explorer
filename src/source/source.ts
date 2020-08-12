@@ -864,7 +864,6 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>>
       ),
     );
     const task = await this.startCocList(explorerActionList);
-    await task.waitShow();
   }
 
   isSelectedAny() {
