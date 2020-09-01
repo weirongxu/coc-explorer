@@ -41,7 +41,7 @@ endfunction
 " doautocmd
 function! coc_explorer#util#do_autocmd(name) abort
   if exists('#User#'.a:name)
-    exe 'doautocmd User '.a:name
+    exe 'doautocmd <nomodeline> User '.a:name
   endif
 endfunction
 
