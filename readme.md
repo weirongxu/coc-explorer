@@ -48,6 +48,7 @@ Explorer extension for [coc.nvim](https://github.com/neoclide/coc.nvim)
     - [x] Selection
     - [x] Cut / Copy / Paste
     - [x] Delete action use trash by default
+    - [x] Other actions, press `?` in explorer to check out the all actions
   - [x] Git status
   - [x] Reveal current file in real time (neovim only)
   - [x] Icons, use [nerdfont](https://github.com/ryanoasis/nerd-fonts)
