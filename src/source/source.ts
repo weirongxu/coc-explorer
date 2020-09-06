@@ -685,15 +685,7 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>>
       },
       vsplit: async () => {
         nvim.pauseNotification();
-        nvim.command(`vsplit ${await getEscapePath()}`, true);
-        const position = await this.explorer.args.value(argOptions.position);
-        if (position === 'left') {
-          nvim.command('wincmd L', true);
-        } else if (position === 'right') {
-          nvim.command('wincmd H', true);
-        } else if (position === 'tab') {
-          nvim.command('wincmd L', true);
-        }
+        nvim.command(`wincmd p | vsplit ${await getEscapePath()}`, true);
         jumpToNotify();
         (await this.explorer.tryQuitOnOpenNotifier()).notify();
         await nvim.resumeNotification();
