@@ -579,7 +579,9 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>>
     if (node.expandable) {
       return;
     }
+
     const { nvim } = this;
+
     const getEscapePath = async () => {
       let path = await getFullpath();
       if (this.config.get('openAction.relativePath')) {
@@ -587,6 +589,7 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>>
       }
       return await this.nvim.call('fnameescape', [path]);
     };
+
     const jumpToNotify = () => {
       if (position) {
         this.nvim.call(
@@ -596,6 +599,7 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>>
         );
       }
     };
+
     const openByWinnr =
       originalOpenByWinnr ??
       (async (winnr: number) => {
@@ -611,6 +615,7 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>>
         (await this.explorer.tryQuitOnOpenNotifier()).notify();
         await nvim.resumeNotification();
       });
+
     const splitIntelligent = async (
       position: ArgPosition,
       command: 'split' | 'vsplit',
@@ -648,6 +653,7 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>>
         await actions[fallbackStrategy]();
       }
     };
+
     const actions: Record<OpenStrategy, () => void | Promise<void>> = {
       select: async () => {
         const position = await this.explorer.args.value(argOptions.position);
@@ -668,6 +674,7 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>>
           },
         );
       },
+
       split: () => actions['split:intelligent'](),
       'split:plain': async () => {
         nvim.pauseNotification();
@@ -676,6 +683,7 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>>
         (await this.explorer.tryQuitOnOpenNotifier()).notify();
         await nvim.resumeNotification();
       },
+
       'split:intelligent': async () => {
         const position = await this.explorer.args.value(argOptions.position);
         if (position === 'floating') {
@@ -687,6 +695,7 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>>
         }
         await splitIntelligent(position, 'split', 'split:plain');
       },
+
       vsplit: () => actions['vsplit:intelligent'](),
       'vsplit:plain': async () => {
         nvim.pauseNotification();
@@ -695,6 +704,7 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>>
         (await this.explorer.tryQuitOnOpenNotifier()).notify();
         await nvim.resumeNotification();
       },
+
       'vsplit:intelligent': async () => {
         const position = await this.explorer.args.value(argOptions.position);
         if (position === 'floating') {
@@ -706,6 +716,7 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>>
         }
         await splitIntelligent(position, 'vsplit', 'vsplit:plain');
       },
+
       tab: async () => {
         await this.explorer.tryQuitOnOpen();
         nvim.pauseNotification();
@@ -713,6 +724,7 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>>
         jumpToNotify();
         await nvim.resumeNotification();
       },
+
       previousBuffer: async () => {
         const prevWinnr = await this.explorer.explorerManager.prevWinnrByPrevBufnr();
         if (prevWinnr) {
@@ -721,6 +733,7 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>>
           await actions.vsplit();
         }
       },
+
       previousWindow: async () => {
         const prevWinnr = await this.explorer.explorerManager.prevWinnrByPrevWindowID();
         if (prevWinnr) {
@@ -729,6 +742,7 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>>
           await actions.vsplit();
         }
       },
+
       sourceWindow: async () => {
         const srcWinnr = await this.explorer.sourceWinnr();
         if (srcWinnr) {
@@ -738,10 +752,10 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>>
         }
       },
     };
-    const openStrategyOption = await this.explorer.args.value(
+
+    let openStrategy = await this.explorer.args.value(
       argOptions.openActionStrategy,
     );
-    let openStrategy = openStrategyOption;
     if (args.length) {
       openStrategy = args.join(':') as OpenStrategy;
     }
