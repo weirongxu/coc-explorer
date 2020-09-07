@@ -1,12 +1,10 @@
 import { BookmarkSource } from './bookmarkSource';
-import { OpenStrategy } from '../../../types';
 
 export function initBookmarkActions(bookmark: BookmarkSource) {
   bookmark.addNodeAction(
     'open',
-    async ({ node, args: [openStrategy, ...args] }) => {
+    async ({ node, args }) => {
       await bookmark.openAction(node, () => node.fullpath, {
-        openStrategy: openStrategy as OpenStrategy,
         args,
         position: { lineIndex: node.lnum - 1 },
       });

@@ -17,7 +17,11 @@ export type RevealStrategy = typeof revealStrategyList[number];
 export const openStrategyList = [
   'select',
   'split',
+  'split:plain',
+  'split:intelligent',
   'vsplit',
+  'vsplit:plain',
+  'vsplit:intelligent',
   'tab',
   'previousBuffer',
   'previousWindow',

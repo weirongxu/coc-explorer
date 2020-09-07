@@ -29,10 +29,11 @@ import {
 import { WinLayoutFinder } from '../winLayoutFinder';
 import { HighlightPositionWithLine } from './highlightManager';
 import { SourcePainters } from './sourcePainters';
-import { onEvent, InternalEventEmitter } from '../events';
+import { InternalEventEmitter } from '../events';
 import { clone } from 'lodash-es';
 import { RegisteredAction } from '../actions/registered';
 import { Class } from 'type-fest';
+import { ArgPosition } from '../parseArgs';
 
 export namespace Options {
   export interface Force {
@@ -550,7 +551,9 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>>
     select: 'use select window UI',
     'split:plain': 'use vim split',
     'split:intelligent': 'use split like vscode',
-    vsplit: 'use vim vsplit',
+    'vsplit:plain': 'use vim vsplit',
+    'vsplit:intelligent':
+      'use vim vsplit, but keep the explorer in the original position',
     tab: 'vim tab',
     previousBuffer: 'use last used buffer',
     previousWindow: 'use last used window',
@@ -562,12 +565,10 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>>
     getFullpath: () => string | Promise<string>,
     {
       openByWinnr: originalOpenByWinnr,
-      openStrategy,
       args = [],
       position,
     }: {
       openByWinnr?: (winnr: number) => void | Promise<void>;
-      openStrategy?: OpenStrategy;
       args?: string[];
       position?: {
         lineIndex: number;
@@ -610,10 +611,44 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>>
         (await this.explorer.tryQuitOnOpenNotifier()).notify();
         await nvim.resumeNotification();
       });
-    const actions: Record<
-      OpenStrategy,
-      (args?: string[]) => void | Promise<void>
-    > = {
+    const splitIntelligent = async (
+      position: ArgPosition,
+      command: 'split' | 'vsplit',
+      fallbackStrategy: OpenStrategy,
+    ) => {
+      const explWinid = await this.explorer.winid;
+      if (!explWinid) {
+        return;
+      }
+
+      const winFinder = await WinLayoutFinder.create();
+      const node = winFinder.findWinid(explWinid);
+      if (node) {
+        if (node.parent && node.parent.group.type === 'row') {
+          const target =
+            node.parent.group.children[
+              node.parent.indexInParent + (position === 'left' ? 1 : -1)
+            ];
+          if (target) {
+            const targetWinid = WinLayoutFinder.getFirstLeafWinid(target);
+
+            nvim.pauseNotification();
+            nvim.call('win_gotoid', [targetWinid], true);
+            nvim.command(`${command} ${await getEscapePath()}`, true);
+            jumpToNotify();
+            (await this.explorer.tryQuitOnOpenNotifier()).notify();
+            await nvim.resumeNotification();
+          }
+        } else {
+          // only exlorer window or explorer is arranged in columns
+          await actions['vsplit:plain']();
+        }
+      } else {
+        // floating
+        await actions[fallbackStrategy]();
+      }
+    };
+    const actions: Record<OpenStrategy, () => void | Promise<void>> = {
       select: async () => {
         const position = await this.explorer.args.value(argOptions.position);
         if (position === 'floating') {
@@ -633,62 +668,43 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>>
           },
         );
       },
-      split: async (args = []) => {
-        type Mode = 'intelligent' | 'plain';
-        const mode: Mode = (args[0] ?? 'intelligent') as Mode;
-        if (mode === 'plain') {
-          nvim.pauseNotification();
-          nvim.command(`split ${await getEscapePath()}`, true);
-          jumpToNotify();
-          (await this.explorer.tryQuitOnOpenNotifier()).notify();
-          await nvim.resumeNotification();
-        } else {
-          const position = await this.explorer.args.value(argOptions.position);
-          if (position === 'floating') {
-            await actions.split(['plain']);
-            return;
-          } else if (position === 'tab') {
-            await actions.vsplit();
-            return;
-          }
-
-          const explWinid = await this.explorer.winid;
-          if (!explWinid) {
-            return;
-          }
-
-          const winFinder = await WinLayoutFinder.create();
-          const node = winFinder.findWinid(explWinid);
-          if (node) {
-            if (node.parent) {
-              const target =
-                node.parent.group.children[
-                  node.parent.indexInParent + (position === 'left' ? 1 : -1)
-                ];
-              if (target) {
-                const targetWinid = WinLayoutFinder.getFirstLeafWinid(target);
-
-                nvim.pauseNotification();
-                nvim.call('win_gotoid', [targetWinid], true);
-                nvim.command(`split ${await getEscapePath()}`, true);
-                jumpToNotify();
-                (await this.explorer.tryQuitOnOpenNotifier()).notify();
-                await nvim.resumeNotification();
-              }
-            } else {
-              await actions.vsplit();
-            }
-          } else {
-            await actions.split(['plain']);
-          }
-        }
-      },
-      vsplit: async () => {
+      split: () => actions['split:intelligent'](),
+      'split:plain': async () => {
         nvim.pauseNotification();
-        nvim.command(`wincmd p | vsplit ${await getEscapePath()}`, true);
+        nvim.command(`split ${await getEscapePath()}`, true);
         jumpToNotify();
         (await this.explorer.tryQuitOnOpenNotifier()).notify();
         await nvim.resumeNotification();
+      },
+      'split:intelligent': async () => {
+        const position = await this.explorer.args.value(argOptions.position);
+        if (position === 'floating') {
+          await actions['split:plain']();
+          return;
+        } else if (position === 'tab') {
+          await actions.vsplit();
+          return;
+        }
+        await splitIntelligent(position, 'split', 'split:plain');
+      },
+      vsplit: () => actions['vsplit:intelligent'](),
+      'vsplit:plain': async () => {
+        nvim.pauseNotification();
+        nvim.command(`vsplit ${await getEscapePath()}`, true);
+        jumpToNotify();
+        (await this.explorer.tryQuitOnOpenNotifier()).notify();
+        await nvim.resumeNotification();
+      },
+      'vsplit:intelligent': async () => {
+        const position = await this.explorer.args.value(argOptions.position);
+        if (position === 'floating') {
+          await actions['vsplit:plain']();
+          return;
+        } else if (position === 'tab') {
+          await actions['vsplit:plain']();
+          return;
+        }
+        await splitIntelligent(position, 'vsplit', 'vsplit:plain');
       },
       tab: async () => {
         await this.explorer.tryQuitOnOpen();
@@ -725,7 +741,14 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>>
     const openStrategyOption = await this.explorer.args.value(
       argOptions.openActionStrategy,
     );
-    await actions[openStrategy ?? openStrategyOption](args);
+    let openStrategy = openStrategyOption;
+    if (args.length) {
+      openStrategy = args.join(':') as OpenStrategy;
+    }
+    if (!(openStrategy in actions)) {
+      new Error(`openStrategy(${openStrategy}) is not supported`);
+    }
+    await actions[openStrategy]();
   }
 
   readonly previewActionMenu = {

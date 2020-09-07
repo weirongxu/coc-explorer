@@ -1,7 +1,10 @@
 import { workspace } from 'coc.nvim';
 
-export type VimWinLayoutGroup = ['col' | 'row', VimWinLayoutNode[]];
-export type VimWinLayoutLeaf = ['leaf', number];
+export type VimWinLayoutGroup = [
+  type: 'col' | 'row',
+  nodes: VimWinLayoutNode[],
+];
+export type VimWinLayoutLeaf = [type: 'leaf', winid: number];
 export type VimWinLayoutNode = VimWinLayoutGroup | VimWinLayoutLeaf;
 
 export interface WinLayoutBase {

@@ -1,7 +1,6 @@
-import { BufferSource } from './bufferSource';
-import { prompt } from '../../../util';
-import { OpenStrategy } from '../../../types';
 import { workspace } from 'coc.nvim';
+import { prompt } from '../../../util';
+import { BufferSource } from './bufferSource';
 
 export function initBufferActions(buffer: BufferSource) {
   const { nvim } = buffer;
@@ -26,9 +25,8 @@ export function initBufferActions(buffer: BufferSource) {
   );
   buffer.addNodeAction(
     'open',
-    async ({ node, args: [openStrategy, ...args] }) => {
+    async ({ node, args }) => {
       await buffer.openAction(node, () => node.fullpath, {
-        openStrategy: openStrategy as OpenStrategy,
         args,
       });
     },

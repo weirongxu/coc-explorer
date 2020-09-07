@@ -19,11 +19,7 @@ import { workspace, listManager } from 'coc.nvim';
 import open from 'open';
 import { driveList } from '../../../lists/drives';
 import { gitManager } from '../../../gitManager';
-import {
-  RevealStrategy,
-  OpenStrategy,
-  revealStrategyList,
-} from '../../../types';
+import { RevealStrategy, revealStrategyList } from '../../../types';
 import { explorerWorkspaceFolderList } from '../../../lists/workspaceFolders';
 
 export function initFileActions(file: FileSource) {
@@ -202,7 +198,7 @@ export function initFileActions(file: FileSource) {
   );
   file.addNodeAction(
     'open',
-    async ({ node, args: [openStrategy, ...args] }) => {
+    async ({ node, args }) => {
       if (node.directory) {
         const directoryAction = file.config.get('openAction.for.directory');
         if (directoryAction) {
@@ -210,7 +206,6 @@ export function initFileActions(file: FileSource) {
         }
       } else {
         await file.openAction(node, () => node.fullpath, {
-          openStrategy: openStrategy as OpenStrategy,
           args,
         });
       }
