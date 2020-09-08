@@ -57,6 +57,9 @@ class HighlightManager {
     highlights: HighlightPositionWithLine[],
   ) {
     for (const hl of highlights) {
+      if (hl.size === 0) {
+        continue;
+      }
       explorer.buffer
         .addHighlight({
           srcId: hlSrcId,

@@ -8,8 +8,8 @@ function! coc_explorer#init#buf(bufnr) abort
   call setbufvar(a:bufnr, '&readonly', 1)
 
   call setbufvar(a:bufnr, '&swapfile', 0)
-  call setbufvar(a:bufnr, '&undofile', 0)
-  call setbufvar(a:bufnr, '&undolevels', -1)
+  " call setbufvar(a:bufnr, '&undofile', 0)
+  " call setbufvar(a:bufnr, '&undolevels', -1)
 
   call setbufvar(a:bufnr, '&modeline', 0)
 endfunction
