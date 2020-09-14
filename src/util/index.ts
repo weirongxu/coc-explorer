@@ -11,6 +11,7 @@ export * from './path';
 export * from './neovimNotify';
 export * from './throttleDebounce';
 export * from './vim';
+export * from './ui';
 export * from './platform';
 export * from './cli';
 export * from './function';

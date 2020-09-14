@@ -418,12 +418,20 @@ export function initFileActions(file: FileSource) {
   file.addNodeAction(
     'addFile',
     async ({ node, args }) => {
-      let filename =
-        args[0] ?? (await input('Input a new filename: ', '', 'file'));
-      filename = filename.trim();
+      let filename: string | undefined;
+
+      const promptText = 'Input a new filename: ';
+      if (args[0]) {
+        filename = args[0];
+      } else {
+        filename = await input(promptText, '', 'file');
+      }
+
+      filename = filename?.trim();
       if (!filename) {
         return;
       }
+
       if (['/', '\\'].includes(filename[filename.length - 1])) {
         await file.doAction('addDirectory', node, [filename]);
         return;
@@ -492,12 +500,16 @@ export function initFileActions(file: FileSource) {
         return;
       }
 
-      const targetPath = await input(
+      let targetPath: string | undefined;
+
+      targetPath = await input(
         `Rename: ${node.fullpath} -> `,
         node.fullpath,
         'file',
       );
-      if (targetPath.length === 0) {
+
+      targetPath = targetPath?.trim();
+      if (!targetPath) {
         return;
       }
 

@@ -34,7 +34,7 @@ export class BufManager {
       internalEvents.on('BufWipeout', () => this.reload()),
       ...(['TextChanged', 'TextChangedI', 'TextChangedP'] as const).map(
         (event) =>
-          onEvent(event, async (bufnr: number) => {
+          onEvent(event as any, async (bufnr: number) => {
             const bufNode = this.bufferNodeMapById.get(bufnr);
             if (!bufNode) {
               return;
