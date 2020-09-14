@@ -333,6 +333,7 @@ export function initFileActions(file: FileSource) {
       if (file.copiedNodes.size > 0) {
         const nodes = Array.from(file.copiedNodes);
         await overwritePrompt(
+          'paste',
           nodes.map((node) => ({
             source: node.fullpath,
             target: pathLib.join(targetDir, pathLib.basename(node.fullpath)),
@@ -345,6 +346,7 @@ export function initFileActions(file: FileSource) {
       } else if (file.cutNodes.size > 0) {
         const nodes = Array.from(file.cutNodes);
         await overwritePrompt(
+          'paste',
           nodes.map((node) => ({
             source: node.fullpath,
             target: pathLib.join(targetDir, pathLib.basename(node.fullpath)),
@@ -439,6 +441,7 @@ export function initFileActions(file: FileSource) {
       const putTargetNode = file.getPutTargetNode(node);
       const targetPath = pathLib.join(putTargetNode.fullpath, filename);
       await overwritePrompt(
+        'add file',
         [
           {
             source: undefined,
@@ -469,6 +472,7 @@ export function initFileActions(file: FileSource) {
       const putTargetNode = file.getPutTargetNode(node);
       const targetPath = pathLib.join(putTargetNode.fullpath, directoryName);
       await overwritePrompt(
+        'add directory',
         [
           {
             source: undefined,
@@ -514,6 +518,7 @@ export function initFileActions(file: FileSource) {
       }
 
       await overwritePrompt(
+        'rename',
         [
           {
             source: node.fullpath,

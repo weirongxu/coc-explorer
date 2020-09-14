@@ -13,8 +13,7 @@ async function getFloatInputApi() {
 }
 
 async function getFloatUI() {
-  const api = await getFloatInputApi();
-  return api?.FloatingUI;
+  return (await getFloatInputApi())?.FloatingUI;
 }
 
 export async function vimPrompt(msg: string): Promise<'yes' | 'no' | undefined>;

@@ -76,6 +76,7 @@ export async function fsMergeDirectory(
 }
 
 export async function overwritePrompt<S extends string | undefined>(
+  promptText: string,
   paths: { source: S; target: string }[],
   action: (source: S, target: string) => Promise<void>,
 ) {
@@ -127,7 +128,9 @@ export async function overwritePrompt<S extends string | undefined>(
         quit,
       };
       const answer = await prompt(
-        `${targetPath} already exists.`,
+        `${promptText[0].toUpperCase()}${promptText.slice(
+          1,
+        )}: ${targetPath} already exists.`,
         Object.keys(choices),
       );
       if (answer && answer in choices) {
@@ -145,7 +148,7 @@ export async function overwritePrompt<S extends string | undefined>(
               source: source as S,
               target: pathLib.join(targetPath, pathLib.basename(source)),
             }));
-            await overwritePrompt(paths, action);
+            await overwritePrompt(promptText, paths, action);
           },
         });
       } else {
