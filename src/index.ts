@@ -12,7 +12,7 @@ import { ExplorerManager } from './explorerManager';
 import { PresetList } from './lists/presets';
 import { registerVimApi } from './vimApi';
 import { registerInternalEvents } from './events';
-import { asyncCatchError } from './util';
+import { asyncCatchError, registerRuntimepath } from './util';
 import { ActionMenuCodeActionProvider } from './codeActionProider';
 
 export const activate = async (context: ExtensionContext) => {
@@ -44,16 +44,7 @@ export const activate = async (context: ExtensionContext) => {
   registerVimApi(context, explorerManager);
   registerInternalEvents(context);
   (async () => {
-    const rtp = (await nvim.getOption('runtimepath')) as string;
-    const paths = rtp.split(',');
-    if (!paths.includes(context.extensionPath)) {
-      await nvim.command(
-        `execute 'noa set rtp+='.fnameescape('${context.extensionPath.replace(
-          /'/g,
-          "''",
-        )}')`,
-      );
-    }
+    await registerRuntimepath(context.extensionPath);
     await nvim.command('runtime plugin/coc_explorer.vim');
     subscriptions.push(
       Disposable.create(

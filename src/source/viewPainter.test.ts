@@ -3,23 +3,18 @@ import { Explorer } from '../explorer';
 import { ExplorerManager } from '../explorerManager';
 import { BaseTreeNode, ExplorerSource } from './source';
 import { ColumnRegistrar } from './columnRegistrar';
-import helper from '../tests/helpTest';
 import { SourcePainters } from './sourcePainters';
 import { workspace } from 'coc.nvim';
 import { buildExplorerConfig, config } from '../config';
+import { jestHelper } from 'coc-helper';
+import { registerRuntimepath } from '../util';
 
 let explorer: Explorer;
 
+jestHelper.boot();
+
 beforeAll(async () => {
-  await helper.setup();
-});
-
-afterAll(async () => {
-  await helper.shutdown();
-});
-
-afterEach(async () => {
-  await helper.reset();
+  await registerRuntimepath(process.cwd());
 });
 
 interface TestNode extends BaseTreeNode<TestNode, 'root' | 'child'> {

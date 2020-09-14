@@ -1,19 +1,9 @@
 import { onBufEnter } from './events';
 import { events } from 'coc.nvim';
 import { delay } from './util';
-import helper from './tests/helpTest';
+import { jestHelper } from 'coc-helper';
 
-beforeAll(async () => {
-  await helper.setup();
-});
-
-afterAll(async () => {
-  await helper.shutdown();
-});
-
-afterEach(async () => {
-  await helper.reset();
-});
+jestHelper.boot();
 
 test('onBufEnter', async () => {
   const mockFn = jest.fn();

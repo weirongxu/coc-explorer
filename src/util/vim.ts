@@ -1,5 +1,5 @@
-import { workspace, Window } from 'coc.nvim';
-import { Notifier } from '.';
+import { workspace, Window, Disposable } from 'coc.nvim';
+import { asyncCatchError, Notifier } from '.';
 
 let _supportedSetbufline: boolean | undefined = undefined;
 export async function supportedSetbufline() {
@@ -25,6 +25,20 @@ export function supportedBufferHighlight() {
 export async function enableWrapscan() {
   const wrapscan = await workspace.nvim.getOption('wrapscan');
   return !!wrapscan;
+}
+
+export async function registerRuntimepath(extensionPath: string) {
+  const { nvim } = workspace;
+  const rtp = (await nvim.getOption('runtimepath')) as string;
+  const paths = rtp.split(',');
+  if (!paths.includes(extensionPath)) {
+    await nvim.command(
+      `execute 'noa set rtp+='.fnameescape('${extensionPath.replace(
+        /'/g,
+        "''",
+      )}')`,
+    );
+  }
 }
 
 export async function displayWidth(str: string) {
