@@ -125,7 +125,7 @@ export async function vimInput(
 ): Promise<string> {
   return workspace.nvim.callAsync('coc#util#with_callback', [
     'input',
-    [prompt, defaultInput, completion],
+    [prompt + ' ', defaultInput, completion],
   ]);
 }
 

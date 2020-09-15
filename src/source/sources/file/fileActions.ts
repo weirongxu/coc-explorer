@@ -85,7 +85,7 @@ export function initFileActions(file: FileSource) {
             targetPath = args[1];
             if (!targetPath) {
               targetPath = await input(
-                'Input a reveal path: ',
+                'Input a reveal path:',
                 file.currentNode()?.fullpath ?? '',
                 'file',
               );
@@ -176,7 +176,7 @@ export function initFileActions(file: FileSource) {
           async actionArgs() {
             return [
               await input(
-                'input a cd path: ',
+                'input a cd path:',
                 file.currentNode()?.fullpath ?? '',
                 'file',
               ),
@@ -422,7 +422,7 @@ export function initFileActions(file: FileSource) {
     async ({ node, args }) => {
       let filename: string | undefined;
 
-      const promptText = 'Input a new filename: ';
+      const promptText = 'Input a new filename:';
       if (args[0]) {
         filename = args[0];
       } else {
@@ -507,7 +507,7 @@ export function initFileActions(file: FileSource) {
       let targetPath: string | undefined;
 
       targetPath = await input(
-        `Rename: ${node.fullpath} -> `,
+        `Rename: ${node.fullpath} ->`,
         node.fullpath,
         'file',
       );

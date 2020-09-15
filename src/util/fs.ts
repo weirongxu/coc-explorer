@@ -99,7 +99,7 @@ export async function overwritePrompt<S extends string | undefined>(
 
     async function rename() {
       const newTargetPath = await input(
-        `Rename: ${targetPath} -> `,
+        `Rename: ${targetPath} ->`,
         targetPath,
         'file',
       );
