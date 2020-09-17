@@ -820,7 +820,11 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>>
     listDisposable.dispose();
 
     const eventDisposable = events.on('BufWinLeave', async () => {
-      if (listManager.ui.shown && listManager.ui.window?.id !== undefined) {
+      if (
+        listManager.ui &&
+        listManager.ui.shown &&
+        listManager.ui.window?.id !== undefined
+      ) {
         return;
       }
 

@@ -754,10 +754,18 @@
   dependencies:
     "@types/istanbul-lib-report" "*"
 
-"@types/jest@26.x", "@types/jest@^26.0.13":
+"@types/jest@26.x":
   version "26.0.13"
   resolved "https://registry.yarnpkg.com/@types/jest/-/jest-26.0.13.tgz#5a7b9d5312f5dd521a38329c38ee9d3802a0b85e"
   integrity sha512-sCzjKow4z9LILc6DhBvn5AkIfmQzDZkgtVVKmGwVrs5tuid38ws281D4l+7x1kP487+FlKDh5kfMZ8WSPAdmdA==
+  dependencies:
+    jest-diff "^25.2.1"
+    pretty-format "^25.2.1"
+
+"@types/jest@^26.0.14":
+  version "26.0.14"
+  resolved "https://registry.yarnpkg.com/@types/jest/-/jest-26.0.14.tgz#078695f8f65cb55c5a98450d65083b2b73e5a3f3"
+  integrity sha512-Hz5q8Vu0D288x3iWXePSn53W7hAjP0H7EQ6QvDO9c7t46mR0lNOLlfuwQ+JkVxuhygHzlzPX+0jKdA3ZgSh+Vg==
   dependencies:
     jest-diff "^25.2.1"
     pretty-format "^25.2.1"
@@ -794,10 +802,10 @@
   resolved "https://registry.yarnpkg.com/@types/node/-/node-12.7.3.tgz#27b3f40addaf2f580459fdb405222685542f907a"
   integrity sha512-3SiLAIBkDWDg6vFo0+5YJyHPWU9uwu40Qe+v+0MH8wRKYBimHvvAOyk3EzMrD/TrIlLYfXrqDqrg913PynrMJQ==
 
-"@types/node@^14.10.1":
-  version "14.10.1"
-  resolved "https://registry.yarnpkg.com/@types/node/-/node-14.10.1.tgz#cc323bad8e8a533d4822f45ce4e5326f36e42177"
-  integrity sha512-aYNbO+FZ/3KGeQCEkNhHFRIzBOUgc7QvcVNKXbfnhDkSfwUv91JsQQa10rDgKSTSLkXZ1UIyPe4FJJNVgw1xWQ==
+"@types/node@^14.10.3":
+  version "14.10.3"
+  resolved "https://registry.yarnpkg.com/@types/node/-/node-14.10.3.tgz#5ae1f119c96643fc9b19b2d1a83bfa2ec3dbb7ea"
+  integrity sha512-zdN0hor7TLkjAdKTnYW+Y22oIhUUpil5ZD1V1OFq0CR0CLKw+NdR6dkziTfkWRLo6sKzisayoj/GNpNbe4LY9Q==
 
 "@types/normalize-package-data@^2.4.0":
   version "2.4.0"
@@ -1870,15 +1878,15 @@ co@^4.6.0:
   resolved "https://registry.yarnpkg.com/co/-/co-4.6.0.tgz#6ea6bdf3d853ae54ccb8e47bfa0bf3f9031fb184"
   integrity sha1-bqa989hTrlTMuOR7+gvz+QMfsYQ=
 
-coc-floatinput@^1.3.0:
-  version "1.3.0"
-  resolved "https://registry.yarnpkg.com/coc-floatinput/-/coc-floatinput-1.3.0.tgz#5c22e4e4fd29767b0e19cfb8bf30cfaca621d232"
-  integrity sha512-mb/FuIGeiAA+kcK0Mwh/YL/nwOIfI5R8RutqZwX1c/SxKugo0Y6b6i/o5h/FYPGTgPKO5LUrmR6HMg/hDJFpyg==
+coc-floatinput@^1.3.2:
+  version "1.3.2"
+  resolved "https://registry.yarnpkg.com/coc-floatinput/-/coc-floatinput-1.3.2.tgz#ef34f68ff2d317dcf78c6bb4a2e2f42700f53267"
+  integrity sha512-qPHzG/I3w4C0h5ri0U1xwTz5SRXiKXp4FPqYY2wrXy7CiH0bOajobcg1oDrQaSbuU92BhHfx492BEi/muVyKeQ==
 
-coc-helper@^0.4.2:
-  version "0.4.2"
-  resolved "https://registry.yarnpkg.com/coc-helper/-/coc-helper-0.4.2.tgz#1157d801491cfd3e14c341dda5a7ec91db3ed2b4"
-  integrity sha512-hal+lq8S6mw9y2BmngIk9YP2/NNjcFRUS7od1lVLma9oJ4ox1C4b7kujjMK5v6DlEWiReXvNc+NmdDsDyFgNGw==
+coc-helper@^0.5.3:
+  version "0.5.3"
+  resolved "https://registry.yarnpkg.com/coc-helper/-/coc-helper-0.5.3.tgz#3341552d004bf00245291d4c2ef7fad7969fa554"
+  integrity sha512-Skyg42uC9pc+WJcC2fPai9A6GNEjn13cPEpo7iFE9XI01X6sqkV//xgS2pWSX39rny7GCQI6/giFQD5FmMvfJQ==
   dependencies:
     app-root-path "^3.0.0"
 
