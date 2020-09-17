@@ -1,7 +1,7 @@
 import { onBufEnter } from './events';
 import { events } from 'coc.nvim';
 import { delay } from './util';
-import { jestHelper } from 'coc-helper';
+import { jestHelper } from 'coc-helper/JestHelper';
 
 jestHelper.boot();
 

@@ -6,7 +6,7 @@ import { ColumnRegistrar } from './columnRegistrar';
 import { SourcePainters } from './sourcePainters';
 import { workspace } from 'coc.nvim';
 import { buildExplorerConfig, config } from '../config';
-import { jestHelper } from 'coc-helper';
+import { jestHelper } from 'coc-helper/JestHelper';
 import { registerRuntimepath } from '../util';
 
 let explorer: Explorer;
