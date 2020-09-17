@@ -470,6 +470,11 @@
             }
           }
         },
+        "explorer.enableFloatinput": {
+          "description": "Enable integrated with coc-floatinput",
+          "type": "boolean",
+          "default": true
+        },
         "explorer.icon.enableNerdfont": {
           "description": "Enable nerdfont",
           "type": "boolean",
@@ -786,7 +791,7 @@
     "@types/which": "^1.3.2",
     "@typescript-eslint/eslint-plugin": "^4.1.1",
     "@typescript-eslint/parser": "^4.1.1",
-    "coc-floatinput": "^1.3.2",
+    "coc-floatinput": "^1.3.3",
     "coc-helper": "^0.5.3",
     "coc.nvim": "^0.0.79",
     "color-convert": "^2.0.1",

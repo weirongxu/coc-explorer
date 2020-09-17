@@ -1,5 +1,6 @@
 import type { FloatInputType } from 'coc-floatinput';
 import { extensions, workspace } from 'coc.nvim';
+import { config } from '../config';
 
 let floatInputApi: FloatInputType | undefined;
 
@@ -13,6 +14,9 @@ async function getFloatInputApi() {
 }
 
 async function getFloatUI() {
+  if (!config.get<boolean>('enableFloatinput')!) {
+    return undefined;
+  }
   return (await getFloatInputApi())?.FloatingUI;
 }
 
