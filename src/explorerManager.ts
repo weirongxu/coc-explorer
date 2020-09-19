@@ -260,24 +260,6 @@ export class ExplorerManager {
     await this.nvim.call('coc_explorer#mappings#clear', [this.mappings]);
   }
 
-  async rootUri(args: Args) {
-    const rootUri = await args.value(argOptions.rootUri);
-    if (rootUri) {
-      return rootUri;
-    }
-    let useGetcwd = false;
-    const buftype = await workspace.nvim.getVar('&buftype');
-    if (buftype === 'nofile') {
-      useGetcwd = true;
-    } else {
-      const bufname = await workspace.nvim.call('bufname', ['%']);
-      if (!bufname) {
-        useGetcwd = true;
-      }
-    }
-    return useGetcwd ? workspace.cwd : workspace.rootPath;
-  }
-
   async open(argStrs: string[]) {
     if (!this.registeredMapping) {
       await new Promise((resolve) => {
