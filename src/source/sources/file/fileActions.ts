@@ -464,7 +464,7 @@ export function initFileActions(file: FileSource) {
     'addDirectory',
     async ({ node, args }) => {
       let directoryName =
-        args[0] ?? (await input('Input a new directory name: ', '', 'file'));
+        args[0] ?? (await input('Input a new directory name:', '', 'file'));
       directoryName = directoryName.trim().replace(/(\/|\\)*$/g, '');
       if (!directoryName) {
         return;
