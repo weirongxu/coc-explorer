@@ -1,4 +1,4 @@
-functio! coc_explorer#buf#create_by_name(name) abort
+function! coc_explorer#buf#create_by_name(name) abort
   return bufadd(a:name)
 endfunction
 
