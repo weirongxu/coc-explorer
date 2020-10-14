@@ -1,6 +1,6 @@
 function! coc_explorer#mappings#register(mappings) abort
   let s:coc_explorer_mappings = a:mappings
-  augroup coc_explorer_mappings
+  augroup CocExplorerMappings
     autocmd!
     autocmd FileType coc-explorer call coc_explorer#mappings#execute(s:coc_explorer_mappings)
   augroup END
