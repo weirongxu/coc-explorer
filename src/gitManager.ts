@@ -1,6 +1,5 @@
 import pathLib from 'path';
-import { onError } from './logger';
-import { execCli, normalizePath } from './util';
+import { execCli, normalizePath, onError } from './util';
 import { config } from './config';
 
 export enum GitFormat {

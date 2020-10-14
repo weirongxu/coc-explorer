@@ -5,7 +5,6 @@ import pathLib from 'path';
 import { argOptions } from '../../../argOptions';
 import { onBufEnter } from '../../../events';
 import { fileList } from '../../../lists/files';
-import { onError } from '../../../logger';
 import {
   fsAccess,
   fsLstat,
@@ -16,6 +15,7 @@ import {
   listDrive,
   normalizePath,
   Notifier,
+  onError,
 } from '../../../util';
 import { hlGroupManager } from '../../highlightManager';
 import { BaseTreeNode, ExplorerSource } from '../../source';

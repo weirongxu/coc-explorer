@@ -6,19 +6,17 @@ import {
   Disposable,
   languages,
 } from 'coc.nvim';
-import { registerLogger, onError } from './logger';
 import { hlGroupManager } from './source/highlightManager';
 import { ExplorerManager } from './explorerManager';
 import { PresetList } from './lists/presets';
 import { registerVimApi } from './vimApi';
 import { registerInternalEvents } from './events';
-import { asyncCatchError, registerRuntimepath } from './util';
+import { asyncCatchError, onError, registerRuntimepath } from './util';
 import { ActionMenuCodeActionProvider } from './codeActionProider';
 
 export const activate = async (context: ExtensionContext) => {
-  const { subscriptions, logger } = context;
+  const { subscriptions } = context;
   const { nvim } = workspace;
-  registerLogger(logger);
 
   hlGroupManager.group(
     'SelectUI',

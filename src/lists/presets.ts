@@ -1,7 +1,7 @@
 import { BasicList, Neovim } from 'coc.nvim';
 import { getPresets } from '../presets';
-import { onError } from '../logger';
 import { configLocal } from '../config';
+import { onError } from '../util';
 
 export class PresetList extends BasicList {
   readonly name = 'explPresets';

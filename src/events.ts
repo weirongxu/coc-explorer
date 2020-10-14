@@ -6,8 +6,7 @@ import {
   workspace,
 } from 'coc.nvim';
 import { LiteralUnion } from 'type-fest';
-import { onError } from './logger';
-import { asyncCatchError, debounce, Notifier, throttle } from './util';
+import { asyncCatchError, debounce, Notifier, onError, throttle } from './util';
 
 type Arguments<F extends Function> = F extends (...args: infer Args) => any
   ? Args

@@ -10,7 +10,6 @@ import {
 import { argOptions } from '../argOptions';
 import { Explorer } from '../explorer';
 import { explorerActionList } from '../lists/actions';
-import { onError } from '../logger';
 import { MappingMode, getReverseMappings } from '../mappings';
 import {
   OpenStrategy,
@@ -25,6 +24,7 @@ import {
   generateUri,
   Notifier,
   delay,
+  onError,
 } from '../util';
 import { WinLayoutFinder } from '../winLayoutFinder';
 import { HighlightPositionWithLine } from './highlightManager';

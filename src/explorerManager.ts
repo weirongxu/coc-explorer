@@ -5,6 +5,7 @@ import {
   ExtensionContext,
   workspace,
 } from 'coc.nvim';
+import { HelperEventEmitter } from 'coc-helper';
 import { argOptions } from './argOptions';
 import { BufManager } from './bufManager';
 import { buildExplorerConfig, configLocal } from './config';
@@ -12,10 +13,9 @@ import { GlobalContextVars } from './contextVariables';
 import { DiagnosticManager } from './diagnosticManager';
 import { onBufEnter } from './events';
 import { Explorer } from './explorer';
-import { onError } from './logger';
 import { getMappings } from './mappings';
 import { Args, ArgPosition } from './parseArgs';
-import { compactI, supportedNvimFloating } from './util';
+import { compactI, onError, supportedNvimFloating } from './util';
 
 export class TabContainer {
   left?: Explorer;
@@ -61,27 +61,36 @@ export class ExplorerManager {
   bufManager: BufManager;
   diagnosticManager: DiagnosticManager;
 
+  events = new HelperEventEmitter<{
+    didAutoload: () => void;
+    registeredMapping: () => void;
+  }>(onError);
+
+  waitAllEvents = ((self) => ({
+    didCount: 0,
+    did: false,
+    emitter: new Emitter<void>(),
+    keys: ['registeredMapping', 'didAutoload'] as const,
+    constructor() {
+      this.keys.forEach((key) => {
+        self.events.on(key, () => {
+          this.didCount += 1;
+          if (this.didCount >= this.keys.length) {
+            this.did = true;
+            this.emitter.fire();
+          }
+        });
+      });
+    },
+  }))(this);
+
   /**
    * mappings[key][mode] = '<Plug>(coc-action-mode-key)'
    */
   private mappings: Record<string, Record<string, string>> = {};
-  private registeredMapping: boolean = false;
-  private onRegisteredMapping = new Emitter<void>();
-  private initedState = {
-    initedCount: 0,
-    list: ['onRegisteredMapping', 'emitterDidAutoload'] as const,
-  };
-  private onInited = new Emitter<void>();
 
   constructor(public context: ExtensionContext) {
-    this.initedState.list.forEach((method) => {
-      this[method].event(() => {
-        this.initedState.initedCount += 1;
-        if (this.initedState.initedCount >= this.initedState.list.length) {
-          this.onInited.fire();
-        }
-      });
-    });
+    this.waitAllEvents.constructor();
 
     this.emitterDidAutoload.event(() => {
       this.registerMappings().catch(onError);
@@ -248,8 +257,7 @@ export class ExplorerManager {
       });
     });
     await this.nvim.call('coc_explorer#mappings#register', [this.mappings]);
-    this.registeredMapping = true;
-    this.onRegisteredMapping.fire();
+    await this.events.fire('registeredMapping');
   }
 
   async executeMappings() {
@@ -261,9 +269,9 @@ export class ExplorerManager {
   }
 
   async open(argStrs: string[]) {
-    if (!this.registeredMapping) {
+    if (!this.waitAllEvents.did) {
       await new Promise((resolve) => {
-        this.onInited.event(resolve);
+        this.waitAllEvents.emitter.event(resolve);
       });
     }
 

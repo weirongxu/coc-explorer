@@ -1,4 +1,5 @@
 import { workspace } from 'coc.nvim';
+import { onError } from '../util';
 
 // Highlight types
 export interface HighlightPosition {
@@ -85,4 +86,3 @@ class HighlightManager {
 export const hlGroupManager = new HighlightManager();
 
 import { Explorer } from '../explorer';
-import { onError } from '../logger';

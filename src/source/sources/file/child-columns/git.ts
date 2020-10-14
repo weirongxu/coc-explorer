@@ -2,11 +2,10 @@ import commandExists from 'command-exists';
 import { fileColumnRegistrar } from '../fileColumnRegistrar';
 import { GitFormat, gitManager, GitMixedStatus } from '../../../../gitManager';
 import pathLib from 'path';
-import { debounce, delay } from '../../../../util';
+import { debounce, delay, onError } from '../../../../util';
 import { fileHighlights } from '../fileSource';
 import { onEvent, internalEvents } from '../../../../events';
 import { workspace } from 'coc.nvim';
-import { onError } from '../../../../logger';
 
 fileColumnRegistrar.registerColumn(
   'child',

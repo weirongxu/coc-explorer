@@ -1,5 +1,5 @@
 import { BasicList, Neovim, workspace, Mru } from 'coc.nvim';
-import { onError } from '../logger';
+import { onError } from '../util';
 
 interface ActionData {
   name: string;

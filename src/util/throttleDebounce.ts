@@ -1,4 +1,4 @@
-import { onError } from '../logger';
+import { onError } from '.';
 
 export class Cancelled {}
 const cancelled = new Cancelled();

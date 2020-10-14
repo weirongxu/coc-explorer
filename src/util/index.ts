@@ -1,6 +1,7 @@
 import { workspace } from 'coc.nvim';
 import util from 'util';
 import { format } from 'date-fns';
+import { genOnError } from 'coc-helper';
 export * from './string';
 export * from './symbol';
 export * from './number';
@@ -19,6 +20,8 @@ export * from './uri';
 export * from './painter';
 
 export const outputChannel = workspace.createOutputChannel('explorer');
+
+export const onError = genOnError(outputChannel);
 
 export function prettyPrint(...data: any[]) {
   let s = `[${format(new Date(), 'yy/MM/dd HH:mm:ss.SSS')}]`;

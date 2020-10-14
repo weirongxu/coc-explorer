@@ -1,6 +1,6 @@
 import { BasicList, Neovim, workspace } from 'coc.nvim';
-import { onError } from '../logger';
 import { FileSource } from '../source/sources/file/fileSource';
+import { onError } from '../util';
 
 export class ExplorerWorkspaceFolderList extends BasicList {
   readonly defaultAction = 'do';
