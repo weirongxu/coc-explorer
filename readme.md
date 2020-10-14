@@ -829,15 +829,17 @@ function! s:init_explorer(bufnr)
 endfunction
 
 function! s:enter_explorer()
-  if !exists('b:has_enter_coc_explorer') && &filetype == 'coc-explorer'
-    " more mappings
-    nmap <buffer> <Leader>fg :call <SID>coc_list_current_dir('-I grep')<CR>
-    nmap <buffer> <Leader>fG :call <SID>coc_list_current_dir('-I grep -regex')<CR>
-    nmap <buffer> <C-p> :call <SID>coc_list_current_dir('files')<CR>
-    let b:has_enter_coc_explorer = v:true
+  if &filetype == 'coc-explorer'
+    if !exists('b:has_enter_coc_explorer')
+      " more mappings
+      nmap <buffer> <Leader>fg :call <SID>coc_list_current_dir('-I grep')<CR>
+      nmap <buffer> <Leader>fG :call <SID>coc_list_current_dir('-I grep -regex')<CR>
+      nmap <buffer> <C-p> :call <SID>coc_list_current_dir('files')<CR>
+      let b:has_enter_coc_explorer = v:true
+    endif
+    " statusline
+    setl statusline=coc-explorer
   endif
-  " statusline
-  setl statusline=coc-explorer
 endfunction
 
 augroup CocExplorerCustom
