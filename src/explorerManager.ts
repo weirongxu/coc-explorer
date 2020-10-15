@@ -51,7 +51,6 @@ export class TabContainer {
 
 export class ExplorerManager {
   filetype = 'coc-explorer';
-  emitterDidAutoload = new Emitter<void>();
   previousBufnr = new GlobalContextVars<number>('previousBufnr');
   previousWindowID = new GlobalContextVars<number>('previousWindowID');
   maxExplorerID = 0;
@@ -92,7 +91,7 @@ export class ExplorerManager {
   constructor(public context: ExtensionContext) {
     this.waitAllEvents.constructor();
 
-    this.emitterDidAutoload.event(() => {
+    this.events.on('didAutoload', () => {
       this.registerMappings().catch(onError);
     });
 

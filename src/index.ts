@@ -51,6 +51,6 @@ export const activate = async (context: ExtensionContext) => {
         }),
       ),
     );
-    explorerManager.emitterDidAutoload.fire();
+    await explorerManager.events.fire('didAutoload');
   })().catch(onError);
 };
