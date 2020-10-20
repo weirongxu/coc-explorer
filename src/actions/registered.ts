@@ -12,9 +12,21 @@ export namespace RegisteredAction {
       }
   >;
   export type Options = {
+    /**
+     * @default false
+     */
     multi: boolean;
+    /**
+     * @default false
+     */
     render: boolean;
+    /**
+     * @default false
+     */
     reload: boolean;
+    /**
+     * @default false
+     */
     select: boolean;
     args: { name: string; description?: string }[];
     menus: RegisteredAction.OptionMenus;

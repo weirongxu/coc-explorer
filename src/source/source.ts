@@ -29,11 +29,11 @@ import {
 import { WinLayoutFinder } from '../winLayoutFinder';
 import { HighlightPositionWithLine } from './highlightManager';
 import { SourcePainters } from './sourcePainters';
-import { InternalEventEmitter } from '../events';
 import { clone } from 'lodash-es';
 import { RegisteredAction } from '../actions/registered';
 import { Class } from 'type-fest';
 import { ArgPosition } from '../parseArgs';
+import { HelperEventEmitter } from 'coc-helper';
 
 export namespace Options {
   export interface Force {
@@ -152,9 +152,9 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>>
   context: ExtensionContext;
   bufManager = this.explorer.explorerManager.bufManager;
   diagnosticManager = this.explorer.explorerManager.diagnosticManager;
-  events = new InternalEventEmitter<{
+  events = new HelperEventEmitter<{
     loaded: (node: TreeNode) => void | Promise<void>;
-  }>();
+  }>(onError);
 
   private requestedRenderNodes: Set<TreeNode> = new Set();
   private isDisposed: boolean = false;

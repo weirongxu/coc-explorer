@@ -658,12 +658,12 @@
         "explorer.file.root.template": {
           "description": "Template for root node of file source",
           "type": "string",
-          "default": "[icon] [title] [hidden & 1][root] [fullpath]"
+          "default": "[icon] [title] [git] [hidden & 1][root] [fullpath]"
         },
         "explorer.file.root.labelingTemplate": {
           "description": "Labeling template for root node of file source, use for preview when previewAction is labeling",
           "type": "string",
-          "default": "[fullpath]"
+          "default": "[fullpath][git]"
         },
         "explorer.file.child.template": {
           "description": "Template for child node file source",
@@ -674,6 +674,42 @@
           "description": "Labeling template for child node of file source, use for preview when previewAction is labeling",
           "type": "string",
           "default": "[fullpath][link][diagnosticWarning][diagnosticError][size][timeAccessed][timeModified][timeCreated][readonly][modified]"
+        },
+        "explorer.file.column.root.git.icon.stashed": {
+          "description": "A stash exists for the local repository",
+          "default": "$"
+        },
+        "explorer.file.column.root.git.icon.ahead": {
+          "description": "Current branch ahead of upstream",
+          "default": "⇡"
+        },
+        "explorer.file.column.root.git.icon.behind": {
+          "description": "Current branch behind upstream",
+          "default": "⇣"
+        },
+        "explorer.file.column.root.git.icon.conflicted": {
+          "description": "Current branch has merge conflicts",
+          "default": "="
+        },
+        "explorer.file.column.root.git.icon.untracked": {
+          "description": "There are untracked files in the working directory",
+          "default": "?"
+        },
+        "explorer.file.column.root.git.icon.modified": {
+          "description": "There are file modifications in the working directory",
+          "default": "~"
+        },
+        "explorer.file.column.root.git.icon.added": {
+          "description": "A new file has been added to the staging area",
+          "default": "+"
+        },
+        "explorer.file.column.root.git.icon.renamed": {
+          "description": "A renamed file has been added to the staging area",
+          "default": "→"
+        },
+        "explorer.file.column.root.git.icon.deleted": {
+          "description": "A file's deletion has been added to the staging area",
+          "default": "✗"
         },
         "explorer.file.column.git.showIgnored": {
           "description": "Show ignored files in git column",
@@ -781,16 +817,16 @@
   "devDependencies": {
     "@types/color-convert": "^1.9.0",
     "@types/command-exists": "^1.2.0",
-    "@types/jest": "^26.0.14",
+    "@types/jest": "^26.0.15",
     "@types/json-schema": "^7.0.6",
     "@types/lodash-es": "^4.17.3",
     "@types/minimatch": "^3.0.3",
-    "@types/node": "^14.11.8",
+    "@types/node": "^14.14.0",
     "@types/rimraf": "^3.0.0",
     "@types/uuid": "^8.3.0",
     "@types/which": "^1.3.2",
-    "@typescript-eslint/eslint-plugin": "^4.4.1",
-    "@typescript-eslint/parser": "^4.4.1",
+    "@typescript-eslint/eslint-plugin": "^4.5.0",
+    "@typescript-eslint/parser": "^4.5.0",
     "coc-floatinput": "^1.4.0",
     "coc-helper": "^0.6.0",
     "coc.nvim": "^0.0.79",
@@ -798,7 +834,7 @@
     "command-exists": "^1.2.9",
     "date-fns": "^2.16.1",
     "eslint": "^7.11.0",
-    "jest": "^26.5.3",
+    "jest": "^26.6.0",
     "lodash-es": "^4.17.15",
     "make-dir": "^3.1.0",
     "minimatch": "^3.0.4",
@@ -807,7 +843,7 @@
     "pretty-bytes": "^5.4.1",
     "rimraf": "^3.0.2",
     "ts-jest": "^26.4.1",
-    "ts-loader": "^8.0.5",
+    "ts-loader": "^8.0.6",
     "type-fest": "^0.18.0",
     "typescript": "^4.0.3",
     "uuid": "^8.3.1",

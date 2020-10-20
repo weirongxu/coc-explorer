@@ -18,7 +18,7 @@ import {
 import { workspace, listManager } from 'coc.nvim';
 import open from 'open';
 import { driveList } from '../../../lists/drives';
-import { gitManager } from '../../../gitManager';
+import { gitManager } from '../../../git/manager';
 import { RevealStrategy, revealStrategyList } from '../../../types';
 import { explorerWorkspaceFolderList } from '../../../lists/workspaceFolders';
 

@@ -1,7 +1,8 @@
-import pathLib from 'path';
-import { gitManager, GitFormat, GitMixedStatus } from './gitManager';
-import { normalizePath } from './util';
 import { mapKeys, mapValues } from 'lodash-es';
+import pathLib from 'path';
+import { normalizePath } from '../util';
+import { gitManager } from './manager';
+import { GitFormat, GitMixedStatus } from './types';
 
 ([
   {
@@ -100,7 +101,7 @@ import { mapKeys, mapValues } from 'lodash-es';
 });
 
 describe('gitManager status', () => {
-  jest.mock('./gitManager');
+  jest.mock('./manager');
 
   Object.defineProperty(gitManager, 'getGitRoot', {
     writable: true,
