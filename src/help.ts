@@ -62,7 +62,7 @@ export class HelpPainter {
   async drawHead() {
     await this.drawRow((row) => {
       row.add('Help ');
-      row.add('(use q or <esc> return to explorer)', {
+      row.add('(use q, ? or <esc> return to explorer)', {
         hl: helpHightlights.hint,
       });
     });
@@ -314,7 +314,7 @@ export async function showHelp(
   await explorer.explorerManager.clearMappings();
 
   const disposables: Disposable[] = [];
-  ['<esc>', 'q'].forEach((key) => {
+  ['<esc>', 'q', '?'].forEach((key) => {
     disposables.push(
       workspace.registerLocalKeymap(
         'n',
