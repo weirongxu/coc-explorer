@@ -1,7 +1,7 @@
 import commandExists from 'command-exists';
 import pathLib from 'path';
 import { config } from '../config';
-import { execCli, normalizePath } from '../util';
+import { execCli, normalizePath, prettyPrint } from '../util';
 import { GitFormat, GitStatus } from './types';
 
 export class GitCommand {
@@ -201,7 +201,7 @@ export class GitCommand {
   }
 
   async hasPush(root: string) {
-    const count = await this.spawn(['rev-list', '--count', '@{upstream}..@`'], {
+    const count = await this.spawn(['rev-list', '--count', '@{upstream}..@'], {
       cwd: root,
     });
     return parseInt(count);
