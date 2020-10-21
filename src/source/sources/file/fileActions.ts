@@ -1,26 +1,27 @@
-import { FileSource } from './fileSource';
+import { listManager, workspace } from 'coc.nvim';
+import open from 'open';
 import pathLib from 'path';
+import { gitManager } from '../../../git/manager';
+import { driveList } from '../../../lists/drives';
+import { explorerWorkspaceFolderList } from '../../../lists/workspaceFolders';
+import { parseActionExp } from '../../../mappings';
+import { RevealStrategy, revealStrategyList } from '../../../types';
 import {
+  bufnrByWinnrOrWinid,
   fsCopyFileRecursive,
-  fsRename,
-  fsTrash,
-  fsRimraf,
   fsMkdirp,
+  fsRename,
+  fsRimraf,
   fsTouch,
+  fsTrash,
+  input,
   isWindows,
   listDrive,
-  prompt,
-  overwritePrompt,
   Notifier,
-  input,
-  bufnrByWinnrOrWinid,
+  overwritePrompt,
+  prompt,
 } from '../../../util';
-import { workspace, listManager } from 'coc.nvim';
-import open from 'open';
-import { driveList } from '../../../lists/drives';
-import { gitManager } from '../../../git/manager';
-import { RevealStrategy, revealStrategyList } from '../../../types';
-import { explorerWorkspaceFolderList } from '../../../lists/workspaceFolders';
+import { FileSource } from './fileSource';
 
 export function initFileActions(file: FileSource) {
   const { nvim } = file;
@@ -198,11 +199,15 @@ export function initFileActions(file: FileSource) {
   );
   file.addNodeAction(
     'open',
-    async ({ node, args }) => {
+    async ({ node, args, mode }) => {
       if (node.directory) {
-        const directoryAction = file.config.get('openAction.for.directory');
-        if (directoryAction) {
-          await file.doAction(directoryAction, node);
+        const directoryActionExp = file.config.get('openAction.for.directory');
+        if (directoryActionExp) {
+          await file.explorer.doActionExp(
+            new Set([file.explorer.flattenedNodes.indexOf(node)]),
+            parseActionExp(directoryActionExp),
+            mode,
+          );
         }
       } else {
         await file.openAction(node, () => node.fullpath, {

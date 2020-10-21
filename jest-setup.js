@@ -4,7 +4,7 @@ const pathLib = require('path');
 
 const fsp = fs.promises;
 
-process.on('uncaughtException', function(err) {
+process.on('uncaughtException', function (err) {
   let msg = 'Uncaught exception: ' + err.stack;
   console.error(msg);
 });
@@ -30,9 +30,13 @@ module.exports = async () => {
   const testDir = __dirname + '/src/tests';
   const cocDir = pathLib.join(testDir, 'coc.nvim');
   if (!fs.existsSync(cocDir)) {
-    await execCli('git', ['clone', '--depth', '1', 'https://github.com/neoclide/coc.nvim.git'], {
-      cwd: testDir,
-    });
+    await execCli(
+      'git',
+      ['clone', '--depth', '1', 'https://github.com/neoclide/coc.nvim.git'],
+      {
+        cwd: testDir,
+      },
+    );
     await execCli('yarn', ['install'], {
       cwd: cocDir,
     });

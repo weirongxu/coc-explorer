@@ -51,16 +51,23 @@
             }
           }
         },
-        "mapping.action": {
+        "mapping.actionExp": {
           "anyOf": [
             {
-              "type": "string"
+              "$ref": "#/definitions/mapping.action"
             },
             {
               "type": "array",
               "items": {
-                "type": "string"
+                "$ref": "#/definitions/mapping.actionExp"
               }
+            }
+          ]
+        },
+        "mapping.action": {
+          "anyOf": [
+            {
+              "type": "string"
             },
             {
               "type": "object",
@@ -171,13 +178,7 @@
           "additionalProperties": {
             "anyOf": [
               {
-                "$ref": "#/definitions/mapping.action"
-              },
-              {
-                "type": "array",
-                "items": {
-                  "$ref": "#/definitions/mapping.action"
-                }
+                "$ref": "#/definitions/mapping.actionExp"
               },
               {
                 "enum": [
@@ -421,7 +422,7 @@
         },
         "explorer.openAction.for.directory": {
           "description": "The action when you open a directory of file source",
-          "type": "string",
+          "$ref": "#/definitions/mapping.actionExp",
           "default": "cd"
         },
         "explorer.openAction.relativePath": {
