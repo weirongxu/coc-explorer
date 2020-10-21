@@ -46,7 +46,9 @@ fileColumnRegistrar.registerColumn(
               const statusChars: string[] = [];
               for (const f of status.formats) {
                 if (isLabeling) {
-                  statusChars.push(statusIcons[f].name);
+                  statusChars.push(
+                    `${statusIcons[f].name}(${statusIcons[f].icon})`,
+                  );
                 } else {
                   statusChars.push(statusIcons[f].icon);
                 }
