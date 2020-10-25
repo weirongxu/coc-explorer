@@ -1,5 +1,5 @@
 import { BaseTreeNode } from '../source/source';
-import { MappingMode } from '../mappings';
+import { MappingMode } from './types';
 
 export namespace RegisteredAction {
   export type OptionMenus = Record<

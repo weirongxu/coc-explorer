@@ -4,7 +4,7 @@ import pathLib from 'path';
 import { gitManager } from '../../../git/manager';
 import { driveList } from '../../../lists/drives';
 import { explorerWorkspaceFolderList } from '../../../lists/workspaceFolders';
-import { parseActionExp } from '../../../mappings';
+import { parseOriginalActionExp } from '../../../mappings';
 import { RevealStrategy, revealStrategyList } from '../../../types';
 import {
   bufnrByWinnrOrWinid,
@@ -204,9 +204,8 @@ export function initFileActions(file: FileSource) {
         const directoryActionExp = file.config.get('openAction.for.directory');
         if (directoryActionExp) {
           await file.explorer.doActionExp(
-            new Set([file.explorer.flattenedNodes.indexOf(node)]),
-            parseActionExp(directoryActionExp),
-            mode,
+            parseOriginalActionExp(directoryActionExp),
+            { mode, lineIndexes: [file.explorer.flattenedNodes.indexOf(node)] },
           );
         }
       } else {

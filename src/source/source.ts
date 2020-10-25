@@ -1,39 +1,42 @@
+import { HelperEventEmitter } from 'coc-helper';
 import {
   Disposable,
   Emitter,
+  events,
   ExtensionContext,
   IList,
   listManager,
   workspace,
-  events,
 } from 'coc.nvim';
+import { clone } from 'lodash-es';
+import { Class } from 'type-fest';
+import { conditionActionRules } from '../actions/condition';
+import { RegisteredAction } from '../actions/registered';
+import { ActionExp, MappingMode } from '../actions/types';
 import { argOptions } from '../argOptions';
 import { Explorer } from '../explorer';
 import { explorerActionList } from '../lists/actions';
-import { MappingMode, getReverseMappings } from '../mappings';
+import { keyMapping } from '../mappings';
+import { ArgPosition } from '../parseArgs';
 import {
-  OpenStrategy,
-  PreviewStrategy,
-  openStrategyList,
-  expandOptionList,
   collapseOptionList,
+  expandOptionList,
+  OpenStrategy,
+  openStrategyList,
+  PreviewStrategy,
 } from '../types';
 import {
+  delay,
   drawnWithIndexRange,
   flatten,
   generateUri,
   Notifier,
-  delay,
   onError,
+  partition,
 } from '../util';
 import { WinLayoutFinder } from '../winLayoutFinder';
 import { HighlightPositionWithLine } from './highlightManager';
 import { SourcePainters } from './sourcePainters';
-import { clone } from 'lodash-es';
-import { RegisteredAction } from '../actions/registered';
-import { Class } from 'type-fest';
-import { ArgPosition } from '../parseArgs';
-import { HelperEventEmitter } from 'coc-helper';
 
 export namespace Options {
   export interface Force {
@@ -495,6 +498,51 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>>
     };
   }
 
+  async doActionExp(
+    actionExp: ActionExp,
+    nodes: TreeNode[],
+    options: {
+      /**
+       *
+       *
+       * @default 'n'
+       */
+      mode?: MappingMode;
+    } = {},
+  ) {
+    const mode = options.mode ?? 'n';
+    if (Array.isArray(actionExp)) {
+      for (let i = 0; i < actionExp.length; i++) {
+        const action = actionExp[i];
+        if (Array.isArray(action)) {
+          await this.doActionExp(actionExp, nodes);
+        } else {
+          const rule = conditionActionRules[action.name];
+          if (rule) {
+            const [trueNodes, falseNodes] = partition(nodes, (node) =>
+              rule.filter(this, node, action.args),
+            );
+            const [trueAction, falseAction] = [
+              actionExp[i + 1],
+              actionExp[i + 2],
+            ];
+            i += 2;
+            if (trueNodes.length) {
+              await this.doActionExp(trueAction, trueNodes);
+            }
+            if (falseNodes.length) {
+              await this.doActionExp(falseAction, falseNodes);
+            }
+          } else {
+            await this.doActionExp(action, nodes);
+          }
+        }
+      }
+    } else {
+      await this.doAction(actionExp.name, nodes, actionExp.args, mode);
+    }
+  }
+
   async doAction(
     name: string,
     nodes: TreeNode | TreeNode[],
@@ -857,7 +905,9 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>>
       ...this.actions,
     };
 
-    const reverseMappings = await getReverseMappings();
+    const reverseMappings = await keyMapping.getReversedMappings(
+      this.sourceType,
+    );
 
     explorerActionList.setExplorerActions(
       flatten(

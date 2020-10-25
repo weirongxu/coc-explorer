@@ -1,14 +1,14 @@
-import { ExtensionContext, commands, workspace } from 'coc.nvim';
-import { MappingMode, parseActionExp } from './mappings';
-import { ExplorerManager } from './explorerManager';
-import { getFileIcon, getDirectoryIcon } from './icons';
+import { commands, ExtensionContext, workspace } from 'coc.nvim';
 import pathLib from 'path';
+import { MappingMode, OriginalActionExp } from './actions/types';
 import { Explorer } from './explorer';
-import { BaseTreeNode, ExplorerSource } from './source/source';
-import { compactI, asyncCatchError } from './util';
-import { WinLayoutFinder } from './winLayoutFinder';
-import { OriginalActionExp } from './actions/mapping';
+import { ExplorerManager } from './explorerManager';
+import { getDirectoryIcon, getFileIcon } from './icons';
 import { actionListMru } from './lists/actions';
+import { parseOriginalActionExp } from './mappings';
+import { BaseTreeNode, ExplorerSource } from './source/source';
+import { asyncCatchError, compactI } from './util';
+import { WinLayoutFinder } from './winLayoutFinder';
 
 export function registerApi(
   id: string,
@@ -110,8 +110,6 @@ export function registerVimApi(
   context: ExtensionContext,
   explorerManager: ExplorerManager,
 ) {
-  const { nvim } = workspace;
-
   async function doAction(
     explorerFinder: ExplorerFinder,
     actionExp: OriginalActionExp,
@@ -124,19 +122,19 @@ export function registerVimApi(
       return;
     }
     await explorer.refreshLineIndex();
-    const lines = compactI(
+    const lineIndexes = compactI(
       await Promise.all(
         positions.map(
           async (position) => await getLineIndexByPosition(position, explorer),
         ),
       ),
     );
-    return explorer.doActionsWithCount(
-      parseActionExp(actionExp),
+    await explorer.doActionExp(parseOriginalActionExp(actionExp), {
       mode,
       count,
-      lines,
-    );
+      lineIndexes,
+      queue: true,
+    });
   }
 
   context.subscriptions.push(

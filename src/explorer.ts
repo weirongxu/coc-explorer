@@ -1,17 +1,17 @@
+import { Mutex } from 'await-semaphore';
 import {
   Buffer,
   Disposable,
+  disposeAll,
   ExtensionContext,
   Window,
   workspace,
-  disposeAll,
 } from 'coc.nvim';
 import pFilter from 'p-filter';
-import { conditionActionRules } from './actions/condition';
-import { ActionExp } from './actions/mapping';
 import { RegisteredAction } from './actions/registered';
+import { ActionExp, MappingMode } from './actions/types';
 import { argOptions } from './argOptions';
-import { ExplorerConfig, getEnableDebug } from './config';
+import { ExplorerConfig } from './config';
 import { BuffuerContextVars, WindowContextVars } from './contextVariables';
 import {
   doUserAutocmd,
@@ -24,7 +24,7 @@ import { ExplorerManager } from './explorerManager';
 import { FloatingPreview } from './floating/floatingPreview';
 import { quitHelp, showHelp } from './help';
 import { IndexingManager } from './indexingManager';
-import { MappingMode } from './mappings';
+import { keyMapping } from './mappings';
 import { ArgContentWidthTypes, Args } from './parseArgs';
 import {
   HighlightPositionWithLine,
@@ -34,26 +34,24 @@ import './source/load';
 import { BaseTreeNode, ExplorerSource } from './source/source';
 import { sourceManager } from './source/sourceManager';
 import {
+  ExplorerOpenOptions,
   MoveStrategy,
   moveStrategyList,
   PreviewStrategy,
   previewStrategyList,
-  ExplorerOpenOptions,
 } from './types';
 import {
   closeWinByBufnrNotifier,
   enableWrapscan,
   flatten,
+  normalizePath,
   Notifier,
-  partition,
-  queueAsyncFunction,
   scanIndexNext,
   scanIndexPrev,
   sum,
   winByWinid,
   winidByWinnr,
   winnrByBufnr,
-  normalizePath,
 } from './util';
 
 export class Explorer implements Disposable {
@@ -181,24 +179,18 @@ export class Explorer implements Disposable {
       this.disposables.push(
         onCursorMoved(async (bufnr) => {
           if (bufnr === this.bufnr) {
-            await this.doActionsWithCount(
-              {
-                name: 'preview',
-                args: ['labeling', '200'],
-              },
-              'n',
-            );
+            await this.doActionExp({
+              name: 'preview',
+              args: ['labeling', '200'],
+            });
           }
         }, 200),
         onBufEnter(async (bufnr) => {
           if (bufnr === this.bufnr) {
-            await this.doActionsWithCount(
-              {
-                name: 'preview',
-                args: ['labeling', '200'],
-              },
-              'n',
-            );
+            await this.doActionExp({
+              name: 'preview',
+              args: ['labeling', '200'],
+            });
           }
         }, 200),
       );
@@ -941,8 +933,7 @@ export class Explorer implements Disposable {
     };
   }
 
-  async getSelectedLineIndexes(mode: MappingMode) {
-    const { nvim } = this;
+  async getSelectedOrCursorLineIndexes(mode: MappingMode) {
     const lineIndexes = new Set<number>();
     const document = await workspace.document;
     if (mode === 'v') {
@@ -958,123 +949,94 @@ export class Explorer implements Disposable {
         return lineIndexes;
       }
     }
-    const line = ((await nvim.call('line', ['.'])) as number) - 1;
-    lineIndexes.add(line);
+    await this.refreshLineIndex();
+    lineIndexes.add(this.currentLineIndex);
     return lineIndexes;
   }
 
-  private _doActionsWithCount?: (
-    actionExp: ActionExp,
-    mode: MappingMode,
-    count?: number,
-    lineIndexes?: number[] | Set<number> | undefined,
-  ) => Promise<void>;
-  async doActionsWithCount(
-    actionExp: ActionExp,
-    mode: MappingMode,
-    count: number = 1,
-    lineIndexes: number[] | Set<number> | undefined = undefined,
-  ) {
-    if (!this._doActionsWithCount) {
-      this._doActionsWithCount = queueAsyncFunction(
-        async (
-          actionExp: ActionExp,
-          mode: MappingMode,
-          count: number = 1,
-          lineIndexes: number[] | Set<number> | undefined = undefined,
-        ) => {
-          const now = Date.now();
-
-          const firstLineIndexes = lineIndexes
-            ? new Set(lineIndexes)
-            : await this.getSelectedLineIndexes(mode);
-
-          for (let c = 0; c < count; c++) {
-            const selectedLineIndexes =
-              c === 0
-                ? firstLineIndexes
-                : await this.getSelectedLineIndexes(mode);
-            await this.doActionExp(selectedLineIndexes, actionExp, mode);
-          }
-          const notifiers = await Promise.all(
-            this.sources.map((source) =>
-              source.emitRequestRenderNodesNotifier(),
-            ),
-          );
-          await Notifier.runAll(notifiers);
-
-          if (getEnableDebug()) {
-            const actionDisplay = (actionExp: ActionExp): string =>
-              Array.isArray(actionExp)
-                ? '[' + actionExp.map(actionDisplay).join(',') + ']'
-                : [actionExp.name, ...actionExp.args].join(':');
-            // eslint-disable-next-line no-restricted-properties
-            workspace.showMessage(
-              `action(${actionDisplay(actionExp)}): ${Date.now() - now}ms`,
-              'more',
-            );
-          }
-        },
+  async doActionByKey(key: string, mode: MappingMode, count: number = 1) {
+    for (let c = 0; c < count; c++) {
+      const selectedLineIndexes = await this.getSelectedOrCursorLineIndexes(
+        mode,
       );
-    }
-    return this._doActionsWithCount(actionExp, mode, count, lineIndexes);
-  }
-
-  async doActionExp(
-    selectedLineIndexes: Set<number>,
-    actionExp: ActionExp,
-    mode: MappingMode,
-  ) {
-    await this.refreshLineIndex();
-    const nodesGroup: Map<ExplorerSource<any>, BaseTreeNode<any>[]> = new Map();
-    for (const lineIndex of selectedLineIndexes) {
-      const [source] = this.findSourceByLineIndex(lineIndex);
-      if (!nodesGroup.has(source)) {
-        nodesGroup.set(source, []);
-      }
-      const relativeLineIndex = lineIndex - source.startLineIndex;
-
-      nodesGroup.get(source)!.push(source.flattenedNodes[relativeLineIndex]);
-    }
-
-    for (const [source, nodes] of nodesGroup.entries()) {
-      async function doActionExp(
-        actionExp: ActionExp,
-        nodes: BaseTreeNode<any>[],
-      ) {
-        if (Array.isArray(actionExp)) {
-          for (let i = 0; i < actionExp.length; i++) {
-            const action = actionExp[i];
-            if (Array.isArray(action)) {
-              await doActionExp(actionExp, nodes);
-            } else {
-              const rule = conditionActionRules[action.name];
-              if (rule) {
-                const [trueNodes, falseNodes] = partition(nodes, (node) =>
-                  rule.filter(source, node, action.args),
-                );
-                const [trueAction, falseAction] = [
-                  actionExp[i + 1],
-                  actionExp[i + 2],
-                ];
-                i += 2;
-                if (trueNodes.length) {
-                  await doActionExp(trueAction, trueNodes);
-                }
-                if (falseNodes.length) {
-                  await doActionExp(falseAction, falseNodes);
-                }
-              } else {
-                await doActionExp(action, nodes);
-              }
-            }
-          }
-        } else {
-          await source.doAction(actionExp.name, nodes, actionExp.args, mode);
+      const lineIndexesGroups = this.lineIndexesGroupBySource(
+        selectedLineIndexes,
+      );
+      for (const { source, lineIndexes } of lineIndexesGroups) {
+        const actionExp = keyMapping.getActionExp(source.sourceType, key);
+        if (actionExp) {
+          await this.doActionExp(actionExp, {
+            mode,
+            lineIndexes,
+            queue: true,
+          });
         }
       }
-      await doActionExp(actionExp, nodes);
     }
+    const notifiers = await Promise.all(
+      this.sources.map((source) => source.emitRequestRenderNodesNotifier()),
+    );
+    await Notifier.runAll(notifiers);
+  }
+
+  private doActionExpMutex = new Mutex();
+
+  async doActionExp(
+    actionExp: ActionExp,
+    options: {
+      /**
+       * @default false
+       */
+      queue?: boolean;
+      /**
+       * @default 1
+       */
+      count?: number;
+      /**
+       *
+       *
+       * @default 'n'
+       */
+      mode?: MappingMode;
+      lineIndexes?: Set<number> | number[];
+    } = {},
+  ) {
+    const mutex = options.queue ?? false;
+    const count = options.count ?? 1;
+    const mode = options.mode ?? 'n';
+
+    const release = mutex ? await this.doActionExpMutex.acquire() : undefined;
+
+    const firstLineIndexes = options.lineIndexes
+      ? new Set(options.lineIndexes)
+      : await this.getSelectedOrCursorLineIndexes(mode);
+
+    for (let c = 0; c < count; c++) {
+      const lineIndexes =
+        c === 0
+          ? firstLineIndexes
+          : await this.getSelectedOrCursorLineIndexes(mode);
+
+      const nodesGroup: Map<
+        ExplorerSource<any>,
+        BaseTreeNode<any>[]
+      > = new Map();
+      for (const lineIndex of lineIndexes) {
+        const { source } = this.findSourceByLineIndex(lineIndex);
+        if (!nodesGroup.has(source)) {
+          nodesGroup.set(source, []);
+        }
+        const relativeLineIndex = lineIndex - source.startLineIndex;
+
+        nodesGroup.get(source)!.push(source.flattenedNodes[relativeLineIndex]);
+      }
+
+      for (const [source, nodes] of nodesGroup.entries()) {
+        await source.doActionExp(actionExp, nodes);
+      }
+    }
+
+    release?.();
   }
 
   addIndexing(name: string, lineIndex: number) {
@@ -1103,16 +1065,39 @@ export class Explorer implements Disposable {
     return false;
   }
 
-  private findSourceByLineIndex(lineIndex: number) {
+  private findSourceByLineIndex(
+    lineIndex: number,
+  ): { source: ExplorerSource<any>; sourceIndex: number } {
     const sourceIndex = this.sources.findIndex(
       (source) => lineIndex < source.endLineIndex,
     );
     if (sourceIndex === -1) {
       const index = this.sources.length - 1;
-      return [this.sources[index], index] as const;
+      return { source: this.sources[index], sourceIndex: index };
     } else {
-      return [this.sources[sourceIndex], sourceIndex] as const;
+      return { source: this.sources[sourceIndex], sourceIndex };
     }
+  }
+
+  private lineIndexesGroupBySource(lineIndexes: number[] | Set<number>) {
+    const groups: Record<
+      number,
+      {
+        source: ExplorerSource<any>;
+        lineIndexes: number[];
+      }
+    > = {};
+    for (const line of lineIndexes) {
+      const { source, sourceIndex } = this.findSourceByLineIndex(line);
+      if (!(sourceIndex in groups)) {
+        groups[sourceIndex] = {
+          source,
+          lineIndexes: [line],
+        };
+      }
+      groups[sourceIndex].lineIndexes.push(line);
+    }
+    return Object.values(groups);
   }
 
   async currentSource(): Promise<
