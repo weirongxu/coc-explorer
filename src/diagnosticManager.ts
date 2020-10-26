@@ -11,6 +11,7 @@ import { throttle } from './util';
 export class DiagnosticManager {
   errorPathCount: Record<string, number> = {};
   warningPathCount: Record<string, number> = {};
+
   onChange = (fn: () => void) => this.onChangeEvent.event(fn);
 
   private onChangeEvent = new Emitter<void>();
@@ -23,6 +24,9 @@ export class DiagnosticManager {
           const errorPathCountNum: Record<string, number> = {};
           const warningPathCountNum: Record<string, number> = {};
 
+          const errorPathsNew: Set<string> = new Set();
+          const warningPathsNew: Set<string> = new Set();
+
           cocDiagnosticManager.getDiagnosticList().forEach((diagnostic) => {
             const uri = diagnostic.location.uri;
             const path = Uri.parse(uri).fsPath;
@@ -31,11 +35,13 @@ export class DiagnosticManager {
                 errorPathCountNum[path] = 0;
               }
               errorPathCountNum[path] += 1;
+              errorPathsNew.add(path);
             } else {
               if (!(path in warningPathCountNum)) {
                 warningPathCountNum[path] = 0;
               }
               warningPathCountNum[path] += 1;
+              warningPathsNew.add(path);
             }
           });
 
@@ -46,6 +52,41 @@ export class DiagnosticManager {
         }),
       ),
     );
+  }
+
+  getMixedErrorsAndWarns(root: string): [Set<string>, Set<string>] {
+    const errorPaths: Set<string> = new Set();
+    const warningPaths: Set<string> = new Set();
+
+    // Get the errors
+    Object.entries(this.errorPathCount).forEach(([fullpath, _]) => {
+      const relativePath = pathLib.relative(root, fullpath);
+      const parts = relativePath.split(pathLib.sep);
+
+      for (let i = 1; i <= parts.length; i++) {
+        const frontalPath = pathLib.join(
+          root,
+          parts.slice(0, i).join(pathLib.sep),
+        );
+        errorPaths.add(frontalPath);
+      }
+    });
+
+    // Get the warnings
+    Object.entries(this.warningPathCount).forEach(([fullpath, _]) => {
+      const relativePath = pathLib.relative(root, fullpath);
+      const parts = relativePath.split(pathLib.sep);
+
+      for (let i = 1; i <= parts.length; i++) {
+        const frontalPath = pathLib.join(
+          root,
+          parts.slice(0, i).join(pathLib.sep),
+        );
+        warningPaths.add(frontalPath);
+      }
+    });
+
+    return [errorPaths, warningPaths];
   }
 
   getMixedError(root: string) {
