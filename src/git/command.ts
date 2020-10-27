@@ -213,7 +213,7 @@ export class GitCommand {
     const list = await this.spawn(['stash', 'list'], {
       cwd: root,
     });
-    return list.split(/\n/g).length;
+    return list.split(/\n/g).length - 1;
   }
 
   async checkIgnore(paths: string[]): Promise<string[]> {
