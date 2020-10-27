@@ -1,7 +1,7 @@
 import commandExists from 'command-exists';
 import pathLib from 'path';
 import { config } from '../config';
-import { execCli, normalizePath, prettyPrint } from '../util';
+import { execCli, fsStat, normalizePath, prettyPrint } from '../util';
 import { GitFormat, GitStatus } from './types';
 
 export class GitCommand {
@@ -24,7 +24,9 @@ export class GitCommand {
     });
   }
 
-  async getRoot(cwd: string) {
+  async getRoot(filepath: string) {
+    const stat = await fsStat(filepath).catch(() => undefined);
+    const cwd = stat?.isDirectory() ? filepath : pathLib.dirname(filepath);
     const output = await this.spawn(['rev-parse', '--show-toplevel'], {
       cwd,
     });
@@ -177,14 +179,14 @@ export class GitCommand {
 
   async stage(paths: string[]) {
     if (paths.length) {
-      const root = await this.getRoot(pathLib.dirname(paths[0]));
+      const root = await this.getRoot(paths[0]);
       await this.spawn(['add', ...paths], { cwd: root });
     }
   }
 
   async unstage(paths: string[]) {
     if (paths.length) {
-      const root = await this.getRoot(pathLib.dirname(paths[0]));
+      const root = await this.getRoot(paths[0]);
       await this.spawn(['reset', ...paths], { cwd: root });
     }
   }
@@ -211,14 +213,14 @@ export class GitCommand {
     const list = await this.spawn(['stash', 'list'], {
       cwd: root,
     });
-    return list.split(/\n/g).length;
+    return list.split(/\n/g).length - 1;
   }
 
   async checkIgnore(paths: string[]): Promise<string[]> {
     if (!paths.length) {
       return [];
     }
-    const root = await this.getRoot(pathLib.dirname(paths[0]));
+    const root = await this.getRoot(paths[0]);
     const output = await this.spawn(['check-ignore', ...paths], { cwd: root });
     return output.split(/\n/g);
   }

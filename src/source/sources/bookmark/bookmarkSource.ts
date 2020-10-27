@@ -2,7 +2,7 @@ import { extensions, workspace } from 'coc.nvim';
 import pathLib from 'path';
 import { argOptions } from '../../../argOptions';
 import { internalEvents } from '../../../events';
-import { debounce, fsExists } from '../../../util';
+import { debounce, fsExists, normalizePath } from '../../../util';
 import { hlGroupManager } from '../../highlightManager';
 import { BaseTreeNode, ExplorerSource } from '../../source';
 import { sourceManager } from '../../sourceManager';
@@ -105,7 +105,7 @@ export class BookmarkSource extends ExplorerSource<BookmarkNode> {
 
     const bookmarkNodes = [] as BookmarkNode[];
     for (const [filepath, bookmarks] of Object.entries(data)) {
-      const fullpath = decode(filepath);
+      const fullpath = normalizePath(decode(filepath));
       if (
         (this.showHidden || fullpath.startsWith(parentNode.fullpath)) &&
         (await fsExists(fullpath))
