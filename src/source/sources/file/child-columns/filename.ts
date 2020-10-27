@@ -2,6 +2,7 @@ import pathLib from 'path';
 import { fileColumnRegistrar } from '../fileColumnRegistrar';
 import { debounce } from '../../../../util';
 import { fileHighlights } from '../fileSource';
+import { gitHighlights, gitChanged } from '../../../../git/highlights';
 import { HighlightCommand } from '../../../highlightManager';
 import { GitMixedStatus, GitFormat } from '../../../../git/types';
 import { gitManager } from '../../../../git/manager';
@@ -23,13 +24,29 @@ fileColumnRegistrar.registerColumn(
         [warningPaths, fileHighlights.diagnosticWarning],
         [errorPaths, fileHighlights.diagnosticError],
       ];
-
+        
       const gitColor = (status: GitMixedStatus) => {
         switch (status.x) {
+          case GitFormat.mixed:
+            return gitHighlights.gitMixed;
+          case GitFormat.unmodified:
+            return gitHighlights.gitUnmodified;
+          case GitFormat.modified:
+            return gitHighlights.gitModified;
+          case GitFormat.added:
+            return gitHighlights.gitAdded;
+          case GitFormat.deleted:
+            return gitHighlights.gitDeleted;
+          case GitFormat.renamed:
+            return gitHighlights.gitRenamed;
+          case GitFormat.copied:
+            return gitHighlights.gitCopied;
+          case GitFormat.unmerged:
+            return gitHighlights.gitUnmerged;
           case GitFormat.untracked:
-            return fileHighlights.gitUnstaged;
-          default:
-            return fileHighlights.gitStaged;
+            return gitHighlights.gitUntracked;
+          case GitFormat.ignored:
+            return gitHighlights.gitIgnored;
         }
       };
 
@@ -40,6 +57,7 @@ fileColumnRegistrar.registerColumn(
       const updatePaths: Set<string> = new Set();
 
       for (const [fullpath, status] of Object.entries(gitStatuses)) {
+        console.error("hi");
         localHighlightMap[fullpath] = gitColor(status);
         updatePaths.add(fullpath);
 

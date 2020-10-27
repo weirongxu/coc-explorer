@@ -68,6 +68,8 @@ export const fileHighlights = {
   timeCreated: hl('TimeCreated', 'Identifier'),
   diagnosticError: hl('FileDiagnosticError', 'CocErrorSign'),
   diagnosticWarning: hl('FileDiagnosticWarning', 'CocWarningSign'),
+  filnameDiagnosticError: hl('FileFilenameDiagnosticError', 'CocErrorSign'),
+  filnameDiagnosticWarning: hl('FileFilenameDiagnosticWarning', 'CocWarningSign'),
 };
 
 export class FileSource extends ExplorerSource<FileNode> {
