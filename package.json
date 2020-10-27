@@ -170,10 +170,14 @@
             "none",
             "default"
           ],
+          "enumDescriptions": [
+            "No default mapping",
+            "Default mapping"
+          ],
           "default": "default"
         },
-        "explorer.keyMappings": {
-          "description": "Custom keymappings",
+        "explorer.keyMappings.global": {
+          "description": "Custom global keymappings",
           "type": "object",
           "additionalProperties": {
             "anyOf": [
@@ -189,7 +193,7 @@
           },
           "default": {}
         },
-        "explorer.keyMappings.sourceOnly": {
+        "explorer.keyMappings.sources": {
           "description": "Custom keymappings in sources",
           "type": "object",
           "additionalProperties": {

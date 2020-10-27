@@ -168,10 +168,21 @@ class KeyMapping {
   private globalMappings_?: Mappings;
   globalMappings() {
     if (!this.globalMappings_) {
-      this.globalMappings_ = mixAndParseMappings(
-        this.config.global,
-        config.get<OriginalUserMappings>('keyMappings', {}),
+      const deprecatedKeyMappings = config.get<OriginalUserMappings>(
+        'keyMappings',
+        {},
       );
+      if (Object.keys(deprecatedKeyMappings).length > 2) {
+        // eslint-disable-next-line no-restricted-properties
+        workspace.showMessage(
+          'explorer.keyMappings has been deprecated, please use explorer.keyMappings.global in coc-settings.json',
+          'warning',
+        );
+      }
+      this.globalMappings_ = mixAndParseMappings(this.config.global, {
+        ...deprecatedKeyMappings,
+        ...config.get<OriginalUserMappings>('keyMappings.global', {}),
+      });
     }
     return this.globalMappings_;
   }
@@ -181,7 +192,7 @@ class KeyMapping {
     if (!this.allSourceMappings_) {
       const defaultSources = this.config.sources ?? {};
       const userSources = config.get<Record<string, OriginalUserMappings>>(
-        'keyMappings.sourceOnly',
+        'keyMappings.sources',
         {},
       );
       this.allSourceMappings_ = {};

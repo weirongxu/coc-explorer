@@ -744,7 +744,7 @@ You can use `?` to view all actions of current source
 ```jsonc
 // coc-settings.json
 {
-  "explorer.keyMappings": {
+  "explorer.keyMappings.global": {
     "i": false, // cancel default mapkey
 
     "gk": "expandablePrev",
