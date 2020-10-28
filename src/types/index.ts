@@ -48,7 +48,7 @@ export type ExpandOption = typeof expandOptionList[number];
 
 export const collapseOptionList = ['recursive', 'all'] as const;
 
-export type Colla_SchemaFieldpseOption = typeof collapseOptionList[number];
+export type CollapseOption = typeof collapseOptionList[number];
 
 export type ExplorerOpenOptions = {
   width: number;

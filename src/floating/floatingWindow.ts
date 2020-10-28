@@ -1,6 +1,6 @@
 import { Disposable, workspace, disposeAll, Buffer, Neovim } from 'coc.nvim';
 import { BufferHighlight, Window } from '@chemzqm/neovim';
-import { FloatingCreateOptions, FloatingOpenOptions } from '../types/types';
+import { FloatingCreateOptions, FloatingOpenOptions } from '../types';
 import { closeWinByBufnrNotifier } from '../util';
 import { onEvent } from '../events';
 

@@ -5,7 +5,7 @@ import { gitManager } from '../../../git/manager';
 import { driveList } from '../../../lists/drives';
 import { explorerWorkspaceFolderList } from '../../../lists/workspaceFolders';
 import { parseOriginalActionExp } from '../../../mappings';
-import { RevealStrategy, revealStrategyList } from '../../../types/types';
+import { RevealStrategy, revealStrategyList } from '../../../types';
 import {
   bufnrByWinnrOrWinid,
   fsCopyFileRecursive,

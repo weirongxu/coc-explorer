@@ -6,7 +6,7 @@ import {
   ArgContentWidthTypes,
   ArgFloatingPositions,
 } from './parseArgs';
-import { OpenStrategy } from './types/types';
+import { OpenStrategy } from './types';
 import { config } from './config';
 
 export const argOptions = {
