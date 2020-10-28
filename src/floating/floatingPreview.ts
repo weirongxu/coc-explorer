@@ -2,7 +2,7 @@ import { workspace, Disposable } from 'coc.nvim';
 import { Explorer } from '../explorer';
 import { BaseTreeNode, ExplorerSource } from '../source/source';
 import { Drawn, flatten, supportedFloat, max, min, byteLength } from '../util';
-import { PreviewStrategy, FloatingOpenOptions } from '../types';
+import { PreviewStrategy, FloatingOpenOptions } from '../types/types';
 import { argOptions } from '../argOptions';
 import { FloatingWindow } from './floatingWindow';
 import { onEvent, onBufEnter, onCursorMoved } from '../events';

@@ -1,4 +1,5 @@
 import { SetRequired } from 'type-fest';
+import { Explorer } from './pkg-config';
 
 export const moveStrategyList = ['default', 'insideSource'] as const;
 
@@ -14,7 +15,11 @@ export const revealStrategyList = [
 
 export type RevealStrategy = typeof revealStrategyList[number];
 
-export const openStrategyList = [
+export type OpenStrategy = NonNullable<
+  Explorer['explorer.openAction.strategy']
+>;
+
+export const openStrategyList: OpenStrategy[] = [
   'select',
   'split',
   'split:plain',
@@ -26,9 +31,7 @@ export const openStrategyList = [
   'previousBuffer',
   'previousWindow',
   'sourceWindow',
-] as const;
-
-export type OpenStrategy = typeof openStrategyList[number];
+];
 
 export const previewStrategyList = ['labeling'] as const;
 
@@ -45,7 +48,7 @@ export type ExpandOption = typeof expandOptionList[number];
 
 export const collapseOptionList = ['recursive', 'all'] as const;
 
-export type CollapseOption = typeof collapseOptionList[number];
+export type Colla_SchemaFieldpseOption = typeof collapseOptionList[number];
 
 export type ExplorerOpenOptions = {
   width: number;

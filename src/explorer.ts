@@ -39,7 +39,7 @@ import {
   moveStrategyList,
   PreviewStrategy,
   previewStrategyList,
-} from './types';
+} from './types/types';
 import {
   closeWinByBufnrNotifier,
   enableWrapscan,

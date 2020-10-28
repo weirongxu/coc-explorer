@@ -24,7 +24,7 @@ import {
   OpenStrategy,
   openStrategyList,
   PreviewStrategy,
-} from '../types';
+} from '../types/types';
 import {
   delay,
   drawnWithIndexRange,
