@@ -2,7 +2,7 @@ import pathLib from 'path';
 import { fileColumnRegistrar } from '../fileColumnRegistrar';
 import { debounce } from '../../../../util';
 import { fileHighlights } from '../fileSource';
-import { gitHighlights, gitChanged } from '../../../../git/highlights';
+import { gitHighlights } from '../../../../git/highlights';
 import { HighlightCommand } from '../../../highlightManager';
 import { GitMixedStatus, GitFormat } from '../../../../git/types';
 import { gitManager } from '../../../../git/manager';
@@ -57,7 +57,6 @@ fileColumnRegistrar.registerColumn(
       const updatePaths: Set<string> = new Set();
 
       for (const [fullpath, status] of Object.entries(gitStatuses)) {
-        console.error("hi");
         localHighlightMap[fullpath] = gitColor(status);
         updatePaths.add(fullpath);
 
