@@ -11,7 +11,9 @@ fileColumnRegistrar.registerColumn(
   'child',
   'filename',
   ({ source, subscriptions }) => {
-    const cache = { highlightMap: {} as Record<string, HighlightCommand | null> };
+    const cache = {
+      highlightMap: {} as Record<string, HighlightCommand | null>,
+    };
 
     const load = async () => {
       const [
@@ -24,7 +26,7 @@ fileColumnRegistrar.registerColumn(
         [warningPaths, fileHighlights.diagnosticWarning],
         [errorPaths, fileHighlights.diagnosticError],
       ];
-        
+
       const gitColor = (status: GitMixedStatus) => {
         switch (status.x) {
           case GitFormat.mixed:

@@ -11,8 +11,20 @@ test('byteLength', () => {
 });
 
 test('splitCount', () => {
-  expect(splitCount('--hello=test=hello', '=', 1)).toEqual(['--hello=test=hello']);
-  expect(splitCount('--hello=test=hello', '=')).toEqual(['--hello', 'test=hello']);
-  expect(splitCount('--hello=test=hello', '=', 2)).toEqual(['--hello', 'test=hello']);
-  expect(splitCount('--hello=test=hello', '=', 3)).toEqual(['--hello', 'test', 'hello']);
+  expect(splitCount('--hello=test=hello', '=', 1)).toEqual([
+    '--hello=test=hello',
+  ]);
+  expect(splitCount('--hello=test=hello', '=')).toEqual([
+    '--hello',
+    'test=hello',
+  ]);
+  expect(splitCount('--hello=test=hello', '=', 2)).toEqual([
+    '--hello',
+    'test=hello',
+  ]);
+  expect(splitCount('--hello=test=hello', '=', 3)).toEqual([
+    '--hello',
+    'test',
+    'hello',
+  ]);
 });
