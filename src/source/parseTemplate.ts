@@ -1,24 +1,26 @@
 /**
- * buffer root
+ * Template examples
+ *
+ * ## buffer root
  * '[icon] [title]'
  *
- * buffer
+ * ## buffer
  * '  [selection | 1] [bufnr] [name][modified][readonly] [fullpath]'
  * '[bufname][fullpath][modified][readonly]'
  *
- * file root
+ * ## file root
  * '[icon] [title] [root] [fullpath]'
  * '[fullpath]'
  *
- * file
+ * ## file
  * '[git | 2] [selection | clip | 1] [indent][icon | 1] [diagnosticError][filename growLeft 2 omitCenter 1][readonly] [linkIcon & 1][link]'
  * '[fullpath][link][diagnosticError][size][accessed][modified][created][readonly]'
  *
- * git root
+ * ## git root
  * '[icon] [title] [filepath]'
  * '[filepath][status][stash]'
  *
- * git
+ * ## git
  * '[status] [filepath]'
  * '[status-plain] [filepath]'
  */

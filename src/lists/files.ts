@@ -14,7 +14,7 @@ import { EventEmitter } from 'events';
 import minimatch from 'minimatch';
 import pathLib from 'path';
 import readline from 'readline';
-import { Location, Range } from 'vscode-languageserver-protocol';
+import { Location, Range } from 'vscode-languageserver-types';
 import { executable, isWindows } from '../util';
 
 class Task extends EventEmitter implements ListTask {

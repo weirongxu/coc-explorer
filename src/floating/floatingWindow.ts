@@ -10,6 +10,7 @@ export class FloatingWindow implements Disposable {
   win?: Window;
   borderWin?: Window;
   nvim: Neovim;
+  hlSrcId = workspace.createNameSpace('coc-explorer-float');
 
   static async create(options: FloatingCreateOptions = {}) {
     const nvim = workspace.nvim;
@@ -63,7 +64,7 @@ export class FloatingWindow implements Disposable {
     this.buffer.setOption('modifiable', false, true);
     this.buffer.setOption('readonly', true, true);
     for (const hl of highlights) {
-      void this.buffer.addHighlight(hl);
+      void this.buffer.addHighlight({ ...hl, srcId: this.hlSrcId });
     }
     await this.nvim.resumeNotification();
     const [winid, borderWinid]: [

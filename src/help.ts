@@ -1,7 +1,7 @@
 import { Disposable, workspace, disposeAll } from 'coc.nvim';
 import { conditionActionRules } from './actions/condition';
 import { Explorer } from './explorer';
-import { getMappings } from './mappings';
+import { keyMapping } from './mappings';
 import {
   HighlightPosition,
   HighlightPositionWithLine,
@@ -10,7 +10,7 @@ import {
 import { BaseTreeNode, ExplorerSource } from './source/source';
 import { ViewPainter, ViewRowPainter } from './source/viewPainter';
 import { DrawBlock, Notifier } from './util';
-import { Action, ActionExp } from './actions/mapping';
+import { Action, ActionExp } from './actions/types';
 import { RegisteredAction } from './actions/registered';
 
 const hl = hlGroupManager.linkGroup.bind(hlGroupManager);
@@ -62,7 +62,7 @@ export class HelpPainter {
   async drawHead() {
     await this.drawRow((row) => {
       row.add('Help ');
-      row.add('(use q or <esc> return to explorer)', {
+      row.add('(use q, ? or <esc> return to explorer)', {
         hl: helpHightlights.hint,
       });
     });
@@ -157,7 +157,7 @@ export class HelpPainter {
       });
     });
 
-    const mappings = await getMappings();
+    const mappings = await keyMapping.getMappings(this.source.sourceType);
     for (const [key, actionExp] of Object.entries(mappings)) {
       if (
         !this.anyAction(
@@ -314,7 +314,7 @@ export async function showHelp(
   await explorer.explorerManager.clearMappings();
 
   const disposables: Disposable[] = [];
-  ['<esc>', 'q'].forEach((key) => {
+  ['<esc>', 'q', '?'].forEach((key) => {
     disposables.push(
       workspace.registerLocalKeymap(
         'n',

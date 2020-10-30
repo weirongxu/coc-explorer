@@ -1,16 +1,16 @@
 import { CodeActionProvider } from 'coc.nvim';
 import {
-  TextDocument,
-  Range,
-  CodeActionContext,
   CancellationToken,
+  CodeActionContext,
   Command,
+  Range,
 } from 'vscode-languageserver-protocol';
-import { ExplorerManager } from './explorerManager';
-import { flatten } from './util';
-import { getReverseMappings } from './mappings';
+import { TextDocument } from 'vscode-languageserver-textdocument';
 import { RegisteredAction } from './actions/registered';
+import { ExplorerManager } from './explorerManager';
 import { actionListMru } from './lists/actions';
+import { keyMapping } from './mappings';
+import { flatten } from './util';
 
 function score(list: string[], key: string): number {
   const idx = list.indexOf(key);
@@ -35,7 +35,9 @@ export class ActionMenuCodeActionProvider implements CodeActionProvider {
       return [];
     }
 
-    const reverseMappings = await getReverseMappings();
+    const reverseMappings = await keyMapping.getReversedMappings(
+      source.sourceType,
+    );
     const actions = {
       ...explorer.globalActions,
       ...source.actions,

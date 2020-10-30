@@ -13,7 +13,7 @@ import { GlobalContextVars } from './contextVariables';
 import { DiagnosticManager } from './diagnosticManager';
 import { onBufEnter } from './events';
 import { Explorer } from './explorer';
-import { getMappings } from './mappings';
+import { keyMapping } from './mappings';
 import { Args, ArgPosition } from './parseArgs';
 import { compactI, onError, supportedNvimFloating } from './util';
 
@@ -218,39 +218,22 @@ export class ExplorerManager {
 
   async registerMappings() {
     this.mappings = {};
-    const mappings = await getMappings();
-    Object.entries(mappings).forEach(([key, actionExp]) => {
-      if (!Array.isArray(actionExp) && actionExp.name === 'unmap') {
-        // eslint-disable-next-line no-restricted-properties
-        workspace.showMessage(
-          'The "unmap" option of explorer.keyMappings has been deprecated, use false instead of "unmap"',
-          'warning',
-        );
-        return;
-      }
-
+    (await keyMapping.getAllKeys()).forEach((key) => {
       this.mappings[key] = {};
       (['n', 'v'] as const).forEach((mode) => {
         if (mode === 'v' && ['o', 'j', 'k'].includes(key)) {
           return;
         }
-        const plugKey = `explorer-action-${mode}-${key.replace(
+        const plugKey = `explorer-key-${mode}-${key.replace(
           /\<(.*)\>/,
           '[$1]',
         )}`;
         this.context.subscriptions.push(
-          workspace.registerKeymap(
-            [mode],
-            plugKey,
-            async () => {
-              const count = (await this.nvim.eval('v:count')) as number;
-              const explorer = this.currentExplorer();
-              explorer
-                ?.doActionsWithCount(actionExp, mode, count || 1)
-                .catch(onError);
-            },
-            { sync: true },
-          ),
+          workspace.registerKeymap([mode], plugKey, async () => {
+            const count = (await this.nvim.eval('v:count')) as number;
+            const explorer = this.currentExplorer();
+            explorer?.doActionByKey(key, mode, count || 1).catch(onError);
+          }),
         );
         this.mappings[key][mode] = `<Plug>(coc-${plugKey})`;
       });

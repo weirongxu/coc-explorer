@@ -9,7 +9,7 @@
       "expand": true
     }
   ],
-  "explorer.keyMappings": {
+  "explorer.keyMappings.global": {
     "<space>": "toggleSelection"
   },
   "explorer.presets": {
