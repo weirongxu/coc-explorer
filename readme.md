@@ -729,6 +729,22 @@ Default: <pre><code>"  "</code></pre>
 Default: <pre><code>true</code></pre>
 </details>
 <details>
+<summary><code>explorer.file.filename.colored.enable</code>: Enable colored filenames based on CoC diagnostics and git statuses. type: <code>boolean</code></summary>
+Default: <pre><code>false</code></pre>
+
+Example of more complicated configuration:
+
+```json
+"explorer.file.filename.colored.enable": {
+  "git": false,
+  "diagnosticWarning": false,
+  "diagnosticError": true
+}
+```
+
+The above only enables colored filenames for CoC error diagnostics.
+</details>
+<details>
 <summary><code>explorer.git.command</code>: Git command. type: <code>string</code></summary>
 Default: <pre><code>"git"</code></pre>
 </details>
