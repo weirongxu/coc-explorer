@@ -168,11 +168,12 @@ class KeyMapping {
   private globalMappings_?: Mappings;
   globalMappings() {
     if (!this.globalMappings_) {
-      const deprecatedKeyMappings = config.get<OriginalUserMappings>(
-        'keyMappings',
-        {},
-      );
-      if (Object.keys(deprecatedKeyMappings).length > 2) {
+      const {
+        global: _global,
+        sources: _sources,
+        ...deprecatedKeyMappings
+      } = config.get<OriginalUserMappings>('keyMappings', {});
+      if (Object.keys(deprecatedKeyMappings).length > 0) {
         // eslint-disable-next-line no-restricted-properties
         workspace.showMessage(
           'explorer.keyMappings has been deprecated, please use explorer.keyMappings.global in coc-settings.json',
