@@ -1,7 +1,7 @@
 import commandExists from 'command-exists';
 import pathLib from 'path';
 import { config } from '../config';
-import { execCli, normalizePath, prettyPrint } from '../util';
+import { execCli, normalizePath } from '../util';
 import { GitFormat, GitStatus } from './types';
 
 export class GitCommand {

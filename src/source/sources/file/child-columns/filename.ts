@@ -12,69 +12,98 @@ fileColumnRegistrar.registerColumn(
   'filename',
   ({ source, subscriptions }) => {
     const cache = {
-      highlightMap: {} as Record<string, HighlightCommand | null>,
+      highlightMap: {} as Record<string, HighlightCommand>,
+    };
+
+    const enabledCompletely =
+      source.config.get<boolean>(
+        'file.filename.colored.enable',
+        false,
+        // This check because it might be an object, which is truthy
+      ) === true;
+
+    const enabledGitStatus =
+      source.config.get<boolean>('file.filename.colored.enable.git', false) ||
+      enabledCompletely;
+
+    const enabledWarnStatus =
+      source.config.get<boolean>(
+        'file.filename.colored.enable.diagnosticWarning',
+        false,
+      ) || enabledCompletely;
+
+    const enabledErrorStatus =
+      source.config.get<boolean>(
+        'file.filename.colored.enable.diagnosticError',
+        false,
+      ) || enabledCompletely;
+
+    const gitColor = (status: GitMixedStatus) => {
+      switch (status.x) {
+        case GitFormat.mixed:
+          return gitHighlights.gitMixed;
+        case GitFormat.unmodified:
+          return gitHighlights.gitUnmodified;
+        case GitFormat.modified:
+          return gitHighlights.gitModified;
+        case GitFormat.added:
+          return gitHighlights.gitAdded;
+        case GitFormat.deleted:
+          return gitHighlights.gitDeleted;
+        case GitFormat.renamed:
+          return gitHighlights.gitRenamed;
+        case GitFormat.copied:
+          return gitHighlights.gitCopied;
+        case GitFormat.unmerged:
+          return gitHighlights.gitUnmerged;
+        case GitFormat.untracked:
+          return gitHighlights.gitUntracked;
+        case GitFormat.ignored:
+          return gitHighlights.gitIgnored;
+      }
     };
 
     const load = async () => {
-      const [
-        errorPaths,
-        warningPaths,
-      ] = source.diagnosticManager.getMixedErrorsAndWarns(source.root);
-
-      // Lower entries have higher priority
-      const priority: Array<[Set<string>, HighlightCommand]> = [
-        [warningPaths, fileHighlights.diagnosticWarning],
-        [errorPaths, fileHighlights.diagnosticError],
-      ];
-
-      const gitColor = (status: GitMixedStatus) => {
-        switch (status.x) {
-          case GitFormat.mixed:
-            return gitHighlights.gitMixed;
-          case GitFormat.unmodified:
-            return gitHighlights.gitUnmodified;
-          case GitFormat.modified:
-            return gitHighlights.gitModified;
-          case GitFormat.added:
-            return gitHighlights.gitAdded;
-          case GitFormat.deleted:
-            return gitHighlights.gitDeleted;
-          case GitFormat.renamed:
-            return gitHighlights.gitRenamed;
-          case GitFormat.copied:
-            return gitHighlights.gitCopied;
-          case GitFormat.unmerged:
-            return gitHighlights.gitUnmerged;
-          case GitFormat.untracked:
-            return gitHighlights.gitUntracked;
-          case GitFormat.ignored:
-            return gitHighlights.gitIgnored;
-        }
-      };
-
-      const gitStatuses = await gitManager.getMixedStatuses(source.root);
-
-      const localHighlightMap: Record<string, HighlightCommand | null> = {};
-      const prevMap = cache.highlightMap;
       const updatePaths: Set<string> = new Set();
 
-      for (const [fullpath, status] of Object.entries(gitStatuses)) {
-        localHighlightMap[fullpath] = gitColor(status);
-        updatePaths.add(fullpath);
+      const localHighlightMap: Record<string, HighlightCommand> = {};
+      const prevMap = cache.highlightMap;
 
-        if (fullpath in prevMap) {
-          delete prevMap[fullpath];
-        }
-      }
-
-      for (const [paths, highlight] of priority) {
-        for (const [fullpath, _] of paths.entries()) {
-          localHighlightMap[fullpath] = highlight;
+      if (enabledGitStatus) {
+        const gitStatuses = await gitManager.getMixedStatuses(source.root);
+        for (const [fullpath, status] of Object.entries(gitStatuses)) {
+          localHighlightMap[fullpath] = gitColor(status);
+          updatePaths.add(fullpath);
 
           if (fullpath in prevMap) {
             delete prevMap[fullpath];
           }
-          updatePaths.add(fullpath);
+        }
+      }
+
+      if (enabledErrorStatus || enabledWarnStatus) {
+        const [
+          errorPaths,
+          warningPaths,
+        ] = source.diagnosticManager.getMixedErrorsAndWarns(source.root);
+
+        // Lower entries have higher priority
+        const priority: Array<[Set<string>, HighlightCommand, boolean]> = [
+          [warningPaths, fileHighlights.diagnosticWarning, enabledWarnStatus],
+          [errorPaths, fileHighlights.diagnosticError, enabledErrorStatus],
+        ];
+
+        for (const [paths, highlight, enabled] of priority) {
+          if (enabled) {
+            for (const [fullpath, _] of paths.entries()) {
+              localHighlightMap[fullpath] = highlight;
+              updatePaths.add(fullpath);
+
+              if (fullpath in prevMap) {
+                delete prevMap[fullpath];
+              }
+            }
+          }
         }
       }
 
