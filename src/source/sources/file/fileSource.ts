@@ -68,8 +68,8 @@ export const fileHighlights = {
   timeCreated: hl('TimeCreated', 'Identifier'),
   diagnosticError: hl('FileDiagnosticError', 'CocErrorSign'),
   diagnosticWarning: hl('FileDiagnosticWarning', 'CocWarningSign'),
-  filnameDiagnosticError: hl('FileFilenameDiagnosticError', 'CocErrorSign'),
-  filnameDiagnosticWarning: hl(
+  filenameDiagnosticError: hl('FileFilenameDiagnosticError', 'CocErrorSign'),
+  filenameDiagnosticWarning: hl(
     'FileFilenameDiagnosticWarning',
     'CocWarningSign',
   ),
