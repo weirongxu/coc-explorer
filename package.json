@@ -684,7 +684,7 @@
         "explorer.file.root.template": {
           "description": "Template for root node of file source",
           "type": "string",
-          "default": "[icon] [title] [git] [hidden & 1][root] [fullpath]"
+          "default": "[icon] [title] [git & 1][hidden & 1][root] [fullpath]"
         },
         "explorer.file.root.labelingTemplate": {
           "description": "Labeling template for root node of file source, use for preview when previewAction is labeling",

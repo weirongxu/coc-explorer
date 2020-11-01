@@ -11,9 +11,3 @@ endfunction
 function! CocExplorerActionAsync(name, ...) abort
   return call('CocActionAsync', extend(['runCommand', 'explorer.' . a:name], a:000))
 endfunction
-
-function! CocExplorerDeactivate() abort
-  augroup CocExplorerInternal
-    autocmd!
-  augroup END
-endfunction
