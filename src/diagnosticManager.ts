@@ -24,9 +24,6 @@ export class DiagnosticManager {
           const errorPathCountNum: Record<string, number> = {};
           const warningPathCountNum: Record<string, number> = {};
 
-          const errorPathsNew: Set<string> = new Set();
-          const warningPathsNew: Set<string> = new Set();
-
           cocDiagnosticManager.getDiagnosticList().forEach((diagnostic) => {
             const uri = diagnostic.location.uri;
             const path = Uri.parse(uri).fsPath;
@@ -35,13 +32,11 @@ export class DiagnosticManager {
                 errorPathCountNum[path] = 0;
               }
               errorPathCountNum[path] += 1;
-              errorPathsNew.add(path);
             } else {
               if (!(path in warningPathCountNum)) {
                 warningPathCountNum[path] = 0;
               }
               warningPathCountNum[path] += 1;
-              warningPathsNew.add(path);
             }
           });
 

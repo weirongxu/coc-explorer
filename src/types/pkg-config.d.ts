@@ -527,6 +527,17 @@ export interface Explorer {
    */
   'explorer.file.tabCD'?: boolean;
   /**
+   * Enable colored filenames based on status
+   */
+  'explorer.file.filename.colored.enable'?:
+    | boolean
+    | {
+        diagnosticError?: boolean;
+        diagnosticWarning?: boolean;
+        git?: boolean;
+        [k: string]: unknown;
+      };
+  /**
    * Git command
    */
   'explorer.git.command'?: string;

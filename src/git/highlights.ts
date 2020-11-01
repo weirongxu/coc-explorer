@@ -7,10 +7,6 @@ const gitChangedPath = h('GitPathChange', 'ctermfg=green guifg=green');
 
 const gitContentChange = h('GitContentChange', 'ctermfg=yellow guifg=yellow');
 
-const gitDeleted = h('GitDeleted', 'ctermfg=red guifg=red');
-
-const gitIgnored = h('GitIgnored', 'ctermfg=gray guifg=gray');
-
 export const gitHighlights = {
   gitRenamed: hl('GitRenamed', gitChangedPath.group),
   gitCopied: hl('GitCopied', gitChangedPath.group),
@@ -22,7 +18,7 @@ export const gitHighlights = {
   gitMixed: hl('GitMixed', gitContentChange.group),
   gitModified: hl('GitModified', gitContentChange.group),
 
-  gitDeleted: hl('GitDeleted', gitDeleted.group),
+  gitDeleted: h('GitDeleted', 'ctermfg=red guifg=red'),
 
-  gitIgnored: hl('GitIgnored', gitIgnored.group),
+  gitIgnored: h('GitIgnored', 'ctermfg=gray guifg=gray'),
 };
