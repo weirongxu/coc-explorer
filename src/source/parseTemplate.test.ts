@@ -2,11 +2,19 @@ import { parseTemplate } from './parseTemplate';
 
 describe('parse columns', () => {
   test('buffer root columns', () => {
-    expect(parseTemplate('[icon] [title]')).toEqual([{ column: 'icon' }, ' ', { column: 'title' }]);
+    expect(parseTemplate('[icon] [title]')).toEqual([
+      { column: 'icon' },
+      ' ',
+      { column: 'title' },
+    ]);
   });
 
   test('buffer columns', () => {
-    expect(parseTemplate('[selection | 1] [bufnr] [name][modified][readonly] [fullpath]')).toEqual([
+    expect(
+      parseTemplate(
+        '[selection | 1] [bufnr] [name][modified][readonly] [fullpath]',
+      ),
+    ).toEqual([
       { column: 'selection', modifiers: [{ name: '|', column: '1' }] },
       ' ',
       { column: 'bufnr' },

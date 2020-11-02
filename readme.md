@@ -969,6 +969,15 @@ Type: <pre><code>boolean</code></pre>
 Type: <pre><code>boolean</code></pre>Default: <pre><code>true</code></pre>
 </details>
 <details>
+<summary><code>explorer.file.filename.colored.enable</code>: Enable colored filenames based on status.</summary>
+Type: <pre><code>boolean | {
+    diagnosticError?: boolean;
+    diagnosticWarning?: boolean;
+    git?: boolean;
+    [k: string]: unknown;
+}</code></pre>Default: <pre><code>false</code></pre>
+</details>
+<details>
 <summary><code>explorer.git.command</code>: Git command.</summary>
 Type: <pre><code>string</code></pre>Default: <pre><code>"git"</code></pre>
 </details>

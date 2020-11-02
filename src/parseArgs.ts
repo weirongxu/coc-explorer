@@ -33,7 +33,11 @@ export type ArgOptionRequired<T> = {
 
 export type ArgContentWidthTypes = 'win-width' | 'vim-width';
 
-export type ArgFloatingPositions = 'left-center' | 'right-center' | 'center' | 'center-top';
+export type ArgFloatingPositions =
+  | 'left-center'
+  | 'right-center'
+  | 'center'
+  | 'center-top';
 
 export class Args {
   private static registeredOptions: Map<string, ArgOption<any>> = new Map();

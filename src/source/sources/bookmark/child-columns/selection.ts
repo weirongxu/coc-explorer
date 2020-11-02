@@ -6,7 +6,7 @@ bookmarkColumnRegistrar.registerColumn('child', 'selection', ({ source }) => ({
       drawNode(row, { node }) {
         if (source.isSelectedNode(node)) {
           row.add(source.icons.selected);
-        };
+        }
       },
     };
   },

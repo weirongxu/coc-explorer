@@ -12,18 +12,9 @@
   "engines": {
     "coc": "^0.0.75"
   },
-  "files": [
-    "lib",
-    "autoload",
-    "plugin"
-  ],
-  "keywords": [
-    "coc.nvim",
-    "explorer"
-  ],
-  "activationEvents": [
-    "*"
-  ],
+  "files": ["lib", "autoload", "plugin"],
+  "keywords": ["coc.nvim", "explorer"],
+  "activationEvents": ["*"],
   "contributes": {
     "commands": [
       {
@@ -34,11 +25,7 @@
     "configuration": {
       "definitions": {
         "flexible.position": {
-          "enum": [
-            "left",
-            "right",
-            "center"
-          ]
+          "enum": ["left", "right", "center"]
         },
         "flexible": {
           "type": "object",
@@ -166,10 +153,7 @@
         },
         "explorer.keyMappingMode": {
           "description": "Keymapping mode",
-          "enum": [
-            "none",
-            "default"
-          ],
+          "enum": ["none", "default"],
           "enumDescriptions": [
             "No default mapping",
             "Default mapping"
@@ -185,9 +169,7 @@
                 "$ref": "#/definitions/mapping.actionExp"
               },
               {
-                "enum": [
-                  false
-                ]
+                "enum": [false]
               }
             ]
           },
@@ -226,12 +208,7 @@
         },
         "explorer.position": {
           "description": "Explorer position",
-          "enum": [
-            "left",
-            "right",
-            "tab",
-            "floating"
-          ],
+          "enum": ["left", "right", "tab", "floating"],
           "default": "left"
         },
         "explorer.width": {
@@ -246,22 +223,14 @@
         },
         "explorer.contentWidthType": {
           "description": "Type of content width",
-          "enum": [
-            "win-width",
-            "vim-width"
-          ],
+          "enum": ["win-width", "vim-width"],
           "default": "vim-width"
         },
         "explorer.floating.position": {
           "description": "Position of Explorer for floating window",
           "anyOf": [
             {
-              "enum": [
-                "left-center",
-                "right-center",
-                "center",
-                "center-top"
-              ]
+              "enum": ["left-center", "right-center", "center", "center-top"]
             },
             {
               "type": "array",
@@ -299,16 +268,7 @@
           "items": {
             "type": "string"
           },
-          "default": [
-            "─",
-            "│",
-            "─",
-            "│",
-            "┌",
-            "┐",
-            "┘",
-            "└"
-          ]
+          "default": ["─", "│", "─", "│", "┌", "┐", "┘", "└"]
         },
         "explorer.floating.border.title": {
           "type": "string",
@@ -328,12 +288,7 @@
           "description": "Automatically expand options",
           "type": "array",
           "items": {
-            "enum": [
-              "recursive",
-              "compact",
-              "uncompact",
-              "recursiveSingle"
-            ],
+            "enum": ["recursive", "compact", "uncompact", "recursiveSingle"],
             "enumDescriptions": [
               "Recursively",
               "Single child folders will be compressed in a combined node",
@@ -341,25 +296,16 @@
               "Expand single child folder recursively"
             ]
           },
-          "default": [
-            "compact",
-            "uncompact"
-          ]
+          "default": ["compact", "uncompact"]
         },
         "explorer.autoCollapseOptions": {
           "description": "Automatically collapse options",
           "type": "array",
           "items": {
-            "enum": [
-              "recursive"
-            ],
-            "enumDescriptions": [
-              "Recursively"
-            ]
+            "enum": ["recursive"],
+            "enumDescriptions": ["Recursively"]
           },
-          "default": [
-            "recursive"
-          ]
+          "default": ["recursive"]
         },
         "explorer.activeMode": {
           "description": "Render explorer when after open or save buffer",
@@ -373,9 +319,7 @@
         },
         "explorer.previewAction.strategy": {
           "description": "Strategy for preview action",
-          "enum": [
-            "labeling"
-          ],
+          "enum": ["labeling"],
           "default": "labeling"
         },
         "explorer.previewAction.onHover": {
@@ -435,13 +379,8 @@
             }
           },
           "default": {
-            "buftypes": [
-              "terminal"
-            ],
-            "filetypes": [
-              "vista_kind",
-              "qf"
-            ],
+            "buftypes": ["terminal"],
+            "filetypes": ["vista_kind", "qf"],
             "floatingWindows": true
           }
         },
@@ -474,19 +413,12 @@
           ],
           "items": {
             "type": "object",
-            "required": [
-              "name",
-              "expand"
-            ],
+            "required": ["name", "expand"],
             "properties": {
               "name": {
                 "description": "Explorer source name",
                 "type": "string",
-                "enum": [
-                  "bookmark",
-                  "buffer",
-                  "file"
-                ]
+                "enum": ["bookmark", "buffer", "file"]
               },
               "expand": {
                 "description": "Whether to expand it by default",
@@ -516,10 +448,7 @@
               "items": {
                 "type": "object",
                 "description": "Icon for an extension group",
-                "required": [
-                  "code",
-                  "color"
-                ],
+                "required": ["code", "color"],
                 "properties": {
                   "code": {
                     "type": "string",
@@ -646,16 +575,9 @@
           "description": "Custom hidden rules for file",
           "type": "object",
           "default": {
-            "extensions": [
-              "o",
-              "a",
-              "obj",
-              "pyc"
-            ],
+            "extensions": ["o", "a", "obj", "pyc"],
             "filenames": [],
-            "patternMatches": [
-              "^\\."
-            ]
+            "patternMatches": ["^\\."]
           },
           "properties": {
             "extensions": {
@@ -813,6 +735,29 @@
           "description": "Change tab directory when performing the cd action",
           "type": "boolean",
           "default": true
+        },
+        "explorer.file.filename.colored.enable": {
+          "description": "Enable colored filenames based on status",
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "object",
+              "properties": {
+                "diagnosticError": {
+                  "type": "boolean"
+                },
+                "diagnosticWarning": {
+                  "type": "boolean"
+                },
+                "git": {
+                  "type": "boolean"
+                }
+              }
+            }
+          ],
+          "default": false
         },
         "explorer.git.command": {
           "description": "Git command",
