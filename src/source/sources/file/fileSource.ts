@@ -49,7 +49,7 @@ export const fileHighlights = {
   rootName: hl('FileRootName', 'Identifier'),
   expandIcon: hl('FileExpandIcon', 'Directory'),
   fullpath: hl('FileFullpath', 'Comment'),
-  filename: hl('FileFilename', 'Ignore'),
+  filename: hl('FileFilename', 'None'),
   directory: hl('FileDirectory', 'Directory'),
   directoryExpanded: hl('FileDirectoryExpanded', 'Directory'),
   directoryCollapsed: hl('FileDirectoryCollapsed', 'Directory'),
