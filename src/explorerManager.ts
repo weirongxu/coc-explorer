@@ -10,7 +10,6 @@ import { argOptions } from './argOptions';
 import { BufManager } from './bufManager';
 import { buildExplorerConfig, configLocal } from './config';
 import { GlobalContextVars } from './contextVariables';
-import { DiagnosticManager } from './diagnosticManager';
 import { onBufEnter } from './events';
 import { Explorer } from './explorer';
 import { keyMapping } from './mappings';
@@ -58,7 +57,6 @@ export class ExplorerManager {
   rootPathRecords: Set<string> = new Set();
   nvim = workspace.nvim;
   bufManager: BufManager;
-  diagnosticManager: DiagnosticManager;
 
   events = new HelperEventEmitter<{
     didAutoload: () => void;
@@ -107,7 +105,6 @@ export class ExplorerManager {
     );
 
     this.bufManager = new BufManager(this.context);
-    this.diagnosticManager = new DiagnosticManager(this.context);
   }
 
   async currentTabId() {

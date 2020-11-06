@@ -1,8 +1,10 @@
 import { Disposable, disposeAll, workspace } from 'coc.nvim';
 import pathLib from 'path';
+import { config } from '../config';
 import { internalEvents, onEvent } from '../events';
-import { FileSource } from '../source/sources/file/fileSource';
-import { debounce, onError } from '../util';
+import { ExplorerManager } from '../explorerManager';
+import { BaseTreeNode, ExplorerSource } from '../source/source';
+import { debounce, mapGetWithDefault, onError, sum } from '../util';
 import { GitCommand } from './command';
 import {
   GitFormat,
@@ -15,57 +17,128 @@ const statusEqual = (a: GitMixedStatus, b: GitMixedStatus) => {
   return a.x === b.x && a.y === b.y;
 };
 
-type BindType = 'root' | 'child';
-
-class FileSourceGitBinding implements Disposable {
-  public refCounts: Record<BindType, number> = {
-    root: 0,
-    child: 0,
-  };
-
+class Binder {
+  protected sourcesBinding: Map<
+    ExplorerSource<BaseTreeNode<any>>,
+    { refCount: number }
+  > = new Map();
   private showIgnored: boolean;
-  private prevStatuses = {} as Record<string, GitMixedStatus>;
-  private disposables: Disposable[] = [];
+  private prevStatuses: Record<string, GitMixedStatus> = {};
+  private registerForSourceDisposables: Disposable[] = [];
+  private registerDisposables: Disposable[] = [];
+  private inited = false;
 
-  constructor(private source: FileSource) {
-    this.disposables.push(
-      source.events.on('loaded', async (node) => {
-        const root =
-          'isRoot' in node
-            ? source.root
-            : node.directory
-            ? node.fullpath
-            : pathLib.dirname(node.fullpath);
-        await this.reload(root, true);
-      }),
+  explorerManager_?: ExplorerManager;
+  get explorerManager() {
+    if (!this.explorerManager_) {
+      throw new Error('explorerManager not initialized yet');
+    }
+    return this.explorerManager_;
+  }
+
+  get sources() {
+    return Array.from(this.sourcesBinding.keys());
+  }
+
+  get refTotalCount() {
+    return sum(Array.from(this.sourcesBinding.values()).map((b) => b.refCount));
+  }
+
+  constructor() {
+    const deprecatedShowIgnored = config.get<boolean>(
+      'file.column.git.showIgnored',
+    );
+    if (deprecatedShowIgnored !== undefined) {
+      // eslint-disable-next-line no-restricted-properties
+      workspace.showMessage(
+        'explorer.file.column.git.showIgnored has been deprecated, please use explorer.git.showIgnored in coc-settings.json',
+        'warning',
+      );
+      this.showIgnored = deprecatedShowIgnored;
+    } else {
+      this.showIgnored = config.get<boolean>('git.showIgnored')!;
+    }
+  }
+
+  protected init_(source: ExplorerSource<BaseTreeNode<any>>) {
+    if (!this.inited) {
+      this.inited = true;
+      this.explorerManager_ = source.explorer.explorerManager;
+    }
+  }
+
+  bind(source: ExplorerSource<BaseTreeNode<any>>) {
+    this.init_(source);
+    const binding = mapGetWithDefault(this.sourcesBinding, source, () => ({
+      refCount: 0,
+    }));
+    binding.refCount += 1;
+    if (binding.refCount === 1) {
+      this.registerForSourceDisposables = this.registerForSource(source);
+    }
+    if (this.refTotalCount === 1) {
+      this.registerDisposables = this.register();
+    }
+    return Disposable.create(() => {
+      binding.refCount -= 1;
+      if (binding.refCount === 0) {
+        disposeAll(this.registerForSourceDisposables);
+        this.registerForSourceDisposables = [];
+      }
+      if (this.refTotalCount === 0) {
+        disposeAll(this.registerDisposables);
+        this.registerDisposables = [];
+      }
+    });
+  }
+
+  protected register() {
+    return [
+      internalEvents.on(
+        'CocGitStatusChange',
+        debounce(1000, async () => {
+          await this.reload(this.sources, workspace.cwd, false);
+        }),
+      ),
       onEvent(
         'BufWritePost',
         debounce(1000, async (bufnr) => {
-          const fullpath = source.bufManager.getBufferNode(bufnr)?.fullpath;
+          const fullpath = this.explorerManager.bufManager.getBufferNode(bufnr)
+            ?.fullpath;
           if (fullpath) {
             const filename = pathLib.basename(fullpath);
             const dirname = pathLib.dirname(fullpath);
             const isReloadAll = filename === '.gitignore';
-            await this.reload(dirname, isReloadAll);
+            await this.reload(this.sources, dirname, isReloadAll);
           }
         }),
       ),
-      internalEvents.on(
-        'CocGitStatusChange',
-        debounce(1000, async () => {
-          await this.reload(workspace.cwd, false);
-        }),
-      ),
-    );
-
-    this.showIgnored = source.getColumnConfig<boolean>('git.showIgnored')!;
+    ];
   }
 
-  dispose() {
-    disposeAll(this.disposables);
+  protected registerForSource(
+    source: ExplorerSource<BaseTreeNode<any, string>>,
+  ) {
+    return [
+      source.events.on('loaded', async (node) => {
+        const directory =
+          'isRoot' in node
+            ? source.root
+            : node.expandable
+            ? node.fullpath
+            : node.fullpath && pathLib.dirname(node.fullpath);
+        if (directory) {
+          await this.reload([source], directory, true);
+        }
+      }),
+    ];
   }
 
-  async reload(directory: string, isReloadAll: boolean) {
+  async reload(
+    sources: ExplorerSource<any>[],
+    directory: string,
+    isReloadAll: boolean,
+  ) {
     await gitManager.reload(directory, this.showIgnored);
 
     // render paths
@@ -94,7 +167,9 @@ class FileSourceGitBinding implements Disposable {
       }
     }
 
-    await this.source.renderPaths(updatePaths);
+    for (const source of sources) {
+      await source.renderPaths(updatePaths);
+    }
     this.prevStatuses = statuses;
   }
 }
@@ -121,7 +196,7 @@ class GitManager {
     string,
     { directories: string[]; files: string[] }
   > = {};
-  private fileSourceBindings: Map<FileSource, FileSourceGitBinding> = new Map();
+  private binder = new Binder();
 
   async getGitRoot(directory: string): Promise<string | undefined> {
     if (directory in this.rootCache) {
@@ -256,24 +331,29 @@ class GitManager {
     }
   }
 
-  bindFileSource(source: FileSource, type: BindType) {
-    const binding = (() => {
-      const binding = this.fileSourceBindings.get(source);
-      if (!binding) {
-        const binding = new FileSourceGitBinding(source);
-        this.fileSourceBindings.set(source, binding);
-        return binding;
-      }
-      return binding;
-    })();
-    binding.refCounts[type] += 1;
-    return Disposable.create(() => {
-      binding.refCounts[type] -= 1;
-      if (binding.refCounts.root <= 0 && binding.refCounts.child <= 0) {
-        binding.dispose();
-        this.fileSourceBindings.delete(source);
-      }
-    });
+  /**
+   * Automatically update column, when git reload
+   *
+   * @example
+   * ```typescript
+   * columnRegistrar.registerColumn(
+   *   'columnType',
+   *   'columnName',
+   *   ({ source, subscriptions }) => {
+   *     return {
+   *       async init() {
+   *         subscriptions.push(gitManager.bindColumn(source));
+   *       },
+   *       async draw() {
+   *         ...
+   *       },
+   *     };
+   *   },
+   * );
+   * ```
+   */
+  bindColumn(source: ExplorerSource<any>) {
+    return this.binder.bind(source);
   }
 
   async getMixedStatuses(path: string) {
@@ -289,6 +369,7 @@ class GitManager {
     fullpath: string,
     isDirectory = false,
   ): GitMixedStatus | undefined {
+    // TODO simplify
     const statusPair = Object.entries(this.mixedStatusCache)
       .sort((a, b) => b[0].localeCompare(a[0]))
       .find(([rootPath]) => fullpath.startsWith(rootPath));

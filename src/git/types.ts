@@ -15,7 +15,13 @@ export type GitFormatForY = Exclude<GitFormat, GitFormat.ignored>;
 
 export type GitStatus = {
   fullpath: string;
+  /**
+   * staged format
+   */
   x: GitFormat;
+  /**
+   * not staged format
+   */
   y: GitFormatForY;
 
   added: boolean;
@@ -31,7 +37,13 @@ export type GitStatus = {
 };
 
 export type GitMixedStatus = {
+  /**
+   * staged format
+   */
   x: GitFormat;
+  /**
+   * not staged format
+   */
   y: GitFormatForY;
 };
 

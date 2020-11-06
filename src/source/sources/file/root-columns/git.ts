@@ -30,7 +30,7 @@ fileColumnRegistrar.registerColumn(
 
     return {
       init() {
-        subscriptions.push(gitManager.bindFileSource(source, 'root'));
+        subscriptions.push(gitManager.bindColumn(source));
       },
       async available() {
         return await gitManager.cmd.available();

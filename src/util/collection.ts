@@ -16,6 +16,19 @@ export {
 export const compactI = <T>(arr: (T | undefined | null | void)[]): T[] =>
   arr.filter((it): it is T => it !== undefined && it !== null);
 
+export function mapGetWithDefault<K, V, M extends Map<K, V>>(
+  map: M,
+  key: K,
+  fetchDefault: () => V,
+) {
+  let v = map.get(key);
+  if (!v) {
+    v = fetchDefault();
+    map.set(key, v);
+  }
+  return v;
+}
+
 export function scanIndexPrev<T>(
   list: T[],
   startIndex: number,

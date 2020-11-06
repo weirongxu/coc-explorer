@@ -25,10 +25,6 @@ import { initFileActions } from './fileActions';
 import { fileColumnRegistrar } from './fileColumnRegistrar';
 import './load';
 
-export type RenderPathsOptions = {
-  withParent?: boolean;
-};
-
 export interface FileNode extends BaseTreeNode<FileNode, 'root' | 'child'> {
   name: string;
   fullpath: string;
@@ -438,25 +434,6 @@ export class FileSource extends ExplorerSource<FileNode> {
     );
 
     return this.sortFiles(files.filter((r): r is FileNode => !!r));
-  }
-
-  async renderPaths(
-    paths: Set<string> | string[],
-    renderPathsOptions: RenderPathsOptions = {},
-  ) {
-    return (await this.renderPathsNotifier(paths, renderPathsOptions))?.run();
-  }
-
-  async renderPathsNotifier(
-    paths: Set<string> | string[],
-    { withParent: withParnt = false }: RenderPathsOptions = {},
-  ) {
-    const pathArr = Array.from(paths);
-    const filterFn: (node: FileNode) => boolean = withParnt
-      ? (node) => pathArr.some((path) => path.startsWith(node.fullpath))
-      : (node) => pathArr.includes(node.fullpath);
-    const nodes = this.flattenedNodes.filter(filterFn);
-    return this.renderNodesNotifier(nodes);
   }
 }
 

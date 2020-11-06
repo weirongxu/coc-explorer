@@ -1,4 +1,5 @@
 import { hlGroupManager } from '../source/highlightManager';
+import { GitFormat, GitMixedStatus } from './types';
 
 const hl = hlGroupManager.linkGroup.bind(hlGroupManager);
 const h = hlGroupManager.group.bind(hlGroupManager);
@@ -12,7 +13,6 @@ export const gitHighlights = {
   gitCopied: hl('GitCopied', gitChangedPath.group),
   gitAdded: hl('GitAdded', gitChangedPath.group),
   gitUntracked: hl('GitUntracked', gitChangedPath.group),
-  gitUnmodified: hl('GitUnmodified', gitChangedPath.group),
   gitUnmerged: hl('GitUnmerged', gitChangedPath.group),
 
   gitMixed: hl('GitMixed', gitContentChange.group),
@@ -21,4 +21,33 @@ export const gitHighlights = {
   gitDeleted: h('GitDeleted', 'ctermfg=red guifg=red'),
 
   gitIgnored: h('GitIgnored', 'ctermfg=gray guifg=gray'),
+};
+
+const getFormatHighlight = (format: GitFormat) => {
+  switch (format) {
+    case GitFormat.mixed:
+      return gitHighlights.gitMixed;
+    case GitFormat.modified:
+      return gitHighlights.gitModified;
+    case GitFormat.added:
+      return gitHighlights.gitAdded;
+    case GitFormat.deleted:
+      return gitHighlights.gitDeleted;
+    case GitFormat.renamed:
+      return gitHighlights.gitRenamed;
+    case GitFormat.copied:
+      return gitHighlights.gitCopied;
+    case GitFormat.unmerged:
+      return gitHighlights.gitUnmerged;
+    case GitFormat.untracked:
+      return gitHighlights.gitUntracked;
+  }
+};
+
+export const getGitHighlight = (status: GitMixedStatus) => {
+  if (status.x === GitFormat.ignored) {
+    return gitHighlights.gitIgnored;
+  }
+
+  return getFormatHighlight(status.x) || getFormatHighlight(status.y);
 };

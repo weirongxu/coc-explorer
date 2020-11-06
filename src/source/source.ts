@@ -43,7 +43,6 @@ export namespace Options {
     /**
      * Force
      * @default false
-     * @type {boolean}
      */
     force?: boolean;
   }
@@ -52,70 +51,60 @@ export namespace Options {
     /**
      * Recursive for expanded nodes
      * @default false
-     * @type {boolean}
      */
     recursiveExpanded?: boolean;
   }
-
-  export type Render<TreeNode extends BaseTreeNode<any>> = {
-    node?: TreeNode;
-  } & Force;
 
   export type ExpandNode = {
     /**
      * Recursive
      * @default false
-     * @type {boolean}
      */
     recursive?: boolean;
     /**
      * Single child folders will be compressed in a combined node
      * @default Depends on "explorer.autoExpandOptions" settings
-     * @type {boolean}
      */
     compact?: boolean;
     /**
      * Reset the combined node
      * @default Depends on "explorer.autoExpandOptions" settings
-     * @type {boolean}
      */
     uncompact?: boolean;
     /**
      * Expand single child folder recursively
      * @default Depends on "explorer.autoExpandOptions" settings
-     * @type {boolean}
      */
     recursiveSingle?: boolean;
     /**
      * Automatically expand maximum depth of one time
      * @default Depends on "explorer.autoExpandMaxDepth" settings
-     * @type {number}
      */
     depth?: number;
     /**
      * Render
      * @default true
-     * @type {boolean}
      */
     render?: boolean;
     /**
      * Load children
      * @default true
-     * @type {boolean}
      */
     load?: boolean;
   };
-}
 
-export type ExpandNodeOptions = {
-  recursive?: boolean;
-  compact?: boolean;
-  uncompact?: boolean;
-  recursiveSingle?: boolean;
-  depth?: number;
-  render?: boolean;
-  load?: boolean;
-};
+  export type Render<TreeNode extends BaseTreeNode<any>> = {
+    node?: TreeNode;
+  } & Force;
+
+  export type RenderPaths = {
+    /**
+     * render parent paths
+     * @default false
+     */
+    withParent?: boolean;
+  };
+}
 
 export type NodeUid = string;
 
@@ -126,6 +115,7 @@ export interface BaseTreeNode<
   type: Type;
   isRoot?: boolean;
   uid: NodeUid;
+  fullpath?: string;
   level?: number;
   expandable?: boolean;
   parent?: TreeNode;
@@ -154,7 +144,6 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>>
   nvim = workspace.nvim;
   context: ExtensionContext;
   bufManager = this.explorer.explorerManager.bufManager;
-  diagnosticManager = this.explorer.explorerManager.diagnosticManager;
   events = new HelperEventEmitter<{
     loaded: (node: TreeNode) => void | Promise<void>;
   }>(onError);
@@ -1552,5 +1541,28 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>>
         nvim.command('redraw', true);
       }
     });
+  }
+
+  async renderPaths(
+    paths: Set<string> | string[],
+    renderPathsOptions: Options.RenderPaths = {},
+  ) {
+    return (await this.renderPathsNotifier(paths, renderPathsOptions))?.run();
+  }
+
+  async renderPathsNotifier(
+    paths: Set<string> | string[],
+    { withParent: withParnt = false }: Options.RenderPaths = {},
+  ) {
+    const pathArr = Array.from(paths);
+    type FilterFn = (node: TreeNode) => boolean;
+    const filterFn: FilterFn = withParnt
+      ? (node) =>
+          pathArr.some(
+            (path) => !!node.fullpath && path.startsWith(node.fullpath),
+          )
+      : (node) => !!node.fullpath && pathArr.includes(node.fullpath);
+    const nodes = this.flattenedNodes.filter(filterFn);
+    return this.renderNodesNotifier(nodes);
   }
 }

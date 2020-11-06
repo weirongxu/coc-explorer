@@ -1,20 +1,17 @@
 import pathLib from 'path';
 import { fileColumnRegistrar } from '../fileColumnRegistrar';
-import { debounce } from '../../../../util';
 import { fileHighlights } from '../fileSource';
-import { gitHighlights } from '../../../../git/highlights';
-import { HighlightCommand } from '../../../highlightManager';
-import { GitMixedStatus, GitFormat } from '../../../../git/types';
+import { getGitHighlight } from '../../../../git/highlights';
 import { gitManager } from '../../../../git/manager';
+import {
+  diagnosticManager,
+  DiagnosticType,
+} from '../../../../diagnosticManager';
 
 fileColumnRegistrar.registerColumn(
   'child',
   'filename',
   ({ source, subscriptions }) => {
-    const cache = {
-      highlightMap: {} as Record<string, HighlightCommand>,
-    };
-
     const enabledCompletely =
       source.config.get<boolean>(
         'file.filename.colored.enable',
@@ -38,95 +35,42 @@ fileColumnRegistrar.registerColumn(
         false,
       ) || enabledCompletely;
 
-    const gitColor = (status: GitMixedStatus) => {
-      switch (status.x) {
-        case GitFormat.mixed:
-          return gitHighlights.gitMixed;
-        case GitFormat.unmodified:
-          return gitHighlights.gitUnmodified;
-        case GitFormat.modified:
-          return gitHighlights.gitModified;
-        case GitFormat.added:
-          return gitHighlights.gitAdded;
-        case GitFormat.deleted:
-          return gitHighlights.gitDeleted;
-        case GitFormat.renamed:
-          return gitHighlights.gitRenamed;
-        case GitFormat.copied:
-          return gitHighlights.gitCopied;
-        case GitFormat.unmerged:
-          return gitHighlights.gitUnmerged;
-        case GitFormat.untracked:
-          return gitHighlights.gitUntracked;
-        case GitFormat.ignored:
-          return gitHighlights.gitIgnored;
+    const getHighlight = (fullpath: string, isDirectory: boolean) => {
+      if (enabledErrorStatus) {
+        const error = diagnosticManager.getMixedError(fullpath);
+        if (error) {
+          return fileHighlights.diagnosticError;
+        }
       }
-    };
-
-    const load = async () => {
-      const updatePaths: Set<string> = new Set();
-
-      const localHighlightMap: Record<string, HighlightCommand> = {};
-      const prevMap = cache.highlightMap;
-
+      if (enabledWarnStatus) {
+        const warning = diagnosticManager.getMixedWarning(fullpath);
+        if (warning) {
+          return fileHighlights.diagnosticWarning;
+        }
+      }
       if (enabledGitStatus) {
-        const gitStatuses = await gitManager.getMixedStatuses(source.root);
-        for (const [fullpath, status] of Object.entries(gitStatuses)) {
-          localHighlightMap[fullpath] = gitColor(status);
-          updatePaths.add(fullpath);
-
-          if (fullpath in prevMap) {
-            delete prevMap[fullpath];
-          }
+        const status = gitManager.getMixedStatus(fullpath);
+        if (status) {
+          return getGitHighlight(status);
         }
       }
-
-      if (enabledErrorStatus || enabledWarnStatus) {
-        const [
-          errorPaths,
-          warningPaths,
-        ] = source.diagnosticManager.getMixedErrorsAndWarns(source.root);
-
-        // Lower entries have higher priority
-        const priority: Array<[Set<string>, HighlightCommand, boolean]> = [
-          [warningPaths, fileHighlights.diagnosticWarning, enabledWarnStatus],
-          [errorPaths, fileHighlights.diagnosticError, enabledErrorStatus],
-        ];
-
-        for (const [paths, highlight, enabled] of priority) {
-          if (enabled) {
-            for (const [fullpath, _] of paths.entries()) {
-              localHighlightMap[fullpath] = highlight;
-              updatePaths.add(fullpath);
-
-              if (fullpath in prevMap) {
-                delete prevMap[fullpath];
-              }
-            }
-          }
-        }
-      }
-
-      for (const fullpath of Object.keys(prevMap)) {
-        updatePaths.add(fullpath);
-      }
-
-      cache.highlightMap = localHighlightMap;
-      return updatePaths;
+      return isDirectory ? fileHighlights.directory : fileHighlights.filename;
     };
 
-    const reload = async () => {
-      await source.renderPaths(await load());
-    };
+    const diagnosticTypes: DiagnosticType[] = [];
+    if (enabledErrorStatus) {
+      diagnosticTypes.push('error');
+    }
+    if (enabledWarnStatus) {
+      diagnosticTypes.push('warning');
+    }
 
     return {
       init() {
         subscriptions.push(
-          source.diagnosticManager.onChange(debounce(1000, reload)),
+          diagnosticManager.bindColumn(source, diagnosticTypes),
+          gitManager.bindColumn(source),
         );
-      },
-      async load() {
-        await load();
       },
       draw() {
         return {
@@ -137,24 +81,19 @@ fileColumnRegistrar.registerColumn(
                 row.add(
                   compactStore.nodes.map((n) => n.name).join(pathLib.sep),
                   {
-                    hl:
-                      cache.highlightMap[node.fullpath] ||
-                      fileHighlights.directory,
+                    hl: getHighlight(node.fullpath, true),
                     unicode: true,
                   },
                 );
               } else {
                 row.add(node.name, {
-                  hl:
-                    cache.highlightMap[node.fullpath] ||
-                    fileHighlights.directory,
+                  hl: getHighlight(node.fullpath, true),
                   unicode: true,
                 });
               }
             } else {
               row.add(node.name, {
-                hl:
-                  cache.highlightMap[node.fullpath] || fileHighlights.filename,
+                hl: getHighlight(node.fullpath, false),
                 unicode: true,
               });
             }

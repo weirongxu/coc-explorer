@@ -659,11 +659,6 @@
           "description": "A file's deletion has been added to the staging area",
           "default": "✗"
         },
-        "explorer.file.column.git.showIgnored": {
-          "description": "Show ignored files in git column",
-          "type": "boolean",
-          "default": false
-        },
         "explorer.file.column.git.icon.mixed": {
           "description": "Icon for git mixed status",
           "type": "string",
@@ -763,6 +758,11 @@
           "description": "Git command",
           "type": "string",
           "default": "git"
+        },
+        "explorer.git.showIgnored": {
+          "description": "Show ignored files in git",
+          "type": "boolean",
+          "default": false
         },
         "explorer.debug": {
           "description": "Enable debug",
