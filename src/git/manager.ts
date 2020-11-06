@@ -128,7 +128,7 @@ class Binder {
             ? node.fullpath
             : node.fullpath && pathLib.dirname(node.fullpath);
         if (directory) {
-          await this.reload([source], directory, true);
+          await this.reload([], directory, true);
         }
       }),
     ];
