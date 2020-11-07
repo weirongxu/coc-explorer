@@ -1,3 +1,4 @@
+import { sleep } from 'coc-helper';
 import { Disposable, disposeAll, workspace } from 'coc.nvim';
 import pathLib from 'path';
 import { config } from '../config';
@@ -128,7 +129,19 @@ class Binder {
             ? node.fullpath
             : node.fullpath && pathLib.dirname(node.fullpath);
         if (directory) {
-          await this.reload([], directory, true);
+          let isTimeout = false;
+          await Promise.race([
+            (async () => {
+              await sleep(200);
+              isTimeout = true;
+            })(),
+            (async () => {
+              const renderPaths = await this.reload([], directory, true);
+              if (isTimeout) {
+                await source.renderPaths(renderPaths);
+              }
+            })(),
+          ]);
         }
       }),
     ];
@@ -170,7 +183,9 @@ class Binder {
     for (const source of sources) {
       await source.renderPaths(updatePaths);
     }
+
     this.prevStatuses = statuses;
+    return updatePaths;
   }
 }
 
