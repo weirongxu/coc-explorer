@@ -463,10 +463,6 @@ export interface Explorer {
    */
   'explorer.file.column.root.git.icon.deleted'?: string;
   /**
-   * Show ignored files in git column
-   */
-  'explorer.file.column.git.showIgnored'?: boolean;
-  /**
    * Icon for git mixed status
    */
   'explorer.file.column.git.icon.mixed'?: string;
@@ -538,9 +534,17 @@ export interface Explorer {
         [k: string]: unknown;
       };
   /**
+   * Enable git
+   */
+  'explorer.git.enable'?: boolean;
+  /**
    * Git command
    */
   'explorer.git.command'?: string;
+  /**
+   * Show ignored files in git
+   */
+  'explorer.git.showIgnored'?: boolean;
   /**
    * Enable debug
    */

@@ -854,7 +854,7 @@ Type: <pre><code>boolean</code></pre>Default: <pre><code>false</code></pre>
 </details>
 <details>
 <summary><code>explorer.file.root.template</code>: Template for root node of file source.</summary>
-Type: <pre><code>string</code></pre>Default: <pre><code>"[icon] [title] [git] [hidden & 1][root] [fullpath]"</code></pre>
+Type: <pre><code>string</code></pre>Default: <pre><code>"[icon] [title] [git & 1][hidden & 1][root] [fullpath]"</code></pre>
 </details>
 <details>
 <summary><code>explorer.file.root.labelingTemplate</code>: Labeling template for root node of file source, use for preview when previewAction is labeling.</summary>
@@ -903,10 +903,6 @@ Type: <pre><code>string</code></pre>Default: <pre><code>"→"</code></pre>
 <details>
 <summary><code>explorer.file.column.root.git.icon.deleted</code>: A file's deletion has been added to the staging area.</summary>
 Type: <pre><code>string</code></pre>Default: <pre><code>"✗"</code></pre>
-</details>
-<details>
-<summary><code>explorer.file.column.git.showIgnored</code>: Show ignored files in git column.</summary>
-Type: <pre><code>boolean</code></pre>Default: <pre><code>false</code></pre>
 </details>
 <details>
 <summary><code>explorer.file.column.git.icon.mixed</code>: Icon for git mixed status.</summary>
@@ -978,8 +974,16 @@ Type: <pre><code>boolean | {
 }</code></pre>Default: <pre><code>false</code></pre>
 </details>
 <details>
+<summary><code>explorer.git.enable</code>: Enable git.</summary>
+Type: <pre><code>boolean</code></pre>Default: <pre><code>true</code></pre>
+</details>
+<details>
 <summary><code>explorer.git.command</code>: Git command.</summary>
 Type: <pre><code>string</code></pre>Default: <pre><code>"git"</code></pre>
+</details>
+<details>
+<summary><code>explorer.git.showIgnored</code>: Show ignored files in git.</summary>
+Type: <pre><code>boolean</code></pre>Default: <pre><code>false</code></pre>
 </details>
 <details>
 <summary><code>explorer.debug</code>: Enable debug.</summary>

@@ -1,7 +1,6 @@
 import Pkg from '../package.json';
 import fs from 'fs';
 import { JSONSchema4, JSONSchema7, JSONSchema7Type } from 'json-schema';
-import { compile } from 'json-schema-to-typescript';
 import ts from 'typescript';
 import util from 'util';
 import pathLib from 'path';

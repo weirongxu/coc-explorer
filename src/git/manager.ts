@@ -368,7 +368,11 @@ class GitManager {
    * ```
    */
   bindColumn(source: ExplorerSource<any>) {
-    return this.binder.bind(source);
+    const enabled = config.get<boolean>('git.enable')!;
+    if (enabled) {
+      return this.binder.bind(source);
+    }
+    return Disposable.create(() => {});
   }
 
   async getMixedStatuses(path: string) {
