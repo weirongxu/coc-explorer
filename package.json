@@ -637,11 +637,6 @@
           "type": "boolean",
           "default": true
         },
-        "explorer.file.diagnosticCountMax": {
-          "description": "Maximum count of diagnostic column",
-          "type": "integer",
-          "default": 99
-        },
         "explorer.file.hiddenRules": {
           "description": "Custom hidden rules for file",
           "type": "object",
@@ -761,6 +756,11 @@
               ]
             }
           ]
+        },
+        "explorer.diagnostic.displayMax": {
+          "description": "Maximum count of diagnostic column",
+          "type": "integer",
+          "default": 99
         },
         "explorer.git.enable": {
           "description": "Enable git",

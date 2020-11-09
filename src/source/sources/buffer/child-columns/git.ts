@@ -12,10 +12,14 @@ bufferColumnRegistrar.registerColumn(
     const icons = getStatusIcons(source.config);
 
     const getHighlight = (fullpath: string, staged: boolean) => {
-      return (
-        filenameHighlight.getHighlight(fullpath, ['git']) ??
-        (staged ? gitHighlights.gitStaged : gitHighlights.gitUnstaged)
-      );
+      if (staged) {
+        return gitHighlights.gitStaged;
+      } else {
+        return (
+          filenameHighlight.getHighlight(fullpath, ['git']) ??
+          gitHighlights.gitUnstaged
+        );
+      }
     };
 
     return {
@@ -53,6 +57,9 @@ bufferColumnRegistrar.registerColumn(
             const status = gitManager.getMixedStatus(node.fullpath, false);
             if (status) {
               showFormat(status.x, true);
+              if (isLabeling) {
+                row.add(' ');
+              }
               showFormat(status.y, false);
               if (status.x === GitFormat.ignored) {
                 source.removeIndexing('git', nodeIndex);
