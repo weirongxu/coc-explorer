@@ -24,6 +24,7 @@ class Binder {
     { refCount: number }
   > = new Map();
   private showIgnored: boolean;
+  private showUntrackedFiles: GitCommand.ShowUntrackedFiles;
   private prevStatuses: Record<string, GitMixedStatus> = {};
   private registerForSourceDisposables: Disposable[] = [];
   private registerDisposables: Disposable[] = [];
@@ -59,6 +60,10 @@ class Binder {
     } else {
       this.showIgnored = config.get<boolean>('git.showIgnored')!;
     }
+
+    this.showUntrackedFiles = config.get<GitCommand.ShowUntrackedFiles>(
+      'file.git.showUntrackedFiles',
+    )!;
   }
 
   protected init_(source: ExplorerSource<BaseTreeNode<any>>) {
@@ -152,7 +157,10 @@ class Binder {
     directory: string,
     isReloadAll: boolean,
   ) {
-    await gitManager.reload(directory, this.showIgnored);
+    await gitManager.reload(directory, {
+      showIgnored: this.showIgnored,
+      showUntrackedFiles: this.showUntrackedFiles,
+    });
 
     // render paths
     const statuses = await gitManager.getMixedStatuses(directory);
@@ -239,10 +247,10 @@ class GitManager {
     return this.rootCache[directory];
   }
 
-  async reload(directory: string, showIgnored: boolean) {
+  async reload(directory: string, statusOptions: GitCommand.StatusOptions) {
     const root = await this.getGitRoot(directory);
     if (root) {
-      const statusRecord = await this.cmd.status(root, showIgnored);
+      const statusRecord = await this.cmd.status(root, statusOptions);
       const statusArray = Object.values(statusRecord);
 
       // generate rootStatusCache

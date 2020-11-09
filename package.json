@@ -832,6 +832,22 @@
           ],
           "default": false
         },
+        "explorer.file.git.showUntrackedFiles": {
+          "description": "show untracked file in git",
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "enum": [
+                "system"
+              ],
+              "enumDescriptions": [
+                "Use system git configuration, status.showUntrackedFiles"
+              ]
+            }
+          ]
+        },
         "explorer.git.enable": {
           "description": "Enable git",
           "type": "boolean",

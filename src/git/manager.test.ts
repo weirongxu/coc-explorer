@@ -129,7 +129,11 @@ describe('gitManager status', () => {
   });
 
   test('status', async () => {
-    expect(await gitManager.cmd.status('/root', true)).toEqual(
+    expect(
+      await gitManager.cmd.status('/root', {
+        showIgnored: true,
+      }),
+    ).toEqual(
       mapValues(
         mapKeys(
           {
@@ -208,7 +212,7 @@ describe('gitManager status', () => {
   });
 
   test('getMixedStatuses', async () => {
-    await gitManager.reload('/root', true);
+    await gitManager.reload('/root', { showIgnored: true });
     expect(await gitManager.getMixedStatuses('/root')).toEqual(
       mapKeys(
         {
@@ -299,7 +303,7 @@ describe('gitManager status', () => {
     ],
   ] as [[string, boolean], GitMixedStatus][]).forEach(([args, result]) => {
     test(`getMixedStatus ${args.join(',')}`, async () => {
-      await gitManager.reload('/root', true);
+      await gitManager.reload('/root', { showIgnored: true });
       expect(
         gitManager.getMixedStatus(
           normalizePath(pathLib.join('/root', args[0])),

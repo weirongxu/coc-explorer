@@ -4,6 +4,21 @@ import { config } from '../config';
 import { execCli, fsStat, normalizePath } from '../util';
 import { GitFormat, GitStatus } from './types';
 
+export namespace GitCommand {
+  export type ShowUntrackedFiles = 'system' | boolean;
+
+  export interface StatusOptions {
+    /**
+     * @default 'system'
+     */
+    showUntrackedFiles?: ShowUntrackedFiles;
+    /**
+     * @default false
+     */
+    showIgnored?: boolean;
+  }
+}
+
 export class GitCommand {
   get binPath() {
     return config.get<string>('git.command')!;
@@ -116,11 +131,19 @@ export class GitCommand {
 
   async status(
     root: string,
-    showIgnored: boolean,
+    {
+      showUntrackedFiles = 'system',
+      showIgnored = true,
+    }: GitCommand.StatusOptions = {},
   ): Promise<Record<string, GitStatus>> {
     const gitStatus: Record<string, GitStatus> = {};
 
-    const args = ['status', '--porcelain', '-u'];
+    const args = ['status', '--porcelain'];
+    if (showUntrackedFiles === true) {
+      args.push('-u');
+    } else if (showUntrackedFiles === false) {
+      args.push('-uno');
+    }
     if (showIgnored) {
       args.push('--ignored=matching');
     }
