@@ -17,7 +17,7 @@ import {
   sum,
 } from '../util';
 import { Column } from './columnRegistrar';
-import { HighlightCommand, HighlightPosition } from './highlightManager';
+import { HighlightCommand, HighlightPosition } from './highlights/highlightManager';
 import { BaseTreeNode } from './source';
 import { TemplatePart } from './sourcePainters';
 

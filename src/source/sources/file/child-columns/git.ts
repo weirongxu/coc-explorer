@@ -1,5 +1,6 @@
 import { gitManager } from '../../../../git/manager';
 import { GitFormat } from '../../../../git/types';
+import { filenameHighlight } from '../../../highlights/filename';
 import { fileColumnRegistrar } from '../fileColumnRegistrar';
 import { fileHighlights } from '../fileSource';
 
@@ -9,6 +10,12 @@ fileColumnRegistrar.registerColumn(
   ({ source, subscriptions }) => {
     const getIconConf = (name: string) =>
       source.getColumnConfig<string>('git.icon.' + name)!;
+
+    const getHighlight = (fullpath: string, staged: boolean) => {
+      return filenameHighlight.getHighlight(fullpath, ['git']) ?? staged
+        ? fileHighlights.gitStaged
+        : fileHighlights.gitUnstaged;
+    };
 
     const statusIcons = {
       [GitFormat.mixed]: getIconConf('mixed'),
@@ -45,9 +52,7 @@ fileColumnRegistrar.registerColumn(
           drawNode(row, { node, nodeIndex }) {
             const showFormat = (f: GitFormat, staged: boolean) => {
               row.add(statusIcons[f], {
-                hl: staged
-                  ? fileHighlights.gitStaged
-                  : fileHighlights.gitUnstaged,
+                hl: getHighlight(node.fullpath, staged),
               });
             };
             const status = gitManager.getMixedStatus(

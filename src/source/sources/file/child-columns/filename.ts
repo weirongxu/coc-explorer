@@ -1,67 +1,32 @@
 import pathLib from 'path';
 import { fileColumnRegistrar } from '../fileColumnRegistrar';
 import { fileHighlights } from '../fileSource';
-import { getGitHighlight } from '../../../../git/highlights';
 import { gitManager } from '../../../../git/manager';
 import {
   diagnosticManager,
   DiagnosticType,
 } from '../../../../diagnosticManager';
+import { filenameHighlight } from '../../../highlights/filename';
 
 fileColumnRegistrar.registerColumn(
   'child',
   'filename',
   ({ source, subscriptions }) => {
-    const enabledCompletely =
-      source.config.get<boolean>(
-        'file.filename.colored.enable',
-        false,
-        // This check because it might be an object, which is truthy
-      ) === true;
-
-    const enabledGitStatus =
-      source.config.get<boolean>('file.filename.colored.enable.git', false) ||
-      enabledCompletely;
-
-    const enabledWarnStatus =
-      source.config.get<boolean>(
-        'file.filename.colored.enable.diagnosticWarning',
-        false,
-      ) || enabledCompletely;
-
-    const enabledErrorStatus =
-      source.config.get<boolean>(
-        'file.filename.colored.enable.diagnosticError',
-        false,
-      ) || enabledCompletely;
-
     const getHighlight = (fullpath: string, isDirectory: boolean) => {
-      if (enabledErrorStatus) {
-        const error = diagnosticManager.getMixedError(fullpath);
-        if (error) {
-          return fileHighlights.diagnosticError;
-        }
-      }
-      if (enabledWarnStatus) {
-        const warning = diagnosticManager.getMixedWarning(fullpath);
-        if (warning) {
-          return fileHighlights.diagnosticWarning;
-        }
-      }
-      if (enabledGitStatus) {
-        const status = gitManager.getMixedStatus(fullpath);
-        if (status) {
-          return getGitHighlight(status);
-        }
-      }
-      return isDirectory ? fileHighlights.directory : fileHighlights.filename;
+      return filenameHighlight.getHighlight(fullpath, [
+        'diagnosticError',
+        'diagnosticWarning',
+        'git',
+      ]) ?? isDirectory
+        ? fileHighlights.directory
+        : fileHighlights.filename;
     };
 
     const diagnosticTypes: DiagnosticType[] = [];
-    if (enabledErrorStatus) {
+    if (filenameHighlight.config.enabledErrorStatus) {
       diagnosticTypes.push('error');
     }
-    if (enabledWarnStatus) {
+    if (filenameHighlight.config.enabledWarningStatus) {
       diagnosticTypes.push('warning');
     }
 

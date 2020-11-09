@@ -35,7 +35,7 @@ import {
   partition,
 } from '../util';
 import { WinLayoutFinder } from '../winLayoutFinder';
-import { HighlightPositionWithLine } from './highlightManager';
+import { HighlightPositionWithLine } from './highlights/highlightManager';
 import { SourcePainters } from './sourcePainters';
 
 export namespace Options {

@@ -17,7 +17,7 @@ import {
   Notifier,
   onError,
 } from '../../../util';
-import { hlGroupManager } from '../../highlightManager';
+import { hlGroupManager } from '../../highlights/highlightManager';
 import { BaseTreeNode, ExplorerSource } from '../../source';
 import { sourceManager } from '../../sourceManager';
 import { SourcePainters } from '../../sourcePainters';

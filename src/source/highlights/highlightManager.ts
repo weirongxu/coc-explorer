@@ -87,5 +87,5 @@ export const hlGroupManager = new HighlightManager();
 /**
  * Avoid import dependence errors, 'explorer' and 'util' must be at the end
  */
-import { Explorer } from '../explorer';
-import { onError } from '../util';
+import { Explorer } from '../../explorer';
+import { onError } from '../../util';

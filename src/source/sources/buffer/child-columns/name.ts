@@ -3,6 +3,7 @@ import { bufferHighlights } from '../bufferSource';
 
 bufferColumnRegistrar.registerColumn('child', 'name', () => ({
   draw() {
+    // TODO highlight name
     return {
       drawNode(row, { node }) {
         if (node.visible) {

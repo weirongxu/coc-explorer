@@ -809,7 +809,7 @@
           "type": "boolean",
           "default": true
         },
-        "explorer.file.filename.colored.enable": {
+        "explorer.filename.colored.enable": {
           "description": "Enable colored filenames based on status",
           "anyOf": [
             {

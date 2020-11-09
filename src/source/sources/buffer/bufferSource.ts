@@ -1,6 +1,6 @@
 import { workspace } from 'coc.nvim';
 import { debounce, uniq } from '../../../util';
-import { hlGroupManager } from '../../highlightManager';
+import { hlGroupManager } from '../../highlights/highlightManager';
 import { ExplorerSource, BaseTreeNode } from '../../source';
 import { sourceManager } from '../../sourceManager';
 import { bufferColumnRegistrar } from './bufferColumnRegistrar';

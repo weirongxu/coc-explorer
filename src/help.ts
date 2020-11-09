@@ -6,7 +6,7 @@ import {
   HighlightPosition,
   HighlightPositionWithLine,
   hlGroupManager,
-} from './source/highlightManager';
+} from './source/highlights/highlightManager';
 import { BaseTreeNode, ExplorerSource } from './source/source';
 import { ViewPainter, ViewRowPainter } from './source/viewPainter';
 import { DrawBlock, Notifier } from './util';

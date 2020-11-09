@@ -29,7 +29,7 @@ import { ArgContentWidthTypes, Args } from './parseArgs';
 import {
   HighlightPositionWithLine,
   hlGroupManager,
-} from './source/highlightManager';
+} from './source/highlights/highlightManager';
 import './source/load';
 import { BaseTreeNode, ExplorerSource } from './source/source';
 import { sourceManager } from './source/sourceManager';

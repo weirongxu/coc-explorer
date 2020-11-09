@@ -1,7 +1,7 @@
 import pFilter from 'p-filter';
 import { Drawn, DrawnWithNodeIndex, groupBy } from '../util';
 import { Column, ColumnRegistrar } from './columnRegistrar';
-import { hlGroupManager } from './highlightManager';
+import { hlGroupManager } from './highlights/highlightManager';
 import { OriginalTemplatePart, parseTemplate } from './parseTemplate';
 import { BaseTreeNode, ExplorerSource } from './source';
 import { ViewPainter } from './viewPainter';

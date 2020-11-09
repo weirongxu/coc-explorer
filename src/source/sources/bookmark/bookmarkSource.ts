@@ -3,7 +3,7 @@ import pathLib from 'path';
 import { argOptions } from '../../../argOptions';
 import { internalEvents } from '../../../events';
 import { debounce, fsExists, normalizePath } from '../../../util';
-import { hlGroupManager } from '../../highlightManager';
+import { hlGroupManager } from '../../highlights/highlightManager';
 import { BaseTreeNode, ExplorerSource } from '../../source';
 import { sourceManager } from '../../sourceManager';
 import { SourcePainters } from '../../sourcePainters';

@@ -1,5 +1,5 @@
 import nerdfontJson from './icons.nerdfont.json';
-import { hlGroupManager, HighlightCommand } from './source/highlightManager';
+import { hlGroupManager, HighlightCommand } from './source/highlights/highlightManager';
 import { getExtensions } from './util';
 import { config } from './config';
 import convert from 'color-convert';

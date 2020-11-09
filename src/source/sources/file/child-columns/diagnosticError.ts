@@ -18,8 +18,16 @@ fileColumnRegistrar.registerColumn(
         return {
           labelVisible: ({ node }) =>
             !!diagnosticManager.getMixedError(node.fullpath),
-          drawNode(row, { node, nodeIndex }) {
+          drawNode(row, { node, nodeIndex, isLabeling }) {
             const errorCount = diagnosticManager.getMixedError(node.fullpath);
+
+            if (isLabeling) {
+              row.add((errorCount ?? 0).toString(), {
+                hl: fileHighlights.diagnosticError,
+              });
+              return;
+            }
+
             if (errorCount) {
               if (node.directory && source.isExpanded(node)) {
                 source.removeIndexing('diagnosticError', nodeIndex);
