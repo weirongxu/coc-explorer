@@ -21,6 +21,9 @@ export const gitHighlights = {
   gitDeleted: h('GitDeleted', 'ctermfg=red guifg=red'),
 
   gitIgnored: h('GitIgnored', 'ctermfg=gray guifg=gray'),
+
+  gitStaged: hl('GitStaged', 'Comment'),
+  gitUnstaged: hl('GitUnstaged', 'Operator'),
 };
 
 const getFormatHighlight = (format: GitFormat) => {

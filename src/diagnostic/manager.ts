@@ -5,9 +5,9 @@ import {
   Uri,
 } from 'coc.nvim';
 import pathLib from 'path';
-import { internalEvents } from './events';
-import { BaseTreeNode, ExplorerSource } from './source/source';
-import { mapGetWithDefault, sum, throttle } from './util';
+import { internalEvents } from '../events';
+import { BaseTreeNode, ExplorerSource } from '../source/source';
+import { mapGetWithDefault, sum, throttle } from '../util';
 
 export type DiagnosticType = 'error' | 'warning';
 

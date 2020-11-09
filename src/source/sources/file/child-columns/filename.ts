@@ -5,7 +5,7 @@ import { gitManager } from '../../../../git/manager';
 import {
   diagnosticManager,
   DiagnosticType,
-} from '../../../../diagnosticManager';
+} from '../../../../diagnostic/manager';
 import { filenameHighlight } from '../../../highlights/filename';
 
 fileColumnRegistrar.registerColumn(
@@ -13,13 +13,13 @@ fileColumnRegistrar.registerColumn(
   'filename',
   ({ source, subscriptions }) => {
     const getHighlight = (fullpath: string, isDirectory: boolean) => {
-      return filenameHighlight.getHighlight(fullpath, [
-        'diagnosticError',
-        'diagnosticWarning',
-        'git',
-      ]) ?? isDirectory
-        ? fileHighlights.directory
-        : fileHighlights.filename;
+      return (
+        filenameHighlight.getHighlight(fullpath, [
+          'diagnosticError',
+          'diagnosticWarning',
+          'git',
+        ]) ?? (isDirectory ? fileHighlights.directory : fileHighlights.filename)
+      );
     };
 
     const diagnosticTypes: DiagnosticType[] = [];

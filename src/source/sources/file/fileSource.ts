@@ -3,7 +3,9 @@ import fs from 'fs';
 import { homedir } from 'os';
 import pathLib from 'path';
 import { argOptions } from '../../../argOptions';
+import { diagnosticHighlights } from '../../../diagnostic/highlights';
 import { onBufEnter } from '../../../events';
+import { gitHighlights } from '../../../git/highlights';
 import { fileList } from '../../../lists/files';
 import {
   fsAccess,
@@ -50,8 +52,8 @@ export const fileHighlights = {
   directoryExpanded: hl('FileDirectoryExpanded', 'Directory'),
   directoryCollapsed: hl('FileDirectoryCollapsed', 'Directory'),
   linkTarget: hl('FileLinkTarget', 'Comment'),
-  gitStaged: hl('FileGitStaged', 'Comment'),
-  gitUnstaged: hl('FileGitUnstaged', 'Operator'),
+  gitStaged: hl('FileGitStaged', gitHighlights.gitStaged.group),
+  gitUnstaged: hl('FileGitUnstaged', gitHighlights.gitUnstaged.group),
   gitRootStaged: hl('FileGitRootStaged', 'Comment'),
   gitRootUnstaged: hl('FileGitRootUnstaged', 'Operator'),
   indentLine: hl('IndentLine', 'Comment'),
@@ -62,8 +64,14 @@ export const fileHighlights = {
   timeAccessed: hl('TimeAccessed', 'Identifier'),
   timeModified: hl('TimeModified', 'Identifier'),
   timeCreated: hl('TimeCreated', 'Identifier'),
-  diagnosticError: hl('FileDiagnosticError', 'CocErrorSign'),
-  diagnosticWarning: hl('FileDiagnosticWarning', 'CocWarningSign'),
+  diagnosticError: hl(
+    'FileDiagnosticError',
+    diagnosticHighlights.diagnosticError.group,
+  ),
+  diagnosticWarning: hl(
+    'FileDiagnosticWarning',
+    diagnosticHighlights.diagnosticWarning.group,
+  ),
   filenameDiagnosticError: hl('FileFilenameDiagnosticError', 'CocErrorSign'),
   filenameDiagnosticWarning: hl(
     'FileFilenameDiagnosticWarning',

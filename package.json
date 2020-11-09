@@ -620,12 +620,12 @@
         "explorer.buffer.child.template": {
           "description": "Template for child node of buffer source",
           "type": "string",
-          "default": "[selection | 1] [bufnr] [name][modified][readonly] [fullpath]"
+          "default": "[git | 2] [selection | 1] [bufnr] [name][modified][readonly] [fullpath]"
         },
         "explorer.buffer.child.labelingTemplate": {
           "description": "Labeling template for child node of buffer source, use for preview when previewAction is labeling",
           "type": "string",
-          "default": "[name][bufname][fullpath][modified][readonly]"
+          "default": "[name][bufname][fullpath][modified][readonly][diagnosticError][diagnosticWarning][git]"
         },
         "explorer.datetime.format": {
           "description": "Explorer datetime format, check out https://date-fns.org/v2.9.0/docs/format",
@@ -699,93 +699,7 @@
         "explorer.file.child.labelingTemplate": {
           "description": "Labeling template for child node of file source, use for preview when previewAction is labeling",
           "type": "string",
-          "default": "[fullpath][link][diagnosticWarning][diagnosticError][size][timeAccessed][timeModified][timeCreated][readonly][modified]"
-        },
-        "explorer.file.column.root.git.icon.stashed": {
-          "description": "A stash exists for the local repository",
-          "default": "$"
-        },
-        "explorer.file.column.root.git.icon.ahead": {
-          "description": "Current branch ahead of upstream",
-          "default": "⇡"
-        },
-        "explorer.file.column.root.git.icon.behind": {
-          "description": "Current branch behind upstream",
-          "default": "⇣"
-        },
-        "explorer.file.column.root.git.icon.conflicted": {
-          "description": "Current branch has merge conflicts",
-          "default": "="
-        },
-        "explorer.file.column.root.git.icon.untracked": {
-          "description": "There are untracked files in the working directory",
-          "default": "?"
-        },
-        "explorer.file.column.root.git.icon.modified": {
-          "description": "There are file modifications in the working directory",
-          "default": "~"
-        },
-        "explorer.file.column.root.git.icon.added": {
-          "description": "A new file has been added to the staging area",
-          "default": "+"
-        },
-        "explorer.file.column.root.git.icon.renamed": {
-          "description": "A renamed file has been added to the staging area",
-          "default": "→"
-        },
-        "explorer.file.column.root.git.icon.deleted": {
-          "description": "A file's deletion has been added to the staging area",
-          "default": "✗"
-        },
-        "explorer.file.column.git.icon.mixed": {
-          "description": "Icon for git mixed status",
-          "type": "string",
-          "default": "*"
-        },
-        "explorer.file.column.git.icon.unmodified": {
-          "description": "Icon for git unmodified status",
-          "type": "string",
-          "default": " "
-        },
-        "explorer.file.column.git.icon.modified": {
-          "description": "Icon for git modified status",
-          "type": "string",
-          "default": "M"
-        },
-        "explorer.file.column.git.icon.added": {
-          "description": "Icon for git added status",
-          "type": "string",
-          "default": "A"
-        },
-        "explorer.file.column.git.icon.deleted": {
-          "description": "Icon for git removed status",
-          "type": "string",
-          "default": "D"
-        },
-        "explorer.file.column.git.icon.renamed": {
-          "description": "Icon for git renamed status",
-          "type": "string",
-          "default": "R"
-        },
-        "explorer.file.column.git.icon.copied": {
-          "description": "Icon for git copied status",
-          "type": "string",
-          "default": "C"
-        },
-        "explorer.file.column.git.icon.unmerged": {
-          "description": "Icon for git unmerged status",
-          "type": "string",
-          "default": "U"
-        },
-        "explorer.file.column.git.icon.untracked": {
-          "description": "Icon for git untracked status",
-          "type": "string",
-          "default": "?"
-        },
-        "explorer.file.column.git.icon.ignored": {
-          "description": "Icon for git ignored status",
-          "type": "string",
-          "default": "!"
+          "default": "[fullpath][link][diagnosticError][diagnosticWarning][git][size][timeAccessed][timeModified][timeCreated][readonly][modified]"
         },
         "explorer.file.column.clip.copy": {
           "description": "Whether the file has been copied",
@@ -858,6 +772,92 @@
           "type": "string",
           "default": "git"
         },
+        "explorer.git.icon.rootStatus.stashed": {
+          "description": "Icon for a stash exists for the local repository",
+          "default": "$"
+        },
+        "explorer.git.icon.rootStatus.ahead": {
+          "description": "Icon for current branch ahead of upstream",
+          "default": "⇡"
+        },
+        "explorer.git.icon.rootStatus.behind": {
+          "description": "Icon for current branch behind upstream",
+          "default": "⇣"
+        },
+        "explorer.git.icon.rootStatus.conflicted": {
+          "description": "Icon for current branch has merge conflicts",
+          "default": "="
+        },
+        "explorer.git.icon.rootStatus.untracked": {
+          "description": "Icon for there are untracked files in the working directory",
+          "default": "?"
+        },
+        "explorer.git.icon.rootStatus.modified": {
+          "description": "Icon for there are file modifications in the working directory",
+          "default": "~"
+        },
+        "explorer.git.icon.rootStatus.added": {
+          "description": "Icon for a new file has been added to the staging area",
+          "default": "+"
+        },
+        "explorer.git.icon.rootStatus.renamed": {
+          "description": "Icon for a renamed file has been added to the staging area",
+          "default": "→"
+        },
+        "explorer.git.icon.rootStatus.deleted": {
+          "description": "Icon for a file's deletion has been added to the staging area",
+          "default": "✗"
+        },
+        "explorer.git.icon.status.mixed": {
+          "description": "Icon for git mixed status",
+          "type": "string",
+          "default": "*"
+        },
+        "explorer.git.icon.status.unmodified": {
+          "description": "Icon for git unmodified status",
+          "type": "string",
+          "default": " "
+        },
+        "explorer.git.icon.status.modified": {
+          "description": "Icon for git modified status",
+          "type": "string",
+          "default": "M"
+        },
+        "explorer.git.icon.status.added": {
+          "description": "Icon for git added status",
+          "type": "string",
+          "default": "A"
+        },
+        "explorer.git.icon.status.deleted": {
+          "description": "Icon for git removed status",
+          "type": "string",
+          "default": "D"
+        },
+        "explorer.git.icon.status.renamed": {
+          "description": "Icon for git renamed status",
+          "type": "string",
+          "default": "R"
+        },
+        "explorer.git.icon.status.copied": {
+          "description": "Icon for git copied status",
+          "type": "string",
+          "default": "C"
+        },
+        "explorer.git.icon.status.unmerged": {
+          "description": "Icon for git unmerged status",
+          "type": "string",
+          "default": "U"
+        },
+        "explorer.git.icon.status.untracked": {
+          "description": "Icon for git untracked status",
+          "type": "string",
+          "default": "?"
+        },
+        "explorer.git.icon.status.ignored": {
+          "description": "Icon for git ignored status",
+          "type": "string",
+          "default": "!"
+        },
         "explorer.git.showIgnored": {
           "description": "Show ignored files in git",
           "type": "boolean",
@@ -893,21 +893,21 @@
     "@types/json-schema": "^7.0.6",
     "@types/lodash-es": "^4.17.3",
     "@types/minimatch": "^3.0.3",
-    "@types/node": "^14.14.2",
+    "@types/node": "^14.14.6",
     "@types/rimraf": "^3.0.0",
     "@types/uuid": "^8.3.0",
     "@types/which": "^1.3.2",
-    "@typescript-eslint/eslint-plugin": "^4.5.0",
-    "@typescript-eslint/parser": "^4.5.0",
+    "@typescript-eslint/eslint-plugin": "^4.6.1",
+    "@typescript-eslint/parser": "^4.6.1",
     "await-semaphore": "^0.1.3",
-    "coc-floatinput": "^1.4.0",
-    "coc-helper": "^0.6.0",
+    "coc-floatinput": "^1.5.0",
+    "coc-helper": "^0.7.0",
     "coc.nvim": "^0.0.79",
     "color-convert": "^2.0.1",
     "command-exists": "^1.2.9",
     "date-fns": "^2.16.1",
-    "eslint": "^7.11.0",
-    "jest": "^26.6.0",
+    "eslint": "^7.13.0",
+    "jest": "^26.6.3",
     "json-schema-to-typescript": "^9.1.1",
     "lodash-es": "^4.17.15",
     "make-dir": "^3.1.0",
@@ -917,10 +917,10 @@
     "p-locate": "^5.0.0",
     "pretty-bytes": "^5.4.1",
     "rimraf": "^3.0.2",
-    "ts-jest": "^26.4.1",
-    "ts-loader": "^8.0.6",
+    "ts-jest": "^26.4.4",
+    "ts-loader": "^8.0.10",
     "type-fest": "^0.18.0",
-    "typescript": "^4.0.3",
+    "typescript": "^4.0.5",
     "uuid": "^8.3.1",
     "vscode-languageserver-protocol": "^3.15.3",
     "vscode-languageserver-textdocument": "^1.0.1",

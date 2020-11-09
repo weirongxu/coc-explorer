@@ -1,13 +1,11 @@
-import { prettyObject } from 'coc-helper';
 import { getStatusIcons } from '../../../../git/config';
+import { gitHighlights } from '../../../../git/highlights';
 import { gitManager } from '../../../../git/manager';
 import { GitFormat } from '../../../../git/types';
-import { outputChannel } from '../../../../util';
 import { filenameHighlight } from '../../../highlights/filename';
-import { fileColumnRegistrar } from '../fileColumnRegistrar';
-import { fileHighlights } from '../fileSource';
+import { bufferColumnRegistrar } from '../bufferColumnRegistrar';
 
-fileColumnRegistrar.registerColumn(
+bufferColumnRegistrar.registerColumn(
   'child',
   'git',
   ({ source, subscriptions }) => {
@@ -16,7 +14,7 @@ fileColumnRegistrar.registerColumn(
     const getHighlight = (fullpath: string, staged: boolean) => {
       return (
         filenameHighlight.getHighlight(fullpath, ['git']) ??
-        (staged ? fileHighlights.gitStaged : fileHighlights.gitUnstaged)
+        (staged ? gitHighlights.gitStaged : gitHighlights.gitUnstaged)
       );
     };
 
@@ -41,9 +39,6 @@ fileColumnRegistrar.registerColumn(
           },
           drawNode(row, { node, nodeIndex, isLabeling }) {
             const showFormat = (f: GitFormat, staged: boolean) => {
-              outputChannel.append(
-                prettyObject(getHighlight(node.fullpath, staged)),
-              );
               const hl = getHighlight(node.fullpath, staged);
               if (isLabeling) {
                 row.add(`${icons[f].name}(${icons[f].icon})`, {
@@ -55,10 +50,7 @@ fileColumnRegistrar.registerColumn(
                 });
               }
             };
-            const status = gitManager.getMixedStatus(
-              node.fullpath,
-              node.directory,
-            );
+            const status = gitManager.getMixedStatus(node.fullpath, false);
             if (status) {
               showFormat(status.x, true);
               showFormat(status.y, false);

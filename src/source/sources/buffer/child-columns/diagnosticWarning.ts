@@ -1,9 +1,9 @@
-import { fileColumnRegistrar } from '../fileColumnRegistrar';
-import { fileHighlights } from '../fileSource';
-import { diagnosticManager } from '../../../../diagnostic/manager';
 import { getDiagnosticDisplayMax } from '../../../../diagnostic/config';
+import { diagnosticHighlights } from '../../../../diagnostic/highlights';
+import { diagnosticManager } from '../../../../diagnostic/manager';
+import { bufferColumnRegistrar } from '../bufferColumnRegistrar';
 
-fileColumnRegistrar.registerColumn(
+bufferColumnRegistrar.registerColumn(
   'child',
   'diagnosticWarning',
   ({ source, subscriptions }) => {
@@ -24,25 +24,21 @@ fileColumnRegistrar.registerColumn(
 
             if (isLabeling) {
               row.add((warningCount ?? 0).toString(), {
-                hl: fileHighlights.diagnosticWarning,
+                hl: diagnosticHighlights.diagnosticWarning,
               });
               return;
             }
 
             if (warningCount) {
-              if (node.directory && source.isExpanded(node)) {
-                source.removeIndexing('diagnosticWarning', nodeIndex);
-              } else {
-                row.add(
-                  warningCount > diagnosticDisplayMax
-                    ? '✗'
-                    : warningCount.toString(),
-                  {
-                    hl: fileHighlights.diagnosticWarning,
-                  },
-                );
-                source.addIndexing('diagnosticWarning', nodeIndex);
-              }
+              row.add(
+                warningCount > diagnosticDisplayMax
+                  ? '✗'
+                  : warningCount.toString(),
+                {
+                  hl: diagnosticHighlights.diagnosticWarning,
+                },
+              );
+              source.addIndexing('diagnosticWarning', nodeIndex);
             } else {
               source.removeIndexing('diagnosticWarning', nodeIndex);
             }

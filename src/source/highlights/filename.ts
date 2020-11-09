@@ -1,5 +1,6 @@
+import { workspace } from 'coc.nvim';
 import { config } from '../../config';
-import { diagnosticManager } from '../../diagnosticManager';
+import { diagnosticManager } from '../../diagnostic/manager';
 import { getGitHighlight } from '../../git/highlights';
 import { gitManager } from '../../git/manager';
 import { fileHighlights } from '../sources/file/fileSource';
@@ -16,30 +17,33 @@ class FilenameHighlight {
   };
 
   constructor() {
-    // TODO change to filename.colored.enable
+    let configKey: string;
+    if (config.get<boolean>('file.filename.colored.enable') !== undefined) {
+      // eslint-disable-next-line no-restricted-properties
+      workspace.showMessage(
+        'explorer.file.filename.colored.enable has been deprecated, please use explorer.filename.colored.enable in coc-settings.json',
+        'warning',
+      );
+      configKey = 'file.filename.colored.enable';
+    } else {
+      configKey = 'filename.colored.enable';
+    }
     const enabledCompletely =
       config.get<boolean>(
-        'file.filename.colored.enable',
+        configKey,
         false,
         // This check because it might be an object, which is truthy
       ) === true;
 
     this.config = {
       enabledGitStatus:
-        enabledCompletely ||
-        config.get<boolean>('file.filename.colored.enable.git', false),
+        enabledCompletely || config.get<boolean>(configKey + '.git', false),
       enabledErrorStatus:
         enabledCompletely ||
-        config.get<boolean>(
-          'file.filename.colored.enable.diagnosticError',
-          false,
-        ),
+        config.get<boolean>(configKey + '.diagnosticError', false),
       enabledWarningStatus:
         enabledCompletely ||
-        config.get<boolean>(
-          'file.filename.colored.enable.diagnosticWarning',
-          false,
-        ),
+        config.get<boolean>(configKey + '.diagnosticWarning', false),
     };
   }
 
