@@ -391,10 +391,6 @@ export interface Explorer {
    */
   'explorer.file.autoReveal'?: boolean;
   /**
-   * Maximum count of diagnostic column
-   */
-  'explorer.file.diagnosticCountMax'?: number;
-  /**
    * Custom hidden rules for file
    */
   'explorer.file.hiddenRules'?: {
@@ -427,82 +423,6 @@ export interface Explorer {
    */
   'explorer.file.child.labelingTemplate'?: string;
   /**
-   * A stash exists for the local repository
-   */
-  'explorer.file.column.root.git.icon.stashed'?: string;
-  /**
-   * Current branch ahead of upstream
-   */
-  'explorer.file.column.root.git.icon.ahead'?: string;
-  /**
-   * Current branch behind upstream
-   */
-  'explorer.file.column.root.git.icon.behind'?: string;
-  /**
-   * Current branch has merge conflicts
-   */
-  'explorer.file.column.root.git.icon.conflicted'?: string;
-  /**
-   * There are untracked files in the working directory
-   */
-  'explorer.file.column.root.git.icon.untracked'?: string;
-  /**
-   * There are file modifications in the working directory
-   */
-  'explorer.file.column.root.git.icon.modified'?: string;
-  /**
-   * A new file has been added to the staging area
-   */
-  'explorer.file.column.root.git.icon.added'?: string;
-  /**
-   * A renamed file has been added to the staging area
-   */
-  'explorer.file.column.root.git.icon.renamed'?: string;
-  /**
-   * A file's deletion has been added to the staging area
-   */
-  'explorer.file.column.root.git.icon.deleted'?: string;
-  /**
-   * Icon for git mixed status
-   */
-  'explorer.file.column.git.icon.mixed'?: string;
-  /**
-   * Icon for git unmodified status
-   */
-  'explorer.file.column.git.icon.unmodified'?: string;
-  /**
-   * Icon for git modified status
-   */
-  'explorer.file.column.git.icon.modified'?: string;
-  /**
-   * Icon for git added status
-   */
-  'explorer.file.column.git.icon.added'?: string;
-  /**
-   * Icon for git removed status
-   */
-  'explorer.file.column.git.icon.deleted'?: string;
-  /**
-   * Icon for git renamed status
-   */
-  'explorer.file.column.git.icon.renamed'?: string;
-  /**
-   * Icon for git copied status
-   */
-  'explorer.file.column.git.icon.copied'?: string;
-  /**
-   * Icon for git unmerged status
-   */
-  'explorer.file.column.git.icon.unmerged'?: string;
-  /**
-   * Icon for git untracked status
-   */
-  'explorer.file.column.git.icon.untracked'?: string;
-  /**
-   * Icon for git ignored status
-   */
-  'explorer.file.column.git.icon.ignored'?: string;
-  /**
    * Whether the file has been copied
    */
   'explorer.file.column.clip.copy'?: string;
@@ -525,7 +445,7 @@ export interface Explorer {
   /**
    * Enable colored filenames based on status
    */
-  'explorer.file.filename.colored.enable'?:
+  'explorer.filename.colored.enable'?:
     | boolean
     | {
         diagnosticError?: boolean;
@@ -534,6 +454,14 @@ export interface Explorer {
         [k: string]: unknown;
       };
   /**
+   * show untracked file in git
+   */
+  'explorer.file.git.showUntrackedFiles'?: boolean | 'system';
+  /**
+   * Maximum count of diagnostic column
+   */
+  'explorer.diagnostic.displayMax'?: number;
+  /**
    * Enable git
    */
   'explorer.git.enable'?: boolean;
@@ -541,6 +469,82 @@ export interface Explorer {
    * Git command
    */
   'explorer.git.command'?: string;
+  /**
+   * Icon for a stash exists for the local repository
+   */
+  'explorer.git.icon.rootStatus.stashed'?: string;
+  /**
+   * Icon for current branch ahead of upstream
+   */
+  'explorer.git.icon.rootStatus.ahead'?: string;
+  /**
+   * Icon for current branch behind upstream
+   */
+  'explorer.git.icon.rootStatus.behind'?: string;
+  /**
+   * Icon for current branch has merge conflicts
+   */
+  'explorer.git.icon.rootStatus.conflicted'?: string;
+  /**
+   * Icon for there are untracked files in the working directory
+   */
+  'explorer.git.icon.rootStatus.untracked'?: string;
+  /**
+   * Icon for there are file modifications in the working directory
+   */
+  'explorer.git.icon.rootStatus.modified'?: string;
+  /**
+   * Icon for a new file has been added to the staging area
+   */
+  'explorer.git.icon.rootStatus.added'?: string;
+  /**
+   * Icon for a renamed file has been added to the staging area
+   */
+  'explorer.git.icon.rootStatus.renamed'?: string;
+  /**
+   * Icon for a file's deletion has been added to the staging area
+   */
+  'explorer.git.icon.rootStatus.deleted'?: string;
+  /**
+   * Icon for git mixed status
+   */
+  'explorer.git.icon.status.mixed'?: string;
+  /**
+   * Icon for git unmodified status
+   */
+  'explorer.git.icon.status.unmodified'?: string;
+  /**
+   * Icon for git modified status
+   */
+  'explorer.git.icon.status.modified'?: string;
+  /**
+   * Icon for git added status
+   */
+  'explorer.git.icon.status.added'?: string;
+  /**
+   * Icon for git removed status
+   */
+  'explorer.git.icon.status.deleted'?: string;
+  /**
+   * Icon for git renamed status
+   */
+  'explorer.git.icon.status.renamed'?: string;
+  /**
+   * Icon for git copied status
+   */
+  'explorer.git.icon.status.copied'?: string;
+  /**
+   * Icon for git unmerged status
+   */
+  'explorer.git.icon.status.unmerged'?: string;
+  /**
+   * Icon for git untracked status
+   */
+  'explorer.git.icon.status.untracked'?: string;
+  /**
+   * Icon for git ignored status
+   */
+  'explorer.git.icon.status.ignored'?: string;
   /**
    * Show ignored files in git
    */

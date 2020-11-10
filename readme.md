@@ -807,11 +807,11 @@ Type: <pre><code>string</code></pre>Default: <pre><code>"[icon] [title] [hidden 
 </details>
 <details>
 <summary><code>explorer.buffer.child.template</code>: Template for child node of buffer source.</summary>
-Type: <pre><code>string</code></pre>Default: <pre><code>"[selection | 1] [bufnr] [name][modified][readonly] [fullpath]"</code></pre>
+Type: <pre><code>string</code></pre>Default: <pre><code>"[git | 2] [selection | 1] [bufnr] [name][modified][readonly] [fullpath]"</code></pre>
 </details>
 <details>
 <summary><code>explorer.buffer.child.labelingTemplate</code>: Labeling template for child node of buffer source, use for preview when previewAction is labeling.</summary>
-Type: <pre><code>string</code></pre>Default: <pre><code>"[name][bufname][fullpath][modified][readonly]"</code></pre>
+Type: <pre><code>string</code></pre>Default: <pre><code>"[name][bufname][fullpath][modified][readonly][diagnosticError][diagnosticWarning][git]"</code></pre>
 </details>
 <details>
 <summary><code>explorer.datetime.format</code>: Explorer datetime format, check out https://date-fns.org/v2.9.0/docs/format.</summary>
@@ -820,10 +820,6 @@ Type: <pre><code>string</code></pre>Default: <pre><code>"yy/MM/dd HH:mm:ss"</cod
 <details>
 <summary><code>explorer.file.autoReveal</code>: Explorer will automatically expand to the current buffer.</summary>
 Type: <pre><code>boolean</code></pre>Default: <pre><code>true</code></pre>
-</details>
-<details>
-<summary><code>explorer.file.diagnosticCountMax</code>: Maximum count of diagnostic column.</summary>
-Type: <pre><code>number</code></pre>Default: <pre><code>99</code></pre>
 </details>
 <details>
 <summary><code>explorer.file.hiddenRules</code>: Custom hidden rules for file.</summary>
@@ -866,83 +862,7 @@ Type: <pre><code>string</code></pre>Default: <pre><code>"[git | 2] [selection | 
 </details>
 <details>
 <summary><code>explorer.file.child.labelingTemplate</code>: Labeling template for child node of file source, use for preview when previewAction is labeling.</summary>
-Type: <pre><code>string</code></pre>Default: <pre><code>"[fullpath][link][diagnosticWarning][diagnosticError][size][timeAccessed][timeModified][timeCreated][readonly][modified]"</code></pre>
-</details>
-<details>
-<summary><code>explorer.file.column.root.git.icon.stashed</code>: A stash exists for the local repository.</summary>
-Type: <pre><code>string</code></pre>Default: <pre><code>"$"</code></pre>
-</details>
-<details>
-<summary><code>explorer.file.column.root.git.icon.ahead</code>: Current branch ahead of upstream.</summary>
-Type: <pre><code>string</code></pre>Default: <pre><code>"⇡"</code></pre>
-</details>
-<details>
-<summary><code>explorer.file.column.root.git.icon.behind</code>: Current branch behind upstream.</summary>
-Type: <pre><code>string</code></pre>Default: <pre><code>"⇣"</code></pre>
-</details>
-<details>
-<summary><code>explorer.file.column.root.git.icon.conflicted</code>: Current branch has merge conflicts.</summary>
-Type: <pre><code>string</code></pre>Default: <pre><code>"="</code></pre>
-</details>
-<details>
-<summary><code>explorer.file.column.root.git.icon.untracked</code>: There are untracked files in the working directory.</summary>
-Type: <pre><code>string</code></pre>Default: <pre><code>"?"</code></pre>
-</details>
-<details>
-<summary><code>explorer.file.column.root.git.icon.modified</code>: There are file modifications in the working directory.</summary>
-Type: <pre><code>string</code></pre>Default: <pre><code>"~"</code></pre>
-</details>
-<details>
-<summary><code>explorer.file.column.root.git.icon.added</code>: A new file has been added to the staging area.</summary>
-Type: <pre><code>string</code></pre>Default: <pre><code>"+"</code></pre>
-</details>
-<details>
-<summary><code>explorer.file.column.root.git.icon.renamed</code>: A renamed file has been added to the staging area.</summary>
-Type: <pre><code>string</code></pre>Default: <pre><code>"→"</code></pre>
-</details>
-<details>
-<summary><code>explorer.file.column.root.git.icon.deleted</code>: A file's deletion has been added to the staging area.</summary>
-Type: <pre><code>string</code></pre>Default: <pre><code>"✗"</code></pre>
-</details>
-<details>
-<summary><code>explorer.file.column.git.icon.mixed</code>: Icon for git mixed status.</summary>
-Type: <pre><code>string</code></pre>Default: <pre><code>"*"</code></pre>
-</details>
-<details>
-<summary><code>explorer.file.column.git.icon.unmodified</code>: Icon for git unmodified status.</summary>
-Type: <pre><code>string</code></pre>Default: <pre><code>" "</code></pre>
-</details>
-<details>
-<summary><code>explorer.file.column.git.icon.modified</code>: Icon for git modified status.</summary>
-Type: <pre><code>string</code></pre>Default: <pre><code>"M"</code></pre>
-</details>
-<details>
-<summary><code>explorer.file.column.git.icon.added</code>: Icon for git added status.</summary>
-Type: <pre><code>string</code></pre>Default: <pre><code>"A"</code></pre>
-</details>
-<details>
-<summary><code>explorer.file.column.git.icon.deleted</code>: Icon for git removed status.</summary>
-Type: <pre><code>string</code></pre>Default: <pre><code>"D"</code></pre>
-</details>
-<details>
-<summary><code>explorer.file.column.git.icon.renamed</code>: Icon for git renamed status.</summary>
-Type: <pre><code>string</code></pre>Default: <pre><code>"R"</code></pre>
-</details>
-<details>
-<summary><code>explorer.file.column.git.icon.copied</code>: Icon for git copied status.</summary>
-Type: <pre><code>string</code></pre>Default: <pre><code>"C"</code></pre>
-</details>
-<details>
-<summary><code>explorer.file.column.git.icon.unmerged</code>: Icon for git unmerged status.</summary>
-Type: <pre><code>string</code></pre>Default: <pre><code>"U"</code></pre>
-</details>
-<details>
-<summary><code>explorer.file.column.git.icon.untracked</code>: Icon for git untracked status.</summary>
-Type: <pre><code>string</code></pre>Default: <pre><code>"?"</code></pre>
-</details>
-<details>
-<summary><code>explorer.file.column.git.icon.ignored</code>: Icon for git ignored status.</summary>
-Type: <pre><code>string</code></pre>Default: <pre><code>"!"</code></pre>
+Type: <pre><code>string</code></pre>Default: <pre><code>"[fullpath][link][diagnosticError][diagnosticWarning][git][size][timeAccessed][timeModified][timeCreated][readonly][modified]"</code></pre>
 </details>
 <details>
 <summary><code>explorer.file.column.clip.copy</code>: Whether the file has been copied.</summary>
@@ -965,7 +885,7 @@ Type: <pre><code>boolean</code></pre>
 Type: <pre><code>boolean</code></pre>Default: <pre><code>true</code></pre>
 </details>
 <details>
-<summary><code>explorer.file.filename.colored.enable</code>: Enable colored filenames based on status.</summary>
+<summary><code>explorer.filename.colored.enable</code>: Enable colored filenames based on status.</summary>
 Type: <pre><code>boolean | {
     diagnosticError?: boolean;
     diagnosticWarning?: boolean;
@@ -974,12 +894,96 @@ Type: <pre><code>boolean | {
 }</code></pre>Default: <pre><code>false</code></pre>
 </details>
 <details>
+<summary><code>explorer.file.git.showUntrackedFiles</code>: show untracked file in git.</summary>
+Type: <pre><code>boolean | 'system'</code></pre>
+</details>
+<details>
+<summary><code>explorer.diagnostic.displayMax</code>: Maximum count of diagnostic column.</summary>
+Type: <pre><code>number</code></pre>Default: <pre><code>99</code></pre>
+</details>
+<details>
 <summary><code>explorer.git.enable</code>: Enable git.</summary>
 Type: <pre><code>boolean</code></pre>Default: <pre><code>true</code></pre>
 </details>
 <details>
 <summary><code>explorer.git.command</code>: Git command.</summary>
 Type: <pre><code>string</code></pre>Default: <pre><code>"git"</code></pre>
+</details>
+<details>
+<summary><code>explorer.git.icon.rootStatus.stashed</code>: Icon for a stash exists for the local repository.</summary>
+Type: <pre><code>string</code></pre>Default: <pre><code>"$"</code></pre>
+</details>
+<details>
+<summary><code>explorer.git.icon.rootStatus.ahead</code>: Icon for current branch ahead of upstream.</summary>
+Type: <pre><code>string</code></pre>Default: <pre><code>"⇡"</code></pre>
+</details>
+<details>
+<summary><code>explorer.git.icon.rootStatus.behind</code>: Icon for current branch behind upstream.</summary>
+Type: <pre><code>string</code></pre>Default: <pre><code>"⇣"</code></pre>
+</details>
+<details>
+<summary><code>explorer.git.icon.rootStatus.conflicted</code>: Icon for current branch has merge conflicts.</summary>
+Type: <pre><code>string</code></pre>Default: <pre><code>"="</code></pre>
+</details>
+<details>
+<summary><code>explorer.git.icon.rootStatus.untracked</code>: Icon for there are untracked files in the working directory.</summary>
+Type: <pre><code>string</code></pre>Default: <pre><code>"?"</code></pre>
+</details>
+<details>
+<summary><code>explorer.git.icon.rootStatus.modified</code>: Icon for there are file modifications in the working directory.</summary>
+Type: <pre><code>string</code></pre>Default: <pre><code>"~"</code></pre>
+</details>
+<details>
+<summary><code>explorer.git.icon.rootStatus.added</code>: Icon for a new file has been added to the staging area.</summary>
+Type: <pre><code>string</code></pre>Default: <pre><code>"+"</code></pre>
+</details>
+<details>
+<summary><code>explorer.git.icon.rootStatus.renamed</code>: Icon for a renamed file has been added to the staging area.</summary>
+Type: <pre><code>string</code></pre>Default: <pre><code>"→"</code></pre>
+</details>
+<details>
+<summary><code>explorer.git.icon.rootStatus.deleted</code>: Icon for a file's deletion has been added to the staging area.</summary>
+Type: <pre><code>string</code></pre>Default: <pre><code>"✗"</code></pre>
+</details>
+<details>
+<summary><code>explorer.git.icon.status.mixed</code>: Icon for git mixed status.</summary>
+Type: <pre><code>string</code></pre>Default: <pre><code>"*"</code></pre>
+</details>
+<details>
+<summary><code>explorer.git.icon.status.unmodified</code>: Icon for git unmodified status.</summary>
+Type: <pre><code>string</code></pre>Default: <pre><code>" "</code></pre>
+</details>
+<details>
+<summary><code>explorer.git.icon.status.modified</code>: Icon for git modified status.</summary>
+Type: <pre><code>string</code></pre>Default: <pre><code>"M"</code></pre>
+</details>
+<details>
+<summary><code>explorer.git.icon.status.added</code>: Icon for git added status.</summary>
+Type: <pre><code>string</code></pre>Default: <pre><code>"A"</code></pre>
+</details>
+<details>
+<summary><code>explorer.git.icon.status.deleted</code>: Icon for git removed status.</summary>
+Type: <pre><code>string</code></pre>Default: <pre><code>"D"</code></pre>
+</details>
+<details>
+<summary><code>explorer.git.icon.status.renamed</code>: Icon for git renamed status.</summary>
+Type: <pre><code>string</code></pre>Default: <pre><code>"R"</code></pre>
+</details>
+<details>
+<summary><code>explorer.git.icon.status.copied</code>: Icon for git copied status.</summary>
+Type: <pre><code>string</code></pre>Default: <pre><code>"C"</code></pre>
+</details>
+<details>
+<summary><code>explorer.git.icon.status.unmerged</code>: Icon for git unmerged status.</summary>
+Type: <pre><code>string</code></pre>Default: <pre><code>"U"</code></pre>
+</details>
+<details>
+<summary><code>explorer.git.icon.status.untracked</code>: Icon for git untracked status.</summary>
+Type: <pre><code>string</code></pre>Default: <pre><code>"?"</code></pre>
+</details>
+<details>
+<summary><code>explorer.git.icon.status.ignored</code>: Icon for git ignored status.</summary>
+Type: <pre><code>string</code></pre>Default: <pre><code>"!"</code></pre>
 </details>
 <details>
 <summary><code>explorer.git.showIgnored</code>: Show ignored files in git.</summary>
