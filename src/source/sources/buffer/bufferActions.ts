@@ -1,4 +1,5 @@
 import { workspace } from 'coc.nvim';
+import { gitManager } from '../../../git/manager';
 import { prompt } from '../../../util';
 import { BufferSource } from './bufferSource';
 
@@ -88,5 +89,23 @@ export function initBufferActions(buffer: BufferSource) {
     },
     'bwipeout buffer',
     { multi: true },
+  );
+
+  buffer.addNodesAction(
+    'gitStage',
+    async ({ nodes }) => {
+      await gitManager.cmd.stage(nodes.map((node) => node.fullpath));
+      await buffer.load(buffer.rootNode);
+    },
+    'add file to git index',
+  );
+
+  buffer.addNodesAction(
+    'gitUnstage',
+    async ({ nodes }) => {
+      await gitManager.cmd.unstage(nodes.map((node) => node.fullpath));
+      await buffer.load(buffer.rootNode);
+    },
+    'reset file from git index',
   );
 }
