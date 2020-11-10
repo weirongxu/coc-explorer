@@ -1,5 +1,5 @@
 import { workspace } from 'coc.nvim';
-import { config } from '../../config';
+import { ExplorerConfig } from '../../config';
 import { diagnosticManager } from '../../diagnostic/manager';
 import { getGitHighlight } from '../../git/highlights';
 import { gitManager } from '../../git/manager';
@@ -9,14 +9,13 @@ export namespace FilenameHighlight {
   export type HighlightTypes = 'diagnosticError' | 'diagnosticWarning' | 'git';
 }
 
-class FilenameHighlight {
-  config: {
-    enabledGitStatus: boolean;
-    enabledErrorStatus: boolean;
-    enabledWarningStatus: boolean;
-  };
+export class FilenameHighlight {
+  enabledGitStatus: boolean;
 
-  constructor() {
+  enabledErrorStatus: boolean;
+  enabledWarningStatus: boolean;
+
+  constructor(config: ExplorerConfig) {
     let configKey: string;
     if (config.get<boolean>('file.filename.colored.enable') !== undefined) {
       // eslint-disable-next-line no-restricted-properties
@@ -35,40 +34,39 @@ class FilenameHighlight {
         // This check because it might be an object, which is truthy
       ) === true;
 
-    this.config = {
-      enabledGitStatus:
-        enabledCompletely || config.get<boolean>(configKey + '.git', false),
-      enabledErrorStatus:
-        enabledCompletely ||
-        config.get<boolean>(configKey + '.diagnosticError', false),
-      enabledWarningStatus:
-        enabledCompletely ||
-        config.get<boolean>(configKey + '.diagnosticWarning', false),
-    };
+    this.enabledGitStatus =
+      enabledCompletely || config.get<boolean>(configKey + '.git', false);
+    this.enabledErrorStatus =
+      enabledCompletely ||
+      config.get<boolean>(configKey + '.diagnosticError', false);
+    this.enabledWarningStatus =
+      enabledCompletely ||
+      config.get<boolean>(configKey + '.diagnosticWarning', false);
   }
 
   getHighlight(
     fullpath: string,
+    isDirectory: boolean,
     highlightOrder: FilenameHighlight.HighlightTypes[],
   ) {
     for (const type of highlightOrder) {
       if (type === 'diagnosticWarning') {
-        if (this.config.enabledWarningStatus) {
+        if (this.enabledWarningStatus) {
           const warning = diagnosticManager.getMixedWarning(fullpath);
           if (warning) {
             return fileHighlights.diagnosticWarning;
           }
         }
       } else if (type === 'diagnosticError') {
-        if (this.config.enabledErrorStatus) {
+        if (this.enabledErrorStatus) {
           const error = diagnosticManager.getMixedError(fullpath);
           if (error) {
             return fileHighlights.diagnosticError;
           }
         }
       } else if (type === 'git') {
-        if (this.config.enabledGitStatus) {
-          const status = gitManager.getMixedStatus(fullpath);
+        if (this.enabledGitStatus) {
+          const status = gitManager.getMixedStatus(fullpath, isDirectory);
           if (status) {
             return getGitHighlight(status);
           }
@@ -77,5 +75,3 @@ class FilenameHighlight {
     }
   }
 }
-
-export const filenameHighlight = new FilenameHighlight();

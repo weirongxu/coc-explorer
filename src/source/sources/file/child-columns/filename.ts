@@ -1,20 +1,22 @@
 import pathLib from 'path';
-import { fileColumnRegistrar } from '../fileColumnRegistrar';
-import { fileHighlights } from '../fileSource';
-import { gitManager } from '../../../../git/manager';
 import {
   diagnosticManager,
   DiagnosticType,
 } from '../../../../diagnostic/manager';
-import { filenameHighlight } from '../../../highlights/filename';
+import { gitManager } from '../../../../git/manager';
+import { FilenameHighlight } from '../../../highlights/filename';
+import { fileColumnRegistrar } from '../fileColumnRegistrar';
+import { fileHighlights } from '../fileSource';
 
 fileColumnRegistrar.registerColumn(
   'child',
   'filename',
   ({ source, subscriptions }) => {
+    const filenameHighlight = new FilenameHighlight(source.config);
+
     const getHighlight = (fullpath: string, isDirectory: boolean) => {
       return (
-        filenameHighlight.getHighlight(fullpath, [
+        filenameHighlight.getHighlight(fullpath, isDirectory, [
           'diagnosticError',
           'diagnosticWarning',
           'git',
@@ -23,10 +25,10 @@ fileColumnRegistrar.registerColumn(
     };
 
     const diagnosticTypes: DiagnosticType[] = [];
-    if (filenameHighlight.config.enabledErrorStatus) {
+    if (filenameHighlight.enabledErrorStatus) {
       diagnosticTypes.push('error');
     }
-    if (filenameHighlight.config.enabledWarningStatus) {
+    if (filenameHighlight.enabledWarningStatus) {
       diagnosticTypes.push('warning');
     }
 

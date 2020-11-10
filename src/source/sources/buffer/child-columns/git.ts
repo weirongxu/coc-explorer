@@ -2,13 +2,14 @@ import { getStatusIcons } from '../../../../git/config';
 import { gitHighlights } from '../../../../git/highlights';
 import { gitManager } from '../../../../git/manager';
 import { GitFormat } from '../../../../git/types';
-import { filenameHighlight } from '../../../highlights/filename';
+import { FilenameHighlight } from '../../../highlights/filename';
 import { bufferColumnRegistrar } from '../bufferColumnRegistrar';
 
 bufferColumnRegistrar.registerColumn(
   'child',
   'git',
   ({ source, subscriptions }) => {
+    const filenameHighlight = new FilenameHighlight(source.config);
     const icons = getStatusIcons(source.config);
 
     const getHighlight = (fullpath: string, staged: boolean) => {
@@ -16,7 +17,7 @@ bufferColumnRegistrar.registerColumn(
         return gitHighlights.gitStaged;
       } else {
         return (
-          filenameHighlight.getHighlight(fullpath, ['git']) ??
+          filenameHighlight.getHighlight(fullpath, false, ['git']) ??
           gitHighlights.gitUnstaged
         );
       }
@@ -32,7 +33,7 @@ bufferColumnRegistrar.registerColumn(
       async draw() {
         return {
           async labelVisible({ node }) {
-            const status = gitManager.getMixedStatus(node.fullpath);
+            const status = gitManager.getMixedStatus(node.fullpath, false);
             if (!status) {
               return false;
             }

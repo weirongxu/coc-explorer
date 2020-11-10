@@ -394,7 +394,7 @@ class GitManager {
 
   getMixedStatus(
     fullpath: string,
-    isDirectory = false,
+    isDirectory: boolean,
   ): GitMixedStatus | undefined {
     // TODO simplify
     const statusPair = Object.entries(this.mixedStatusCache)

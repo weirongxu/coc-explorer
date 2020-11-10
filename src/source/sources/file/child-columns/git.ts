@@ -1,7 +1,7 @@
 import { getStatusIcons } from '../../../../git/config';
 import { gitManager } from '../../../../git/manager';
 import { GitFormat } from '../../../../git/types';
-import { filenameHighlight } from '../../../highlights/filename';
+import { FilenameHighlight } from '../../../highlights/filename';
 import { fileColumnRegistrar } from '../fileColumnRegistrar';
 import { fileHighlights } from '../fileSource';
 
@@ -9,14 +9,19 @@ fileColumnRegistrar.registerColumn(
   'child',
   'git',
   ({ source, subscriptions }) => {
+    const filenameHighlight = new FilenameHighlight(source.config);
     const icons = getStatusIcons(source.config);
 
-    const getHighlight = (fullpath: string, staged: boolean) => {
+    const getHighlight = (
+      fullpath: string,
+      staged: boolean,
+      isDirectory: boolean,
+    ) => {
       if (staged) {
         return fileHighlights.gitStaged;
       } else {
         return (
-          filenameHighlight.getHighlight(fullpath, ['git']) ??
+          filenameHighlight.getHighlight(fullpath, isDirectory, ['git']) ??
           fileHighlights.gitUnstaged
         );
       }
@@ -32,7 +37,10 @@ fileColumnRegistrar.registerColumn(
       async draw() {
         return {
           async labelVisible({ node }) {
-            const status = gitManager.getMixedStatus(node.fullpath);
+            const status = gitManager.getMixedStatus(
+              node.fullpath,
+              node.directory,
+            );
             if (!status) {
               return false;
             }
@@ -43,7 +51,7 @@ fileColumnRegistrar.registerColumn(
           },
           drawNode(row, { node, nodeIndex, isLabeling }) {
             const showFormat = (f: GitFormat, staged: boolean) => {
-              const hl = getHighlight(node.fullpath, staged);
+              const hl = getHighlight(node.fullpath, staged, node.directory);
               if (isLabeling) {
                 row.add(`${icons[f].name}(${icons[f].icon})`, {
                   hl,

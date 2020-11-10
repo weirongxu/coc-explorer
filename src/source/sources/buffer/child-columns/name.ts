@@ -1,11 +1,13 @@
-import { filenameHighlight } from '../../../highlights/filename';
+import { FilenameHighlight } from '../../../highlights/filename';
 import { bufferColumnRegistrar } from '../bufferColumnRegistrar';
 import { bufferHighlights } from '../bufferSource';
 
-bufferColumnRegistrar.registerColumn('child', 'name', () => {
+bufferColumnRegistrar.registerColumn('child', 'name', ({ source }) => {
+  const filenameHighlight = new FilenameHighlight(source.config);
+
   const getHighlight = (fullpath: string, visible: boolean) => {
     return (
-      filenameHighlight.getHighlight(fullpath, [
+      filenameHighlight.getHighlight(fullpath, false, [
         'diagnosticError',
         'diagnosticWarning',
         'git',
