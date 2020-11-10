@@ -40,14 +40,14 @@ export class BufManager {
               return;
             }
             const buffer = this.nvim.createBuffer(bufnr);
-            const modified = !!(await buffer
-              .getOption('modified')
-              .catch(() => false));
-            if (bufNode.modified === modified) {
-              return;
+            if (await buffer.valid) {
+              const modified = !!(await buffer.getOption('modified'));
+              if (bufNode.modified === modified) {
+                return;
+              }
+              bufNode.modified = modified;
+              this.modifiedEvent.fire(bufNode.fullpath);
             }
-            bufNode.modified = modified;
-            this.modifiedEvent.fire(bufNode.fullpath);
           }),
       ),
     );
