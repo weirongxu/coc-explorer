@@ -40,7 +40,9 @@ export class BufManager {
               return;
             }
             const buffer = this.nvim.createBuffer(bufnr);
-            const modified = !!(await buffer.getOption('modified'));
+            const modified = !!(await buffer
+              .getOption('modified')
+              .catch(() => false));
             if (bufNode.modified === modified) {
               return;
             }
