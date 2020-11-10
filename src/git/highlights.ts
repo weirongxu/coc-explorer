@@ -52,5 +52,5 @@ export const getGitHighlight = (status: GitMixedStatus) => {
     return gitHighlights.gitIgnored;
   }
 
-  return getFormatHighlight(status.x) || getFormatHighlight(status.y);
+  return getFormatHighlight(status.y);
 };
