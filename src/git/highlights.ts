@@ -26,7 +26,7 @@ export const gitHighlights = {
   gitUnstaged: hl('GitUnstaged', 'Operator'),
 };
 
-const getFormatHighlight = (format: GitFormat) => {
+export const getGitFormatHighlight = (format: GitFormat) => {
   switch (format) {
     case GitFormat.mixed:
       return gitHighlights.gitMixed;
@@ -45,12 +45,4 @@ const getFormatHighlight = (format: GitFormat) => {
     case GitFormat.untracked:
       return gitHighlights.gitUntracked;
   }
-};
-
-export const getGitHighlight = (status: GitMixedStatus) => {
-  if (status.x === GitFormat.ignored) {
-    return gitHighlights.gitIgnored;
-  }
-
-  return getFormatHighlight(status.y);
 };

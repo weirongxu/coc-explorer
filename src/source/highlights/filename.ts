@@ -1,8 +1,9 @@
 import { workspace } from 'coc.nvim';
 import { ExplorerConfig } from '../../config';
 import { diagnosticManager } from '../../diagnostic/manager';
-import { getGitHighlight } from '../../git/highlights';
+import { getGitFormatHighlight, gitHighlights } from '../../git/highlights';
 import { gitManager } from '../../git/manager';
+import { GitFormat, GitMixedStatus } from '../../git/types';
 import { fileHighlights } from '../sources/file/fileSource';
 
 export namespace FilenameHighlight {
@@ -44,6 +45,14 @@ export class FilenameHighlight {
       config.get<boolean>(configKey + '.diagnosticWarning', false);
   }
 
+  getGitHighlight(status: GitMixedStatus) {
+    if (status.x === GitFormat.ignored) {
+      return gitHighlights.gitIgnored;
+    }
+
+    return getGitFormatHighlight(status.y);
+  }
+
   getHighlight(
     fullpath: string,
     isDirectory: boolean,
@@ -68,7 +77,7 @@ export class FilenameHighlight {
         if (this.enabledGitStatus) {
           const status = gitManager.getMixedStatus(fullpath, isDirectory);
           if (status) {
-            return getGitHighlight(status);
+            return this.getGitHighlight(status);
           }
         }
       }
