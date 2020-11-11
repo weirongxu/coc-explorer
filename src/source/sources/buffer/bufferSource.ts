@@ -9,6 +9,7 @@ import { initBufferActions } from './bufferActions';
 import { SourcePainters } from '../../sourcePainters';
 import { argOptions } from '../../../argOptions';
 import { onBufEnter } from '../../../events';
+import { bufferArgOptions } from './argOptions';
 
 export interface BufferNode extends BaseTreeNode<BufferNode, 'root' | 'child'> {
   bufnr: number;
@@ -103,12 +104,14 @@ export class BufferSource extends ExplorerSource<BufferNode> {
   async open() {
     await this.sourcePainters.parseTemplate(
       'root',
-      await this.explorer.args.value(argOptions.bufferRootTemplate),
+      await this.explorer.args.value(bufferArgOptions.bufferRootTemplate),
     );
     await this.sourcePainters.parseTemplate(
       'child',
-      await this.explorer.args.value(argOptions.bufferChildTemplate),
-      await this.explorer.args.value(argOptions.bufferChildLabelingTemplate),
+      await this.explorer.args.value(bufferArgOptions.bufferChildTemplate),
+      await this.explorer.args.value(
+        bufferArgOptions.bufferChildLabelingTemplate,
+      ),
     );
   }
 

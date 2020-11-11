@@ -23,6 +23,7 @@ import { hlGroupManager } from '../../highlights/highlightManager';
 import { BaseTreeNode, ExplorerSource } from '../../source';
 import { sourceManager } from '../../sourceManager';
 import { SourcePainters } from '../../sourcePainters';
+import { fileArgOptions } from './argOptions';
 import { initFileActions } from './fileActions';
 import { fileColumnRegistrar } from './fileColumnRegistrar';
 import './load';
@@ -198,14 +199,14 @@ export class FileSource extends ExplorerSource<FileNode> {
   async open() {
     await this.sourcePainters.parseTemplate(
       'root',
-      await this.explorer.args.value(argOptions.fileRootTemplate),
-      await this.explorer.args.value(argOptions.fileRootLabelingTemplate),
+      await this.explorer.args.value(fileArgOptions.fileRootTemplate),
+      await this.explorer.args.value(fileArgOptions.fileRootLabelingTemplate),
     );
 
     await this.sourcePainters.parseTemplate(
       'child',
-      await this.explorer.args.value(argOptions.fileChildTemplate),
-      await this.explorer.args.value(argOptions.fileChildLabelingTemplate),
+      await this.explorer.args.value(fileArgOptions.fileChildTemplate),
+      await this.explorer.args.value(fileArgOptions.fileChildLabelingTemplate),
     );
 
     this.root = this.explorer.rootUri;

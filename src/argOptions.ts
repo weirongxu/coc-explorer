@@ -93,49 +93,4 @@ export const argOptions = {
     parseArg: (s) => parseInt(s, 10),
     getDefault: () => config.get<number>('floating.contentWidth')!,
   }),
-  bookmarkRootTemplate: Args.registerOption<string>('bookmark-root-template', {
-    getDefault: () => config.get<string>('bookmark.root.template')!,
-  }),
-  bookmarkChildTemplate: Args.registerOption<string>(
-    'bookmark-child-template',
-    {
-      getDefault: () => config.get<string>('bookmark.child.template')!,
-    },
-  ),
-  bookmarkChildLabelingTemplate: Args.registerOption<string>(
-    'bookmark-child-labeling-template',
-    {
-      getDefault: () => config.get<string>('bookmark.child.labelingTemplate')!,
-    },
-  ),
-  bufferRootTemplate: Args.registerOption<string>('buffer-root-template', {
-    getDefault: () => config.get<string>('buffer.root.template')!,
-  }),
-  bufferChildTemplate: Args.registerOption<string>('buffer-child-template', {
-    getDefault: () => config.get<string>('buffer.child.template')!,
-  }),
-  bufferChildLabelingTemplate: Args.registerOption<string>(
-    'buffer-child-labeling-template',
-    {
-      getDefault: () => config.get<string>('buffer.child.labelingTemplate')!,
-    },
-  ),
-  fileRootTemplate: Args.registerOption<string>('file-root-template', {
-    getDefault: () => config.get<string>('file.root.template')!,
-  }),
-  fileRootLabelingTemplate: Args.registerOption<string>(
-    'file-root-labeling-template',
-    {
-      getDefault: () => config.get<string>('file.root.labelingTemplate')!,
-    },
-  ),
-  fileChildTemplate: Args.registerOption<string>('file-child-template', {
-    getDefault: () => config.get<string>('file.child.template')!,
-  }),
-  fileChildLabelingTemplate: Args.registerOption<string>(
-    'file-child-labeling-template',
-    {
-      getDefault: () => config.get<string>('file.child.labelingTemplate')!,
-    },
-  ),
 };

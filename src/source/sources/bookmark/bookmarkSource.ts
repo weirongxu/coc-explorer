@@ -7,6 +7,7 @@ import { hlGroupManager } from '../../highlights/highlightManager';
 import { BaseTreeNode, ExplorerSource } from '../../source';
 import { sourceManager } from '../../sourceManager';
 import { SourcePainters } from '../../sourcePainters';
+import { bookmarkArgOptions } from './argOptions';
 import { initBookmarkActions } from './bookmarkActions';
 import { bookmarkColumnRegistrar } from './bookmarkColumnRegistrar';
 import './load';
@@ -83,12 +84,14 @@ export class BookmarkSource extends ExplorerSource<BookmarkNode> {
   async open() {
     await this.sourcePainters.parseTemplate(
       'root',
-      await this.explorer.args.value(argOptions.bookmarkRootTemplate),
+      await this.explorer.args.value(bookmarkArgOptions.bookmarkRootTemplate),
     );
     await this.sourcePainters.parseTemplate(
       'child',
-      await this.explorer.args.value(argOptions.bookmarkChildTemplate),
-      await this.explorer.args.value(argOptions.bookmarkChildLabelingTemplate),
+      await this.explorer.args.value(bookmarkArgOptions.bookmarkChildTemplate),
+      await this.explorer.args.value(
+        bookmarkArgOptions.bookmarkChildLabelingTemplate,
+      ),
     );
 
     this.rootNode.fullpath = this.explorer.rootUri;
