@@ -1,6 +1,7 @@
 import { getDiagnosticDisplayMax } from '../../../../diagnostic/config';
 import { diagnosticHighlights } from '../../../../diagnostic/highlights';
 import { diagnosticManager } from '../../../../diagnostic/manager';
+import { toSubscriptNumbers } from '../../../../util';
 import { bufferColumnRegistrar } from '../bufferColumnRegistrar';
 
 bufferColumnRegistrar.registerColumn(
@@ -33,7 +34,7 @@ bufferColumnRegistrar.registerColumn(
               row.add(
                 warningCount > diagnosticDisplayMax
                   ? '✗'
-                  : warningCount.toString(),
+                  : toSubscriptNumbers(warningCount),
                 {
                   hl: diagnosticHighlights.diagnosticWarning,
                 },

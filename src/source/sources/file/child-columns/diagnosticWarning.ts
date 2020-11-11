@@ -2,6 +2,7 @@ import { fileColumnRegistrar } from '../fileColumnRegistrar';
 import { fileHighlights } from '../fileSource';
 import { diagnosticManager } from '../../../../diagnostic/manager';
 import { getDiagnosticDisplayMax } from '../../../../diagnostic/config';
+import { toSubscriptNumbers } from '../../../../util';
 
 fileColumnRegistrar.registerColumn(
   'child',
@@ -36,7 +37,7 @@ fileColumnRegistrar.registerColumn(
                 row.add(
                   warningCount > diagnosticDisplayMax
                     ? '✗'
-                    : warningCount.toString(),
+                    : toSubscriptNumbers(warningCount),
                   {
                     hl: fileHighlights.diagnosticWarning,
                   },

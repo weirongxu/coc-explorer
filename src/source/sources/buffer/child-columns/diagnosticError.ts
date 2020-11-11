@@ -1,6 +1,7 @@
 import { getDiagnosticDisplayMax } from '../../../../diagnostic/config';
 import { diagnosticHighlights } from '../../../../diagnostic/highlights';
 import { diagnosticManager } from '../../../../diagnostic/manager';
+import { toSubscriptNumbers } from '../../../../util';
 import { bufferColumnRegistrar } from '../bufferColumnRegistrar';
 
 bufferColumnRegistrar.registerColumn(
@@ -29,7 +30,9 @@ bufferColumnRegistrar.registerColumn(
 
             if (errorCount) {
               row.add(
-                errorCount > diagnosticDisplayMax ? '✗' : errorCount.toString(),
+                errorCount > diagnosticDisplayMax
+                  ? '✗'
+                  : toSubscriptNumbers(errorCount),
                 { hl: diagnosticHighlights.diagnosticError },
               );
               source.addIndexing('diagnosticError', nodeIndex);
