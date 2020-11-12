@@ -458,9 +458,9 @@ export interface Explorer {
    */
   'explorer.file.git.showUntrackedFiles'?: boolean | 'system';
   /**
-   * Trash command template, arguments(%s source filepath), example: 'trash-put %s', 'mv --backup=t %s ~/.trash/'
+   * Trash command template, arguments(%s source filepath, %l source filepath list), example: 'trash-put %l', 'mv --backup=t %l ~/.trash/'
    */
-  'explorer.trash.command'?: ('module:trash' | 'trash-put %s') | string;
+  'explorer.trash.command'?: ('nodejs:module' | 'trash-put %s') | string;
   /**
    * Maximum count of diagnostic column
    */

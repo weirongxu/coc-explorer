@@ -894,8 +894,12 @@ Type: <pre><code>boolean | {
 }</code></pre>Default: <pre><code>false</code></pre>
 </details>
 <details>
-<summary><code>explorer.file.git.showUntrackedFiles</code>: show untracked file in git.</summary>
+<summary><code>explorer.file.git.showUntrackedFiles</code>: Show untracked file in git.</summary>
 Type: <pre><code>boolean | 'system'</code></pre>
+</details>
+<details>
+<summary><code>explorer.trash.command</code>: Trash command template, arguments(%s source filepath, %l source filepath list), example: 'trash-put %l', 'mv --backup=t %l ~/.trash/'.</summary>
+Type: <pre><code>('nodejs:module' | 'trash-put %s') | string</code></pre>Default: <pre><code>"nodejs:module"</code></pre>
 </details>
 <details>
 <summary><code>explorer.diagnostic.displayMax</code>: Maximum count of diagnostic column.</summary>
