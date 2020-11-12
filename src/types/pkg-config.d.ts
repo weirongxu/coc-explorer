@@ -466,6 +466,10 @@ export interface Explorer {
    */
   'explorer.diagnostic.displayMax'?: number;
   /**
+   * Subscript number for diagnostic count
+   */
+  'explorer.diagnostic.enableSubscriptNumber'?: boolean;
+  /**
    * Enable git
    */
   'explorer.git.enable'?: boolean;

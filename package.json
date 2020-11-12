@@ -781,6 +781,11 @@
           "type": "integer",
           "default": 99
         },
+        "explorer.diagnostic.enableSubscriptNumber": {
+          "description": "Subscript number for diagnostic count",
+          "type": "boolen",
+          "default": false
+        },
         "explorer.git.enable": {
           "description": "Enable git",
           "type": "boolean",

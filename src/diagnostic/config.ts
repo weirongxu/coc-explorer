@@ -1,7 +1,20 @@
 import { workspace } from 'coc.nvim';
 import { ExplorerConfig } from '../config';
+import { toSubscriptNumbers } from '../util';
 
-export const getDiagnosticDisplayMax = (config: ExplorerConfig) => {
+type DiagnosisConfig = {
+  displayMax: number;
+  enableSubscriptNumber: boolean;
+};
+
+export const getDiagnosticConfig = (config: ExplorerConfig) => {
+  const diagnosticConfig: DiagnosisConfig = {
+    displayMax: config.get<number>('diagnostic.displayMax')!,
+    enableSubscriptNumber: config.get<boolean>(
+      'diagnostic.enableSubscriptNumber',
+    ),
+  };
+
   const deprecatedMax = config.get<number>('file.diagnosticCountMax');
   if (deprecatedMax !== undefined) {
     // eslint-disable-next-line no-restricted-properties
@@ -9,8 +22,21 @@ export const getDiagnosticDisplayMax = (config: ExplorerConfig) => {
       'explorer.file.diagnosticCountMax has been deprecated, please use explorer.diagnostic.displayMax in coc-settings.json',
       'warning',
     );
-    return deprecatedMax;
+    diagnosticConfig.displayMax = deprecatedMax;
+  }
+
+  return diagnosticConfig;
+};
+
+export const printDiagnosticCount = (
+  count: number,
+  config: DiagnosisConfig,
+) => {
+  if (count > config.displayMax) {
+    return '✗';
+  } else if (config.enableSubscriptNumber) {
+    return toSubscriptNumbers(count);
   } else {
-    return config.get<number>('diagnostic.displayMax')!;
+    return count.toString();
   }
 };

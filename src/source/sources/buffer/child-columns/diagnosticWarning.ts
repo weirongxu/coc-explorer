@@ -1,14 +1,16 @@
-import { getDiagnosticDisplayMax } from '../../../../diagnostic/config';
+import {
+  getDiagnosticConfig,
+  printDiagnosticCount,
+} from '../../../../diagnostic/config';
 import { diagnosticHighlights } from '../../../../diagnostic/highlights';
 import { diagnosticManager } from '../../../../diagnostic/manager';
-import { toSubscriptNumbers } from '../../../../util';
 import { bufferColumnRegistrar } from '../bufferColumnRegistrar';
 
 bufferColumnRegistrar.registerColumn(
   'child',
   'diagnosticWarning',
   ({ source, subscriptions }) => {
-    const diagnosticDisplayMax = getDiagnosticDisplayMax(source.config);
+    const diagnosticConfig = getDiagnosticConfig(source.config);
 
     return {
       init() {
@@ -31,14 +33,9 @@ bufferColumnRegistrar.registerColumn(
             }
 
             if (warningCount) {
-              row.add(
-                warningCount > diagnosticDisplayMax
-                  ? '✗'
-                  : toSubscriptNumbers(warningCount),
-                {
-                  hl: diagnosticHighlights.diagnosticWarning,
-                },
-              );
+              row.add(printDiagnosticCount(warningCount, diagnosticConfig), {
+                hl: diagnosticHighlights.diagnosticWarning,
+              });
               source.addIndexing('diagnosticWarning', nodeIndex);
             } else {
               source.removeIndexing('diagnosticWarning', nodeIndex);

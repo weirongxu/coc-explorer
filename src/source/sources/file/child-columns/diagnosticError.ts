@@ -1,14 +1,16 @@
+import {
+  getDiagnosticConfig,
+  printDiagnosticCount,
+} from '../../../../diagnostic/config';
+import { diagnosticManager } from '../../../../diagnostic/manager';
 import { fileColumnRegistrar } from '../fileColumnRegistrar';
 import { fileHighlights } from '../fileSource';
-import { diagnosticManager } from '../../../../diagnostic/manager';
-import { getDiagnosticDisplayMax } from '../../../../diagnostic/config';
-import { toSubscriptNumbers } from '../../../../util';
 
 fileColumnRegistrar.registerColumn(
   'child',
   'diagnosticError',
   ({ source, subscriptions }) => {
-    const diagnosticDisplayMax = getDiagnosticDisplayMax(source.config);
+    const diagnosticConfig = getDiagnosticConfig(source.config);
 
     return {
       init() {
@@ -32,12 +34,9 @@ fileColumnRegistrar.registerColumn(
               if (node.directory && source.isExpanded(node)) {
                 source.removeIndexing('diagnosticError', nodeIndex);
               } else {
-                row.add(
-                  errorCount > diagnosticDisplayMax
-                    ? '✗'
-                    : toSubscriptNumbers(errorCount),
-                  { hl: fileHighlights.diagnosticError },
-                );
+                row.add(printDiagnosticCount(errorCount, diagnosticConfig), {
+                  hl: fileHighlights.diagnosticError,
+                });
                 source.addIndexing('diagnosticError', nodeIndex);
               }
             } else {

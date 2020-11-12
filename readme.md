@@ -906,6 +906,10 @@ Type: <pre><code>('nodejs:module' | 'trash-put %s') | string</code></pre>Default
 Type: <pre><code>number</code></pre>Default: <pre><code>99</code></pre>
 </details>
 <details>
+<summary><code>explorer.diagnostic.enableSubscriptNumber</code>: Subscript number for diagnostic count.</summary>
+Type: <pre><code>boolean</code></pre>Default: <pre><code>false</code></pre>
+</details>
+<details>
 <summary><code>explorer.git.enable</code>: Enable git.</summary>
 Type: <pre><code>boolean</code></pre>Default: <pre><code>true</code></pre>
 </details>
