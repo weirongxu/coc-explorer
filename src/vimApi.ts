@@ -7,7 +7,7 @@ import { getDirectoryIcon, getFileIcon } from './icons';
 import { actionListMru } from './lists/actions';
 import { parseOriginalActionExp } from './mappings';
 import { BaseTreeNode, ExplorerSource } from './source/source';
-import { asyncCatchError, compactI } from './util';
+import { asyncCatchError, compactI, onError } from './util';
 import { WinLayoutFinder } from './winLayoutFinder';
 
 export function registerApi(
@@ -129,12 +129,14 @@ export function registerVimApi(
         ),
       ),
     );
-    await explorer.doActionExp(parseOriginalActionExp(actionExp), {
-      mode,
-      count,
-      lineIndexes,
-      queue: true,
-    });
+    await explorer
+      .doActionExp(parseOriginalActionExp(actionExp), {
+        mode,
+        count,
+        lineIndexes,
+        queue: true,
+      })
+      .catch(onError);
   }
 
   context.subscriptions.push(

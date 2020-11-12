@@ -1,7 +1,7 @@
 import commandExists from 'command-exists';
 import pathLib from 'path';
 import { config } from '../config';
-import { execCli, fsStat, normalizePath } from '../util';
+import { execCmd, fsStat, normalizePath } from '../util';
 import { GitFormat, GitStatus } from './types';
 
 export namespace GitCommand {
@@ -34,7 +34,7 @@ export class GitCommand {
   }
 
   spawn(args: string[], { cwd }: { cwd?: string } = {}) {
-    return execCli(this.binPath, args, {
+    return execCmd(this.binPath, args, {
       cwd,
     });
   }

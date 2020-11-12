@@ -454,9 +454,13 @@ export interface Explorer {
         [k: string]: unknown;
       };
   /**
-   * show untracked file in git
+   * Show untracked file in git
    */
   'explorer.file.git.showUntrackedFiles'?: boolean | 'system';
+  /**
+   * Trash command template, arguments(%s source filepath), example: 'trash-put %s', 'mv --backup=t %s ~/.trash/'
+   */
+  'explorer.trash.command'?: ('module:trash' | 'trash-put %s') | string;
   /**
    * Maximum count of diagnostic column
    */

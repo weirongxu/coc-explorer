@@ -1,12 +1,13 @@
 import fs from 'fs';
-import { promisify } from 'util';
+import makeDir from 'make-dir';
+import pathLib from 'path';
 import rimraf from 'rimraf';
 import trash from 'trash';
-import pathLib from 'path';
-import { execCli } from './cli';
-import { isWindows } from './platform';
+import { promisify } from 'util';
 import { input, prompt } from '.';
-import makeDir from 'make-dir';
+import { execCmd } from './cli';
+import { isWindows } from './platform';
+import { trashCmd } from './trash';
 
 export const fsOpen = promisify(fs.open);
 export const fsClose = promisify(fs.close);
@@ -28,9 +29,14 @@ export const fsStat = promisify(fs.stat);
 export const fsLstat = promisify(fs.lstat);
 export const fsCopyFile = promisify(fs.copyFile);
 export const fsRename = promisify(fs.rename);
-export const fsTrash = (paths: string | string[]) =>
-  trash(paths, { glob: false });
 export const fsRimraf = promisify(rimraf);
+
+export const fsTrash = async (paths: string | string[]) => {
+  await trashCmd.exec(typeof paths === 'string' ? [paths] : paths);
+};
+
+export const nodejsModuleTrash = (paths: string | string[]) =>
+  trash(paths, { glob: false });
 
 export async function fsCopyFileRecursive(
   sourcePath: string,
@@ -166,7 +172,7 @@ export async function overwritePrompt<S extends string | undefined>(
 
 export async function listDrive(): Promise<string[]> {
   if (isWindows) {
-    const content = await execCli('wmic', ['logicaldisk', 'get', 'name']);
+    const content = await execCmd('wmic', ['logicaldisk', 'get', 'name']);
     const list = content
       .split('\n')
       .map((d) => d.trim())

@@ -742,7 +742,7 @@
           "default": false
         },
         "explorer.file.git.showUntrackedFiles": {
-          "description": "show untracked file in git",
+          "description": "Show untracked file in git",
           "anyOf": [
             {
               "type": "boolean"
@@ -756,6 +756,25 @@
               ]
             }
           ]
+        },
+        "explorer.trash.command": {
+          "description": "Trash command template, arguments(%s source filepath, %l source filepath list), example: 'trash-put %l', 'mv --backup=t %l ~/.trash/'",
+          "anyOf": [
+            {
+              "enum": [
+                "nodejs:module",
+                "trash-put %s"
+              ],
+              "enumDescriptions": [
+                "Use nodejs module"
+              ]
+            },
+            {
+              "description": "Use template string as trash command",
+              "type": "string"
+            }
+          ],
+          "default": "nodejs:module"
         },
         "explorer.diagnostic.displayMax": {
           "description": "Maximum count of diagnostic column",

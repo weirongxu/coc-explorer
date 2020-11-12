@@ -3,6 +3,7 @@ import { workspace } from 'coc.nvim';
 import { argOptions } from './argOptions';
 import { config } from './config';
 import { normalizePath } from './util';
+import { fileArgOptions } from './source/sources/file/argOptions';
 
 it('should parse args', async () => {
   const oldNvim = workspace.nvim;
@@ -34,7 +35,7 @@ it('should parse args', async () => {
     [rootUri, '--file-child-template', '[git][fileame] [fullpath]'],
     config,
   );
-  expect(await args.value(argOptions.fileChildTemplate)).toEqual(
+  expect(await args.value(fileArgOptions.fileChildTemplate)).toEqual(
     '[git][fileame] [fullpath]',
   );
 
