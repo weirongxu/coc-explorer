@@ -73,38 +73,39 @@ export class ColumnRegistrar<
     type: Type,
     source: S,
     columnName: string,
-  ): Promise<number | Column<TreeNode>> {
+  ): Promise<undefined | number | Column<TreeNode>> {
     if (/\d+/.test(columnName)) {
       return parseInt(columnName, 10);
-    } else {
-      const registeredColumn = this.registeredColumns
-        .get(type)
-        ?.get(columnName);
-      if (registeredColumn) {
-        const column = { label: columnName } as Column<TreeNode>;
-        const subscriptions: Disposable[] = [];
-        Object.assign(
-          column,
-          registeredColumn.createColumn({
-            source,
-            column,
-            subscriptions,
-          }),
-          { subscriptions },
-        );
+    }
 
-        if (column.inited) {
-          return column;
-        } else {
-          if (!column.available || column.available()) {
-            await column.init?.();
-            column.inited = true;
-            return column;
-          }
-        }
-      }
+    const registeredColumn = this.registeredColumns.get(type)?.get(columnName);
+    if (!registeredColumn) {
       throw Error(`column(${columnName}) not found`);
     }
+
+    const column = { label: columnName } as Column<TreeNode>;
+    const subscriptions: Disposable[] = [];
+    Object.assign(
+      column,
+      registeredColumn.createColumn({
+        source,
+        column,
+        subscriptions,
+      }),
+      { subscriptions },
+    );
+
+    if (column.inited) {
+      return column;
+    }
+
+    if (column.available && !(await column.available())) {
+      return undefined;
+    }
+
+    await column.init?.();
+    column.inited = true;
+    return column;
   }
 
   registerColumn(

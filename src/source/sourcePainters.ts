@@ -1,5 +1,5 @@
 import pFilter from 'p-filter';
-import { Drawn, DrawnWithNodeIndex, groupBy } from '../util';
+import { compactI, Drawn, DrawnWithNodeIndex, groupBy } from '../util';
 import { Column, ColumnRegistrar } from './columnRegistrar';
 import { hlGroupManager } from './highlights/highlightManager';
 import { OriginalTemplatePart, parseTemplate } from './parseTemplate';
@@ -64,7 +64,10 @@ export class SourcePainter<
       const initedParts: TemplatePart<TreeNode>[] = [];
 
       for (const parsedPart of parseTemplate(template)) {
-        initedParts.push(await this.initPart(parsedPart));
+        const part = await this.initPart(parsedPart);
+        if (part) {
+          initedParts.push(part);
+        }
       }
 
       this.clearParts(this.parts);
@@ -77,7 +80,10 @@ export class SourcePainter<
         const initedLabelingParts: TemplatePart<TreeNode>[] = [];
 
         for (const parsedPart of parseTemplate(labelingTemplate)) {
-          initedLabelingParts.push(await this.initPart(parsedPart));
+          const part = await this.initPart(parsedPart);
+          if (part) {
+            initedLabelingParts.push(part);
+          }
         }
 
         this.clearParts(this.labelingParts);
@@ -109,31 +115,47 @@ export class SourcePainter<
     }
   }
 
-  async initPart(part: OriginalTemplatePart): Promise<TemplatePart<TreeNode>> {
-    if (typeof part !== 'string') {
-      const column: TemplateBlock<TreeNode> = {
-        column: await this.columnRegistrar.initColumn(
-          this.type,
-          this.source,
-          part.column,
-        ),
-      };
-      if (part.modifiers) {
-        column.modifiers = await Promise.all(
-          part.modifiers.map(async (modifier) => ({
-            name: modifier.name,
-            column: await this.columnRegistrar.initColumn(
-              this.type,
-              this.source,
-              modifier.column,
-            ),
-          })),
-        );
-      }
-      return column;
-    } else {
+  async initPart(
+    part: OriginalTemplatePart,
+  ): Promise<undefined | TemplatePart<TreeNode>> {
+    if (typeof part === 'string') {
       return part;
     }
+
+    const column = await this.columnRegistrar.initColumn(
+      this.type,
+      this.source,
+      part.column,
+    );
+
+    if (!column) {
+      return undefined;
+    }
+
+    const block: TemplateBlock<TreeNode> = {
+      column,
+    };
+
+    if (part.modifiers) {
+      const modifiers = await Promise.all(
+        part.modifiers.map(async (modifier) => {
+          const column = await this.columnRegistrar.initColumn(
+            this.type,
+            this.source,
+            modifier.column,
+          );
+          if (!column) {
+            return undefined;
+          }
+          return {
+            name: modifier.name,
+            column,
+          };
+        }),
+      );
+      block.modifiers = compactI(modifiers);
+    }
+    return block;
   }
 }
 
