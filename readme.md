@@ -476,17 +476,29 @@ https://github.com/weirongxu/coc-explorer/issues?q=is%3Aissue+sort%3Aupdated-des
 ## Example by Vim API and event hooks
 
 ```vim
-function! s:coc_list_current_dir(args)
+function! s:explorer_cur_dir()
   let node_info = CocAction('runCommand', 'explorer.getNodeInfo', 0)
-  execute 'cd ' . fnamemodify(node_info['fullpath'], ':h')
-  execute 'CocList ' . a:args
+  return fnamemodify(node_info['fullpath'], ':h')
 endfunction
 
-function! s:init_explorer(bufnr)
-  set winblend=50
-  nmap <buffer> <Leader>fg :call <SID>coc_list_current_dir('-I grep')<CR>
-  nmap <buffer> <Leader>fG :call <SID>coc_list_current_dir('-I grep -regex')<CR>
-  nmap <buffer> <C-p> :call <SID>coc_list_current_dir('files')<CR>
+function! s:exec_cur_dir(cmd)
+  let dir = s:explorer_cur_dir()
+  execute 'cd ' . dir
+  execute a:cmd
+endfunction
+
+function! s:init_explorer()
+  set winblend=10
+
+  " Integration with other plugins
+
+  " CocList
+  nmap <buffer> <Leader>fg :call <SID>exec_cur_dir('CocList -I grep')<CR>
+  nmap <buffer> <Leader>fG :call <SID>exec_cur_dir('CocList -I grep -regex')<CR>
+  nmap <buffer> <C-p> :call <SID>exec_cur_dir('CocList files')<CR>
+
+  " vim-floaterm
+  nmap <buffer> <Leader>ft :call <SID>exec_cur_dir('FloatermNew --wintype=floating')<CR>
 endfunction
 
 function! s:enter_explorer()
