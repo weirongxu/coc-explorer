@@ -447,6 +447,37 @@ export class Explorer implements Disposable {
       },
       'go to next git changed',
     );
+
+    const indexOptions = {
+      args: [
+        {
+          name: 'index name',
+          description: 'string',
+        },
+      ],
+      menus: {
+        modified: 'modified',
+        diagnosticWarning: 'diagnosticWarning',
+        diagnosticError: 'diagnosticError',
+        git: 'git',
+      },
+    };
+    this.addGlobalAction(
+      'indexPrev',
+      async ({ args }) => {
+        await this.gotoPrevIndexing(...args);
+      },
+      'go to previous index',
+      indexOptions,
+    );
+    this.addGlobalAction(
+      'indexNext',
+      async ({ args }) => {
+        await this.gotoNextIndexing(...args);
+      },
+      'go to next index',
+      indexOptions,
+    );
   }
 
   dispose() {

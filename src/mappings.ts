@@ -146,14 +146,16 @@ class KeyMapping {
         '[i': 'indentPrev',
         ']i': 'indentNext',
 
-        '[m': 'modifiedPrev',
-        ']m': 'modifiedNext',
+        '[m': 'indexPrev:modified',
+        ']m': 'indexPrev:modified',
 
-        '[d': 'diagnosticPrev',
-        ']d': 'diagnosticNext',
+        '[d': 'indexPrev:diagnosticError:diagnosticWarning',
+        ']d': 'indexNext:diagnosticError:diagnosticWarning',
+        '[D': 'indexPrev:diagnosticError',
+        ']D': 'indexNext:diagnosticError',
 
-        '[c': 'gitPrev',
-        ']c': 'gitNext',
+        '[c': 'indexNext:git',
+        ']c': 'indexNext:git',
         '<<': 'gitStage',
         '>>': 'gitUnstage',
       },
