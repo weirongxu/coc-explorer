@@ -40,14 +40,15 @@ export class BufManager {
               return;
             }
             const buffer = this.nvim.createBuffer(bufnr);
-            if (await buffer.valid) {
-              const modified = !!(await buffer.getOption('modified'));
-              if (bufNode.modified === modified) {
-                return;
-              }
-              bufNode.modified = modified;
-              this.modifiedEvent.fire(bufNode.fullpath);
+            const modified = (await workspace.nvim.eval(
+              `bufloaded(${buffer.id}) ? getbufvar(${buffer.id}, '&modified') : v:null`,
+            )) as boolean | null;
+            // const modified = !!(await buffer.getOption('modified'));
+            if (modified === null || bufNode.modified === modified) {
+              return;
             }
+            bufNode.modified = modified;
+            this.modifiedEvent.fire(bufNode.fullpath);
           }),
       ),
     );
