@@ -739,7 +739,7 @@
               }
             }
           ],
-          "default": false
+          "default": true
         },
         "explorer.file.git.showUntrackedFiles": {
           "description": "Show untracked file in git",
@@ -885,7 +885,7 @@
         "explorer.git.showIgnored": {
           "description": "Show ignored files in git",
           "type": "boolean",
-          "default": false
+          "default": true
         },
         "explorer.debug": {
           "description": "Enable debug",
