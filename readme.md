@@ -396,18 +396,17 @@ You can use `?` to view all actions of current source
   "explorer.keyMappings.global": {
     "i": false, // cancel default mapkey
 
-    "gk": "expandablePrev",
-    "gj": "expandableNext",
-
     "*": "toggleSelection",
     "<tab>": "actionMenu",
 
+    "gk": "expandablePrev",
+    "gj": "expandableNext",
     "h": "collapse",
     "l": ["expandable?", "expand", "open"],
-    "J": ["toggleSelection", "nodeNext"],
-    "K": ["toggleSelection", "nodePrev"],
-    "gl": "expandRecursive",
-    "gh": "collapseRecursive",
+    "J": ["toggleSelection", "normal:j"],
+    "K": ["toggleSelection", "normal:k"],
+    "gl": "expand:recursive",
+    "gh": "collapse:recursive",
     "<2-LeftMouse>": [
       "expandable?",
       ["expanded?", "collapse", "expand"],
@@ -417,10 +416,10 @@ You can use `?` to view all actions of current source
     "<cr>": ["expandable?", "cd", "open"],
     "e": "open",
     "s": "open:split",
-    "S": "open:split:plain",
     "E": "open:vsplit",
     "t": "open:tab",
     "<bs>": "gotoParent",
+    "gs": "reveal:select",
     "gp": "preview:labeling",
 
     "y": "copyFilepath",
@@ -453,11 +452,19 @@ You can use `?` to view all actions of current source
     "[[": "sourcePrev",
     "]]": "sourceNext",
 
-    "[d": "diagnosticPrev",
-    "]d": "diagnosticNext",
+    "[i": "indentPrev",
+    "]i": "indentNext",
 
-    "[c": "gitPrev",
-    "]c": "gitNext",
+    "[m": "indexPrev:modified",
+    "]m": "indexPrev:modified",
+
+    "[d": "indexPrev:diagnosticError:diagnosticWarning",
+    "]d": "indexNext:diagnosticError:diagnosticWarning",
+    "[D": "indexPrev:diagnosticError",
+    "]D": "indexNext:diagnosticError",
+
+    "[c": "indexNext:git",
+    "]c": "indexNext:git",
     "<<": "gitStage",
     ">>": "gitUnstage"
   }
