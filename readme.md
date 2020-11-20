@@ -456,14 +456,14 @@ You can use `?` to view all actions of current source
     "]i": "indentNext",
 
     "[m": "indexPrev:modified",
-    "]m": "indexPrev:modified",
+    "]m": "indexNext:modified",
 
     "[d": "indexPrev:diagnosticError:diagnosticWarning",
     "]d": "indexNext:diagnosticError:diagnosticWarning",
     "[D": "indexPrev:diagnosticError",
     "]D": "indexNext:diagnosticError",
 
-    "[c": "indexNext:git",
+    "[c": "indexPrev:git",
     "]c": "indexNext:git",
     "<<": "gitStage",
     ">>": "gitUnstage"
