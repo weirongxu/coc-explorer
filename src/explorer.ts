@@ -321,7 +321,7 @@ export class Explorer implements Disposable {
       'normal',
       async ({ args }) => {
         if (args[0]) {
-          await this.nvim.command('normal ' + args[0]);
+          await this.nvim.command('execute "normal ' + args[0] + '"');
         }
       },
       'execute vim normal mode commands',
