@@ -887,11 +887,6 @@
           "type": "boolean",
           "default": true
         },
-        "explorer.git.showOnlyGitChange": {
-          "description": "Default show only git changed files",
-          "type": "boolean",
-          "default": false
-        },
         "explorer.debug": {
           "description": "Enable debug",
           "type": "boolean",
