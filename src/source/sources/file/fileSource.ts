@@ -6,6 +6,7 @@ import { argOptions } from '../../../argOptions';
 import { diagnosticHighlights } from '../../../diagnostic/highlights';
 import { onBufEnter } from '../../../events';
 import { gitHighlights } from '../../../git/highlights';
+import { gitManager } from '../../../git/manager';
 import { fileList } from '../../../lists/files';
 import {
   fsAccess,
@@ -84,6 +85,7 @@ export class FileSource extends ExplorerSource<FileNode> {
   scheme = 'file';
   hlSrcId = workspace.createNameSpace('coc-explorer-file');
   showHidden: boolean = this.config.get<boolean>('file.showHiddenFiles')!;
+  showOnlyGitChange: boolean = false;
   copiedNodes: Set<FileNode> = new Set();
   cutNodes: Set<FileNode> = new Set();
   rootNode: FileNode = {
@@ -138,6 +140,10 @@ export class FileSource extends ExplorerSource<FileNode> {
         new RegExp(pattern).test(filename),
       )
     );
+  }
+
+  isGitChange(parentNode: FileNode, filename: string): boolean {
+    return !!gitManager.getMixedStatus(parentNode.fullpath + '/' + filename, false);
   }
 
   getColumnConfig<T>(name: string, defaultValue?: T): T {
@@ -401,6 +407,10 @@ export class FileSource extends ExplorerSource<FileNode> {
     const files = await Promise.all(
       filenames.map(async (filename) => {
         try {
+          if (this.showOnlyGitChange && !this.isGitChange(parentNode, filename)) {
+            return;
+          }
+
           const hidden = this.isHidden(filename);
           if (!this.showHidden && hidden) {
             return;

@@ -614,4 +614,21 @@ export function initFileActions(file: FileSource) {
     },
     'reset file from git index',
   );
+
+  file.addNodeAction(
+    'toggleOnlyGitChange',
+    async () => {
+      file.showOnlyGitChange = !file.showOnlyGitChange;
+      const loadNotifier = await file.loadNotifier(file.rootNode, {
+        force: true,
+      });
+
+      file.nvim.pauseNotification();
+      file.clearHighlightsNotify();
+      loadNotifier?.notify();
+      await file.nvim.resumeNotification();
+    },
+    'toggle visibility of git change node',
+    { reload: true },
+  );
 }
