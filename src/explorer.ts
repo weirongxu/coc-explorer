@@ -46,6 +46,7 @@ import {
   flatten,
   normalizePath,
   Notifier,
+  onError,
   scanIndexNext,
   scanIndexPrev,
   sum,
@@ -1042,29 +1043,35 @@ export class Explorer implements Disposable {
       ? new Set(options.lineIndexes)
       : await this.getSelectedOrCursorLineIndexes(mode);
 
-    for (let c = 0; c < count; c++) {
-      const lineIndexes =
-        c === 0
-          ? firstLineIndexes
-          : await this.getSelectedOrCursorLineIndexes(mode);
+    try {
+      for (let c = 0; c < count; c++) {
+        const lineIndexes =
+          c === 0
+            ? firstLineIndexes
+            : await this.getSelectedOrCursorLineIndexes(mode);
 
-      const nodesGroup: Map<
-        ExplorerSource<any>,
-        BaseTreeNode<any>[]
-      > = new Map();
-      for (const lineIndex of lineIndexes) {
-        const { source } = this.findSourceByLineIndex(lineIndex);
-        if (!nodesGroup.has(source)) {
-          nodesGroup.set(source, []);
+        const nodesGroup: Map<
+          ExplorerSource<any>,
+          BaseTreeNode<any>[]
+        > = new Map();
+        for (const lineIndex of lineIndexes) {
+          const { source } = this.findSourceByLineIndex(lineIndex);
+          if (!nodesGroup.has(source)) {
+            nodesGroup.set(source, []);
+          }
+          const relativeLineIndex = lineIndex - source.startLineIndex;
+
+          nodesGroup
+            .get(source)!
+            .push(source.flattenedNodes[relativeLineIndex]);
         }
-        const relativeLineIndex = lineIndex - source.startLineIndex;
 
-        nodesGroup.get(source)!.push(source.flattenedNodes[relativeLineIndex]);
+        for (const [source, nodes] of nodesGroup.entries()) {
+          await source.doActionExp(actionExp, nodes);
+        }
       }
-
-      for (const [source, nodes] of nodesGroup.entries()) {
-        await source.doActionExp(actionExp, nodes);
-      }
+    } catch (error) {
+      onError(error);
     }
 
     release?.();
