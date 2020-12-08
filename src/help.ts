@@ -43,7 +43,7 @@ export class HelpPainter {
     this.painter = new ViewPainter(explorer);
 
     this.registeredActions = {
-      ...this.explorer.globalActions,
+      ...this.explorer.actions,
       ...this.source.actions,
     };
   }

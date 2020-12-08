@@ -23,7 +23,7 @@ import {
 } from '../../../util';
 import { FileSource } from './fileSource';
 
-export function initFileActions(file: FileSource) {
+export function registerFileActions(file: FileSource) {
   const { nvim } = file;
 
   file.addNodeAction(
@@ -196,30 +196,6 @@ export function initFileActions(file: FileSource) {
       disposable.dispose();
     },
     'change directory to current node',
-  );
-  file.addNodeAction(
-    'open',
-    async ({ node, args, mode }) => {
-      if (node.directory) {
-        const directoryActionExp = file.config.get('openAction.for.directory');
-        if (directoryActionExp) {
-          await file.explorer.doActionExp(
-            parseOriginalActionExp(directoryActionExp),
-            { mode, lineIndexes: [file.explorer.flattenedNodes.indexOf(node)] },
-          );
-        }
-      } else {
-        await file.openAction(node, () => node.fullpath, {
-          args,
-        });
-      }
-    },
-    'open file or directory',
-    {
-      multi: true,
-      args: file.openActionArgs,
-      menus: file.openActionMenu,
-    },
   );
   file.addNodeAction(
     'drop',

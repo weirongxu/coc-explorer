@@ -8,6 +8,7 @@ import {
   workspace,
 } from 'coc.nvim';
 import pFilter from 'p-filter';
+import { registerGlobalActions } from './actions/globalActions';
 import { RegisteredAction } from './actions/registered';
 import { ActionExp, MappingMode } from './actions/types';
 import { argOptions } from './argOptions';
@@ -32,15 +33,7 @@ import {
 import './source/load';
 import { BaseTreeNode, ExplorerSource } from './source/source';
 import { sourceManager } from './source/sourceManager';
-import {
-  ExplorerOpenOptions,
-  MoveStrategy,
-  moveStrategyList,
-  PreviewOnHoverBehavior,
-  previewOnHoverBehaviorList,
-  previewStrategyList,
-} from './types';
-import { PreviewActionStrategy } from './types/pkg-config';
+import { ExplorerOpenOptions, MoveStrategy } from './types';
 import {
   closeWinByBufnrNotifier,
   enableWrapscan,
@@ -66,7 +59,7 @@ export class Explorer implements Disposable {
   sourceWinid = new BuffuerContextVars<number>('sourceWinid', this);
   sourceBufnr = new BuffuerContextVars<number>('sourceBufnr', this);
   winline = new WindowContextVars<number>('winline', this);
-  globalActions: RegisteredAction.Map<BaseTreeNode<any>> = {};
+  actions: RegisteredAction.Map<BaseTreeNode<any>> = {};
   context: ExtensionContext;
   floatingPreview: FloatingPreview;
   contentWidth = 0;
@@ -187,342 +180,7 @@ export class Explorer implements Disposable {
       );
     }
 
-    const moveActionArgs = [
-      {
-        name: 'move action options',
-        description: moveStrategyList.join(' | '),
-      },
-    ];
-    const moveActionMenu = {
-      insideSource: 'move inside current source',
-    };
-    this.addGlobalAction(
-      'nodePrev',
-      async ({ args }) => {
-        const moveStrategy = args[0] as MoveStrategy;
-        if (moveStrategy === 'insideSource') {
-          const source = await this.currentSource();
-          if (!source) {
-            return;
-          }
-          await source.gotoLineIndex(source.currentLineIndex - 1);
-        } else {
-          const line = this.currentLineIndex;
-          await this.gotoLineIndex(line - 1);
-        }
-      },
-      'previous node',
-      {
-        args: moveActionArgs,
-        menus: moveActionMenu,
-      },
-    );
-    this.addGlobalAction(
-      'nodeNext',
-      async ({ args }) => {
-        const moveStrategy = args[0] as MoveStrategy;
-        if (moveStrategy === 'insideSource') {
-          const source = await this.currentSource();
-          if (!source) {
-            return;
-          }
-          await source.gotoLineIndex(source.currentLineIndex + 1);
-        } else {
-          const line = this.currentLineIndex;
-          await this.gotoLineIndex(line + 1);
-        }
-      },
-      'next node',
-      {
-        args: moveActionArgs,
-        menus: moveActionMenu,
-      },
-    );
-    this.addGlobalAction(
-      'expandablePrev',
-      async ({ args }) => {
-        await this.nodePrev(
-          args[0] as MoveStrategy,
-          (node) => !!node.expandable,
-        );
-      },
-      'previous expandable node',
-      {
-        args: moveActionArgs,
-        menus: moveActionMenu,
-      },
-    );
-    this.addGlobalAction(
-      'expandableNext',
-      async ({ args }) => {
-        await this.nodeNext(
-          args[0] as MoveStrategy,
-          (node) => !!node.expandable,
-        );
-      },
-      'next expandable node',
-      {
-        args: moveActionArgs,
-        menus: moveActionMenu,
-      },
-    );
-    this.addGlobalAction(
-      'indentPrev',
-      async ({ args }) => {
-        const node = await this.currentNode();
-        const level = node?.level ?? 0;
-        await this.nodePrev(
-          args[0] as MoveStrategy,
-          (node) => node.level !== level,
-        );
-      },
-      'previous indent node',
-      {
-        args: moveActionArgs,
-        menus: moveActionMenu,
-      },
-    );
-    this.addGlobalAction(
-      'indentNext',
-      async ({ args }) => {
-        const node = await this.currentNode();
-        const level = node?.level ?? 0;
-        await this.nodeNext(
-          args[0] as MoveStrategy,
-          (node) => node.level !== level,
-        );
-      },
-      'next indent node',
-      {
-        args: moveActionArgs,
-        menus: moveActionMenu,
-      },
-    );
-    this.addGlobalAction(
-      'normal',
-      async ({ args }) => {
-        if (args[0]) {
-          await this.nvim.command('execute "normal ' + args[0] + '"');
-        }
-      },
-      'execute vim normal mode commands',
-      {
-        args: [
-          {
-            name: 'normal commands',
-          },
-        ],
-        menus: {
-          zz: 'execute normal zz',
-        },
-      },
-    );
-    this.addGlobalAction(
-      'quit',
-      async () => {
-        await this.quit();
-      },
-      'quit explorer',
-    );
-
-    this.addGlobalAction(
-      'preview',
-      async ({ nodes, args }) => {
-        const source = await this.currentSource();
-        if (nodes && nodes[0] && source) {
-          const node = nodes[0];
-          const previewStrategy = args[0] as undefined | PreviewActionStrategy;
-          if (!previewStrategy) {
-            return;
-          }
-          const nodeIndex = source.getLineByNode(node);
-          if (nodeIndex === undefined) {
-            return;
-          }
-
-          await this.floatingPreview.previewNode(
-            previewStrategy,
-            source,
-            node,
-            nodeIndex,
-          );
-        }
-      },
-      'preview',
-      {
-        args: [
-          {
-            name: 'preview strategy',
-            description: previewStrategyList.join(' | '),
-          },
-        ],
-        menus: {
-          labeling: 'preview for node labeling',
-        },
-      },
-    );
-    this.addGlobalAction(
-      'previewOnHover',
-      async ({ nodes, args }) => {
-        const source = await this.currentSource();
-        if (nodes && nodes[0] && source) {
-          const previewStrategy = args[0] as undefined | PreviewActionStrategy;
-          if (!previewStrategy) {
-            return;
-          }
-
-          const previewOnHoverBehavior = args[1] as
-            | undefined
-            | PreviewOnHoverBehavior;
-          if (!previewOnHoverBehavior) {
-            return;
-          }
-
-          const delay = args[2] ? parseInt(args[2]) : 0;
-
-          if (previewOnHoverBehavior === 'toggle') {
-            this.floatingPreview.toggleOnHover(previewStrategy, delay);
-          } else if (previewOnHoverBehavior === 'enable') {
-            this.floatingPreview.registerOnHover(previewStrategy, delay);
-          } else {
-            this.floatingPreview.unregisterOnHover();
-          }
-        }
-      },
-      'preview on hover',
-      {
-        args: [
-          {
-            name: 'preview strategy',
-            description: previewStrategyList.join(' | '),
-          },
-          {
-            name: 'behavior',
-            description: previewOnHoverBehaviorList.join(' | '),
-          },
-          {
-            name: 'delay',
-            description: 'delay millisecond',
-          },
-        ],
-        menus: {
-          'labeling:toggle': 'toggle labeling',
-          'labeling:toggle:200': 'toggle labeling with debounce',
-          'content:toggle': 'toggle content',
-        },
-      },
-    );
-
-    this.addGlobalAction(
-      'gotoSource',
-      async ({ args }) => {
-        const source = this.sources.find((s) => s.sourceType === args[0]);
-        if (source) {
-          await source.gotoLineIndex(0);
-        }
-      },
-      'go to source',
-    );
-    this.addGlobalAction(
-      'sourceNext',
-      async () => {
-        const nextSource = this.sources[(await this.currentSourceIndex()) + 1];
-        if (nextSource) {
-          await nextSource.gotoLineIndex(0);
-        } else if (await enableWrapscan()) {
-          await this.sources[0].gotoLineIndex(0);
-        }
-      },
-      'go to next source',
-    );
-    this.addGlobalAction(
-      'sourcePrev',
-      async () => {
-        const prevSource = this.sources[(await this.currentSourceIndex()) - 1];
-        if (prevSource) {
-          await prevSource.gotoLineIndex(0);
-        } else if (await enableWrapscan()) {
-          await this.sources[this.sources.length - 1].gotoLineIndex(0);
-        }
-      },
-      'go to previous source',
-    );
-
-    this.addGlobalAction(
-      'modifiedPrev',
-      async () => {
-        await this.gotoPrevIndexing('modified');
-      },
-      'go to previous modified',
-    );
-    this.addGlobalAction(
-      'modifiedNext',
-      async () => {
-        await this.gotoNextIndexing('modified');
-      },
-      'go to next modified',
-    );
-
-    this.addGlobalAction(
-      'diagnosticPrev',
-      async () => {
-        await this.gotoPrevIndexing('diagnosticError', 'diagnosticWarning');
-      },
-      'go to previous diagnostic',
-    );
-    this.addGlobalAction(
-      'diagnosticNext',
-      async () => {
-        await this.gotoNextIndexing('diagnosticError', 'diagnosticWarning');
-      },
-      'go to next diagnostic',
-    );
-
-    this.addGlobalAction(
-      'gitPrev',
-      async () => {
-        await this.gotoPrevIndexing('git');
-      },
-      'go to previous git changed',
-    );
-    this.addGlobalAction(
-      'gitNext',
-      async () => {
-        await this.gotoNextIndexing('git');
-      },
-      'go to next git changed',
-    );
-
-    const indexOptions = {
-      args: [
-        {
-          name: 'index name',
-          description: 'string',
-        },
-      ],
-      menus: {
-        modified: 'modified',
-        diagnosticWarning: 'diagnosticWarning',
-        diagnosticError: 'diagnosticError',
-        git: 'git',
-      },
-    };
-    this.addGlobalAction(
-      'indexPrev',
-      async ({ args }) => {
-        await this.gotoPrevIndexing(...args);
-      },
-      'go to previous index',
-      indexOptions,
-    );
-    this.addGlobalAction(
-      'indexNext',
-      async ({ args }) => {
-        await this.gotoNextIndexing(...args);
-      },
-      'go to next index',
-      indexOptions,
-    );
+    registerGlobalActions(this);
   }
 
   dispose() {
@@ -655,7 +313,7 @@ export class Explorer implements Disposable {
     }
   }
 
-  private async nodePrev(
+  async nodePrev(
     moveStrategy: MoveStrategy = 'default',
     condition: (it: BaseTreeNode<any>) => boolean,
   ) {
@@ -691,7 +349,7 @@ export class Explorer implements Disposable {
     }
   }
 
-  private async nodeNext(
+  async nodeNext(
     moveStrategy: MoveStrategy = 'default',
     condition: (it: BaseTreeNode<any>) => boolean,
   ) {
@@ -992,7 +650,7 @@ export class Explorer implements Disposable {
     return true;
   }
 
-  addGlobalAction(
+  addNodesAction(
     name: string,
     callback: (options: {
       nodes: BaseTreeNode<any>[];
@@ -1002,8 +660,29 @@ export class Explorer implements Disposable {
     description: string,
     options: Partial<RegisteredAction.Options> = {},
   ) {
-    this.globalActions[name] = {
+    this.actions[name] = {
       callback,
+      description,
+      options,
+    };
+  }
+
+  addNodeAction(
+    name: string,
+    callback: (options: {
+      node: BaseTreeNode<any>;
+      args: string[];
+      mode: MappingMode;
+    }) => void | Promise<void>,
+    description: string,
+    options: Partial<RegisteredAction.Options> = {},
+  ) {
+    this.actions[name] = {
+      callback: async ({ nodes, args, mode }) => {
+        for (const node of nodes) {
+          await callback({ node, args, mode });
+        }
+      },
       description,
       options,
     };

@@ -39,7 +39,7 @@ export class ActionMenuCodeActionProvider implements CodeActionProvider {
       source.sourceType,
     );
     const actions = {
-      ...explorer.globalActions,
+      ...explorer.actions,
       ...source.actions,
     };
     const mruList = await actionListMru.load();

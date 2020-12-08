@@ -3,7 +3,7 @@ import { gitManager } from '../../../git/manager';
 import { prompt } from '../../../util';
 import { BufferSource } from './bufferSource';
 
-export function initBufferActions(buffer: BufferSource) {
+export function registerBufferActions(buffer: BufferSource) {
   const { nvim } = buffer;
   buffer.addNodeAction(
     'expandOrCollapse',
@@ -23,20 +23,6 @@ export function initBufferActions(buffer: BufferSource) {
     },
     'expand or collapse root',
     { multi: true },
-  );
-  buffer.addNodeAction(
-    'open',
-    async ({ node, args }) => {
-      await buffer.openAction(node, () => node.fullpath, {
-        args,
-      });
-    },
-    'open buffer',
-    {
-      multi: true,
-      args: buffer.openActionArgs,
-      menus: buffer.openActionMenu,
-    },
   );
   buffer.addNodeAction(
     'drop',

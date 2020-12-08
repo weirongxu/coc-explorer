@@ -25,7 +25,7 @@ import { BaseTreeNode, ExplorerSource } from '../../source';
 import { sourceManager } from '../../sourceManager';
 import { SourcePainters } from '../../sourcePainters';
 import { fileArgOptions } from './argOptions';
-import { initFileActions } from './fileActions';
+import { registerFileActions } from './fileActions';
 import { fileColumnRegistrar } from './fileColumnRegistrar';
 import './load';
 
@@ -199,7 +199,7 @@ export class FileSource extends ExplorerSource<FileNode> {
       }),
     );
 
-    initFileActions(this);
+    registerFileActions(this);
   }
 
   async open() {

@@ -1,6 +1,6 @@
 import { extensions, workspace } from 'coc.nvim';
 import pathLib from 'path';
-import { argOptions } from '../../../argOptions';
+import { Location, Range } from 'vscode-languageserver-protocol';
 import { internalEvents } from '../../../events';
 import { debounce, fsExists, normalizePath } from '../../../util';
 import { hlGroupManager } from '../../highlights/highlightManager';
@@ -8,7 +8,6 @@ import { BaseTreeNode, ExplorerSource } from '../../source';
 import { sourceManager } from '../../sourceManager';
 import { SourcePainters } from '../../sourcePainters';
 import { bookmarkArgOptions } from './argOptions';
-import { initBookmarkActions } from './bookmarkActions';
 import { bookmarkColumnRegistrar } from './bookmarkColumnRegistrar';
 import './load';
 import BookmarkDB from './util/db';
@@ -23,10 +22,18 @@ export interface BookmarkNode
   annotation: string | undefined;
 }
 
-interface BookmarkItem {
-  line: string;
-  filetype: string;
-  annotation?: string;
+export namespace BookmarkDB {
+  export type Filepath = string;
+  export type LineString = string;
+
+  export interface Item {
+    line: string;
+    filetype: string;
+    annotation?: string;
+  }
+
+  export type Collection = Record<LineString, Item>;
+  export type Data = Record<Filepath, Collection>;
 }
 
 const hl = hlGroupManager.linkGroup.bind(hlGroupManager);
@@ -77,8 +84,6 @@ export class BookmarkSource extends ExplorerSource<BookmarkNode> {
         ),
       );
     }
-
-    initBookmarkActions(this);
   }
 
   async open() {
@@ -104,29 +109,32 @@ export class BookmarkSource extends ExplorerSource<BookmarkNode> {
       'coc-bookmark-data/bookmark.json',
     );
     const db = new BookmarkDB(bookmarkPath);
-    const data = (await db.load()) as Object;
+    const data = (await db.load()) as BookmarkDB.Data;
 
-    const bookmarkNodes = [] as BookmarkNode[];
+    const bookmarkNodes: BookmarkNode[] = [];
     for (const [filepath, bookmarks] of Object.entries(data)) {
       const fullpath = normalizePath(decode(filepath));
       if (
-        (this.showHidden || fullpath.startsWith(parentNode.fullpath)) &&
-        (await fsExists(fullpath))
+        (!this.showHidden && !fullpath.startsWith(parentNode.fullpath)) ||
+        !(await fsExists(fullpath))
       ) {
-        for (const lnum of Object.keys(bookmarks).sort(
-          (l1, l2) => Number(l1) - Number(l2),
-        )) {
-          const bookmark: BookmarkItem = bookmarks[lnum];
-          bookmarkNodes.push({
-            type: 'child',
-            uid: this.helper.getUid(fullpath + lnum),
-            fullpath,
-            filename: pathLib.basename(fullpath),
-            lnum: Number(lnum),
-            line: bookmark.line,
-            annotation: bookmark.annotation?.toString(),
-          });
-        }
+        continue;
+      }
+
+      for (const lnum of Object.keys(bookmarks)
+        .map((l) => Number(l))
+        .sort((l1, l2) => l1 - l2)) {
+        const bookmark: BookmarkDB.Item = bookmarks[lnum];
+        bookmarkNodes.push({
+          type: 'child',
+          uid: this.helper.getUid(fullpath + ':' + lnum),
+          fullpath,
+          filename: pathLib.basename(fullpath),
+          lnum,
+          location: Location.create(fullpath, Range.create(lnum, -1, lnum, -1)),
+          line: bookmark.line,
+          annotation: bookmark.annotation?.toString(),
+        });
       }
     }
     return bookmarkNodes;
