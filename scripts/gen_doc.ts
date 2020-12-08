@@ -232,7 +232,7 @@ class CommandDocGenerator extends DocGenerator {
 }
 
 async function main() {
-  const cmd = 'yarn run gen:doc';
+  const cmd = 'yarn run bulid:config-doc';
   await new CommandDocGenerator(cmd).attach(3, 'Commands', 'readme.md');
   await new ConfigurationDocGenerator(cmd, 'src/types/pkg-config.d.ts').attach(
     3,

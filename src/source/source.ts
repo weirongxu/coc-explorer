@@ -10,6 +10,7 @@ import {
 } from 'coc.nvim';
 import { clone } from 'lodash-es';
 import { Class } from 'type-fest';
+import { Location } from 'vscode-languageserver-protocol';
 import { conditionActionRules } from '../actions/condition';
 import { RegisteredAction } from '../actions/registered';
 import { ActionExp, MappingMode } from '../actions/types';
@@ -23,7 +24,6 @@ import {
   expandOptionList,
   OpenStrategy,
   openStrategyList,
-  PreviewStrategy,
 } from '../types';
 import {
   delay,
@@ -116,6 +116,7 @@ export interface BaseTreeNode<
   isRoot?: boolean;
   uid: NodeUid;
   fullpath?: string;
+  location?: Location;
   level?: number;
   expandable?: boolean;
   parent?: TreeNode;
@@ -800,28 +801,6 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>>
       new Error(`openStrategy(${openStrategy}) is not supported`);
     }
     await actions[openStrategy]();
-  }
-
-  readonly previewActionMenu = {
-    labeling: 'preview for node labeling',
-    'labeling:200': 'preview for node labeling with debounce',
-  };
-
-  async previewAction(
-    node: TreeNode,
-    previewStrategy: PreviewStrategy,
-    debounceTimeout: number,
-  ) {
-    const nodeIndex = this.getLineByNode(node);
-    if (nodeIndex !== undefined) {
-      await this.explorer.floatingPreview.previewNode(
-        previewStrategy,
-        this,
-        node,
-        nodeIndex,
-        debounceTimeout,
-      );
-    }
   }
 
   addIndexing(name: string, relativeLineIndex: number) {

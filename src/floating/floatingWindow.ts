@@ -1,8 +1,8 @@
-import { Disposable, workspace, disposeAll, Buffer, Neovim } from 'coc.nvim';
 import { BufferHighlight, Window } from '@chemzqm/neovim';
+import { Buffer, Disposable, disposeAll, Neovim, workspace } from 'coc.nvim';
+import { onEvent } from '../events';
 import { FloatingCreateOptions, FloatingOpenOptions } from '../types';
 import { closeWinByBufnrNotifier } from '../util';
-import { onEvent } from '../events';
 
 export class FloatingWindow implements Disposable {
   buffer: Buffer;
@@ -66,6 +66,11 @@ export class FloatingWindow implements Disposable {
     for (const hl of highlights) {
       void this.buffer.addHighlight({ ...hl, srcId: this.hlSrcId });
     }
+    if (options.filetype) {
+      this.buffer.setOption('filetype', options.filetype, true);
+    } else {
+      this.buffer.setOption('filetype', '', true);
+    }
     await this.nvim.resumeNotification();
     const [winid, borderWinid]: [
       number,
@@ -74,6 +79,12 @@ export class FloatingWindow implements Disposable {
       this.bufnr,
       { ...options, border_bufnr: this.borderBufnr, focus: false },
     ]);
+    if (!options.filetype && options.filepath) {
+      await this.nvim.call('coc_explorer#win#emit_buf_read_by_winid', [
+        winid,
+        options.filepath,
+      ]);
+    }
     if (workspace.isVim) {
       await this.nvim.command('redraw!');
     }

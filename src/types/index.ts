@@ -1,5 +1,4 @@
-import { SetRequired } from 'type-fest';
-import { Explorer } from './pkg-config';
+import { Explorer, PreviewActionStrategy } from './pkg-config';
 
 export const moveStrategyList = ['default', 'insideSource'] as const;
 
@@ -33,9 +32,18 @@ export const openStrategyList: OpenStrategy[] = [
   'sourceWindow',
 ];
 
-export const previewStrategyList = ['labeling'] as const;
+export const previewOnHoverBehaviorList = [
+  'toggle',
+  'enable',
+  'disable',
+] as const;
 
-export type PreviewStrategy = typeof previewStrategyList[number];
+export type PreviewOnHoverBehavior = typeof previewOnHoverBehaviorList[number];
+
+export const previewStrategyList: PreviewActionStrategy[] = [
+  'labeling',
+  'content',
+];
 
 export const expandOptionList = [
   'recursive',
@@ -83,4 +91,6 @@ export type FloatingCreateOptions = {
   name?: string;
 };
 
-export type FloatingOpenOptions = SetRequired<ExplorerOpenOptions, 'filetype'>;
+export type FloatingOpenOptions = {
+  filepath?: string;
+} & ExplorerOpenOptions;

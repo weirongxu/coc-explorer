@@ -1,7 +1,8 @@
 import { workspace, WorkspaceConfiguration } from 'coc.nvim';
 import { generateUri } from './util';
-import { PreviewStrategy, ExpandOption, CollapseOption } from './types';
+import { ExpandOption, CollapseOption } from './types';
 import { OriginalActionExp } from './actions/types';
+import { Explorer } from './types/pkg-config';
 
 export const config = workspace.getConfiguration('explorer');
 
@@ -19,8 +20,9 @@ export interface ExplorerConfig {
   get(section: 'autoCollapseOptions'): CollapseOption[];
   get(section: 'openAction.for.directory'): OriginalActionExp;
   get(section: 'openAction.relativePath'): boolean;
-  get(section: 'previewAction.strategy'): PreviewStrategy;
-  get(section: 'previewAction.onHover'): boolean;
+  get(
+    section: 'previewAction.onHover',
+  ): NonNullable<Explorer['explorer.previewAction.onHover']>;
   get(section: 'datetime.format'): string;
   get(section: 'icon.enableVimDevicons'): boolean;
   get(section: 'icon.enableNerdfont'): boolean;

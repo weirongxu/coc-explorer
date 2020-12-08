@@ -13,6 +13,10 @@ export type MappingAction =
       args?: string[];
       [k: string]: unknown;
     };
+/**
+ * Strategy for preview action
+ */
+export type PreviewActionStrategy = 'labeling' | 'content';
 
 export interface Explorer {
   /**
@@ -215,13 +219,9 @@ export interface Explorer {
    */
   'explorer.quitOnOpen'?: boolean;
   /**
-   * Strategy for preview action
-   */
-  'explorer.previewAction.strategy'?: 'labeling';
-  /**
    * Open preview when hovering over on node
    */
-  'explorer.previewAction.onHover'?: boolean;
+  'explorer.previewAction.onHover'?: false | PreviewActionStrategy | [PreviewActionStrategy, number];
   /**
    * Strategy for open action
    */

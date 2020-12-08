@@ -16,7 +16,6 @@ import { BuffuerContextVars, WindowContextVars } from './contextVariables';
 import {
   doUserAutocmd,
   doUserAutocmdNotifier,
-  onBufEnter,
   onCursorMoved,
   onEvent,
 } from './events';
@@ -37,9 +36,11 @@ import {
   ExplorerOpenOptions,
   MoveStrategy,
   moveStrategyList,
-  PreviewStrategy,
+  PreviewOnHoverBehavior,
+  previewOnHoverBehaviorList,
   previewStrategyList,
 } from './types';
+import { PreviewActionStrategy } from './types/pkg-config';
 import {
   closeWinByBufnrNotifier,
   enableWrapscan,
@@ -175,27 +176,6 @@ export class Explorer implements Disposable {
         await this.winline.set(await this.nvim.call('winline'));
       }
     }, 200);
-
-    if (this.config.get('previewAction.onHover')) {
-      this.disposables.push(
-        onCursorMoved(async (bufnr) => {
-          if (bufnr === this.bufnr) {
-            await this.doActionExp({
-              name: 'preview',
-              args: ['labeling', '200'],
-            });
-          }
-        }, 200),
-        onBufEnter(async (bufnr) => {
-          if (bufnr === this.bufnr) {
-            await this.doActionExp({
-              name: 'preview',
-              args: ['labeling', '200'],
-            });
-          }
-        }, 200),
-      );
-    }
 
     if (borderBufnr) {
       this.disposables.push(
@@ -344,17 +324,28 @@ export class Explorer implements Disposable {
       },
       'quit explorer',
     );
+
     this.addGlobalAction(
       'preview',
       async ({ nodes, args }) => {
         const source = await this.currentSource();
         if (nodes && nodes[0] && source) {
           const node = nodes[0];
-          const previewStrategy =
-            (args[0] as PreviewStrategy) ??
-            this.config.get('previewAction.strategy');
-          const debounceTimeout = args[1] ? parseInt(args[1]) : 0;
-          return source.previewAction(node, previewStrategy, debounceTimeout);
+          const previewStrategy = args[0] as undefined | PreviewActionStrategy;
+          if (!previewStrategy) {
+            return;
+          }
+          const nodeIndex = source.getLineByNode(node);
+          if (nodeIndex === undefined) {
+            return;
+          }
+
+          await this.floatingPreview.previewNode(
+            previewStrategy,
+            source,
+            node,
+            nodeIndex,
+          );
         }
       },
       'preview',
@@ -365,7 +356,60 @@ export class Explorer implements Disposable {
             description: previewStrategyList.join(' | '),
           },
         ],
-        menus: ExplorerSource.prototype.previewActionMenu,
+        menus: {
+          labeling: 'preview for node labeling',
+        },
+      },
+    );
+    this.addGlobalAction(
+      'previewOnHover',
+      async ({ nodes, args }) => {
+        const source = await this.currentSource();
+        if (nodes && nodes[0] && source) {
+          const previewStrategy = args[0] as undefined | PreviewActionStrategy;
+          if (!previewStrategy) {
+            return;
+          }
+
+          const previewOnHoverBehavior = args[1] as
+            | undefined
+            | PreviewOnHoverBehavior;
+          if (!previewOnHoverBehavior) {
+            return;
+          }
+
+          const delay = args[2] ? parseInt(args[2]) : 0;
+
+          if (previewOnHoverBehavior === 'toggle') {
+            this.floatingPreview.toggleOnHover(previewStrategy, delay);
+          } else if (previewOnHoverBehavior === 'enable') {
+            this.floatingPreview.registerOnHover(previewStrategy, delay);
+          } else {
+            this.floatingPreview.unregisterOnHover();
+          }
+        }
+      },
+      'preview on hover',
+      {
+        args: [
+          {
+            name: 'preview strategy',
+            description: previewStrategyList.join(' | '),
+          },
+          {
+            name: 'behavior',
+            description: previewOnHoverBehaviorList.join(' | '),
+          },
+          {
+            name: 'delay',
+            description: 'delay millisecond',
+          },
+        ],
+        menus: {
+          'labeling:toggle': 'toggle labeling',
+          'labeling:toggle:200': 'toggle labeling with debounce',
+          'content:toggle': 'toggle content',
+        },
       },
     );
 
@@ -1071,6 +1115,8 @@ export class Explorer implements Disposable {
         }
       }
     } catch (error) {
+      // eslint-disable-next-line no-restricted-properties
+      workspace.showMessage(`Error when do action ${actionExp}`, 'error');
       onError(error);
     }
 

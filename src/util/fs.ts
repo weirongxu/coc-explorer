@@ -1,6 +1,7 @@
 import fs from 'fs';
 import makeDir from 'make-dir';
 import pathLib from 'path';
+import readline from 'readline';
 import rimraf from 'rimraf';
 import trash from 'trash';
 import { promisify } from 'util';
@@ -168,6 +169,44 @@ export async function overwritePrompt<S extends string | undefined>(
       }
     }
   }
+}
+
+export function readFileLines(
+  fullpath: string,
+  start: number,
+  end: number,
+): Promise<string[]> {
+  if (!fs.existsSync(fullpath)) {
+    return Promise.reject(new Error(`file does not exist: ${fullpath}`));
+  }
+  const res: string[] = [];
+  const stream = fs.createReadStream(fullpath, { encoding: 'utf8' });
+  const rl = readline.createInterface({
+    input: stream,
+    crlfDelay: Infinity,
+    terminal: false,
+  });
+  let n = 0;
+  return new Promise((resolve, reject) => {
+    stream.on('error', reject);
+    rl.on('line', (line) => {
+      if (n === 0 && line.startsWith('\uFEFF')) {
+        // handle BOM
+        line = line.slice(1);
+      }
+      if (n >= start && n <= end) {
+        res.push(line);
+      }
+      if (n === end) {
+        rl.close();
+      }
+      n = n + 1;
+    });
+    rl.on('close', () => {
+      resolve(res);
+    });
+    rl.on('error', reject);
+  });
 }
 
 export async function listDrive(): Promise<string[]> {

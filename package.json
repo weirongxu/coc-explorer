@@ -33,6 +33,13 @@
     ],
     "configuration": {
       "definitions": {
+        "previewAction.strategy": {
+          "description": "Strategy for preview action",
+          "enum": [
+            "labeling",
+            "content"
+          ]
+        },
         "flexible.position": {
           "enum": [
             "left",
@@ -371,17 +378,33 @@
           "type": "boolean",
           "default": false
         },
-        "explorer.previewAction.strategy": {
-          "description": "Strategy for preview action",
-          "enum": [
-            "labeling"
-          ],
-          "default": "labeling"
-        },
         "explorer.previewAction.onHover": {
           "description": "Open preview when hovering over on node",
-          "type": "boolean",
-          "default": true
+          "anyOf": [
+            {
+              "enum": [
+                false
+              ]
+            },
+            {
+              "$ref": "#/definitions/previewAction.strategy"
+            },
+            {
+              "type": "array",
+              "maxItems": 2,
+              "minItems": 2,
+              "items": [
+                {
+                  "$ref": "#/definitions/previewAction.strategy"
+                },
+                {
+                  "type": "integer",
+                  "description": "delay"
+                }
+              ]
+            }
+          ],
+          "default": false
         },
         "explorer.openAction.strategy": {
           "description": "Strategy for open action",
@@ -899,11 +922,12 @@
     "clean": "rimraf lib",
     "build:types": "node scripts/gen_package_type.js",
     "build:webpack": "webpack --mode production",
-    "build": "run-s build:types build:webpack",
+    "build:config-doc": "ts-node ./scripts/gen_doc.ts",
+    "build": "run-s build:types build:webpack build:config-doc",
     "dev": "webpack --mode development --watch",
+    "dev:no-emit": "tsc --noEmit --watch",
     "prepare": "run-s clean build",
     "lint": "eslint src --ext .js,.ts",
-    "gen:doc": "ts-node ./scripts/gen_doc.ts",
     "test": "jest --runInBand --detectOpenHandles --forceExit"
   },
   "dependencies": {
@@ -943,6 +967,7 @@
     "rimraf": "^3.0.2",
     "ts-jest": "^26.4.4",
     "ts-loader": "^8.0.10",
+    "ts-node": "^9.1.0",
     "type-fest": "^0.18.0",
     "typescript": "^4.0.5",
     "uuid": "^8.3.1",

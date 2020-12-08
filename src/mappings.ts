@@ -111,7 +111,10 @@ class KeyMapping {
         t: 'open:tab',
         '<bs>': 'gotoParent',
         gs: 'reveal:select',
-        gp: 'preview:labeling',
+        il: 'preview:labeling',
+        ic: 'preview:content',
+        Il: 'previewOnHover:labeling:toggle',
+        Ic: 'previewOnHover:content:toggle',
 
         y: 'copyFilepath',
         Y: 'copyFilename',
