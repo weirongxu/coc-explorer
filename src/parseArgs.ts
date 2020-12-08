@@ -107,6 +107,7 @@ export class Args {
 
     while (args.length > 0) {
       const arg = args.shift()!;
+
       if (arg.startsWith('--')) {
         let key: string, value: undefined | string;
 
@@ -118,23 +119,27 @@ export class Args {
 
         const option = this.registeredOptions.get(key);
 
-        if (option) {
-          if (!value) {
-            if (option.type === 'boolean') {
-              self.optionValues.set(option.name, !key.startsWith('no-'));
+        if (!option) {
+          throw Error(`coc-explorer command no support option(${key})`);
+        }
+
+        if (value === undefined) {
+          if (option.type === 'boolean') {
+            self.optionValues.set(option.name, !key.startsWith('no-'));
+            continue;
+          } else {
+            value = args.shift()!;
+            if (value === undefined) {
               continue;
-            } else {
-              value = args.shift()!;
             }
           }
-          if (value !== undefined) {
-            self.optionValues.set(
-              option.name,
-              option.parseArg ? await option.parseArg(value) : value,
-            );
-            continue;
-          }
         }
+
+        self.optionValues.set(
+          option.name,
+          option.parseArg ? await option.parseArg(value) : value,
+        );
+        continue;
       }
 
       const positional = Array.from(this.registeredOptions.values()).find(
@@ -151,18 +156,31 @@ export class Args {
 
     // presets
     const preset = self.optionValues.get('preset') as string | undefined;
-    if (preset) {
-      const presets = await getPresets(config);
-      if (preset in presets) {
-        for (const [argName, argValue] of Object.entries(presets[preset])) {
-          if (self.optionValues.has(argName)) {
-            continue;
-          }
-          self.optionValues.set(argName, argValue);
-        }
-      } else {
-        // eslint-disable-next-line no-restricted-properties
-        workspace.showMessage(`Preset(${preset}) not found`, 'warning');
+    if (!preset) {
+      return self;
+    }
+
+    const presets = await getPresets(config);
+    if (!(preset in presets)) {
+      // eslint-disable-next-line no-restricted-properties
+      workspace.showMessage(
+        `coc-explorer preset(${preset}) not found`,
+        'warning',
+      );
+      return self;
+    }
+
+    for (const [argName, argValue] of Object.entries(presets[preset])) {
+      if (self.optionValues.has(argName) || argValue === undefined) {
+        continue;
+      }
+      const option = this.registeredOptions.get(argName);
+      if (option) {
+        self.optionValues.set(
+          argName,
+          argValue,
+          // option.parseArg ? option.parseArg(argValue) : argValue,
+        );
       }
     }
 

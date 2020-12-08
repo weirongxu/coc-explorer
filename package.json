@@ -481,20 +481,6 @@
         "explorer.sources": {
           "description": "Explorer sources",
           "type": "array",
-          "default": [
-            {
-              "name": "bookmark",
-              "expand": false
-            },
-            {
-              "name": "buffer",
-              "expand": false
-            },
-            {
-              "name": "file",
-              "expand": true
-            }
-          ],
           "items": {
             "type": "object",
             "required": [
@@ -517,7 +503,21 @@
                 "default": false
               }
             }
-          }
+          },
+          "default": [
+            {
+              "name": "bookmark",
+              "expand": false
+            },
+            {
+              "name": "buffer",
+              "expand": false
+            },
+            {
+              "name": "file",
+              "expand": true
+            }
+          ]
         },
         "explorer.enableFloatinput": {
           "description": "Enable integrated with coc-floatinput",

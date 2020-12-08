@@ -53,6 +53,9 @@ let g:coc_explorer_global_presets = {
 \   'b': {
 \     'file-child-template': '[git | 2] [selection | clip | 1] [indent][icon | 1] [filename growRight 1 omitCenter 1][size]',
 \     'file-child-labeling-template': '[fullpath][size][created][modified][accessed][readonly]',
+\   },
+\   'buffer': {
+\     'sources': [{'name': 'buffer', 'expand': v:true}],
 \   }
 \ }
 
@@ -62,8 +65,9 @@ nmap <Leader>ft :CocCommand explorer --preset floatingTop<CR>
 nmap <Leader>fl :CocCommand explorer --preset floatingLeftside<CR>
 nmap <Leader>fr :CocCommand explorer --preset floatingRightside<CR>
 nmap <Leader>s  :CocCommand explorer --preset simplify<CR>
-nmap <Leader>a  :CocCommand explorer --preset a<CR>
-nmap <Leader>b  :CocCommand explorer --preset b<CR>
+nmap <Leader>pa :CocCommand explorer --preset a<CR>
+nmap <Leader>pb :CocCommand explorer --preset b<CR>
+nmap <Leader>b  :CocCommand explorer --preset buffer<CR>
 
 set hidden
 set cmdheight=2
