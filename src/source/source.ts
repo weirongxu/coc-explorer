@@ -253,161 +253,6 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>>
 
   constructor(public sourceType: string, public explorer: Explorer) {
     this.context = this.explorer.context;
-
-    this.addNodeAction(
-      'expand',
-      async ({ node, args }) => {
-        if (node.expandable) {
-          const options = (args[0] ?? '').split('|');
-          const recursive = options.includes('recursive') || undefined;
-          const compact = options.includes('compact') || undefined;
-          const uncompact = options.includes('uncompact') || undefined;
-          const recursiveSingle =
-            options.includes('recursiveSingle') || undefined;
-          await this.expand(node, {
-            recursive,
-            compact,
-            uncompact,
-            recursiveSingle,
-          });
-        }
-      },
-      'expand node',
-      {
-        multi: true,
-        args: [
-          {
-            name: 'expand options',
-            description: expandOptionList.join(' | '),
-          },
-        ],
-        menus: {
-          recursive: 'recursively',
-          compact: 'single child folders will be compressed in a combined node',
-          uncompact: 'reset the combined node',
-          'compact|uncompact': 'compact or uncompact',
-          recursiveSingle: 'expand single child folder recursively',
-        },
-      },
-    );
-    this.addNodeAction(
-      'collapse',
-      async ({ node, args }) => {
-        const options = (args[0] ?? '').split('|');
-        const all = options.includes('all');
-        const recursive = options.includes('recursive');
-        if (all && this.rootNode.children) {
-          for (const subNode of this.rootNode.children) {
-            if (subNode.expandable && this.isExpanded(subNode)) {
-              await this.doAction(
-                'collapse',
-                subNode,
-                options.filter((op) => op !== 'all'),
-              );
-            }
-          }
-        } else {
-          if (node.expandable && this.isExpanded(node)) {
-            await this.collapse(node, { recursive });
-          } else if (node.parent) {
-            await this.collapse(node.parent, { recursive });
-          }
-        }
-      },
-      'collapse node',
-      {
-        multi: true,
-        args: [
-          {
-            name: 'collapse options',
-            description: collapseOptionList.join(' | '),
-          },
-        ],
-        menus: {
-          recursive: 'recursively',
-          all: 'for all nodes',
-        },
-      },
-    );
-    this.addNodeAction(
-      'esc',
-      async ({ mode }) => {
-        const position = await this.explorer.args.value(argOptions.position);
-        if (position === 'floating' && mode === 'n') {
-          await this.explorer.quit();
-        } else {
-          this.requestRenderNodes(Array.from(this.selectedNodes));
-          this.selectedNodes.clear();
-        }
-      },
-      'esc action',
-    );
-    this.addNodeAction(
-      'toggleHidden',
-      async () => {
-        this.showHidden = !this.showHidden;
-      },
-      'toggle visibility of hidden node',
-      { reload: true },
-    );
-    this.addNodeAction(
-      'refresh',
-      async () => {
-        const loadNotifier = await this.loadNotifier(this.rootNode, {
-          force: true,
-        });
-
-        this.nvim.pauseNotification();
-        this.clearHighlightsNotify();
-        loadNotifier?.notify();
-        await this.nvim.resumeNotification();
-      },
-      'refresh',
-    );
-    this.addNodeAction(
-      'help',
-      async () => {
-        await this.explorer.showHelp(this);
-      },
-      'show help',
-    );
-    this.addNodesAction(
-      'actionMenu',
-      async ({ nodes }) => {
-        await this.listActionMenu(nodes);
-      },
-      'show actions in coc-list',
-    );
-    this.addNodeAction(
-      'select',
-      async ({ node }) => {
-        this.selectedNodes.add(node);
-        this.requestRenderNodes([node]);
-      },
-      'select node',
-      { select: true },
-    );
-    this.addNodeAction(
-      'unselect',
-      async ({ node }) => {
-        this.selectedNodes.delete(node);
-        this.requestRenderNodes([node]);
-      },
-      'unselect node',
-      { select: true },
-    );
-    this.addNodeAction(
-      'toggleSelection',
-      async ({ node }) => {
-        if (this.selectedNodes.has(node)) {
-          await this.doAction('unselect', node);
-        } else {
-          await this.doAction('select', node);
-        }
-      },
-      'toggle node selection',
-      { select: true },
-    );
   }
 
   dispose() {
@@ -442,11 +287,7 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>>
 
   addNodesAction(
     name: string,
-    callback: (options: {
-      nodes: TreeNode[];
-      args: string[];
-      mode: MappingMode;
-    }) => void | Promise<void>,
+    callback: RegisteredAction.ActionNodesCallback<TreeNode>,
     description: string,
     options: Partial<Omit<RegisteredAction.Options, 'multi'>> = {},
   ) {
@@ -462,18 +303,14 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>>
 
   addNodeAction(
     name: string,
-    callback: (options: {
-      node: TreeNode;
-      args: string[];
-      mode: MappingMode;
-    }) => void | Promise<void>,
+    callback: RegisteredAction.ActionNodeCallback<TreeNode>,
     description: string,
     options: Partial<RegisteredAction.Options> = {},
   ) {
     this.actions[name] = {
-      callback: async ({ nodes, args, mode }) => {
+      callback: async ({ source, nodes, args, mode }) => {
         for (const node of nodes) {
-          await callback({ node, args, mode });
+          await callback.call(source, { source, node, args, mode });
         }
       },
       description,
@@ -545,19 +382,35 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>>
     } = action.options;
 
     const finalNodes = Array.isArray(nodes) ? nodes : [nodes];
+    const source = this;
     if (select) {
-      await action.callback({ nodes: finalNodes, args, mode });
+      await action.callback.call(source, {
+        source,
+        nodes: finalNodes,
+        args,
+        mode,
+      });
     } else if (multi) {
       if (this.selectedNodes.size > 0) {
         const nodes = Array.from(this.selectedNodes);
         this.selectedNodes.clear();
         this.requestRenderNodes(nodes);
-        await action.callback({ nodes, args, mode });
+        await action.callback.call(source, { source, nodes, args, mode });
       } else {
-        await action.callback({ nodes: finalNodes, args, mode });
+        await action.callback.call(source, {
+          source,
+          nodes: finalNodes,
+          args,
+          mode,
+        });
       }
     } else {
-      await action.callback({ nodes: [finalNodes[0]], args, mode });
+      await action.callback.call(source, {
+        source,
+        nodes: [finalNodes[0]],
+        args,
+        mode,
+      });
     }
 
     if (reload) {
@@ -633,7 +486,7 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>>
 
   async listActionMenu(nodes: TreeNode[]) {
     const actions = {
-      ...this.explorer.actions,
+      ...((this.explorer.actions as unknown) as RegisteredAction.Map<TreeNode>),
       ...this.actions,
     };
 
@@ -652,9 +505,15 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>>
                 name: actionName,
                 key: reverseMappings[actionName],
                 description,
-                async callback() {
+                callback: async () => {
                   await task.waitShow();
-                  await callback({ nodes, args: [], mode: 'n' });
+                  const source = this;
+                  await callback.call(source, {
+                    source,
+                    nodes,
+                    args: [],
+                    mode: 'n',
+                  });
                 },
               },
             ];
@@ -667,9 +526,11 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>>
                       name: fullActionName,
                       key: reverseMappings[fullActionName],
                       description: description + ' ' + menu.description,
-                      async callback() {
+                      callback: async () => {
                         await task.waitShow();
-                        await callback({
+                        const source = this;
+                        await callback.call(source, {
+                          source,
                           nodes,
                           args: await menu.actionArgs(),
                           mode: 'n',

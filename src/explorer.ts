@@ -640,11 +640,7 @@ export class Explorer implements Disposable {
 
   addNodesAction(
     name: string,
-    callback: (options: {
-      nodes: BaseTreeNode<any>[];
-      args: string[];
-      mode: MappingMode;
-    }) => void | Promise<void>,
+    callback: RegisteredAction.ActionNodesCallback<BaseTreeNode<any>>,
     description: string,
     options: Partial<RegisteredAction.Options> = {},
   ) {
@@ -657,18 +653,14 @@ export class Explorer implements Disposable {
 
   addNodeAction(
     name: string,
-    callback: (options: {
-      node: BaseTreeNode<any>;
-      args: string[];
-      mode: MappingMode;
-    }) => void | Promise<void>,
+    callback: RegisteredAction.ActionNodeCallback<BaseTreeNode<any>>,
     description: string,
     options: Partial<RegisteredAction.Options> = {},
   ) {
     this.actions[name] = {
-      callback: async ({ nodes, args, mode }) => {
+      callback: async ({ source, nodes, args, mode }) => {
         for (const node of nodes) {
-          await callback({ node, args, mode });
+          await callback.call(source, { source, node, args, mode });
         }
       },
       description,

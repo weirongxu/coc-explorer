@@ -1,4 +1,4 @@
-import { BaseTreeNode } from '../source/source';
+import type { BaseTreeNode, ExplorerSource } from '../source/source';
 import { MappingMode } from './types';
 
 export namespace RegisteredAction {
@@ -32,14 +32,30 @@ export namespace RegisteredAction {
     menus: RegisteredAction.OptionMenus;
   };
 
-  type Action<TreeNode extends BaseTreeNode<TreeNode>> = {
-    description: string;
-    options: Partial<Options>;
-    callback: (options: {
+  export type ActionNodeCallback<TreeNode extends BaseTreeNode<TreeNode>> = (
+    this: ExplorerSource<TreeNode>,
+    options: {
+      source: ExplorerSource<TreeNode>;
+      node: TreeNode;
+      args: string[];
+      mode: MappingMode;
+    },
+  ) => void | Promise<void>;
+
+  export type ActionNodesCallback<TreeNode extends BaseTreeNode<TreeNode>> = (
+    this: ExplorerSource<TreeNode>,
+    options: {
+      source: ExplorerSource<TreeNode>;
       nodes: TreeNode[];
       args: string[];
       mode: MappingMode;
-    }) => void | Promise<void>;
+    },
+  ) => void | Promise<void>;
+
+  export type Action<TreeNode extends BaseTreeNode<TreeNode>> = {
+    description: string;
+    options: Partial<Options>;
+    callback: ActionNodesCallback<TreeNode>;
   };
 
   export type Map<TreeNode extends BaseTreeNode<TreeNode>> = Record<
