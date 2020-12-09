@@ -63,6 +63,7 @@ export const InternalVimEvents = new HelperVimEvents<{
   BufWipeout: BufEventListener;
   CocDiagnosticChange: () => EventResult;
   CocGitStatusChange: () => EventResult;
+  FugitiveChanged: () => EventResult;
   CocBookmarkChange: () => EventResult;
 }>(
   {
@@ -79,6 +80,9 @@ export const InternalVimEvents = new HelperVimEvents<{
     },
     CocGitStatusChange: {
       eventExpr: 'User CocGitStatusChange',
+    },
+    FugitiveChanged: {
+      eventExpr: 'User FugitiveChanged',
     },
     CocBookmarkChange: {
       eventExpr: 'User CocBookmarkChange',

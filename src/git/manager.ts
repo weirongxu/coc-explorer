@@ -100,11 +100,13 @@ class Binder {
 
   protected register() {
     return [
-      internalEvents.on(
-        'CocGitStatusChange',
-        debounce(1000, async () => {
-          await this.reload(this.sources, workspace.cwd, false);
-        }),
+      ...(['CocGitStatusChange', 'FugitiveChanged'] as const).map((event) =>
+        internalEvents.on(
+          event,
+          debounce(1000, async () => {
+            await this.reload(this.sources, workspace.cwd, false);
+          }),
+        ),
       ),
       onEvent(
         'BufWritePost',
