@@ -57,6 +57,7 @@ export class Explorer implements Disposable {
   context: ExtensionContext;
   floatingPreview: FloatingPreview;
   contentWidth = 0;
+  doActionExpMutex = new Mutex();
 
   private disposables: Disposable[] = [];
   private _buffer?: Buffer;
@@ -703,7 +704,6 @@ export class Explorer implements Disposable {
           await this.doActionExp(actionExp, {
             mode,
             lineIndexes,
-            queue: true,
           });
         }
       }
@@ -714,33 +714,22 @@ export class Explorer implements Disposable {
     await Notifier.runAll(notifiers);
   }
 
-  private doActionExpMutex = new Mutex();
-
   async doActionExp(
     actionExp: ActionExp,
     options: {
-      /**
-       * @default false
-       */
-      queue?: boolean;
       /**
        * @default 1
        */
       count?: number;
       /**
-       *
-       *
        * @default 'n'
        */
       mode?: MappingMode;
       lineIndexes?: Set<number> | number[];
     } = {},
   ) {
-    const mutex = options.queue ?? false;
     const count = options.count ?? 1;
     const mode = options.mode ?? 'n';
-
-    const release = mutex ? await this.doActionExpMutex.acquire() : undefined;
 
     const firstLineIndexes = options.lineIndexes
       ? new Set(options.lineIndexes)
@@ -770,7 +759,7 @@ export class Explorer implements Disposable {
         }
 
         for (const [source, nodes] of nodesGroup.entries()) {
-          await source.doActionExp(actionExp, nodes);
+          await source.doActionExp(actionExp, nodes, { mode });
         }
       }
     } catch (error) {
@@ -781,8 +770,6 @@ export class Explorer implements Disposable {
       );
       onError(error);
     }
-
-    release?.();
   }
 
   addIndexing(name: string, lineIndex: number) {

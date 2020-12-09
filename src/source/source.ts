@@ -18,7 +18,6 @@ import { argOptions } from '../argOptions';
 import { Explorer } from '../explorer';
 import { explorerActionList } from '../lists/actions';
 import { keyMapping } from '../mappings';
-import { collapseOptionList, expandOptionList } from '../types';
 import {
   delay,
   drawnWithIndexRange,
@@ -323,20 +322,41 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>>
     nodes: TreeNode[],
     options: {
       /**
-       *
-       *
        * @default 'n'
        */
       mode?: MappingMode;
+      /**
+       * @default false
+       */
+      isSubAction?: boolean;
     } = {},
   ) {
     const mode = options.mode ?? 'n';
-    if (Array.isArray(actionExp)) {
-      for (let i = 0; i < actionExp.length; i++) {
-        const action = actionExp[i];
-        if (Array.isArray(action)) {
-          await this.doActionExp(actionExp, nodes);
-        } else {
+    const isSubAction = options.isSubAction ?? false;
+    let release: undefined | (() => void);
+
+    const subOptions = {
+      mode: mode,
+      isSubAction: true,
+    };
+    try {
+      if (Array.isArray(actionExp)) {
+        for (let i = 0; i < actionExp.length; i++) {
+          const action = actionExp[i];
+
+          if (Array.isArray(action)) {
+            await this.doActionExp(actionExp, nodes, subOptions);
+            continue;
+          }
+
+          if (action.name === 'wait') {
+            if (release || isSubAction) {
+              continue;
+            }
+            release = await this.explorer.doActionExpMutex.acquire();
+            continue;
+          }
+
           const rule = conditionActionRules[action.name];
           if (rule) {
             const [trueNodes, falseNodes] = partition(nodes, (node) =>
@@ -348,18 +368,22 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>>
             ];
             i += 2;
             if (trueNodes.length) {
-              await this.doActionExp(trueAction, trueNodes);
+              await this.doActionExp(trueAction, trueNodes, subOptions);
             }
             if (falseNodes.length) {
-              await this.doActionExp(falseAction, falseNodes);
+              await this.doActionExp(falseAction, falseNodes, subOptions);
             }
           } else {
-            await this.doActionExp(action, nodes);
+            await this.doActionExp(action, nodes, subOptions);
           }
         }
+      } else {
+        await this.doAction(actionExp.name, nodes, actionExp.args, mode);
       }
-    } else {
-      await this.doAction(actionExp.name, nodes, actionExp.args, mode);
+    } catch (error) {
+      throw error;
+    } finally {
+      release?.();
     }
   }
 

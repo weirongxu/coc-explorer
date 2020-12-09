@@ -134,7 +134,6 @@ export function registerVimApi(
         mode,
         count,
         lineIndexes,
-        queue: true,
       })
       .catch(onError);
   }
