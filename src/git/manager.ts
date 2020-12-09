@@ -134,19 +134,23 @@ class Binder {
             ? node.fullpath
             : node.fullpath && pathLib.dirname(node.fullpath);
         if (directory) {
-          let isTimeout = false;
-          await Promise.race([
-            (async () => {
-              await sleep(200);
-              isTimeout = true;
-            })(),
-            (async () => {
-              const renderPaths = await this.reload([], directory, true);
-              if (isTimeout) {
-                await source.renderPaths(renderPaths);
-              }
-            })(),
-          ]);
+          (async () => {
+            const renderPaths = await this.reload([], directory, true);
+            await source.renderPaths(renderPaths);
+          })().catch(onError);
+          // let isTimeout = false;
+          // await Promise.race([
+          //   (async () => {
+          //     await sleep(200);
+          //     isTimeout = true;
+          //   })(),
+          //   (async () => {
+          //     const renderPaths = await this.reload([], directory, true);
+          //     if (isTimeout) {
+          //       await source.renderPaths(renderPaths);
+          //     }
+          //   })(),
+          // ]);
         }
       }),
     ];
