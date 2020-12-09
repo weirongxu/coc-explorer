@@ -10,8 +10,8 @@ import {
   moveStrategyList,
   OpenStrategy,
   openStrategyList,
-  PreviewOnHoverBehavior,
-  previewOnHoverBehaviorList,
+  PreviewOnHoverAction,
+  previewOnHoverActionList,
   previewStrategyList,
 } from '../types';
 import { PreviewActionStrategy } from '../types/pkg-config';
@@ -460,42 +460,40 @@ export function registerGlobalActions(explorer: Explorer) {
   );
   explorer.addNodesAction(
     'previewOnHover',
-    async ({ nodes, args }) => {
-      const source = await explorer.currentSource();
-      if (nodes && nodes[0] && source) {
-        const previewStrategy = args[0] as undefined | PreviewActionStrategy;
-        if (!previewStrategy) {
-          return;
-        }
+    async ({ args }) => {
+      const previewOnHoverAction = args[0] as undefined | PreviewOnHoverAction;
+      if (!previewOnHoverAction) {
+        return;
+      }
 
-        const previewOnHoverBehavior = args[1] as
-          | undefined
-          | PreviewOnHoverBehavior;
-        if (!previewOnHoverBehavior) {
-          return;
-        }
-
-        const delay = args[2] ? parseInt(args[2]) : 0;
-
-        if (previewOnHoverBehavior === 'toggle') {
-          explorer.floatingPreview.toggleOnHover(previewStrategy, delay);
-        } else if (previewOnHoverBehavior === 'enable') {
-          explorer.floatingPreview.registerOnHover(previewStrategy, delay);
-        } else {
+      const previewStrategy = args[1] as undefined | PreviewActionStrategy;
+      if (!previewStrategy) {
+        if (previewOnHoverAction === 'disable') {
           explorer.floatingPreview.unregisterOnHover();
         }
+        return;
+      }
+
+      const delay = args[2] ? parseInt(args[2]) : 0;
+
+      if (previewOnHoverAction === 'toggle') {
+        explorer.floatingPreview.toggleOnHover(previewStrategy, delay);
+      } else if (previewOnHoverAction === 'enable') {
+        explorer.floatingPreview.registerOnHover(previewStrategy, delay);
+      } else {
+        explorer.floatingPreview.unregisterOnHover();
       }
     },
     'preview on hover',
     {
       args: [
         {
-          name: 'preview strategy',
-          description: previewStrategyList.join(' | '),
+          name: 'sub action',
+          description: previewOnHoverActionList.join(' | '),
         },
         {
-          name: 'behavior',
-          description: previewOnHoverBehaviorList.join(' | '),
+          name: 'preview strategy',
+          description: previewStrategyList.join(' | '),
         },
         {
           name: 'delay',
@@ -503,9 +501,9 @@ export function registerGlobalActions(explorer: Explorer) {
         },
       ],
       menus: {
-        'labeling:toggle': 'toggle labeling',
-        'labeling:toggle:200': 'toggle labeling with debounce',
-        'content:toggle': 'toggle content',
+        'toggle:labeling': 'toggle labeling',
+        'toggle:labeling:200': 'toggle labeling with debounce',
+        'toggle:content': 'toggle content',
       },
     },
   );

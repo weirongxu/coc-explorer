@@ -113,8 +113,9 @@ class KeyMapping {
         gs: 'reveal:select',
         il: 'preview:labeling',
         ic: 'preview:content',
-        Il: 'previewOnHover:labeling:toggle',
-        Ic: 'previewOnHover:content:toggle',
+        Il: 'previewOnHover:toggle:labeling',
+        Ic: 'previewOnHover:toggle:content',
+        II: 'previewOnHover:disable',
 
         y: 'copyFilepath',
         Y: 'copyFilename',

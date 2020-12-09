@@ -32,13 +32,13 @@ export const openStrategyList: OpenStrategy[] = [
   'sourceWindow',
 ];
 
-export const previewOnHoverBehaviorList = [
+export const previewOnHoverActionList = [
   'toggle',
   'enable',
   'disable',
 ] as const;
 
-export type PreviewOnHoverBehavior = typeof previewOnHoverBehaviorList[number];
+export type PreviewOnHoverAction = typeof previewOnHoverActionList[number];
 
 export const previewStrategyList: PreviewActionStrategy[] = [
   'labeling',
@@ -81,6 +81,7 @@ export type ExplorerOpenOptions = {
    */
   title: string;
   filetype?: string;
+  focusLineIndex?: number;
   focus?: boolean;
 };
 

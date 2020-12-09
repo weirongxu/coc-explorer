@@ -13,13 +13,8 @@ import { RegisteredAction } from './actions/registered';
 import { ActionExp, MappingMode } from './actions/types';
 import { argOptions } from './argOptions';
 import { ExplorerConfig } from './config';
-import { BuffuerContextVars, WindowContextVars } from './contextVariables';
-import {
-  doUserAutocmd,
-  doUserAutocmdNotifier,
-  onCursorMoved,
-  onEvent,
-} from './events';
+import { BuffuerContextVars } from './contextVariables';
+import { doUserAutocmd, doUserAutocmdNotifier, onEvent } from './events';
 import { ExplorerManager } from './explorerManager';
 import { FloatingPreview } from './floating/floatingPreview';
 import { quitHelp, showHelp } from './help';
@@ -58,7 +53,6 @@ export class Explorer implements Disposable {
   inited = new BuffuerContextVars<boolean>('inited', this);
   sourceWinid = new BuffuerContextVars<number>('sourceWinid', this);
   sourceBufnr = new BuffuerContextVars<number>('sourceBufnr', this);
-  winline = new WindowContextVars<number>('winline', this);
   actions: RegisteredAction.Map<BaseTreeNode<any>> = {};
   context: ExtensionContext;
   floatingPreview: FloatingPreview;
@@ -163,12 +157,6 @@ export class Explorer implements Disposable {
   ) {
     this.context = explorerManager.context;
     this.floatingPreview = new FloatingPreview(this);
-
-    onCursorMoved(async (bufnr) => {
-      if (bufnr === this.bufnr) {
-        await this.winline.set(await this.nvim.call('winline'));
-      }
-    }, 200);
 
     if (borderBufnr) {
       this.disposables.push(
@@ -795,7 +783,10 @@ export class Explorer implements Disposable {
       }
     } catch (error) {
       // eslint-disable-next-line no-restricted-properties
-      workspace.showMessage(`Error when do action ${actionExp}`, 'error');
+      workspace.showMessage(
+        `Error when do action ${JSON.stringify(actionExp)}`,
+        'error',
+      );
       onError(error);
     }
 

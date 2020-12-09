@@ -6,9 +6,9 @@ const variableName = 'coc_explorer_context';
 export abstract class ContextVars<T> {
   constructor(public name: string) {}
 
-  abstract async read(): Promise<object>;
+  abstract read(): Promise<object>;
 
-  abstract async write(obj: object): Promise<void>;
+  abstract write(obj: object): Promise<void>;
 
   async set(value: T | undefined) {
     const obj = await this.read();

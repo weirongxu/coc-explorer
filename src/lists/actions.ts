@@ -29,7 +29,7 @@ export class ExplorerActionList extends BasicList {
         const data = item.data as ActionData;
         await data.callback();
         await actionListMru.add(data.name);
-        resolve();
+        resolve(undefined);
       }).catch(onError);
     });
   }

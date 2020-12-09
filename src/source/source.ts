@@ -624,7 +624,7 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>>
         return new Promise((resolve) => {
           shownExplorerEmitter.event(() => {
             isShown = true;
-            resolve();
+            resolve(undefined);
           });
         });
       },

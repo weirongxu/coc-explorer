@@ -428,7 +428,11 @@ You can use `?` to view all actions of current source
     "t": "open:tab",
     "<bs>": "gotoParent",
     "gs": "reveal:select",
-    "gp": "preview:labeling",
+    "il": "preview:labeling",
+    "ic": "preview:content",
+    "Il": "previewOnHover:toggle:labeling",
+    "Ic": "previewOnHover:toggle:content",
+    "II": "previewOnHover:disable",
 
     "y": "copyFilepath",
     "Y": "copyFilename",

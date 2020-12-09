@@ -1,49 +1,26 @@
-import { BufferHighlight, Window } from '@chemzqm/neovim';
-import { Buffer, Disposable, disposeAll, Neovim, workspace } from 'coc.nvim';
-import { onEvent } from '../events';
+import { BufferHighlight } from '@chemzqm/neovim';
+import { Disposable, workspace } from 'coc.nvim';
 import { FloatingCreateOptions, FloatingOpenOptions } from '../types';
-import { closeWinByBufnrNotifier } from '../util';
+import { FloatingWindow as HelperFloatingWindow } from 'coc-helper';
 
 export class FloatingWindow implements Disposable {
-  buffer: Buffer;
-  borderBuffer?: Buffer;
-  win?: Window;
-  borderWin?: Window;
-  nvim: Neovim;
-  hlSrcId = workspace.createNameSpace('coc-explorer-float');
+  bufnr: number;
 
   static async create(options: FloatingCreateOptions = {}) {
-    const nvim = workspace.nvim;
-    const [bufnr, borderBufnr]: [number, number | null] = await nvim.call(
-      'coc_explorer#float#create',
-      [
-        {
-          ...options,
-        },
-      ],
-    );
-    return new FloatingWindow(bufnr, borderBufnr ?? undefined, options);
+    const win = await HelperFloatingWindow.create({
+      mode: 'show',
+      name: options.name,
+    });
+
+    return new FloatingWindow(win);
   }
 
-  private disposables: Disposable[] = [];
+  constructor(public win: HelperFloatingWindow) {
+    this.bufnr = this.win.bufnr;
+  }
 
-  constructor(
-    public bufnr: number,
-    public borderBufnr: number | undefined,
-    public options: FloatingCreateOptions,
-  ) {
-    this.buffer = workspace.nvim.createBuffer(bufnr);
-    if (borderBufnr) {
-      this.borderBuffer = workspace.nvim.createBuffer(borderBufnr);
-      this.disposables.push(
-        onEvent('BufWinLeave', async (curBufnr) => {
-          if (curBufnr === this.bufnr) {
-            await closeWinByBufnrNotifier([borderBufnr]).run();
-          }
-        }),
-      );
-    }
-    this.nvim = workspace.nvim;
+  dispose() {
+    this.win.dispose();
   }
 
   async open(
@@ -51,59 +28,70 @@ export class FloatingWindow implements Disposable {
     highlights: BufferHighlight[],
     options: FloatingOpenOptions,
   ) {
-    await this.close();
-
-    if (options.width <= 0 || options.height <= 0) {
-      return;
-    }
-
-    this.nvim.pauseNotification();
-    this.buffer.setOption('modifiable', true, true);
-    this.buffer.setOption('readonly', false, true);
-    void this.buffer.setLines(lines, { start: 0, end: -1 }, true);
-    this.buffer.setOption('modifiable', false, true);
-    this.buffer.setOption('readonly', true, true);
-    for (const hl of highlights) {
-      void this.buffer.addHighlight({ ...hl, srcId: this.hlSrcId });
-    }
-    if (options.filetype) {
-      this.buffer.setOption('filetype', options.filetype, true);
-    } else {
-      this.buffer.setOption('filetype', '', true);
-    }
-    await this.nvim.resumeNotification();
-    const [winid, borderWinid]: [
-      number,
-      number?,
-    ] = await this.nvim.call('coc_explorer#float#open', [
-      this.bufnr,
-      { ...options, border_bufnr: this.borderBufnr, focus: false },
-    ]);
-    if (!options.filetype && options.filepath) {
-      await this.nvim.call('coc_explorer#win#emit_buf_read_by_winid', [
-        winid,
-        options.filepath,
-      ]);
-    }
-    if (workspace.isVim) {
-      await this.nvim.command('redraw!');
-    }
-    this.win = this.nvim.createWindow(winid);
-    this.borderWin = borderWinid ? this.nvim.createWindow(winid) : undefined;
+    await this.win.open({
+      top: options.top,
+      left: options.left,
+      width: options.width,
+      height: options.height,
+      winHl: 'CocExplorerNormalFloat',
+      winHlNC: 'CocExplorerNormalFloat',
+      borderWinHl: 'CocExplorerNormalFloatBorder',
+      lines,
+      highlights,
+      focus: false,
+      initedExecute: ({ winid }) => {
+        const scripts: string[] = [];
+        if (workspace.isNvim) {
+          scripts.push(`
+            let store_winid = bufwinid(bufnr())
+            if store_winid != ${winid}
+              noau let successful = win_gotoid(${winid})
+              if !successful
+                return
+              endif
+            endif
+          `);
+          scripts.push('set filetype=');
+          if (options.focusLineIndex) {
+            scripts.push(`call nvim_win_set_cursor(${options.focusLineIndex})`);
+          }
+          if (!options.filetype && options.filepath) {
+            scripts.push(
+              `execute 'doautocmd filetypedetect BufRead ' . fnameescape('${options.filepath}')`,
+            );
+          }
+          if (options.filetype) {
+            scripts.push(`set filetype=${options.filetype}`);
+          }
+          scripts.push(`
+            if store_winid != ${winid}
+              noau call win_gotoid(store_winid)
+            endif
+          `);
+        } else {
+          scripts.push(`call win_execute(${winid}, 'set filetype=')`);
+          if (options.focusLineIndex) {
+            scripts.push(
+              `call win_execute(${winid}, 'call cursor(${options.focusLineIndex}, 1)')`,
+            );
+          }
+          if (!options.filetype && options.filepath) {
+            scripts.push(
+              `call win_execute(${winid}, 'doautocmd filetypedetect BufRead ' . fnameescape('${options.filepath}'))`,
+            );
+          }
+          if (options.filetype) {
+            scripts.push(
+              `call win_execute(${winid}, 'set filetype=${options.filetype}'`,
+            );
+          }
+        }
+        return scripts.join('\n');
+      },
+    });
   }
 
   async close() {
-    if (workspace.isNvim) {
-      await closeWinByBufnrNotifier([this.bufnr]).run();
-    } else {
-      if (this.win) {
-        await this.nvim.call('popup_close', [this.win.id]).catch();
-      }
-    }
-  }
-
-  dispose() {
-    disposeAll(this.disposables);
-    this.disposables.forEach((s) => s.dispose());
+    await this.win.close();
   }
 }

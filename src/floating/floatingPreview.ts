@@ -24,6 +24,7 @@ type PreviewArguments = {
   lines: string[];
   highlights?: BufferHighlight[];
   options?: {
+    focusLineIndex?: number;
     filetype?: string;
     filepath?: string;
   };
@@ -36,13 +37,13 @@ type PreviewAction = (options: {
 }) => void | PreviewArguments | Promise<PreviewArguments | void>;
 
 export class FloatingPreview implements Disposable {
-  nvim = workspace.nvim;
   shown: boolean = false;
   disposables: Disposable[] = [];
   maxHeight = 30;
   preferTop = false;
+  onHoverStrategy: false | PreviewActionStrategy = false;
 
-  private onHoverStrategy: false | PreviewActionStrategy = false;
+  private nvim = workspace.nvim;
 
   constructor(public explorer: Explorer) {
     this.disposables.push(
@@ -54,17 +55,17 @@ export class FloatingPreview implements Disposable {
       onBufEnter(async (bufnr) => {
         if (
           bufnr !== this.explorer.bufnr &&
-          bufnr !== this.previewWindowStore?.bufnr
+          bufnr !== this.previewWindow?.bufnr
         ) {
           await this.close();
         }
-      }, 300),
+      }, 200),
       onCursorMoved(async (bufnr) => {
         if (this.onHoverStrategy || bufnr !== this.explorer.bufnr) {
           return;
         }
         await this.close();
-      }, 300),
+      }, 200),
       Disposable.create(() => {
         disposeAll(this.onHoverDisposables);
       }),
@@ -84,19 +85,19 @@ export class FloatingPreview implements Disposable {
   }
 
   dispose() {
-    this.previewWindowStore?.dispose();
+    this.previewWindow?.dispose();
   }
 
-  private previewWindowStore: FloatingWindow | undefined;
+  private previewWindow: FloatingWindow | undefined;
   private async getPreviewWindow() {
-    if (!this.previewWindowStore) {
-      this.previewWindowStore = await FloatingWindow.create();
+    if (!this.previewWindow) {
+      this.previewWindow = await FloatingWindow.create();
     }
-    return this.previewWindowStore;
+    return this.previewWindow;
   }
 
   async close() {
-    await this.previewWindowStore?.close();
+    await this.previewWindow?.close();
   }
 
   private onHoverDisposables: Disposable[] = [];
@@ -122,7 +123,6 @@ export class FloatingPreview implements Disposable {
       if (bufnr !== this.explorer.bufnr) {
         return;
       }
-      await this.close();
 
       await this.explorer.refreshLineIndex();
 
@@ -225,7 +225,10 @@ export class FloatingPreview implements Disposable {
       return {
         lines,
         highlights: [],
-        options: { filepath: uri.fsPath },
+        options: {
+          filepath: uri.fsPath,
+          focusLineIndex: range.start.line,
+        },
       };
     });
   }
@@ -278,7 +281,10 @@ export class FloatingPreview implements Disposable {
       return;
     }
     let alignTop: boolean = false;
-    let winline = (await this.explorer.winline.get()) ?? 1;
+    let winline =
+      workspace.bufnr === this.explorer.bufnr
+        ? await this.nvim.call('winline')
+        : 1;
     winline -= 1;
     const containerWin =
       isFloating && this.explorer.config.get('floating.border.enable')
@@ -294,7 +300,7 @@ export class FloatingPreview implements Disposable {
     winTop -= 1;
     winLeft -= 1;
     const containerWidth = await containerWin.width;
-    const maxWidth = vimColumns - containerWidth - (isFloating ? 0 : 1);
+    const maxWidth = vimColumns - containerWidth - (isFloating ? 0 : 1) - 2;
     const maxHeight = min([this.maxHeight, vimLines])!;
 
     const { width, height } = this.getDimension(lines, maxWidth, maxHeight);
@@ -313,13 +319,13 @@ export class FloatingPreview implements Disposable {
 
     let left: number;
     if (position === 'left') {
-      left = winLeft + containerWidth + 1;
+      left = winLeft + containerWidth + 2;
     } else if (position === 'right') {
-      left = winLeft - width - 1;
+      left = winLeft - width - 2;
     } else if (isFloating && floatingPosition === 'left-center') {
-      left = winLeft + containerWidth;
+      left = winLeft + containerWidth + 1;
     } else if (isFloating && floatingPosition === 'right-center') {
-      left = winLeft - width;
+      left = winLeft - width - 1;
     } else {
       // TODO tab and floating other
       return;
@@ -345,6 +351,10 @@ export class FloatingPreview implements Disposable {
     }
 
     if (!this.registeredPreviewActions[previewStrategy]) {
+      // eslint-disable-next-line no-restricted-properties
+      workspace.showMessage(
+        `coc-explorer no support preview strategy(${previewStrategy})`,
+      );
       return;
     }
 
@@ -354,6 +364,7 @@ export class FloatingPreview implements Disposable {
       nodeIndex,
     });
     if (!openArgs) {
+      await this.close();
       return;
     }
 
@@ -361,6 +372,7 @@ export class FloatingPreview implements Disposable {
 
     const floatOptions = await this.getFloatOptions(openArgs.lines);
     if (!floatOptions) {
+      await this.close();
       return;
     }
 
