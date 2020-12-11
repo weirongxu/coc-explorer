@@ -11,7 +11,7 @@ import {
 import { clone } from 'lodash-es';
 import { Class } from 'type-fest';
 import { Location } from 'vscode-languageserver-protocol';
-import { conditionActionRules } from '../actions/condition';
+import { conditionActionRules, waitAction } from '../actions/special';
 import { RegisteredAction } from '../actions/registered';
 import { ActionExp, MappingMode } from '../actions/types';
 import { argOptions } from '../argOptions';
@@ -345,11 +345,11 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>>
           const action = actionExp[i];
 
           if (Array.isArray(action)) {
-            await this.doActionExp(actionExp, nodes, subOptions);
+            await this.doActionExp(action, nodes, subOptions);
             continue;
           }
 
-          if (action.name === 'wait') {
+          if (action.name === waitAction.name) {
             if (release || isSubAction) {
               continue;
             }

@@ -1,6 +1,9 @@
 import { ViewRowPainter } from '../source/viewPainter';
 import { displayWidth, compactI, flatten, sum, displaySlice } from '.';
-import { hlGroupManager, HighlightPosition } from '../source/highlights/highlightManager';
+import {
+  hlGroupManager,
+  HighlightPosition,
+} from '../source/highlights/highlightManager';
 import { NodeUid } from '../source/source';
 
 // Flexible types

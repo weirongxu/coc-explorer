@@ -8,19 +8,24 @@ export const conditionActionRules: Record<
       n: BaseTreeNode<any>,
       args: string[],
     ) => boolean | undefined;
-    getDescription: (args: string[]) => string;
+    getHelpDescription: (args: string[]) => string;
   }
 > = {
   'expandable?': {
     filter: (_s, n) => n.expandable,
-    getDescription: () => 'expandable?',
+    getHelpDescription: () => 'expandable?',
   },
   'expanded?': {
     filter: (s, n) => s.isExpanded(n),
-    getDescription: () => 'expanded?',
+    getHelpDescription: () => 'expanded?',
   },
   'type?': {
     filter: (_s, n, args) => n.type === args[0],
-    getDescription: (args) => `type is ${args[0]}`,
+    getHelpDescription: (args) => `type is ${args[0]}`,
   },
+};
+
+export const waitAction = {
+  name: 'wait',
+  helpDescription: '<wait>',
 };

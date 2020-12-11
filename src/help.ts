@@ -1,5 +1,5 @@
 import { Disposable, workspace, disposeAll } from 'coc.nvim';
-import { conditionActionRules } from './actions/condition';
+import { conditionActionRules, waitAction } from './actions/special';
 import { Explorer } from './explorer';
 import { keyMapping } from './mappings';
 import {
@@ -24,8 +24,15 @@ const helpHightlights = {
   column: hl('HelpColumn', 'Identifier'),
   arg: hl('HelpArg', 'Identifier'),
   description: hl('HelpDescription', 'Comment'),
+  type: hl('HelperType', 'Type'),
   conditional: hl('HelpConditional', 'Conditional'),
 };
+
+interface MappingActionContext {
+  key: string;
+  isFirstLine: boolean;
+  isWait: boolean;
+}
 
 export class HelpPainter {
   painter: ViewPainter;
@@ -93,56 +100,101 @@ export class HelpPainter {
     }
   }
 
-  private async drawActionExp(
-    actionExp: ActionExp,
+  private drawMappingsPrefix(
     indent: string,
-    drawBlocks: DrawBlock[] = [],
+    row: ViewRowPainter,
+    ctx: MappingActionContext,
+  ) {
+    if (!ctx.isFirstLine) {
+      row.add(indent);
+      return;
+    }
+    ctx.isFirstLine = false;
+    if (ctx.key) {
+      row.add(' ');
+      row.add(ctx.key, { hl: helpHightlights.mappingKey });
+      row.add(' - ');
+    }
+    if (ctx.isWait) {
+      row.add(waitAction.helpDescription, { hl: helpHightlights.type });
+    }
+  }
+
+  private async drawMappingsAction(
+    indent: string,
+    action: Action,
+    ctx: MappingActionContext,
+  ) {
+    await this.drawRow((row) => {
+      this.drawMappingsPrefix(indent, row, ctx);
+
+      row.add(action.name, { hl: helpHightlights.action });
+      if (action.args) {
+        row.add(`(${action.args.join(',')})`, { hl: helpHightlights.arg });
+      }
+      row.add(' ');
+      if (action.name in this.registeredActions) {
+        row.add(this.registeredActions[action.name].description, {
+          hl: helpHightlights.description,
+        });
+      }
+    });
+  }
+
+  private async drawMappingsActionExp(
+    indent: string,
+    actionExp: ActionExp,
+    ctx: MappingActionContext,
   ) {
     if (Array.isArray(actionExp)) {
-      for (var i = 0; i < actionExp.length; i++) {
+      for (let i = 0; i < actionExp.length; i++) {
         const action = actionExp[i];
+
         if (Array.isArray(action)) {
-          await this.drawActionExp(action, indent, drawBlocks);
-        } else {
-          const rule = conditionActionRules[action.name];
-          if (rule) {
-            drawBlocks.push((row) => {
-              row.add(indent);
-              row.add('if ' + rule.getDescription(action.args) + ' ', {
-                hl: helpHightlights.conditional,
-              });
-            });
-            await this.drawActionExp(
-              actionExp[i + 1],
-              indent + '  ',
-              drawBlocks,
-            );
-            drawBlocks.push((row) => {
-              row.add(indent);
-              row.add('else ', { hl: helpHightlights.conditional });
-            });
-            await this.drawActionExp(
-              actionExp[i + 2],
-              indent + '  ',
-              drawBlocks,
-            );
-            i += 2;
-          } else {
-            await this.drawActionExp(action, indent, drawBlocks);
-          }
+          await this.drawMappingsActionExp(indent, action, ctx);
+          continue;
         }
+
+        if (action.name === waitAction.name) {
+          if (ctx.isFirstLine) {
+            ctx.isWait = true;
+          }
+          continue;
+        }
+
+        const rule = conditionActionRules[action.name];
+        if (rule) {
+          await this.drawRow((row) => {
+            this.drawMappingsPrefix(indent, row, ctx);
+            row.add('if ' + rule.getHelpDescription(action.args), {
+              hl: helpHightlights.conditional,
+            });
+          });
+          const [trueAction, falseAction] = [
+            actionExp[i + 1],
+            actionExp[i + 2],
+          ];
+          await this.drawMappingsActionExp(indent + '  ', trueAction, ctx);
+          await this.drawRow((row) => {
+            row.add(indent);
+            row.add('else', {
+              hl: helpHightlights.conditional,
+            });
+          });
+          await this.drawMappingsActionExp(indent + '  ', falseAction, ctx);
+          i += 2;
+          continue;
+        }
+
+        await this.drawMappingsAction(indent, action, ctx);
       }
     } else {
-      drawBlocks.push((row) => {
-        row.add(indent);
-        this.drawActionForMapping(row, actionExp);
-      });
+      await this.drawMappingsAction(indent, actionExp, ctx);
     }
-    return drawBlocks;
   }
 
   /**
-   * <cr> - if expandable?
+   * <cr> - <wait> if expandable?
    *          if expanded?
    *            expand() expand a directory
    *          else
@@ -167,26 +219,12 @@ export class HelpPainter {
       ) {
         continue;
       }
-      const drawBlocks = await this.drawActionExp(actionExp, '');
 
-      if (!drawBlocks.length) {
-        continue;
-      }
-
-      await this.drawRow(async (row) => {
-        row.add(' ');
-        row.add(key, { hl: helpHightlights.mappingKey });
-        row.add(' - ');
-        await drawBlocks[0](row);
+      await this.drawMappingsActionExp(' '.repeat(key.length + 4), actionExp, {
+        key,
+        isFirstLine: true,
+        isWait: false,
       });
-
-      const indent = ' '.repeat(key.length + 4);
-      for (const drawBlock of drawBlocks.slice(1)) {
-        await this.drawRow(async (row) => {
-          row.add(indent);
-          await drawBlock(row);
-        });
-      }
     }
   }
 
@@ -211,8 +249,7 @@ export class HelpPainter {
           row.add('   ');
           row.add('args:', { hl: helpHightlights.subtitle });
         });
-        for (let i = 0; i < action.options.args.length; i++) {
-          const arg = action.options.args[i];
+        for (const arg of action.options.args) {
           await this.drawRow((row) => {
             row.add('     - ');
             row.add(arg.name, { hl: helpHightlights.arg });
@@ -275,8 +312,7 @@ export class HelpPainter {
       )
       .notify();
     const highlightPositions: HighlightPositionWithLine[] = [];
-    for (let i = 0; i < this.drawnResults.length; i++) {
-      const drawn = this.drawnResults[i];
+    for (const [i, drawn] of this.drawnResults.entries()) {
       if (drawn.highlightPositions) {
         highlightPositions.push(
           ...drawn.highlightPositions.map((hl) => ({

@@ -1,4 +1,5 @@
 import { workspace } from 'coc.nvim';
+import { conditionActionRules, waitAction } from './actions/special';
 import {
   Action,
   ActionExp,
@@ -14,7 +15,7 @@ type MappingConfigMode = 'none' | 'default';
 
 /**
  * @example
- * parseAction('open:split:plain')
+ * parseOriginalAction('open:split:plain')
  * // return { name: 'open', args: ['split', 'plain'] }
  */
 export function parseOriginalAction(originalAction: OriginalAction): Action {
@@ -26,6 +27,16 @@ export function parseOriginalAction(originalAction: OriginalAction): Action {
     name,
     args,
   };
+}
+
+/**
+ * @example
+ * parseAction('open:split:plain')
+ * // return { name: 'open', args: ['split', 'plain'] }
+ */
+export function toOriginalAction(action: Action): string {
+  const { name, args } = action;
+  return [name, ...args].join(':');
 }
 
 export function parseOriginalActionExp(
@@ -64,10 +75,16 @@ function mixAndParseMappings(
 export function getSingleAction(actionExp: ActionExp): Action | undefined {
   if (!Array.isArray(actionExp)) {
     return actionExp;
-  } else if (actionExp.length === 1) {
-    return getSingleAction(actionExp[0]);
   } else {
-    return undefined;
+    const actions = actionExp
+      .map((action) => getSingleAction(action))
+      .filter(
+        (action) =>
+          action &&
+          !(action.name in conditionActionRules) &&
+          action.name !== waitAction.name,
+      );
+    return actions[0];
   }
 }
 
@@ -117,19 +134,20 @@ class KeyMapping {
         Ic: 'previewOnHover:toggle:content',
         II: 'previewOnHover:disable',
 
-        y: 'copyFilepath',
-        Y: 'copyFilename',
-        c: 'copyFile',
-        x: 'cutFile',
+        yp: 'copyFilepath',
+        yn: 'copyFilename',
+        yy: 'copyFile',
+        dd: 'cutFile',
         p: 'pasteFile',
-        d: 'delete',
-        D: 'deleteForever',
+        df: 'delete',
+        dF: 'deleteForever',
 
         a: 'addFile',
         A: 'addDirectory',
         r: 'rename',
 
-        '.': 'toggleHidden',
+        zh: 'toggleHidden',
+        'g.': 'toggleHidden',
         R: 'refresh',
 
         '?': 'help',
@@ -268,7 +286,7 @@ class KeyMapping {
     Object.entries(mappings).find(([key, actionExp]) => {
       const action = getSingleAction(actionExp);
       if (action) {
-        reverseMappings[action.name] = key;
+        reverseMappings[toOriginalAction(action)] = key;
       }
     });
     return reverseMappings;
