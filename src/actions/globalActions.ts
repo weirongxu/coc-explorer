@@ -2,6 +2,7 @@ import { workspace } from 'coc.nvim';
 import { argOptions } from '../argOptions';
 import type { Explorer } from '../explorer';
 import { parseOriginalActionExp } from '../mappings';
+import { BaseTreeNode } from '../source/source';
 import {
   collapseOptionList,
   expandOptionList,
@@ -15,8 +16,12 @@ import {
 import { PreviewActionStrategy } from '../types/pkg-config';
 import { enableWrapscan } from '../util';
 import { openAction } from './openAction';
+import { ActionRegistrar } from './registrar';
 
-export function registerGlobalActions(explorer: Explorer) {
+export function loadGlobalActions(
+  ctx: ActionRegistrar<Explorer, BaseTreeNode<any>>,
+) {
+  const explorer = ctx.owner;
   const { nvim } = workspace;
   const openActionArgs = [
     {
@@ -41,7 +46,7 @@ export function registerGlobalActions(explorer: Explorer) {
     sourceWindow: 'use the window where explorer opened',
   };
   // open, expand, collapse
-  explorer.addNodeAction(
+  ctx.addNodeAction(
     'open',
     async ({ node, args, mode }) => {
       if (node.expandable) {
@@ -49,7 +54,7 @@ export function registerGlobalActions(explorer: Explorer) {
           'openAction.for.directory',
         );
         if (directoryActionExp) {
-          await explorer.doActionExp(
+          await explorer.action.doActionExp(
             parseOriginalActionExp(directoryActionExp),
             { mode, lineIndexes: [explorer.flattenedNodes.indexOf(node)] },
           );
@@ -80,7 +85,7 @@ export function registerGlobalActions(explorer: Explorer) {
       menus: openActionMenu,
     },
   );
-  explorer.addNodeAction(
+  ctx.addNodeAction(
     'expand',
     async ({ source, node, args }) => {
       if (node.expandable) {
@@ -116,7 +121,7 @@ export function registerGlobalActions(explorer: Explorer) {
       },
     },
   );
-  explorer.addNodeAction(
+  ctx.addNodeAction(
     'collapse',
     async ({ source, node, args }) => {
       const options = (args[0] ?? '').split('|');
@@ -125,7 +130,7 @@ export function registerGlobalActions(explorer: Explorer) {
       if (all && source.rootNode.children) {
         for (const subNode of source.rootNode.children) {
           if (subNode.expandable && source.isExpanded(subNode)) {
-            await source.doAction(
+            await source.action.doAction(
               'collapse',
               subNode,
               options.filter((op) => op !== 'all'),
@@ -166,7 +171,7 @@ export function registerGlobalActions(explorer: Explorer) {
   const moveActionMenu = {
     insideSource: 'move inside current source',
   };
-  explorer.addNodesAction(
+  ctx.addNodesAction(
     'nodePrev',
     async ({ args }) => {
       const moveStrategy = args[0] as MoveStrategy;
@@ -187,7 +192,7 @@ export function registerGlobalActions(explorer: Explorer) {
       menus: moveActionMenu,
     },
   );
-  explorer.addNodesAction(
+  ctx.addNodesAction(
     'nodeNext',
     async ({ args }) => {
       const moveStrategy = args[0] as MoveStrategy;
@@ -208,7 +213,7 @@ export function registerGlobalActions(explorer: Explorer) {
       menus: moveActionMenu,
     },
   );
-  explorer.addNodesAction(
+  ctx.addNodesAction(
     'expandablePrev',
     async ({ args }) => {
       await explorer.nodePrev(
@@ -222,7 +227,7 @@ export function registerGlobalActions(explorer: Explorer) {
       menus: moveActionMenu,
     },
   );
-  explorer.addNodesAction(
+  ctx.addNodesAction(
     'expandableNext',
     async ({ args }) => {
       await explorer.nodeNext(
@@ -236,7 +241,7 @@ export function registerGlobalActions(explorer: Explorer) {
       menus: moveActionMenu,
     },
   );
-  explorer.addNodesAction(
+  ctx.addNodesAction(
     'indentPrev',
     async ({ args }) => {
       const node = await explorer.currentNode();
@@ -252,7 +257,7 @@ export function registerGlobalActions(explorer: Explorer) {
       menus: moveActionMenu,
     },
   );
-  explorer.addNodesAction(
+  ctx.addNodesAction(
     'indentNext',
     async ({ args }) => {
       const node = await explorer.currentNode();
@@ -269,7 +274,7 @@ export function registerGlobalActions(explorer: Explorer) {
     },
   );
 
-  explorer.addNodesAction(
+  ctx.addNodesAction(
     'gotoSource',
     async ({ args }) => {
       const source = explorer.sources.find((s) => s.sourceType === args[0]);
@@ -279,7 +284,7 @@ export function registerGlobalActions(explorer: Explorer) {
     },
     'go to source',
   );
-  explorer.addNodesAction(
+  ctx.addNodesAction(
     'sourceNext',
     async () => {
       const nextSource =
@@ -292,7 +297,7 @@ export function registerGlobalActions(explorer: Explorer) {
     },
     'go to next source',
   );
-  explorer.addNodesAction(
+  ctx.addNodesAction(
     'sourcePrev',
     async () => {
       const prevSource =
@@ -306,14 +311,14 @@ export function registerGlobalActions(explorer: Explorer) {
     'go to previous source',
   );
 
-  explorer.addNodesAction(
+  ctx.addNodesAction(
     'modifiedPrev',
     async () => {
       await explorer.gotoPrevIndexing('modified');
     },
     'go to previous modified',
   );
-  explorer.addNodesAction(
+  ctx.addNodesAction(
     'modifiedNext',
     async () => {
       await explorer.gotoNextIndexing('modified');
@@ -321,14 +326,14 @@ export function registerGlobalActions(explorer: Explorer) {
     'go to next modified',
   );
 
-  explorer.addNodesAction(
+  ctx.addNodesAction(
     'diagnosticPrev',
     async () => {
       await explorer.gotoPrevIndexing('diagnosticError', 'diagnosticWarning');
     },
     'go to previous diagnostic',
   );
-  explorer.addNodesAction(
+  ctx.addNodesAction(
     'diagnosticNext',
     async () => {
       await explorer.gotoNextIndexing('diagnosticError', 'diagnosticWarning');
@@ -336,14 +341,14 @@ export function registerGlobalActions(explorer: Explorer) {
     'go to next diagnostic',
   );
 
-  explorer.addNodesAction(
+  ctx.addNodesAction(
     'gitPrev',
     async () => {
       await explorer.gotoPrevIndexing('git');
     },
     'go to previous git changed',
   );
-  explorer.addNodesAction(
+  ctx.addNodesAction(
     'gitNext',
     async () => {
       await explorer.gotoNextIndexing('git');
@@ -365,7 +370,7 @@ export function registerGlobalActions(explorer: Explorer) {
       git: 'git',
     },
   };
-  explorer.addNodesAction(
+  ctx.addNodesAction(
     'indexPrev',
     async ({ args }) => {
       await explorer.gotoPrevIndexing(...args);
@@ -373,7 +378,7 @@ export function registerGlobalActions(explorer: Explorer) {
     'go to previous index',
     indexOptions,
   );
-  explorer.addNodesAction(
+  ctx.addNodesAction(
     'indexNext',
     async ({ args }) => {
       await explorer.gotoNextIndexing(...args);
@@ -383,7 +388,7 @@ export function registerGlobalActions(explorer: Explorer) {
   );
 
   // preview
-  explorer.addNodesAction(
+  ctx.addNodesAction(
     'preview',
     async ({ nodes, args }) => {
       const source = await explorer.currentSource();
@@ -419,7 +424,7 @@ export function registerGlobalActions(explorer: Explorer) {
       },
     },
   );
-  explorer.addNodesAction(
+  ctx.addNodesAction(
     'previewOnHover',
     async ({ args }) => {
       const previewOnHoverAction = args[0] as undefined | PreviewOnHoverAction;
@@ -470,7 +475,7 @@ export function registerGlobalActions(explorer: Explorer) {
   );
 
   // select, hidden
-  explorer.addNodeAction(
+  ctx.addNodeAction(
     'toggleHidden',
     async ({ source }) => {
       source.showHidden = !source.showHidden;
@@ -478,7 +483,7 @@ export function registerGlobalActions(explorer: Explorer) {
     'toggle visibility of hidden node',
     { reload: true },
   );
-  explorer.addNodeAction(
+  ctx.addNodeAction(
     'select',
     async ({ source, node }) => {
       source.selectedNodes.add(node);
@@ -487,7 +492,7 @@ export function registerGlobalActions(explorer: Explorer) {
     'select node',
     { select: true },
   );
-  explorer.addNodeAction(
+  ctx.addNodeAction(
     'unselect',
     async ({ source, node }) => {
       source.selectedNodes.delete(node);
@@ -496,13 +501,13 @@ export function registerGlobalActions(explorer: Explorer) {
     'unselect node',
     { select: true },
   );
-  explorer.addNodeAction(
+  ctx.addNodeAction(
     'toggleSelection',
     async ({ source, node }) => {
       if (source.selectedNodes.has(node)) {
-        await source.doAction('unselect', node);
+        await source.action.doAction('unselect', node);
       } else {
-        await source.doAction('select', node);
+        await source.action.doAction('select', node);
       }
     },
     'toggle node selection',
@@ -510,7 +515,7 @@ export function registerGlobalActions(explorer: Explorer) {
   );
 
   // other
-  explorer.addNodeAction(
+  ctx.addNodeAction(
     'refresh',
     async ({ source }) => {
       const loadNotifier = await source.loadNotifier(source.rootNode, {
@@ -524,21 +529,21 @@ export function registerGlobalActions(explorer: Explorer) {
     },
     'refresh',
   );
-  explorer.addNodeAction(
+  ctx.addNodeAction(
     'help',
     async ({ source }) => {
       await source.explorer.showHelp(source);
     },
     'show help',
   );
-  explorer.addNodesAction(
+  ctx.addNodesAction(
     'actionMenu',
     async ({ source, nodes }) => {
-      await source.listActionMenu(nodes);
+      await source.action.listActionMenu(nodes);
     },
     'show actions in coc-list',
   );
-  explorer.addNodesAction(
+  ctx.addNodesAction(
     'normal',
     async ({ args }) => {
       if (args[0]) {
@@ -557,7 +562,7 @@ export function registerGlobalActions(explorer: Explorer) {
       },
     },
   );
-  explorer.addNodeAction(
+  ctx.addNodeAction(
     'esc',
     async ({ source, mode }) => {
       const position = await source.explorer.args.value(argOptions.position);
@@ -570,7 +575,7 @@ export function registerGlobalActions(explorer: Explorer) {
     },
     'esc action',
   );
-  explorer.addNodesAction(
+  ctx.addNodesAction(
     'quit',
     async () => {
       await explorer.quit();

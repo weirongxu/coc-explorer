@@ -6,7 +6,7 @@ import {
   Range,
 } from 'vscode-languageserver-protocol';
 import { TextDocument } from 'vscode-languageserver-textdocument';
-import { RegisteredAction } from './actions/registered';
+import { ActionMenu } from './actions/menu';
 import { ExplorerManager } from './explorerManager';
 import { actionListMru } from './lists/actions';
 import { keyMapping } from './mappings';
@@ -38,10 +38,7 @@ export class ActionMenuCodeActionProvider implements CodeActionProvider {
     const reverseMappings = await keyMapping.getReversedMappings(
       source.sourceType,
     );
-    const actions = {
-      ...explorer.actions,
-      ...source.actions,
-    };
+    const actions = source.action.registeredActions();
     const mruList = await actionListMru.load();
 
     return flatten(
@@ -65,24 +62,22 @@ export class ActionMenuCodeActionProvider implements CodeActionProvider {
           ];
           if (options.menus) {
             list.push(
-              ...RegisteredAction.getNormalizeMenus(options.menus).map(
-                (menu) => {
-                  const fullActionName = actionName + ':' + menu.args;
-                  return {
-                    title: `${fullActionName} [${
-                      reverseMappings[fullActionName] ?? ''
-                    }]`,
-                    name: fullActionName,
-                    command: 'explorer.doCodeAction',
-                    arguments: [
-                      fullActionName,
-                      actionName,
-                      () => menu.actionArgs(),
-                    ] as [string, string, () => Promise<string[]>],
-                    score: score(mruList, fullActionName),
-                  };
-                },
-              ),
+              ...ActionMenu.getNormalizeMenus(options.menus).map((menu) => {
+                const fullActionName = actionName + ':' + menu.args;
+                return {
+                  title: `${fullActionName} [${
+                    reverseMappings[fullActionName] ?? ''
+                  }]`,
+                  name: fullActionName,
+                  command: 'explorer.doCodeAction',
+                  arguments: [
+                    fullActionName,
+                    actionName,
+                    () => menu.actionArgs(),
+                  ] as [string, string, () => Promise<string[]>],
+                  score: score(mruList, fullActionName),
+                };
+              }),
             );
           }
           return list;

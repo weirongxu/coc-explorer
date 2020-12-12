@@ -229,7 +229,9 @@ export class ExplorerManager {
           workspace.registerKeymap([mode], plugKey, async () => {
             const count = (await this.nvim.eval('v:count')) as number;
             const explorer = this.currentExplorer();
-            explorer?.doActionByKey(key, mode, count || 1).catch(onError);
+            explorer?.action
+              .doActionByKey(key, mode, count || 1)
+              .catch(onError);
           }),
         );
         this.mappings[key][mode] = `<Plug>(coc-${plugKey})`;

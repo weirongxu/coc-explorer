@@ -11,7 +11,8 @@ import { BaseTreeNode, ExplorerSource } from './source/source';
 import { ViewPainter, ViewRowPainter } from './source/viewPainter';
 import { DrawBlock, Notifier } from './util';
 import { Action, ActionExp } from './actions/types';
-import { RegisteredAction } from './actions/registered';
+import { ActionRegistrar } from './actions/registrar';
+import { ActionMenu } from './actions/menu';
 
 const hl = hlGroupManager.linkGroup.bind(hlGroupManager);
 const helpHightlights = {
@@ -40,7 +41,7 @@ export class HelpPainter {
     highlightPositions: HighlightPosition[];
     content: string;
   }[] = [];
-  registeredActions: RegisteredAction.Map<BaseTreeNode<any>>;
+  registeredActions: ActionRegistrar.Map<BaseTreeNode<any>>;
 
   constructor(
     private explorer: Explorer,
@@ -49,10 +50,7 @@ export class HelpPainter {
   ) {
     this.painter = new ViewPainter(explorer);
 
-    this.registeredActions = {
-      ...this.explorer.actions,
-      ...this.source.actions,
-    };
+    this.registeredActions = this.source.action.registeredActions();
   }
 
   async drawRow(drawBlock: DrawBlock) {
@@ -267,9 +265,7 @@ export class HelpPainter {
           row.add('   ');
           row.add('menus:', { hl: helpHightlights.subtitle });
         });
-        for (const menu of RegisteredAction.getNormalizeMenus(
-          action.options.menus,
-        )) {
+        for (const menu of ActionMenu.getNormalizeMenus(action.options.menus)) {
           await this.drawRow((row) => {
             row.add('     - ');
             row.add(`${name}:${menu.args}`, { hl: helpHightlights.action });

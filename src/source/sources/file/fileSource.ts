@@ -25,7 +25,7 @@ import { BaseTreeNode, ExplorerSource } from '../../source';
 import { sourceManager } from '../../sourceManager';
 import { SourcePainters } from '../../sourcePainters';
 import { fileArgOptions } from './argOptions';
-import { registerFileActions } from './fileActions';
+import { loadFileActions } from './fileActions';
 import { fileColumnRegistrar } from './fileColumnRegistrar';
 import './load';
 
@@ -143,7 +143,10 @@ export class FileSource extends ExplorerSource<FileNode> {
   }
 
   isGitChange(parentNode: FileNode, filename: string): boolean {
-    return !!gitManager.getMixedStatus(parentNode.fullpath + '/' + filename, false);
+    return !!gitManager.getMixedStatus(
+      parentNode.fullpath + '/' + filename,
+      false,
+    );
   }
 
   getColumnConfig<T>(name: string, defaultValue?: T): T {
@@ -151,8 +154,6 @@ export class FileSource extends ExplorerSource<FileNode> {
   }
 
   async init() {
-    const { nvim } = this;
-
     if (this.config.get('activeMode')) {
       if (workspace.isNvim) {
         if (this.config.get('file.autoReveal')) {
@@ -199,7 +200,7 @@ export class FileSource extends ExplorerSource<FileNode> {
       }),
     );
 
-    registerFileActions(this);
+    loadFileActions(this.action);
   }
 
   async open() {
@@ -407,7 +408,10 @@ export class FileSource extends ExplorerSource<FileNode> {
     const files = await Promise.all(
       filenames.map(async (filename) => {
         try {
-          if (this.showOnlyGitChange && !this.isGitChange(parentNode, filename)) {
+          if (
+            this.showOnlyGitChange &&
+            !this.isGitChange(parentNode, filename)
+          ) {
             return;
           }
 

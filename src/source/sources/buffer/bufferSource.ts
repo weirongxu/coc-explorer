@@ -5,9 +5,8 @@ import { ExplorerSource, BaseTreeNode } from '../../source';
 import { sourceManager } from '../../sourceManager';
 import { bufferColumnRegistrar } from './bufferColumnRegistrar';
 import './load';
-import { registerBufferActions } from './bufferActions';
+import { loadBufferActions } from './bufferActions';
 import { SourcePainters } from '../../sourcePainters';
-import { argOptions } from '../../../argOptions';
 import { onBufEnter } from '../../../events';
 import { bufferArgOptions } from './argOptions';
 
@@ -98,7 +97,7 @@ export class BufferSource extends ExplorerSource<BufferNode> {
       }
     }
 
-    registerBufferActions(this);
+    loadBufferActions(this.action);
   }
 
   async open() {

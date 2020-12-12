@@ -8,9 +8,9 @@ import {
   workspace,
 } from 'coc.nvim';
 import pFilter from 'p-filter';
-import { registerGlobalActions } from './actions/globalActions';
-import { RegisteredAction } from './actions/registered';
-import { ActionExp, MappingMode } from './actions/types';
+import { loadGlobalActions } from './actions/globalActions';
+import { ExplorerActionRegistrar } from './actions/registrar';
+import { MappingMode } from './actions/types';
 import { argOptions } from './argOptions';
 import { ExplorerConfig } from './config';
 import { BuffuerContextVars } from './contextVariables';
@@ -19,7 +19,6 @@ import { ExplorerManager } from './explorerManager';
 import { FloatingPreview } from './floating/floatingPreview';
 import { quitHelp, showHelp } from './help';
 import { IndexingManager } from './indexingManager';
-import { keyMapping } from './mappings';
 import { ArgContentWidthTypes, Args } from './parseArgs';
 import {
   HighlightPositionWithLine,
@@ -35,7 +34,6 @@ import {
   flatten,
   normalizePath,
   Notifier,
-  onError,
   scanIndexNext,
   scanIndexPrev,
   sum,
@@ -53,11 +51,12 @@ export class Explorer implements Disposable {
   inited = new BuffuerContextVars<boolean>('inited', this);
   sourceWinid = new BuffuerContextVars<number>('sourceWinid', this);
   sourceBufnr = new BuffuerContextVars<number>('sourceBufnr', this);
-  actions: RegisteredAction.Map<BaseTreeNode<any>> = {};
   context: ExtensionContext;
   floatingPreview: FloatingPreview;
   contentWidth = 0;
+  renderMutex = new Mutex();
   doActionExpMutex = new Mutex();
+  action = new ExplorerActionRegistrar(this);
 
   private disposables: Disposable[] = [];
   private _buffer?: Buffer;
@@ -169,7 +168,7 @@ export class Explorer implements Disposable {
       );
     }
 
-    registerGlobalActions(this);
+    loadGlobalActions(this.action);
   }
 
   dispose() {
@@ -639,36 +638,6 @@ export class Explorer implements Disposable {
     return true;
   }
 
-  addNodesAction(
-    name: string,
-    callback: RegisteredAction.ActionNodesCallback<BaseTreeNode<any>>,
-    description: string,
-    options: Partial<RegisteredAction.Options> = {},
-  ) {
-    this.actions[name] = {
-      callback,
-      description,
-      options,
-    };
-  }
-
-  addNodeAction(
-    name: string,
-    callback: RegisteredAction.ActionNodeCallback<BaseTreeNode<any>>,
-    description: string,
-    options: Partial<RegisteredAction.Options> = {},
-  ) {
-    this.actions[name] = {
-      callback: async ({ source, nodes, args, mode }) => {
-        for (const node of nodes) {
-          await callback.call(source, { source, node, args, mode });
-        }
-      },
-      description,
-      options,
-    };
-  }
-
   async getSelectedOrCursorLineIndexes(mode: MappingMode) {
     const lineIndexes = new Set<number>();
     const document = await workspace.document;
@@ -688,88 +657,6 @@ export class Explorer implements Disposable {
     await this.refreshLineIndex();
     lineIndexes.add(this.currentLineIndex);
     return lineIndexes;
-  }
-
-  async doActionByKey(key: string, mode: MappingMode, count: number = 1) {
-    for (let c = 0; c < count; c++) {
-      const selectedLineIndexes = await this.getSelectedOrCursorLineIndexes(
-        mode,
-      );
-      const lineIndexesGroups = this.lineIndexesGroupBySource(
-        selectedLineIndexes,
-      );
-      for (const { source, lineIndexes } of lineIndexesGroups) {
-        const actionExp = keyMapping.getActionExp(source.sourceType, key);
-        if (actionExp) {
-          await this.doActionExp(actionExp, {
-            mode,
-            lineIndexes,
-          });
-        }
-      }
-    }
-    const notifiers = await Promise.all(
-      this.sources.map((source) => source.emitRequestRenderNodesNotifier()),
-    );
-    await Notifier.runAll(notifiers);
-  }
-
-  async doActionExp(
-    actionExp: ActionExp,
-    options: {
-      /**
-       * @default 1
-       */
-      count?: number;
-      /**
-       * @default 'n'
-       */
-      mode?: MappingMode;
-      lineIndexes?: Set<number> | number[];
-    } = {},
-  ) {
-    const count = options.count ?? 1;
-    const mode = options.mode ?? 'n';
-
-    const firstLineIndexes = options.lineIndexes
-      ? new Set(options.lineIndexes)
-      : await this.getSelectedOrCursorLineIndexes(mode);
-
-    try {
-      for (let c = 0; c < count; c++) {
-        const lineIndexes =
-          c === 0
-            ? firstLineIndexes
-            : await this.getSelectedOrCursorLineIndexes(mode);
-
-        const nodesGroup: Map<
-          ExplorerSource<any>,
-          BaseTreeNode<any>[]
-        > = new Map();
-        for (const lineIndex of lineIndexes) {
-          const { source } = this.findSourceByLineIndex(lineIndex);
-          if (!nodesGroup.has(source)) {
-            nodesGroup.set(source, []);
-          }
-          const relativeLineIndex = lineIndex - source.startLineIndex;
-
-          nodesGroup
-            .get(source)!
-            .push(source.flattenedNodes[relativeLineIndex]);
-        }
-
-        for (const [source, nodes] of nodesGroup.entries()) {
-          await source.doActionExp(actionExp, nodes, { mode });
-        }
-      }
-    } catch (error) {
-      // eslint-disable-next-line no-restricted-properties
-      workspace.showMessage(
-        `Error when do action ${JSON.stringify(actionExp)}`,
-        'error',
-      );
-      onError(error);
-    }
   }
 
   addIndexing(name: string, lineIndex: number) {
@@ -798,7 +685,7 @@ export class Explorer implements Disposable {
     return false;
   }
 
-  private findSourceByLineIndex(
+  findSourceByLineIndex(
     lineIndex: number,
   ): { source: ExplorerSource<any>; sourceIndex: number } {
     const sourceIndex = this.sources.findIndex(
@@ -812,7 +699,7 @@ export class Explorer implements Disposable {
     }
   }
 
-  private lineIndexesGroupBySource(lineIndexes: number[] | Set<number>) {
+  lineIndexesGroupBySource(lineIndexes: number[] | Set<number>) {
     const groups: Record<
       number,
       {

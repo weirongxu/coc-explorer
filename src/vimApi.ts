@@ -129,7 +129,7 @@ export function registerVimApi(
         ),
       ),
     );
-    await explorer
+    await explorer.action
       .doActionExp(parseOriginalActionExp(actionExp), {
         mode,
         count,

@@ -1,10 +1,10 @@
 import { listManager, workspace } from 'coc.nvim';
 import open from 'open';
 import pathLib from 'path';
+import { SourceActionRegistrar } from '../../../actions/registrar';
 import { gitManager } from '../../../git/manager';
 import { driveList } from '../../../lists/drives';
 import { explorerWorkspaceFolderList } from '../../../lists/workspaceFolders';
-import { parseOriginalActionExp } from '../../../mappings';
 import { RevealStrategy, revealStrategyList } from '../../../types';
 import {
   bufnrByWinnrOrWinid,
@@ -21,12 +21,15 @@ import {
   overwritePrompt,
   prompt,
 } from '../../../util';
-import { FileSource } from './fileSource';
+import { FileNode, FileSource } from './fileSource';
 
-export function registerFileActions(file: FileSource) {
-  const { nvim } = file;
+export function loadFileActions(
+  ctx: SourceActionRegistrar<FileSource, FileNode>,
+) {
+  const { nvim } = workspace;
+  const file = ctx.owner;
 
-  file.addNodeAction(
+  ctx.addNodeAction(
     'gotoParent',
     async () => {
       if (file.root === '') {
@@ -46,7 +49,7 @@ export function registerFileActions(file: FileSource) {
     },
     'change directory to parent directory',
   );
-  file.addNodesAction(
+  ctx.addNodesAction(
     'reveal',
     async ({ args }) => {
       const target = args[0];
@@ -146,7 +149,7 @@ export function registerFileActions(file: FileSource) {
       },
     },
   );
-  file.addNodeAction(
+  ctx.addNodeAction(
     'cd',
     async ({ node, args }) => {
       const cdTo = async (fullpath: string) => {
@@ -187,7 +190,7 @@ export function registerFileActions(file: FileSource) {
       },
     },
   );
-  file.addNodeAction(
+  ctx.addNodeAction(
     'workspaceFolders',
     async () => {
       explorerWorkspaceFolderList.setFileSource(file);
@@ -197,7 +200,7 @@ export function registerFileActions(file: FileSource) {
     },
     'change directory to current node',
   );
-  file.addNodeAction(
+  ctx.addNodeAction(
     'drop',
     async ({ node }) => {
       if (!node.directory) {
@@ -210,7 +213,7 @@ export function registerFileActions(file: FileSource) {
     'open file by drop command',
     { multi: true },
   );
-  file.addNodeAction(
+  ctx.addNodeAction(
     'expandRecursive',
     async ({ node }) => {
       // eslint-disable-next-line no-restricted-properties
@@ -218,12 +221,12 @@ export function registerFileActions(file: FileSource) {
         'The action expandRecursive has been deprecated, use expand:recursive instead of it',
         'warning',
       );
-      return file.doAction('expand', [node], ['recursive']);
+      return ctx.doAction('expand', [node], ['recursive']);
     },
     'expand directory recursively (deprecated)',
     { multi: true },
   );
-  file.addNodeAction(
+  ctx.addNodeAction(
     'collapseRecursive',
     async ({ node }) => {
       // eslint-disable-next-line no-restricted-properties
@@ -231,12 +234,12 @@ export function registerFileActions(file: FileSource) {
         'The action collapseRecursive has been deprecated, use collapse:recursive instead of it',
         'warning',
       );
-      return file.doAction('collapse', [node], ['recursive']);
+      return ctx.doAction('collapse', [node], ['recursive']);
     },
     'collapse directory recursively (deprecated)',
     { multi: true },
   );
-  file.addNodeAction(
+  ctx.addNodeAction(
     'expandOrCollapse',
     async ({ node }) => {
       // eslint-disable-next-line no-restricted-properties
@@ -246,9 +249,9 @@ export function registerFileActions(file: FileSource) {
       );
       if (node.directory) {
         if (file.isExpanded(node)) {
-          await file.doAction('collapse', node);
+          await ctx.doAction('collapse', node);
         } else {
-          await file.doAction('expand', node);
+          await ctx.doAction('expand', node);
         }
       }
     },
@@ -256,7 +259,7 @@ export function registerFileActions(file: FileSource) {
     { multi: true },
   );
 
-  file.addNodesAction(
+  ctx.addNodesAction(
     'copyFilepath',
     async ({ nodes }) => {
       await file.copyToClipboard(
@@ -267,7 +270,7 @@ export function registerFileActions(file: FileSource) {
     },
     'copy full filepath to clipboard',
   );
-  file.addNodesAction(
+  ctx.addNodesAction(
     'copyFilename',
     async ({ nodes }) => {
       await file.copyToClipboard(
@@ -280,7 +283,7 @@ export function registerFileActions(file: FileSource) {
     },
     'copy filename to clipboard',
   );
-  file.addNodesAction(
+  ctx.addNodesAction(
     'copyFile',
     async ({ nodes }) => {
       const clearNodes = [...file.copiedNodes, ...file.cutNodes];
@@ -293,7 +296,7 @@ export function registerFileActions(file: FileSource) {
     },
     'copy file for paste',
   );
-  file.addNodesAction(
+  ctx.addNodesAction(
     'cutFile',
     async ({ nodes }) => {
       const clearNodes = [...file.copiedNodes, ...file.cutNodes];
@@ -306,7 +309,7 @@ export function registerFileActions(file: FileSource) {
     },
     'cut file for paste',
   );
-  file.addNodeAction(
+  ctx.addNodeAction(
     'pasteFile',
     async ({ node }) => {
       const targetDir = file.getPutTargetDir(node);
@@ -342,7 +345,7 @@ export function registerFileActions(file: FileSource) {
     },
     'paste files to here',
   );
-  file.addNodesAction(
+  ctx.addNodesAction(
     'delete',
     async ({ nodes }) => {
       if (
@@ -369,7 +372,7 @@ export function registerFileActions(file: FileSource) {
     'move file or directory to trash',
     { reload: true },
   );
-  file.addNodesAction(
+  ctx.addNodesAction(
     'deleteForever',
     async ({ nodes }) => {
       if (
@@ -397,7 +400,7 @@ export function registerFileActions(file: FileSource) {
     { reload: true },
   );
 
-  file.addNodeAction(
+  ctx.addNodeAction(
     'addFile',
     async ({ node, args }) => {
       let filename: string | undefined;
@@ -415,7 +418,7 @@ export function registerFileActions(file: FileSource) {
       }
 
       if (['/', '\\'].includes(filename[filename.length - 1])) {
-        await file.doAction('addDirectory', node, [filename]);
+        await ctx.doAction('addDirectory', node, [filename]);
         return;
       }
       const putTargetNode = file.getPutTargetNode(node);
@@ -440,7 +443,7 @@ export function registerFileActions(file: FileSource) {
     },
     'add a new file',
   );
-  file.addNodeAction(
+  ctx.addNodeAction(
     'addDirectory',
     async ({ node, args }) => {
       let directoryName =
@@ -474,7 +477,7 @@ export function registerFileActions(file: FileSource) {
     },
     'add a new directory',
   );
-  file.addNodeAction(
+  ctx.addNodeAction(
     'rename',
     async ({ node }) => {
       if (
@@ -516,7 +519,7 @@ export function registerFileActions(file: FileSource) {
     'rename a file or directory',
   );
 
-  file.addNodesAction(
+  ctx.addNodesAction(
     'systemExecute',
     async ({ nodes }) => {
       if (nodes) {
@@ -529,7 +532,7 @@ export function registerFileActions(file: FileSource) {
   );
 
   if (isWindows) {
-    file.addNodeAction(
+    ctx.addNodeAction(
       'listDrive',
       async () => {
         const drives = await listDrive();
@@ -554,7 +557,7 @@ export function registerFileActions(file: FileSource) {
     );
   }
 
-  file.addNodeAction(
+  ctx.addNodeAction(
     'search',
     async ({ node }) => {
       await file.searchByCocList(
@@ -565,7 +568,7 @@ export function registerFileActions(file: FileSource) {
     'search by coc-list',
   );
 
-  file.addNodeAction(
+  ctx.addNodeAction(
     'searchRecursive',
     async ({ node }) => {
       await file.searchByCocList(pathLib.dirname(node.fullpath), true);
@@ -573,7 +576,7 @@ export function registerFileActions(file: FileSource) {
     'search by coc-list recursively',
   );
 
-  file.addNodesAction(
+  ctx.addNodesAction(
     'gitStage',
     async ({ nodes }) => {
       await gitManager.cmd.stage(nodes.map((node) => node.fullpath));
@@ -582,7 +585,7 @@ export function registerFileActions(file: FileSource) {
     'add file to git index',
   );
 
-  file.addNodesAction(
+  ctx.addNodesAction(
     'gitUnstage',
     async ({ nodes }) => {
       await gitManager.cmd.unstage(nodes.map((node) => node.fullpath));
@@ -591,7 +594,7 @@ export function registerFileActions(file: FileSource) {
     'reset file from git index',
   );
 
-  file.addNodeAction(
+  ctx.addNodeAction(
     'toggleOnlyGitChange',
     async () => {
       file.showOnlyGitChange = !file.showOnlyGitChange;

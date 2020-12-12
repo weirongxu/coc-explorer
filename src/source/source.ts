@@ -12,7 +12,6 @@ import { clone } from 'lodash-es';
 import { Class } from 'type-fest';
 import { Location } from 'vscode-languageserver-protocol';
 import { conditionActionRules, waitAction } from '../actions/special';
-import { RegisteredAction } from '../actions/registered';
 import { ActionExp, MappingMode } from '../actions/types';
 import { argOptions } from '../argOptions';
 import { Explorer } from '../explorer';
@@ -29,8 +28,10 @@ import {
 } from '../util';
 import { HighlightPositionWithLine } from './highlights/highlightManager';
 import { SourcePainters } from './sourcePainters';
+import { SourceActionRegistrar } from '../actions/registrar';
+import { ActionMenu } from '../actions/menu';
 
-export namespace Options {
+export namespace SourceOptions {
   export interface Force {
     /**
      * Force
@@ -140,6 +141,10 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>>
   events = new HelperEventEmitter<{
     loaded: (node: TreeNode) => void | Promise<void>;
   }>(onError);
+  action = new SourceActionRegistrar<this, TreeNode>(
+    this,
+    this.explorer.action,
+  );
 
   private requestedRenderNodes: Set<TreeNode> = new Set();
   private isDisposed: boolean = false;
@@ -244,8 +249,6 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>>
     },
   }))(this);
 
-  actions: RegisteredAction.Map<TreeNode> = {};
-
   static get enabled(): boolean | Promise<boolean> {
     return true;
   }
@@ -282,166 +285,6 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>>
 
   async openedNotifier(_isFirst: boolean): Promise<Notifier> {
     return Notifier.noop();
-  }
-
-  addNodesAction(
-    name: string,
-    callback: RegisteredAction.ActionNodesCallback<TreeNode>,
-    description: string,
-    options: Partial<Omit<RegisteredAction.Options, 'multi'>> = {},
-  ) {
-    this.actions[name] = {
-      callback,
-      description,
-      options: {
-        ...options,
-        multi: true,
-      },
-    };
-  }
-
-  addNodeAction(
-    name: string,
-    callback: RegisteredAction.ActionNodeCallback<TreeNode>,
-    description: string,
-    options: Partial<RegisteredAction.Options> = {},
-  ) {
-    this.actions[name] = {
-      callback: async ({ source, nodes, args, mode }) => {
-        for (const node of nodes) {
-          await callback.call(source, { source, node, args, mode });
-        }
-      },
-      description,
-      options,
-    };
-  }
-
-  async doActionExp(
-    actionExp: ActionExp,
-    nodes: TreeNode[],
-    options: {
-      /**
-       * @default 'n'
-       */
-      mode?: MappingMode;
-      /**
-       * @default false
-       */
-      isSubAction?: boolean;
-    } = {},
-  ) {
-    const mode = options.mode ?? 'n';
-    const isSubAction = options.isSubAction ?? false;
-    let release: undefined | (() => void);
-
-    const subOptions = {
-      mode: mode,
-      isSubAction: true,
-    };
-    try {
-      if (Array.isArray(actionExp)) {
-        for (let i = 0; i < actionExp.length; i++) {
-          const action = actionExp[i];
-
-          if (Array.isArray(action)) {
-            await this.doActionExp(action, nodes, subOptions);
-            continue;
-          }
-
-          if (action.name === waitAction.name) {
-            if (release || isSubAction) {
-              continue;
-            }
-            release = await this.explorer.doActionExpMutex.acquire();
-            continue;
-          }
-
-          const rule = conditionActionRules[action.name];
-          if (rule) {
-            const [trueNodes, falseNodes] = partition(nodes, (node) =>
-              rule.filter(this, node, action.args),
-            );
-            const [trueAction, falseAction] = [
-              actionExp[i + 1],
-              actionExp[i + 2],
-            ];
-            i += 2;
-            if (trueNodes.length) {
-              await this.doActionExp(trueAction, trueNodes, subOptions);
-            }
-            if (falseNodes.length) {
-              await this.doActionExp(falseAction, falseNodes, subOptions);
-            }
-          } else {
-            await this.doActionExp(action, nodes, subOptions);
-          }
-        }
-      } else {
-        await this.doAction(actionExp.name, nodes, actionExp.args, mode);
-      }
-    } catch (error) {
-      throw error;
-    } finally {
-      release?.();
-    }
-  }
-
-  async doAction(
-    name: string,
-    nodes: TreeNode | TreeNode[],
-    args: string[] = [],
-    mode: MappingMode = 'n',
-  ) {
-    const action = this.actions[name] || this.explorer.actions[name];
-    if (!action) {
-      return;
-    }
-
-    const {
-      multi = false,
-      render = false,
-      reload = false,
-      select = false,
-    } = action.options;
-
-    const finalNodes = Array.isArray(nodes) ? nodes : [nodes];
-    const source = this;
-    if (select) {
-      await action.callback.call(source, {
-        source,
-        nodes: finalNodes,
-        args,
-        mode,
-      });
-    } else if (multi) {
-      if (this.selectedNodes.size > 0) {
-        const nodes = Array.from(this.selectedNodes);
-        this.selectedNodes.clear();
-        this.requestRenderNodes(nodes);
-        await action.callback.call(source, { source, nodes, args, mode });
-      } else {
-        await action.callback.call(source, {
-          source,
-          nodes: finalNodes,
-          args,
-          mode,
-        });
-      }
-    } else {
-      await action.callback.call(source, {
-        source,
-        nodes: [finalNodes[0]],
-        args,
-        mode,
-      });
-    }
-
-    if (reload) {
-      await this.load(this.rootNode);
-    } else if (render) {
-      await this.render();
-    }
   }
 
   addIndexing(name: string, relativeLineIndex: number) {
@@ -506,71 +349,6 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>>
         });
       },
     };
-  }
-
-  async listActionMenu(nodes: TreeNode[]) {
-    const actions = {
-      ...((this.explorer.actions as unknown) as RegisteredAction.Map<TreeNode>),
-      ...this.actions,
-    };
-
-    const reverseMappings = await keyMapping.getReversedMappings(
-      this.sourceType,
-    );
-
-    explorerActionList.setExplorerActions(
-      flatten(
-        Object.entries(actions)
-          .filter(([actionName]) => actionName !== 'actionMenu')
-          .sort(([aName], [bName]) => aName.localeCompare(bName))
-          .map(([actionName, { callback, options, description }]) => {
-            const list = [
-              {
-                name: actionName,
-                key: reverseMappings[actionName],
-                description,
-                callback: async () => {
-                  await task.waitShow();
-                  const source = this;
-                  await callback.call(source, {
-                    source,
-                    nodes,
-                    args: [],
-                    mode: 'n',
-                  });
-                },
-              },
-            ];
-            if (options.menus) {
-              list.push(
-                ...RegisteredAction.getNormalizeMenus(options.menus).map(
-                  (menu) => {
-                    const fullActionName = actionName + ':' + menu.args;
-                    return {
-                      name: fullActionName,
-                      key: reverseMappings[fullActionName],
-                      description: description + ' ' + menu.description,
-                      callback: async () => {
-                        await task.waitShow();
-                        const source = this;
-                        await callback.call(source, {
-                          source,
-                          nodes,
-                          args: await menu.actionArgs(),
-                          mode: 'n',
-                        });
-                      },
-                    };
-                  },
-                ),
-              );
-            }
-            return list;
-          }),
-      ),
-    );
-    const task = await this.startCocList(explorerActionList);
-    task.waitShow()?.catch(onError);
   }
 
   isSelectedAny() {
@@ -677,12 +455,12 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>>
 
   abstract loadChildren(
     parentNode: TreeNode,
-    options?: Options.Force,
+    options?: SourceOptions.Force,
   ): Promise<TreeNode[]>;
 
   async loadInitedChildren(
     parentNode: TreeNode,
-    options?: Options.Force & Options.RecursiveExpanded,
+    options?: SourceOptions.Force & SourceOptions.RecursiveExpanded,
   ) {
     const children = await this.loadChildren(parentNode, options);
     await Promise.all(
@@ -902,7 +680,10 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>>
     });
   }
 
-  private async expandRecursive(node: TreeNode, options: Options.ExpandNode) {
+  private async expandRecursive(
+    node: TreeNode,
+    options: SourceOptions.ExpandNode,
+  ) {
     const autoExpandOptions = this.config.get('autoExpandOptions');
     const compact = options.compact ?? autoExpandOptions.includes('compact');
     const uncompact =
@@ -966,7 +747,7 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>>
     }
   }
 
-  async expand(node: TreeNode, options: Options.ExpandNode = {}) {
+  async expand(node: TreeNode, options: SourceOptions.ExpandNode = {}) {
     await this.expandRecursive(node, options);
     if (options.render ?? true) {
       await this.expandRender(node);
@@ -1108,14 +889,14 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>>
     });
   }
 
-  async render(options?: Options.Render<TreeNode>) {
+  async render(options?: SourceOptions.Render<TreeNode>) {
     return (await this.renderNotifier(options))?.run();
   }
 
   async renderNotifier({
     node = this.rootNode,
     force = false,
-  }: Options.Render<TreeNode> = {}) {
+  }: SourceOptions.Render<TreeNode> = {}) {
     if (this.explorer.isHelpUI) {
       return Notifier.noop();
     }
@@ -1173,14 +954,14 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>>
 
   async renderPaths(
     paths: Set<string> | string[],
-    renderPathsOptions: Options.RenderPaths = {},
+    renderPathsOptions: SourceOptions.RenderPaths = {},
   ) {
     return (await this.renderPathsNotifier(paths, renderPathsOptions))?.run();
   }
 
   async renderPathsNotifier(
     paths: Set<string> | string[],
-    { withParent: withParnt = false }: Options.RenderPaths = {},
+    { withParent: withParnt = false }: SourceOptions.RenderPaths = {},
   ) {
     const pathArr = Array.from(paths);
     type FilterFn = (node: TreeNode) => boolean;

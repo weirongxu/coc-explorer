@@ -25,7 +25,7 @@ export class ExplorerWorkspaceFolderList extends BasicList {
       data: {
         path,
         callback: () => {
-          this.fileSource?.doAction('cd', [], [path]).catch(onError);
+          this.fileSource?.action.doAction('cd', [], [path]).catch(onError);
         },
       },
     }));

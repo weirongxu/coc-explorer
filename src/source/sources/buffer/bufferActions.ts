@@ -1,11 +1,16 @@
 import { workspace } from 'coc.nvim';
+import { SourceActionRegistrar } from '../../../actions/registrar';
 import { gitManager } from '../../../git/manager';
 import { prompt } from '../../../util';
-import { BufferSource } from './bufferSource';
+import { BufferNode, BufferSource } from './bufferSource';
 
-export function registerBufferActions(buffer: BufferSource) {
-  const { nvim } = buffer;
-  buffer.addNodeAction(
+export function loadBufferActions(
+  ctx: SourceActionRegistrar<BufferSource, BufferNode>,
+) {
+  const { nvim } = workspace;
+  const buffer = ctx.owner;
+
+  ctx.addNodeAction(
     'expandOrCollapse',
     async ({ node }) => {
       // eslint-disable-next-line no-restricted-properties
@@ -15,16 +20,16 @@ export function registerBufferActions(buffer: BufferSource) {
       );
       if (node.expandable) {
         if (buffer.isExpanded(node)) {
-          await buffer.doAction('collapse', node);
+          await ctx.doAction('collapse', node);
         } else {
-          await buffer.doAction('expand', node);
+          await ctx.doAction('expand', node);
         }
       }
     },
     'expand or collapse root',
     { multi: true },
   );
-  buffer.addNodeAction(
+  ctx.addNodeAction(
     'drop',
     async ({ node }) => {
       if (!node.hidden) {
@@ -46,7 +51,7 @@ export function registerBufferActions(buffer: BufferSource) {
     'open buffer by drop command',
     { multi: true },
   );
-  buffer.addNodeAction(
+  ctx.addNodeAction(
     'delete',
     async ({ node }) => {
       if (
@@ -61,7 +66,7 @@ export function registerBufferActions(buffer: BufferSource) {
     'delete buffer',
     { multi: true },
   );
-  buffer.addNodeAction(
+  ctx.addNodeAction(
     'deleteForever',
     async ({ node }) => {
       if (
@@ -77,7 +82,7 @@ export function registerBufferActions(buffer: BufferSource) {
     { multi: true },
   );
 
-  buffer.addNodesAction(
+  ctx.addNodesAction(
     'gitStage',
     async ({ nodes }) => {
       await gitManager.cmd.stage(nodes.map((node) => node.fullpath));
@@ -86,7 +91,7 @@ export function registerBufferActions(buffer: BufferSource) {
     'add file to git index',
   );
 
-  buffer.addNodesAction(
+  ctx.addNodesAction(
     'gitUnstage',
     async ({ nodes }) => {
       await gitManager.cmd.unstage(nodes.map((node) => node.fullpath));
