@@ -34,9 +34,9 @@ bufferColumnRegistrar.registerColumn(
               row.add(printDiagnosticCount(errorCount, diagnosticConfig), {
                 hl: diagnosticHighlights.diagnosticError,
               });
-              source.addIndexing('diagnosticError', nodeIndex);
+              source.locator.mark.add('diagnosticError', nodeIndex);
             } else {
-              source.removeIndexing('diagnosticError', nodeIndex);
+              source.locator.mark.remove('diagnosticError', nodeIndex);
             }
           },
         };

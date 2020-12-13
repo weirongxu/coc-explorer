@@ -68,7 +68,7 @@ async function getLineIndexByPosition(
   explorer: Explorer,
 ): Promise<number | undefined> {
   if (position === 'current') {
-    return explorer.currentLineIndex;
+    return explorer.view.currentLineIndex;
   } else if (typeof position === 'number') {
     return position;
   } else if (Array.isArray(position)) {
@@ -76,9 +76,9 @@ async function getLineIndexByPosition(
     if (mode === 'relative') {
       const source = type
         ? explorer.sources.find((s) => s.sourceType === type)
-        : await explorer.currentSource();
+        : await explorer.view.currentSource();
       if (source) {
-        return source.startLineIndex + lineIndex;
+        return source.view.startLineIndex + lineIndex;
       }
     }
   }
@@ -97,13 +97,13 @@ async function getSourceAndNodeByPosition(
   }
   const source = explorer.sources.find(
     (source) =>
-      lineIndex >= source.startLineIndex && lineIndex < source.endLineIndex,
+      lineIndex >= source.view.startLineIndex && lineIndex < source.view.endLineIndex,
   );
   if (!source) {
     return [undefined, undefined];
   }
-  const nodeIndex = lineIndex - source.startLineIndex;
-  return [source, source.flattenedNodes[nodeIndex] ?? undefined];
+  const nodeIndex = lineIndex - source.view.startLineIndex;
+  return [source, source.view.flattenedNodes[nodeIndex] ?? undefined];
 }
 
 export function registerVimApi(
@@ -121,7 +121,7 @@ export function registerVimApi(
     if (!explorer) {
       return;
     }
-    await explorer.refreshLineIndex();
+    await explorer.view.refreshLineIndex();
     const lineIndexes = compactI(
       await Promise.all(
         positions.map(
@@ -165,7 +165,7 @@ export function registerVimApi(
         if (!explorer) {
           return undefined;
         }
-        await explorer.refreshLineIndex();
+        await explorer.view.refreshLineIndex();
         const [, node] = await getSourceAndNodeByPosition(position, explorer);
         if (!node) {
           return undefined;

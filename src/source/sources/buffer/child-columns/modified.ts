@@ -14,8 +14,8 @@ bufferColumnRegistrar.registerColumn('child', 'modified', ({ source }) => ({
         }
 
         node.modified
-          ? source.addIndexing('modified', nodeIndex)
-          : source.removeIndexing('modified', nodeIndex);
+          ? source.locator.mark.add('modified', nodeIndex)
+          : source.locator.mark.remove('modified', nodeIndex);
       },
     };
   },

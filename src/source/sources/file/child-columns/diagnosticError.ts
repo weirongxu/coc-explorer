@@ -31,16 +31,16 @@ fileColumnRegistrar.registerColumn(
             }
 
             if (errorCount) {
-              if (node.directory && source.isExpanded(node)) {
-                source.removeIndexing('diagnosticError', nodeIndex);
+              if (node.directory && source.view.isExpanded(node)) {
+                source.locator.mark.remove('diagnosticError', nodeIndex);
               } else {
                 row.add(printDiagnosticCount(errorCount, diagnosticConfig), {
                   hl: fileHighlights.diagnosticError,
                 });
-                source.addIndexing('diagnosticError', nodeIndex);
+                source.locator.mark.add('diagnosticError', nodeIndex);
               }
             } else {
-              source.removeIndexing('diagnosticError', nodeIndex);
+              source.locator.mark.remove('diagnosticError', nodeIndex);
             }
           },
         };

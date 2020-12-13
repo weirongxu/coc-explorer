@@ -1,8 +1,6 @@
 import { workspace } from 'coc.nvim';
 import { argOptions } from '../argOptions';
-import type { Explorer } from '../explorer';
 import { parseOriginalActionExp } from '../mappings';
-import { BaseTreeNode } from '../source/source';
 import {
   collapseOptionList,
   expandOptionList,
@@ -15,13 +13,12 @@ import {
 } from '../types';
 import { PreviewActionStrategy } from '../types/pkg-config';
 import { enableWrapscan } from '../util';
+import { ActionExplorer } from './actionExplorer';
 import { openAction } from './openAction';
-import { ActionRegistrar } from './registrar';
 
-export function loadGlobalActions(
-  ctx: ActionRegistrar<Explorer, BaseTreeNode<any>>,
-) {
-  const explorer = ctx.owner;
+export function loadGlobalActions(action: ActionExplorer) {
+  const explorer = action.owner;
+  const locator = explorer.locator;
   const { nvim } = workspace;
   const openActionArgs = [
     {
@@ -46,7 +43,7 @@ export function loadGlobalActions(
     sourceWindow: 'use the window where explorer opened',
   };
   // open, expand, collapse
-  ctx.addNodeAction(
+  action.addNodeAction(
     'open',
     async ({ node, args, mode }) => {
       if (node.expandable) {
@@ -56,7 +53,7 @@ export function loadGlobalActions(
         if (directoryActionExp) {
           await explorer.action.doActionExp(
             parseOriginalActionExp(directoryActionExp),
-            { mode, lineIndexes: [explorer.flattenedNodes.indexOf(node)] },
+            { mode, lineIndexes: [explorer.view.flattenedNodes.indexOf(node)] },
           );
         }
         return;
@@ -85,7 +82,7 @@ export function loadGlobalActions(
       menus: openActionMenu,
     },
   );
-  ctx.addNodeAction(
+  action.addNodeAction(
     'expand',
     async ({ source, node, args }) => {
       if (node.expandable) {
@@ -95,7 +92,7 @@ export function loadGlobalActions(
         const uncompact = options.includes('uncompact') || undefined;
         const recursiveSingle =
           options.includes('recursiveSingle') || undefined;
-        await source.expand(node, {
+        await source.view.expand(node, {
           recursive,
           compact,
           uncompact,
@@ -121,15 +118,15 @@ export function loadGlobalActions(
       },
     },
   );
-  ctx.addNodeAction(
+  action.addNodeAction(
     'collapse',
     async ({ source, node, args }) => {
       const options = (args[0] ?? '').split('|');
       const all = options.includes('all');
       const recursive = options.includes('recursive');
-      if (all && source.rootNode.children) {
-        for (const subNode of source.rootNode.children) {
-          if (subNode.expandable && source.isExpanded(subNode)) {
+      if (all && source.view.rootNode.children) {
+        for (const subNode of source.view.rootNode.children) {
+          if (subNode.expandable && source.view.isExpanded(subNode)) {
             await source.action.doAction(
               'collapse',
               subNode,
@@ -138,10 +135,10 @@ export function loadGlobalActions(
           }
         }
       } else {
-        if (node.expandable && source.isExpanded(node)) {
-          await source.collapse(node, { recursive });
+        if (node.expandable && source.view.isExpanded(node)) {
+          await source.view.collapse(node, { recursive });
         } else if (node.parent) {
-          await source.collapse(node.parent, { recursive });
+          await source.view.collapse(node.parent, { recursive });
         }
       }
     },
@@ -171,19 +168,19 @@ export function loadGlobalActions(
   const moveActionMenu = {
     insideSource: 'move inside current source',
   };
-  ctx.addNodesAction(
+  action.addNodesAction(
     'nodePrev',
     async ({ args }) => {
       const moveStrategy = args[0] as MoveStrategy;
       if (moveStrategy === 'insideSource') {
-        const source = await explorer.currentSource();
+        const source = await explorer.view.currentSource();
         if (!source) {
           return;
         }
-        await source.gotoLineIndex(source.currentLineIndex - 1);
+        await source.locator.gotoLineIndex(source.view.currentLineIndex - 1);
       } else {
-        const line = explorer.currentLineIndex;
-        await explorer.gotoLineIndex(line - 1);
+        const line = explorer.view.currentLineIndex;
+        await locator.gotoLineIndex(line - 1);
       }
     },
     'previous node',
@@ -192,19 +189,19 @@ export function loadGlobalActions(
       menus: moveActionMenu,
     },
   );
-  ctx.addNodesAction(
+  action.addNodesAction(
     'nodeNext',
     async ({ args }) => {
       const moveStrategy = args[0] as MoveStrategy;
       if (moveStrategy === 'insideSource') {
-        const source = await explorer.currentSource();
+        const source = await explorer.view.currentSource();
         if (!source) {
           return;
         }
-        await source.gotoLineIndex(source.currentLineIndex + 1);
+        await source.locator.gotoLineIndex(source.view.currentLineIndex + 1);
       } else {
-        const line = explorer.currentLineIndex;
-        await explorer.gotoLineIndex(line + 1);
+        const line = explorer.view.currentLineIndex;
+        await locator.gotoLineIndex(line + 1);
       }
     },
     'next node',
@@ -213,10 +210,10 @@ export function loadGlobalActions(
       menus: moveActionMenu,
     },
   );
-  ctx.addNodesAction(
+  action.addNodesAction(
     'expandablePrev',
     async ({ args }) => {
-      await explorer.nodePrev(
+      await explorer.action.nodePrev(
         args[0] as MoveStrategy,
         (node) => !!node.expandable,
       );
@@ -227,10 +224,10 @@ export function loadGlobalActions(
       menus: moveActionMenu,
     },
   );
-  ctx.addNodesAction(
+  action.addNodesAction(
     'expandableNext',
     async ({ args }) => {
-      await explorer.nodeNext(
+      await action.nodeNext(
         args[0] as MoveStrategy,
         (node) => !!node.expandable,
       );
@@ -241,12 +238,12 @@ export function loadGlobalActions(
       menus: moveActionMenu,
     },
   );
-  ctx.addNodesAction(
+  action.addNodesAction(
     'indentPrev',
     async ({ args }) => {
-      const node = await explorer.currentNode();
+      const node = await explorer.view.currentNode();
       const level = node?.level ?? 0;
-      await explorer.nodePrev(
+      await action.nodePrev(
         args[0] as MoveStrategy,
         (node) => node.level !== level,
       );
@@ -257,12 +254,12 @@ export function loadGlobalActions(
       menus: moveActionMenu,
     },
   );
-  ctx.addNodesAction(
+  action.addNodesAction(
     'indentNext',
     async ({ args }) => {
-      const node = await explorer.currentNode();
+      const node = await explorer.view.currentNode();
       const level = node?.level ?? 0;
-      await explorer.nodeNext(
+      await action.nodeNext(
         args[0] as MoveStrategy,
         (node) => node.level !== level,
       );
@@ -274,84 +271,86 @@ export function loadGlobalActions(
     },
   );
 
-  ctx.addNodesAction(
+  action.addNodesAction(
     'gotoSource',
     async ({ args }) => {
       const source = explorer.sources.find((s) => s.sourceType === args[0]);
       if (source) {
-        await source.gotoLineIndex(0);
+        await source.locator.gotoLineIndex(0);
       }
     },
     'go to source',
   );
-  ctx.addNodesAction(
+  action.addNodesAction(
     'sourceNext',
     async () => {
       const nextSource =
-        explorer.sources[(await explorer.currentSourceIndex()) + 1];
+        explorer.sources[(await explorer.view.currentSourceIndex()) + 1];
       if (nextSource) {
-        await nextSource.gotoLineIndex(0);
+        await nextSource.locator.gotoLineIndex(0);
       } else if (await enableWrapscan()) {
-        await explorer.sources[0].gotoLineIndex(0);
+        await explorer.sources[0].locator.gotoLineIndex(0);
       }
     },
     'go to next source',
   );
-  ctx.addNodesAction(
+  action.addNodesAction(
     'sourcePrev',
     async () => {
       const prevSource =
-        explorer.sources[(await explorer.currentSourceIndex()) - 1];
+        explorer.sources[(await explorer.view.currentSourceIndex()) - 1];
       if (prevSource) {
-        await prevSource.gotoLineIndex(0);
+        await prevSource.locator.gotoLineIndex(0);
       } else if (await enableWrapscan()) {
-        await explorer.sources[explorer.sources.length - 1].gotoLineIndex(0);
+        await explorer.sources[
+          explorer.sources.length - 1
+        ].locator.gotoLineIndex(0);
       }
     },
     'go to previous source',
   );
 
-  ctx.addNodesAction(
+  action.addNodesAction(
     'modifiedPrev',
     async () => {
-      await explorer.gotoPrevIndexing('modified');
+      await locator.gotoPrevMark('modified');
     },
     'go to previous modified',
   );
-  ctx.addNodesAction(
+  action.addNodesAction(
     'modifiedNext',
     async () => {
-      await explorer.gotoNextIndexing('modified');
+      await locator.gotoNextMark('modified');
     },
     'go to next modified',
   );
 
-  ctx.addNodesAction(
+  action.addNodesAction(
     'diagnosticPrev',
     async () => {
-      await explorer.gotoPrevIndexing('diagnosticError', 'diagnosticWarning');
+      await locator.gotoPrevMark('diagnosticError', 'diagnosticWarning');
     },
     'go to previous diagnostic',
   );
-  ctx.addNodesAction(
+  action.addNodesAction(
     'diagnosticNext',
     async () => {
-      await explorer.gotoNextIndexing('diagnosticError', 'diagnosticWarning');
+      await locator.gotoNextMark('diagnosticError', 'diagnosticWarning');
     },
     'go to next diagnostic',
   );
 
-  ctx.addNodesAction(
+  action.addNodesAction(
     'gitPrev',
     async () => {
-      await explorer.gotoPrevIndexing('git');
+      await locator.gotoPrevMark('git');
     },
     'go to previous git changed',
   );
-  ctx.addNodesAction(
+  action.addNodesAction(
     'gitNext',
     async () => {
-      await explorer.gotoNextIndexing('git');
+      await locator.gotoNextMark('git');
     },
     'go to next git changed',
   );
@@ -370,35 +369,35 @@ export function loadGlobalActions(
       git: 'git',
     },
   };
-  ctx.addNodesAction(
+  action.addNodesAction(
     'indexPrev',
     async ({ args }) => {
-      await explorer.gotoPrevIndexing(...args);
+      await locator.gotoPrevMark(...args);
     },
     'go to previous index',
     indexOptions,
   );
-  ctx.addNodesAction(
+  action.addNodesAction(
     'indexNext',
     async ({ args }) => {
-      await explorer.gotoNextIndexing(...args);
+      await locator.gotoNextMark(...args);
     },
     'go to next index',
     indexOptions,
   );
 
   // preview
-  ctx.addNodesAction(
+  action.addNodesAction(
     'preview',
     async ({ nodes, args }) => {
-      const source = await explorer.currentSource();
+      const source = await explorer.view.currentSource();
       if (nodes && nodes[0] && source) {
         const node = nodes[0];
         const previewStrategy = args[0] as undefined | PreviewActionStrategy;
         if (!previewStrategy) {
           return;
         }
-        const nodeIndex = source.getLineByNode(node);
+        const nodeIndex = source.view.getLineByNode(node);
         if (nodeIndex === undefined) {
           return;
         }
@@ -424,7 +423,7 @@ export function loadGlobalActions(
       },
     },
   );
-  ctx.addNodesAction(
+  action.addNodesAction(
     'previewOnHover',
     async ({ args }) => {
       const previewOnHoverAction = args[0] as undefined | PreviewOnHoverAction;
@@ -475,7 +474,7 @@ export function loadGlobalActions(
   );
 
   // select, hidden
-  ctx.addNodeAction(
+  action.addNodeAction(
     'toggleHidden',
     async ({ source }) => {
       source.showHidden = !source.showHidden;
@@ -483,25 +482,25 @@ export function loadGlobalActions(
     'toggle visibility of hidden node',
     { reload: true },
   );
-  ctx.addNodeAction(
+  action.addNodeAction(
     'select',
     async ({ source, node }) => {
       source.selectedNodes.add(node);
-      source.requestRenderNodes([node]);
+      source.view.requestRenderNodes([node]);
     },
     'select node',
     { select: true },
   );
-  ctx.addNodeAction(
+  action.addNodeAction(
     'unselect',
     async ({ source, node }) => {
       source.selectedNodes.delete(node);
-      source.requestRenderNodes([node]);
+      source.view.requestRenderNodes([node]);
     },
     'unselect node',
     { select: true },
   );
-  ctx.addNodeAction(
+  action.addNodeAction(
     'toggleSelection',
     async ({ source, node }) => {
       if (source.selectedNodes.has(node)) {
@@ -515,10 +514,10 @@ export function loadGlobalActions(
   );
 
   // other
-  ctx.addNodeAction(
+  action.addNodeAction(
     'refresh',
     async ({ source }) => {
-      const loadNotifier = await source.loadNotifier(source.rootNode, {
+      const loadNotifier = await source.loadNotifier(source.view.rootNode, {
         force: true,
       });
 
@@ -529,21 +528,21 @@ export function loadGlobalActions(
     },
     'refresh',
   );
-  ctx.addNodeAction(
+  action.addNodeAction(
     'help',
     async ({ source }) => {
       await source.explorer.showHelp(source);
     },
     'show help',
   );
-  ctx.addNodesAction(
+  action.addNodesAction(
     'actionMenu',
     async ({ source, nodes }) => {
       await source.action.listActionMenu(nodes);
     },
     'show actions in coc-list',
   );
-  ctx.addNodesAction(
+  action.addNodesAction(
     'normal',
     async ({ args }) => {
       if (args[0]) {
@@ -562,20 +561,20 @@ export function loadGlobalActions(
       },
     },
   );
-  ctx.addNodeAction(
+  action.addNodeAction(
     'esc',
     async ({ source, mode }) => {
       const position = await source.explorer.args.value(argOptions.position);
       if (position === 'floating' && mode === 'n') {
         await source.explorer.quit();
       } else {
-        source.requestRenderNodes(Array.from(source.selectedNodes));
+        source.view.requestRenderNodes(Array.from(source.selectedNodes));
         source.selectedNodes.clear();
       }
     },
     'esc action',
   );
-  ctx.addNodesAction(
+  action.addNodesAction(
     'quit',
     async () => {
       await explorer.quit();

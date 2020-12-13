@@ -30,7 +30,7 @@ export class ActionMenuCodeActionProvider implements CodeActionProvider {
     if (!explorer) {
       return [];
     }
-    const source = await explorer.currentSource();
+    const source = await explorer.view.currentSource();
     if (!source) {
       return [];
     }

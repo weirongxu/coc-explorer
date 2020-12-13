@@ -5,7 +5,6 @@ import { keyMapping } from './mappings';
 import { hlGroupManager } from './highlight/manager';
 import { BaseTreeNode, ExplorerSource } from './source/source';
 import { ViewPainter, ViewRowPainter } from './source/viewPainter';
-import { Notifier } from './util';
 import { Action, ActionExp } from './actions/types';
 import { ActionRegistrar } from './actions/registrar';
 import { ActionMenu } from './actions/menu';
@@ -13,7 +12,8 @@ import {
   HighlightPosition,
   HighlightPositionWithLine,
 } from './highlight/types';
-import {DrawBlock} from './painter/types';
+import { DrawBlock } from './painter/types';
+import { Notifier } from 'coc-helper';
 
 const hl = hlGroupManager.linkGroup.bind(hlGroupManager);
 const helpHightlights = {
@@ -332,7 +332,7 @@ export async function showHelp(
   source: ExplorerSource<any>,
 ) {
   explorer.isHelpUI = true;
-  const storeNode = await explorer.currentNode();
+  const storeNode = await explorer.view.currentNode();
 
   const width = (await (await explorer.win)?.width) ?? 80;
   const helpPainter = new HelpPainter(explorer, source, width);
@@ -357,7 +357,7 @@ export async function showHelp(
           await quitHelp(explorer);
           await Notifier.runAll([
             await explorer.renderAllNotifier(),
-            await source.gotoNodeNotifier(storeNode),
+            await source.locator.gotoNodeNotifier(storeNode),
           ]);
         },
         true,

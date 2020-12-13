@@ -1,4 +1,5 @@
-import { drawnWithIndexRange, DrawnWithNodeIndex } from './painter';
+import { DrawnWithNodeIndex } from './types';
+import { drawnWithIndexRange } from './util';
 
 test('drawnToRange', () => {
   const drawnList: DrawnWithNodeIndex[] = [

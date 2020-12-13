@@ -1,4 +1,5 @@
 import { Mutex } from 'await-semaphore';
+import { Notifier } from 'coc-helper';
 import {
   Buffer,
   Disposable,
@@ -8,8 +9,8 @@ import {
   workspace,
 } from 'coc.nvim';
 import pFilter from 'p-filter';
+import { ActionExplorer } from './actions/actionExplorer';
 import { loadGlobalActions } from './actions/globalActions';
-import { ExplorerActionRegistrar } from './actions/registrar';
 import { MappingMode } from './actions/types';
 import { argOptions } from './argOptions';
 import { ExplorerConfig } from './config';
@@ -18,33 +19,27 @@ import { doUserAutocmd, doUserAutocmdNotifier, onEvent } from './events';
 import { ExplorerManager } from './explorerManager';
 import { FloatingPreview } from './floating/floatingPreview';
 import { quitHelp, showHelp } from './help';
-import { HighlightExplorer } from './highlight/explorerOrSource';
-import { IndexingManager } from './indexingManager';
+import { HighlightExplorer } from './highlight/highlightExplorer';
+import { LocatorExplorer } from './locator/locatorExplorer';
 import { ArgContentWidthTypes, Args } from './parseArgs';
 import './source/load';
 import { BaseTreeNode, ExplorerSource } from './source/source';
 import { sourceManager } from './source/sourceManager';
-import { ExplorerOpenOptions, MoveStrategy } from './types';
+import { ExplorerOpenOptions } from './types';
 import {
   closeWinByBufnrNotifier,
-  enableWrapscan,
-  flatten,
   normalizePath,
-  Notifier,
-  scanIndexNext,
-  scanIndexPrev,
   sum,
   winByWinid,
   winidByWinnr,
   winnrByBufnr,
 } from './util';
+import { ViewExplorer } from './view/viewExplorer';
 
 export class Explorer implements Disposable {
   nvim = workspace.nvim;
   isHelpUI: boolean = false;
-  currentLineIndex = 0;
   helpHlSrcId = workspace.createNameSpace('coc-explorer-help');
-  indexingManager = new IndexingManager(this);
   inited = new BuffuerContextVars<boolean>('inited', this);
   sourceWinid = new BuffuerContextVars<number>('sourceWinid', this);
   sourceBufnr = new BuffuerContextVars<number>('sourceBufnr', this);
@@ -53,8 +48,10 @@ export class Explorer implements Disposable {
   contentWidth = 0;
   // TODO
   renderMutex = new Mutex();
-  action = new ExplorerActionRegistrar(this);
+  action = new ActionExplorer(this);
   highlight = new HighlightExplorer(this);
+  view = new ViewExplorer(this);
+  locator = new LocatorExplorer(this);
 
   private disposables: Disposable[] = [];
   private _buffer?: Buffer;
@@ -202,10 +199,6 @@ export class Explorer implements Disposable {
     return this._sources;
   }
 
-  get flattenedNodes() {
-    return flatten(this.sources.map((s) => s.flattenedNodes));
-  }
-
   get height() {
     return sum(this.sources.map((s) => s.height));
   }
@@ -270,86 +263,6 @@ export class Explorer implements Disposable {
       return;
     }
     return this.nvim.createBuffer(bufnr);
-  }
-
-  async nodePrev(
-    moveStrategy: MoveStrategy = 'default',
-    condition: (it: BaseTreeNode<any>) => boolean,
-  ) {
-    const gotoPrev = async (
-      nodes: BaseTreeNode<any>[],
-      lineIndex: number,
-      startLineIndex: number,
-    ) => {
-      const relativeIndex = scanIndexPrev(
-        nodes,
-        lineIndex,
-        await enableWrapscan(),
-        condition,
-      );
-      if (relativeIndex === undefined) {
-        return;
-      }
-      await this.gotoLineIndex(startLineIndex + relativeIndex);
-    };
-
-    if (moveStrategy === 'insideSource') {
-      const source = await this.currentSource();
-      if (!source) {
-        return;
-      }
-      await gotoPrev(
-        source.flattenedNodes,
-        source.currentLineIndex,
-        source.startLineIndex,
-      );
-    } else {
-      await gotoPrev(this.flattenedNodes, this.currentLineIndex, 0);
-    }
-  }
-
-  async nodeNext(
-    moveStrategy: MoveStrategy = 'default',
-    condition: (it: BaseTreeNode<any>) => boolean,
-  ) {
-    const gotoNext = async (
-      nodes: BaseTreeNode<any>[],
-      lineIndex: number,
-      startLineIndex: number,
-    ) => {
-      const relativeIndex = scanIndexNext(
-        nodes,
-        lineIndex,
-        await enableWrapscan(),
-        condition,
-      );
-      if (relativeIndex === undefined) {
-        return;
-      }
-      await this.gotoLineIndex(startLineIndex + relativeIndex);
-    };
-
-    if (moveStrategy === 'insideSource') {
-      const source = await this.currentSource();
-      if (!source) {
-        return;
-      }
-      await gotoNext(
-        source.flattenedNodes,
-        source.currentLineIndex,
-        source.startLineIndex,
-      );
-    } else {
-      await gotoNext(this.flattenedNodes, this.currentLineIndex, 0);
-    }
-  }
-
-  async refreshLineIndex() {
-    const win = await this.win;
-    if (win) {
-      const cursor = await win.cursor;
-      this.currentLineIndex = cursor[0] - 1;
-    }
   }
 
   async refreshWidth() {
@@ -625,42 +538,16 @@ export class Explorer implements Disposable {
         return lineIndexes;
       }
     }
-    await this.refreshLineIndex();
-    lineIndexes.add(this.currentLineIndex);
+    await this.view.refreshLineIndex();
+    lineIndexes.add(this.view.currentLineIndex);
     return lineIndexes;
-  }
-
-  addIndexing(name: string, lineIndex: number) {
-    this.indexingManager.addLine(name, lineIndex);
-  }
-
-  removeIndexing(name: string, lineIndex: number) {
-    this.indexingManager.removeLine(name, lineIndex);
-  }
-
-  async gotoPrevIndexing(...names: string[]) {
-    const lineIndex = await this.indexingManager.prevLineIndex(...names);
-    if (lineIndex) {
-      await this.gotoLineIndex(lineIndex);
-      return true;
-    }
-    return false;
-  }
-
-  async gotoNextIndexing(...names: string[]) {
-    const lineIndex = await this.indexingManager.nextLineIndex(...names);
-    if (lineIndex) {
-      await this.gotoLineIndex(lineIndex);
-      return true;
-    }
-    return false;
   }
 
   findSourceByLineIndex(
     lineIndex: number,
   ): { source: ExplorerSource<any>; sourceIndex: number } {
     const sourceIndex = this.sources.findIndex(
-      (source) => lineIndex < source.endLineIndex,
+      (source) => lineIndex < source.view.endLineIndex,
     );
     if (sourceIndex === -1) {
       const index = this.sources.length - 1;
@@ -689,55 +576,6 @@ export class Explorer implements Disposable {
       groups[sourceIndex].lineIndexes.push(line);
     }
     return Object.values(groups);
-  }
-
-  async currentSource(): Promise<
-    ExplorerSource<BaseTreeNode<any>> | undefined
-  > {
-    return this.sources[await this.currentSourceIndex()];
-  }
-
-  async currentSourceIndex() {
-    const lineIndex = this.currentLineIndex;
-    return this.sources.findIndex(
-      (source) =>
-        lineIndex >= source.startLineIndex && lineIndex < source.endLineIndex,
-    );
-  }
-
-  async currentNode() {
-    const source = await this.currentSource();
-    if (source) {
-      const nodeIndex = this.currentLineIndex - source.startLineIndex;
-      return source.flattenedNodes[nodeIndex] as
-        | BaseTreeNode<any, string>
-        | undefined;
-    }
-  }
-
-  async gotoLineIndex(lineIndex: number) {
-    return (await this.gotoLineIndexNotifier(lineIndex)).run();
-  }
-
-  async gotoLineIndexNotifier(lineIndex: number, col?: number) {
-    const win = await this.win;
-    return Notifier.create(() => {
-      if (win) {
-        const height = this.height;
-        if (lineIndex < 0) {
-          lineIndex = 0;
-        } else if (lineIndex >= height) {
-          lineIndex = height - 1;
-        }
-        this.currentLineIndex = lineIndex;
-        win.setCursor([lineIndex + 1, col ?? 0], true);
-        if (workspace.isVim) {
-          this.nvim.command('redraw', true);
-        } else {
-          this.nvim.command('redraw!', true);
-        }
-      }
-    });
   }
 
   setLinesNotifier(lines: string[], start: number, end: number) {
@@ -773,10 +611,10 @@ export class Explorer implements Disposable {
   }
 
   async loadAllNotifier({ render = true } = {}) {
-    this.indexingManager.removeAll();
+    this.locator.mark.removeAll();
     const notifiers = await Promise.all(
       this.sources.map((source) =>
-        source.loadNotifier(source.rootNode, { render: false }),
+        source.loadNotifier(source.view.rootNode, { render: false }),
       ),
     );
     if (render) {
@@ -787,7 +625,7 @@ export class Explorer implements Disposable {
 
   async renderAllNotifier() {
     const notifiers = await Promise.all(
-      this.sources.map((s) => s.renderNotifier({ force: true })),
+      this.sources.map((s) => s.view.renderNotifier({ force: true })),
     );
 
     return Notifier.combine(notifiers);

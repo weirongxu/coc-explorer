@@ -43,7 +43,7 @@ fileColumnRegistrar.registerColumn(
         return {
           async drawNode(row, { node }) {
             if (node.directory) {
-              const compactStore = source.getCompact(node);
+              const compactStore = source.view.getCompact(node);
               if (node.compacted && compactStore?.status === 'compacted') {
                 row.add(
                   compactStore.nodes.map((n) => n.name).join(pathLib.sep),

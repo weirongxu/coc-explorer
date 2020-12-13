@@ -157,7 +157,7 @@ class Binder {
     }
 
     for (const source of sources) {
-      await source.renderPaths(updatePaths);
+      await source.view.renderPaths(updatePaths);
     }
   }
 }

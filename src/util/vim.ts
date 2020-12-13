@@ -1,5 +1,5 @@
-import { workspace, Window, Disposable } from 'coc.nvim';
-import { asyncCatchError, Notifier } from '.';
+import { Notifier } from 'coc-helper';
+import { workspace, Window } from 'coc.nvim';
 
 let _supportedSetbufline: boolean | undefined = undefined;
 export async function supportedSetbufline() {

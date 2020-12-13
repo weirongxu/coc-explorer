@@ -33,16 +33,16 @@ fileColumnRegistrar.registerColumn(
             }
 
             if (warningCount) {
-              if (node.directory && source.isExpanded(node)) {
-                source.removeIndexing('diagnosticWarning', nodeIndex);
+              if (node.directory && source.view.isExpanded(node)) {
+                source.locator.mark.remove('diagnosticWarning', nodeIndex);
               } else {
                 row.add(printDiagnosticCount(warningCount, diagnosticConfig), {
                   hl: fileHighlights.diagnosticWarning,
                 });
-                source.addIndexing('diagnosticWarning', nodeIndex);
+                source.locator.mark.add('diagnosticWarning', nodeIndex);
               }
             } else {
-              source.removeIndexing('diagnosticWarning', nodeIndex);
+              source.locator.mark.remove('diagnosticWarning', nodeIndex);
             }
           },
         };

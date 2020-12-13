@@ -1,7 +1,8 @@
+import { Notifier } from 'coc-helper';
 import { listManager, workspace } from 'coc.nvim';
 import open from 'open';
 import pathLib from 'path';
-import { SourceActionRegistrar } from '../../../actions/registrar';
+import { ActionSource } from '../../../actions/actionSource';
 import { gitManager } from '../../../git/manager';
 import { driveList } from '../../../lists/drives';
 import { explorerWorkspaceFolderList } from '../../../lists/workspaceFolders';
@@ -17,39 +18,36 @@ import {
   input,
   isWindows,
   listDrive,
-  Notifier,
   overwritePrompt,
   prompt,
 } from '../../../util';
 import { FileNode, FileSource } from './fileSource';
 
-export function loadFileActions(
-  ctx: SourceActionRegistrar<FileSource, FileNode>,
-) {
+export function loadFileActions(action: ActionSource<FileSource, FileNode>) {
   const { nvim } = workspace;
-  const file = ctx.owner;
+  const file = action.owner;
 
-  ctx.addNodeAction(
+  action.addNodeAction(
     'gotoParent',
     async () => {
       if (file.root === '') {
         return;
       }
-      const nodeUid = file.currentNode()?.uid;
+      const nodeUid = file.view.currentNode()?.uid;
       if (/^[A-Za-z]:[\\\/]$/.test(file.root)) {
         file.root = '';
       } else {
         file.root = pathLib.dirname(file.root);
         await file.cd(file.root);
       }
-      await file.expand(file.rootNode);
+      await file.view.expand(file.view.rootNode);
       if (nodeUid) {
-        await file.gotoNodeUid(nodeUid);
+        await file.locator.gotoNodeUid(nodeUid);
       }
     },
     'change directory to parent directory',
   );
-  ctx.addNodesAction(
+  action.addNodesAction(
     'reveal',
     async ({ args }) => {
       const target = args[0];
@@ -90,7 +88,7 @@ export function loadFileActions(
             if (!targetPath) {
               targetPath = await input(
                 'Input a reveal path:',
-                file.currentNode()?.fullpath ?? '',
+                file.view.currentNode()?.fullpath ?? '',
                 'file',
               );
             }
@@ -149,13 +147,13 @@ export function loadFileActions(
       },
     },
   );
-  ctx.addNodeAction(
+  action.addNodeAction(
     'cd',
     async ({ node, args }) => {
       const cdTo = async (fullpath: string) => {
         await file.cd(fullpath);
         file.root = fullpath;
-        await file.expand(file.rootNode);
+        await file.view.expand(file.view.rootNode);
       };
       const path = args[0];
       if (path !== undefined) {
@@ -181,7 +179,7 @@ export function loadFileActions(
             return [
               await input(
                 'input a cd path:',
-                file.currentNode()?.fullpath ?? '',
+                file.view.currentNode()?.fullpath ?? '',
                 'file',
               ),
             ];
@@ -190,7 +188,7 @@ export function loadFileActions(
       },
     },
   );
-  ctx.addNodeAction(
+  action.addNodeAction(
     'workspaceFolders',
     async () => {
       explorerWorkspaceFolderList.setFileSource(file);
@@ -200,7 +198,7 @@ export function loadFileActions(
     },
     'change directory to current node',
   );
-  ctx.addNodeAction(
+  action.addNodeAction(
     'drop',
     async ({ node }) => {
       if (!node.directory) {
@@ -213,7 +211,7 @@ export function loadFileActions(
     'open file by drop command',
     { multi: true },
   );
-  ctx.addNodeAction(
+  action.addNodeAction(
     'expandRecursive',
     async ({ node }) => {
       // eslint-disable-next-line no-restricted-properties
@@ -221,12 +219,12 @@ export function loadFileActions(
         'The action expandRecursive has been deprecated, use expand:recursive instead of it',
         'warning',
       );
-      return ctx.doAction('expand', [node], ['recursive']);
+      return action.doAction('expand', [node], ['recursive']);
     },
     'expand directory recursively (deprecated)',
     { multi: true },
   );
-  ctx.addNodeAction(
+  action.addNodeAction(
     'collapseRecursive',
     async ({ node }) => {
       // eslint-disable-next-line no-restricted-properties
@@ -234,12 +232,12 @@ export function loadFileActions(
         'The action collapseRecursive has been deprecated, use collapse:recursive instead of it',
         'warning',
       );
-      return ctx.doAction('collapse', [node], ['recursive']);
+      return action.doAction('collapse', [node], ['recursive']);
     },
     'collapse directory recursively (deprecated)',
     { multi: true },
   );
-  ctx.addNodeAction(
+  action.addNodeAction(
     'expandOrCollapse',
     async ({ node }) => {
       // eslint-disable-next-line no-restricted-properties
@@ -248,10 +246,10 @@ export function loadFileActions(
         'warning',
       );
       if (node.directory) {
-        if (file.isExpanded(node)) {
-          await ctx.doAction('collapse', node);
+        if (file.view.isExpanded(node)) {
+          await action.doAction('collapse', node);
         } else {
-          await ctx.doAction('expand', node);
+          await action.doAction('expand', node);
         }
       }
     },
@@ -259,7 +257,7 @@ export function loadFileActions(
     { multi: true },
   );
 
-  ctx.addNodesAction(
+  action.addNodesAction(
     'copyFilepath',
     async ({ nodes }) => {
       await file.copyToClipboard(
@@ -270,7 +268,7 @@ export function loadFileActions(
     },
     'copy full filepath to clipboard',
   );
-  ctx.addNodesAction(
+  action.addNodesAction(
     'copyFilename',
     async ({ nodes }) => {
       await file.copyToClipboard(
@@ -283,7 +281,7 @@ export function loadFileActions(
     },
     'copy filename to clipboard',
   );
-  ctx.addNodesAction(
+  action.addNodesAction(
     'copyFile',
     async ({ nodes }) => {
       const clearNodes = [...file.copiedNodes, ...file.cutNodes];
@@ -292,11 +290,11 @@ export function loadFileActions(
       nodes.forEach((node) => {
         file.copiedNodes.add(node);
       });
-      file.requestRenderNodes(clearNodes.concat(nodes));
+      file.view.requestRenderNodes(clearNodes.concat(nodes));
     },
     'copy file for paste',
   );
-  ctx.addNodesAction(
+  action.addNodesAction(
     'cutFile',
     async ({ nodes }) => {
       const clearNodes = [...file.copiedNodes, ...file.cutNodes];
@@ -305,11 +303,11 @@ export function loadFileActions(
       nodes.forEach((node) => {
         file.cutNodes.add(node);
       });
-      file.requestRenderNodes(clearNodes.concat(nodes));
+      file.view.requestRenderNodes(clearNodes.concat(nodes));
     },
     'cut file for paste',
   );
-  ctx.addNodeAction(
+  action.addNodeAction(
     'pasteFile',
     async ({ node }) => {
       const targetDir = file.getPutTargetDir(node);
@@ -323,7 +321,7 @@ export function loadFileActions(
           })),
           fsCopyFileRecursive,
         );
-        file.requestRenderNodes(nodes);
+        file.view.requestRenderNodes(nodes);
         file.copiedNodes.clear();
         await file.load(node.parent ? node.parent : node);
       } else if (file.cutNodes.size > 0) {
@@ -337,7 +335,7 @@ export function loadFileActions(
           fsRename,
         );
         file.cutNodes.clear();
-        await file.load(file.rootNode);
+        await file.load(file.view.rootNode);
       } else {
         // eslint-disable-next-line no-restricted-properties
         workspace.showMessage('Copied files or cut files is empty', 'error');
@@ -345,7 +343,7 @@ export function loadFileActions(
     },
     'paste files to here',
   );
-  ctx.addNodesAction(
+  action.addNodesAction(
     'delete',
     async ({ nodes }) => {
       if (
@@ -372,7 +370,7 @@ export function loadFileActions(
     'move file or directory to trash',
     { reload: true },
   );
-  ctx.addNodesAction(
+  action.addNodesAction(
     'deleteForever',
     async ({ nodes }) => {
       if (
@@ -400,7 +398,7 @@ export function loadFileActions(
     { reload: true },
   );
 
-  ctx.addNodeAction(
+  action.addNodeAction(
     'addFile',
     async ({ node, args }) => {
       let filename: string | undefined;
@@ -418,7 +416,7 @@ export function loadFileActions(
       }
 
       if (['/', '\\'].includes(filename[filename.length - 1])) {
-        await ctx.doAction('addDirectory', node, [filename]);
+        await action.doAction('addDirectory', node, [filename]);
         return;
       }
       const putTargetNode = file.getPutTargetNode(node);
@@ -443,7 +441,7 @@ export function loadFileActions(
     },
     'add a new file',
   );
-  ctx.addNodeAction(
+  action.addNodeAction(
     'addDirectory',
     async ({ node, args }) => {
       let directoryName =
@@ -477,7 +475,7 @@ export function loadFileActions(
     },
     'add a new directory',
   );
-  ctx.addNodeAction(
+  action.addNodeAction(
     'rename',
     async ({ node }) => {
       if (
@@ -513,13 +511,13 @@ export function loadFileActions(
 
       await file.bufManager.remove(node.fullpath, true);
 
-      await file.load(file.rootNode);
+      await file.load(file.view.rootNode);
     },
 
     'rename a file or directory',
   );
 
-  ctx.addNodesAction(
+  action.addNodesAction(
     'systemExecute',
     async ({ nodes }) => {
       if (nodes) {
@@ -532,7 +530,7 @@ export function loadFileActions(
   );
 
   if (isWindows) {
-    ctx.addNodeAction(
+    action.addNodeAction(
       'listDrive',
       async () => {
         const drives = await listDrive();
@@ -541,7 +539,7 @@ export function loadFileActions(
             name: drive,
             callback: async (drive) => {
               file.root = drive;
-              await file.expand(file.rootNode);
+              await file.view.expand(file.view.rootNode);
             },
           })),
         );
@@ -557,7 +555,7 @@ export function loadFileActions(
     );
   }
 
-  ctx.addNodeAction(
+  action.addNodeAction(
     'search',
     async ({ node }) => {
       await file.searchByCocList(
@@ -568,7 +566,7 @@ export function loadFileActions(
     'search by coc-list',
   );
 
-  ctx.addNodeAction(
+  action.addNodeAction(
     'searchRecursive',
     async ({ node }) => {
       await file.searchByCocList(pathLib.dirname(node.fullpath), true);
@@ -576,29 +574,29 @@ export function loadFileActions(
     'search by coc-list recursively',
   );
 
-  ctx.addNodesAction(
+  action.addNodesAction(
     'gitStage',
     async ({ nodes }) => {
       await gitManager.cmd.stage(nodes.map((node) => node.fullpath));
-      await file.load(file.rootNode);
+      await file.load(file.view.rootNode);
     },
     'add file to git index',
   );
 
-  ctx.addNodesAction(
+  action.addNodesAction(
     'gitUnstage',
     async ({ nodes }) => {
       await gitManager.cmd.unstage(nodes.map((node) => node.fullpath));
-      await file.load(file.rootNode);
+      await file.load(file.view.rootNode);
     },
     'reset file from git index',
   );
 
-  ctx.addNodeAction(
+  action.addNodeAction(
     'toggleOnlyGitChange',
     async () => {
       file.showOnlyGitChange = !file.showOnlyGitChange;
-      const loadNotifier = await file.loadNotifier(file.rootNode, {
+      const loadNotifier = await file.loadNotifier(file.view.rootNode, {
         force: true,
       });
 

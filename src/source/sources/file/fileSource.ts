@@ -17,7 +17,6 @@ import {
   isWindows,
   listDrive,
   normalizePath,
-  Notifier,
   onError,
 } from '../../../util';
 import { hlGroupManager } from '../../../highlight/manager';
@@ -28,6 +27,8 @@ import { fileArgOptions } from './argOptions';
 import { loadFileActions } from './fileActions';
 import { fileColumnRegistrar } from './fileColumnRegistrar';
 import './load';
+import { Notifier } from 'coc-helper';
+import { ViewSource } from '../../../view/viewSource';
 
 export interface FileNode extends BaseTreeNode<FileNode, 'root' | 'child'> {
   name: string;
@@ -87,7 +88,7 @@ export class FileSource extends ExplorerSource<FileNode> {
   showOnlyGitChange: boolean = false;
   copiedNodes: Set<FileNode> = new Set();
   cutNodes: Set<FileNode> = new Set();
-  rootNode: FileNode = {
+  view: ViewSource<FileNode> = new ViewSource<FileNode>(this, {
     type: 'root',
     isRoot: true,
     uid: this.helper.getUid(pathLib.sep),
@@ -102,20 +103,20 @@ export class FileSource extends ExplorerSource<FileNode> {
     hidden: false,
     symbolicLink: true,
     lstat: undefined,
-  };
+  });
   sourcePainters: SourcePainters<FileNode> = new SourcePainters<FileNode>(
     this,
     fileColumnRegistrar,
   );
 
   get root() {
-    return this.rootNode.fullpath;
+    return this.view.rootNode.fullpath;
   }
 
   set root(root: string) {
-    this.rootNode.uid = this.helper.getUid(root);
-    this.rootNode.fullpath = root;
-    this.rootNode.children = undefined;
+    this.view.rootNode.uid = this.helper.getUid(root);
+    this.view.rootNode.fullpath = root;
+    this.view.rootNode.children = undefined;
   }
 
   getHiddenRules() {
@@ -185,7 +186,7 @@ export class FileSource extends ExplorerSource<FileNode> {
         this.disposables.push(
           onBufEnter(async (bufnr) => {
             if (bufnr === this.explorer.bufnr) {
-              await this.load(this.rootNode);
+              await this.load(this.view.rootNode);
             }
           }, 200),
         );
@@ -252,7 +253,7 @@ export class FileSource extends ExplorerSource<FileNode> {
     const revealPath = await this.revealPath();
     if (!revealPath) {
       if (isFirst) {
-        return this.gotoRootNotifier({ col: 1 });
+        return this.locator.gotoRootNotifier({ col: 1 });
       }
       return Notifier.noop();
     }
@@ -268,11 +269,11 @@ export class FileSource extends ExplorerSource<FileNode> {
       } else if (isFirst) {
         return Notifier.combine([
           ...notifiers,
-          await this.gotoRootNotifier({ col: 1 }),
+          await this.locator.gotoRootNotifier({ col: 1 }),
         ]);
       }
     } else if (isFirst) {
-      return this.gotoRootNotifier({ col: 1 });
+      return this.locator.gotoRootNotifier({ col: 1 });
     }
 
     return Notifier.noop();
@@ -280,13 +281,13 @@ export class FileSource extends ExplorerSource<FileNode> {
 
   getPutTargetNode(node: FileNode) {
     if (node.isRoot) {
-      return this.rootNode;
-    } else if (node.expandable && this.isExpanded(node)) {
+      return this.view.rootNode;
+    } else if (node.expandable && this.view.isExpanded(node)) {
       return node;
     } else if (node.parent) {
       return node.parent;
     } else {
-      return this.rootNode;
+      return this.view.rootNode;
     }
   }
 
@@ -313,7 +314,7 @@ export class FileSource extends ExplorerSource<FileNode> {
   async revealNodeByPathNotifier(
     path: string,
     {
-      node = this.rootNode,
+      node = this.view.rootNode,
       goto = true,
       render = true,
       compact,
@@ -342,7 +343,7 @@ export class FileSource extends ExplorerSource<FileNode> {
         path.startsWith(node.fullpath + pathLib.sep)
       ) {
         let foundNode: FileNode | undefined = undefined;
-        const isRender = render && !this.isExpanded(node);
+        const isRender = render && !this.view.isExpanded(node);
         if (!node.children) {
           node.children = await this.loadInitedChildren(node);
         }
@@ -354,7 +355,7 @@ export class FileSource extends ExplorerSource<FileNode> {
           });
           foundNode = childFoundNode;
           if (foundNode) {
-            await this.expand(node, {
+            await this.view.expand(node, {
               compact,
               uncompact: false,
               render: false,
@@ -365,7 +366,7 @@ export class FileSource extends ExplorerSource<FileNode> {
         }
         if (foundNode) {
           if (isRender) {
-            const renderNotifier = await this.renderNotifier({
+            const renderNotifier = await this.view.renderNotifier({
               node,
             });
             if (renderNotifier) {
@@ -373,7 +374,7 @@ export class FileSource extends ExplorerSource<FileNode> {
             }
           }
           if (goto) {
-            notifiers.push(await this.gotoNodeNotifier(foundNode));
+            notifiers.push(await this.locator.gotoNodeNotifier(foundNode));
           }
         }
         return foundNode;

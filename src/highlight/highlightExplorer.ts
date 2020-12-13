@@ -1,6 +1,5 @@
 import { workspace } from 'coc.nvim';
-import type { Explorer } from '../explorer';
-import { ExplorerSource } from '../source/source';
+import { Explorer } from '../explorer';
 import { hlGroupManager } from './manager';
 import { HighlightPositionWithLine } from './types';
 
@@ -37,27 +36,5 @@ export class HighlightExplorer {
       }
       await workspace.nvim.resumeNotification();
     }
-  }
-}
-
-export class HighlightSource {
-  constructor(
-    public readonly source: ExplorerSource<any>,
-    public readonly hlSrcId: number,
-  ) {}
-
-  addHighlightsNotify(highlights: HighlightPositionWithLine[]) {
-    this.source.explorer.highlight.addHighlightsNotify(
-      this.hlSrcId,
-      highlights,
-    );
-  }
-
-  clearHighlightsNotify(lineStart?: number, lineEnd?: number) {
-    this.source.explorer.highlight.clearHighlightsNotify(
-      this.hlSrcId,
-      lineStart,
-      lineEnd,
-    );
   }
 }

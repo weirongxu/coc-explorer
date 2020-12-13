@@ -124,18 +124,18 @@ export class FloatingPreview implements Disposable {
         return;
       }
 
-      await this.explorer.refreshLineIndex();
+      await this.explorer.view.refreshLineIndex();
 
-      const source = await this.explorer.currentSource();
+      const source = await this.explorer.view.currentSource();
       if (!source) {
         return;
       }
 
-      const node = source.currentNode();
+      const node = source.view.currentNode();
       if (!node) {
         return;
       }
-      const nodeIndex = source.getLineByNode(node);
+      const nodeIndex = source.view.getLineByNode(node);
       if (nodeIndex === undefined) {
         return;
       }

@@ -14,7 +14,7 @@ fileColumnRegistrar.registerColumn(
           subscriptions.push(
             source.bufManager.onModified(
               debounce(500, async (fullpath) => {
-                await source.renderPaths([fullpath]);
+                await source.view.renderPaths([fullpath]);
               }),
             ),
           );
@@ -27,7 +27,7 @@ fileColumnRegistrar.registerColumn(
           drawNode(row, { node, nodeIndex }) {
             let modified: boolean = false;
             if (node.directory) {
-              if (!source.isExpanded(node)) {
+              if (!source.view.isExpanded(node)) {
                 modified = source.bufManager.modifiedPrefix(node.fullpath);
               }
             } else {
@@ -37,8 +37,8 @@ fileColumnRegistrar.registerColumn(
               hl: fileHighlights.readonly,
             });
             modified
-              ? source.addIndexing('modified', nodeIndex)
-              : source.removeIndexing('modified', nodeIndex);
+              ? source.locator.mark.add('modified', nodeIndex)
+              : source.locator.mark.remove('modified', nodeIndex);
           },
         };
       },

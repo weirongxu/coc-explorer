@@ -6,7 +6,7 @@ fileColumnRegistrar.registerColumn('root', 'icon', ({ source }) => ({
     return {
       drawNode(row, { node }) {
         row.add(
-          source.isExpanded(node)
+          source.view.isExpanded(node)
             ? source.icons.expanded
             : source.icons.collapsed,
           { hl: fileHighlights.expandIcon },

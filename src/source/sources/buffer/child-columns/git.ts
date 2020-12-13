@@ -63,12 +63,12 @@ bufferColumnRegistrar.registerColumn(
               }
               showFormat(status.y, false);
               if (status.x === GitFormat.ignored) {
-                source.removeIndexing('git', nodeIndex);
+                source.locator.mark.remove('git', nodeIndex);
               } else {
-                source.addIndexing('git', nodeIndex);
+                source.locator.mark.add('git', nodeIndex);
               }
             } else {
-              source.removeIndexing('git', nodeIndex);
+              source.locator.mark.remove('git', nodeIndex);
             }
           },
         };

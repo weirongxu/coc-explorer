@@ -9,6 +9,7 @@ import { loadBufferActions } from './bufferActions';
 import { SourcePainters } from '../../sourcePainters';
 import { onBufEnter } from '../../../events';
 import { bufferArgOptions } from './argOptions';
+import { ViewSource } from '../../../view/viewSource';
 
 export interface BufferNode extends BaseTreeNode<BufferNode, 'root' | 'child'> {
   bufnr: number;
@@ -44,7 +45,7 @@ export const bufferHighlights = {
 
 export class BufferSource extends ExplorerSource<BufferNode> {
   showHidden: boolean = this.config.get<boolean>('file.showHiddenBuffers')!;
-  rootNode: BufferNode = {
+  view: ViewSource<BufferNode> = new ViewSource<BufferNode>(this, {
     type: 'root',
     isRoot: true,
     expandable: true,
@@ -64,7 +65,7 @@ export class BufferSource extends ExplorerSource<BufferNode> {
     terminal: false,
     modified: false,
     readErrors: false,
-  };
+  });
   sourcePainters: SourcePainters<BufferNode> = new SourcePainters<BufferNode>(
     this,
     bufferColumnRegistrar,
@@ -76,12 +77,12 @@ export class BufferSource extends ExplorerSource<BufferNode> {
         this.disposables.push(
           this.bufManager.onReload(
             debounce(500, async () => {
-              await this.load(this.rootNode);
+              await this.load(this.view.rootNode);
             }),
           ),
           this.bufManager.onModified(
             debounce(500, async () => {
-              await this.load(this.rootNode);
+              await this.load(this.view.rootNode);
             }),
           ),
         );
@@ -89,7 +90,7 @@ export class BufferSource extends ExplorerSource<BufferNode> {
         this.disposables.push(
           onBufEnter(async (bufnr) => {
             if (bufnr === this.explorer.bufnr) {
-              await this.load(this.rootNode, { render: false });
+              await this.load(this.view.rootNode, { render: false });
             }
           }, 500),
         );

@@ -12,6 +12,7 @@ import { bookmarkColumnRegistrar } from './bookmarkColumnRegistrar';
 import './load';
 import BookmarkDB from './util/db';
 import { decode } from './util/encodeDecode';
+import { ViewSource } from '../../../view/viewSource';
 
 export interface BookmarkNode
   extends BaseTreeNode<BookmarkNode, 'root' | 'child'> {
@@ -53,7 +54,7 @@ export const bookmarkHighlights = {
 };
 
 export class BookmarkSource extends ExplorerSource<BookmarkNode> {
-  rootNode: BookmarkNode = {
+  view: ViewSource<BookmarkNode> = new ViewSource<BookmarkNode>(this, {
     type: 'root',
     isRoot: true,
     expandable: true,
@@ -63,7 +64,7 @@ export class BookmarkSource extends ExplorerSource<BookmarkNode> {
     lnum: -1,
     line: '',
     annotation: undefined,
-  };
+  });
   sourcePainters: SourcePainters<BookmarkNode> = new SourcePainters<BookmarkNode>(
     this,
     bookmarkColumnRegistrar,
@@ -79,7 +80,7 @@ export class BookmarkSource extends ExplorerSource<BookmarkNode> {
         internalEvents.on(
           'CocBookmarkChange',
           debounce(500, async () => {
-            await this.load(this.rootNode);
+            await this.load(this.view.rootNode);
           }),
         ),
       );
@@ -99,7 +100,7 @@ export class BookmarkSource extends ExplorerSource<BookmarkNode> {
       ),
     );
 
-    this.rootNode.fullpath = this.explorer.rootUri;
+    this.view.rootNode.fullpath = this.explorer.rootUri;
   }
 
   async loadChildren(parentNode: BookmarkNode) {

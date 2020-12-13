@@ -16,7 +16,7 @@ export const conditionActionRules: Record<
     getHelpDescription: () => 'expandable?',
   },
   'expanded?': {
-    filter: (s, n) => s.isExpanded(n),
+    filter: (s, n) => s.view.isExpanded(n),
     getHelpDescription: () => 'expanded?',
   },
   'type?': {
