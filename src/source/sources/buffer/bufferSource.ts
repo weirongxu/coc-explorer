@@ -1,6 +1,6 @@
 import { workspace } from 'coc.nvim';
 import { debounce, uniq } from '../../../util';
-import { hlGroupManager } from '../../highlights/highlightManager';
+import { hlGroupManager } from '../../../highlight/manager';
 import { ExplorerSource, BaseTreeNode } from '../../source';
 import { sourceManager } from '../../sourceManager';
 import { bufferColumnRegistrar } from './bufferColumnRegistrar';
@@ -43,7 +43,6 @@ export const bufferHighlights = {
 };
 
 export class BufferSource extends ExplorerSource<BufferNode> {
-  hlSrcId = workspace.createNameSpace('coc-explorer-buffer');
   showHidden: boolean = this.config.get<boolean>('file.showHiddenBuffers')!;
   rootNode: BufferNode = {
     type: 'root',

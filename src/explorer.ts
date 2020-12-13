@@ -18,12 +18,9 @@ import { doUserAutocmd, doUserAutocmdNotifier, onEvent } from './events';
 import { ExplorerManager } from './explorerManager';
 import { FloatingPreview } from './floating/floatingPreview';
 import { quitHelp, showHelp } from './help';
+import { HighlightExplorer } from './highlight/explorerOrSource';
 import { IndexingManager } from './indexingManager';
 import { ArgContentWidthTypes, Args } from './parseArgs';
-import {
-  HighlightPositionWithLine,
-  hlGroupManager,
-} from './source/highlights/highlightManager';
 import './source/load';
 import { BaseTreeNode, ExplorerSource } from './source/source';
 import { sourceManager } from './source/sourceManager';
@@ -54,9 +51,10 @@ export class Explorer implements Disposable {
   context: ExtensionContext;
   floatingPreview: FloatingPreview;
   contentWidth = 0;
+  // TODO
   renderMutex = new Mutex();
-  doActionExpMutex = new Mutex();
   action = new ExplorerActionRegistrar(this);
+  highlight = new HighlightExplorer(this);
 
   private disposables: Disposable[] = [];
   private _buffer?: Buffer;
@@ -274,33 +272,6 @@ export class Explorer implements Disposable {
     return this.nvim.createBuffer(bufnr);
   }
 
-  clearHighlightsNotify(hlSrcId: number, lineStart?: number, lineEnd?: number) {
-    hlGroupManager.clearHighlightsNotify(this, hlSrcId, lineStart, lineEnd);
-  }
-
-  addHighlightsNotify(
-    hlSrcId: number,
-    highlights: HighlightPositionWithLine[],
-  ) {
-    hlGroupManager.addHighlightsNotify(this, hlSrcId, highlights);
-  }
-
-  async addHighlightSyntax() {
-    const winnr = await this.winnr;
-    const curWinnr = await this.nvim.call('winnr');
-    if (winnr) {
-      this.nvim.pauseNotification();
-      if (winnr !== curWinnr) {
-        this.nvim.command(`${winnr}wincmd w`, true);
-      }
-      hlGroupManager.addHighlightSyntaxNotify();
-      if (winnr !== curWinnr) {
-        this.nvim.command(`${curWinnr}wincmd w`, true);
-      }
-      await this.nvim.resumeNotification();
-    }
-  }
-
   async nodePrev(
     moveStrategy: MoveStrategy = 'default',
     condition: (it: BaseTreeNode<any>) => boolean,
@@ -504,7 +475,7 @@ export class Explorer implements Disposable {
       await this.quitHelp();
     }
 
-    await this.addHighlightSyntax();
+    await this.highlight.addSyntax();
 
     const sourcesChanged = await this.initArgs(args, rootPath);
 

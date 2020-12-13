@@ -603,7 +603,7 @@ export function loadFileActions(
       });
 
       file.nvim.pauseNotification();
-      file.clearHighlightsNotify();
+      file.highlight.clearHighlightsNotify();
       loadNotifier?.notify();
       await file.nvim.resumeNotification();
     },

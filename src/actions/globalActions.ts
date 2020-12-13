@@ -523,7 +523,7 @@ export function loadGlobalActions(
       });
 
       nvim.pauseNotification();
-      source.clearHighlightsNotify();
+      source.highlight.clearHighlightsNotify();
       loadNotifier?.notify();
       await nvim.resumeNotification();
     },

@@ -7,7 +7,7 @@ import {
   getDirectoryIcon,
   nerdfont,
   nerdfontHighlights,
-} from '../../../../icons';
+} from '../../../../icon/icons';
 import { ColumnDrawHandle } from '../../../columnRegistrar';
 
 const attrSymbol = Symbol('icon-column');

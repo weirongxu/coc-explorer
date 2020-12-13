@@ -1,4 +1,4 @@
-import { FilenameHighlight } from '../../../highlights/filename';
+import { FilenameHighlight } from '../../../../highlight/filename';
 import { bufferColumnRegistrar } from '../bufferColumnRegistrar';
 import { bufferHighlights } from '../bufferSource';
 

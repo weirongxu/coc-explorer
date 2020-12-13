@@ -1,4 +1,4 @@
-import { hlGroupManager } from '../source/highlights/highlightManager';
+import { hlGroupManager } from '../highlight/manager';
 import { GitFormat } from './types';
 
 const hl = hlGroupManager.linkGroup.bind(hlGroupManager);

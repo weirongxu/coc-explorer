@@ -2,17 +2,18 @@ import { Disposable, workspace, disposeAll } from 'coc.nvim';
 import { conditionActionRules, waitAction } from './actions/special';
 import { Explorer } from './explorer';
 import { keyMapping } from './mappings';
-import {
-  HighlightPosition,
-  HighlightPositionWithLine,
-  hlGroupManager,
-} from './source/highlights/highlightManager';
+import { hlGroupManager } from './highlight/manager';
 import { BaseTreeNode, ExplorerSource } from './source/source';
 import { ViewPainter, ViewRowPainter } from './source/viewPainter';
-import { DrawBlock, Notifier } from './util';
+import { Notifier } from './util';
 import { Action, ActionExp } from './actions/types';
 import { ActionRegistrar } from './actions/registrar';
 import { ActionMenu } from './actions/menu';
+import {
+  HighlightPosition,
+  HighlightPositionWithLine,
+} from './highlight/types';
+import {DrawBlock} from './painter/types';
 
 const hl = hlGroupManager.linkGroup.bind(hlGroupManager);
 const helpHightlights = {
@@ -318,7 +319,7 @@ export class HelpPainter {
         );
       }
     }
-    this.explorer.addHighlightsNotify(
+    this.explorer.highlight.addHighlightsNotify(
       this.explorer.helpHlSrcId,
       highlightPositions,
     );

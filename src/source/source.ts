@@ -11,25 +11,14 @@ import {
 import { clone } from 'lodash-es';
 import { Class } from 'type-fest';
 import { Location } from 'vscode-languageserver-protocol';
-import { conditionActionRules, waitAction } from '../actions/special';
-import { ActionExp, MappingMode } from '../actions/types';
+import { SourceActionRegistrar } from '../actions/registrar';
 import { argOptions } from '../argOptions';
 import { Explorer } from '../explorer';
-import { explorerActionList } from '../lists/actions';
-import { keyMapping } from '../mappings';
-import {
-  delay,
-  drawnWithIndexRange,
-  flatten,
-  generateUri,
-  Notifier,
-  onError,
-  partition,
-} from '../util';
-import { HighlightPositionWithLine } from './highlights/highlightManager';
+import { HighlightSource } from '../highlight/explorerOrSource';
+import { HighlightPositionWithLine } from '../highlight/types';
+import { drawnWithIndexRange } from '../painter/util';
+import { delay, flatten, generateUri, Notifier, onError } from '../util';
 import { SourcePainters } from './sourcePainters';
-import { SourceActionRegistrar } from '../actions/registrar';
-import { ActionMenu } from '../actions/menu';
 
 export namespace SourceOptions {
   export interface Force {
@@ -125,7 +114,6 @@ export type ExplorerSourceClass = Class<ExplorerSource<any>> & {
 
 export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>>
   implements Disposable {
-  abstract hlSrcId: number;
   abstract rootNode: TreeNode;
   abstract sourcePainters: SourcePainters<TreeNode>;
   startLineIndex: number = 0;
@@ -145,6 +133,7 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>>
     this,
     this.explorer.action,
   );
+  highlight: HighlightSource;
 
   private requestedRenderNodes: Set<TreeNode> = new Set();
   private isDisposed: boolean = false;
@@ -255,6 +244,10 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>>
 
   constructor(public sourceType: string, public explorer: Explorer) {
     this.context = this.explorer.context;
+    this.highlight = new HighlightSource(
+      this,
+      workspace.createNameSpace(`coc-explorer-${sourceType}`),
+    );
   }
 
   dispose() {
@@ -670,7 +663,7 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>>
 
         this.nvim.pauseNotification();
         this.setLinesNotifier(contents, startIndex, endIndex + 1).notify();
-        this.addHighlightsNotify(highlightPositions);
+        this.highlight.addHighlightsNotify(highlightPositions);
         if (workspace.isVim) {
           this.nvim.command('redraw', true);
         }
@@ -777,7 +770,7 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>>
 
         this.nvim.pauseNotification();
         this.setLinesNotifier(contents, startIndex, endIndex + 1).notify();
-        this.addHighlightsNotify(highlightPositions);
+        this.highlight.addHighlightsNotify(highlightPositions);
         gotoNotifier.notify();
         if (workspace.isVim) {
           this.nvim.command('redraw', true);
@@ -842,14 +835,6 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>>
     };
   }
 
-  addHighlightsNotify(highlights: HighlightPositionWithLine[]) {
-    this.explorer.addHighlightsNotify(this.hlSrcId, highlights);
-  }
-
-  clearHighlightsNotify(lineStart?: number, lineEnd?: number) {
-    this.explorer.clearHighlightsNotify(this.hlSrcId, lineStart, lineEnd);
-  }
-
   requestRenderNodes(nodes: TreeNode[]) {
     nodes.forEach((node) => {
       this.requestedRenderNodes.add(node);
@@ -878,7 +863,7 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>>
               dr.nodeIndexEnd + 1,
             ).notify();
           });
-          this.addHighlightsNotify(highlightPositions);
+          this.highlight.addHighlightsNotify(highlightPositions);
           if (workspace.isVim) {
             this.nvim.command('redraw', true);
           }
@@ -944,7 +929,7 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>>
             : this.startLineIndex + nodeIndex + oldHeight,
         )
         .notify();
-      this.addHighlightsNotify(highlightPositions);
+      this.highlight.addHighlightsNotify(highlightPositions);
 
       if (workspace.isVim) {
         nvim.command('redraw', true);

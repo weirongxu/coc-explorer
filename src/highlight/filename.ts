@@ -1,10 +1,10 @@
 import { workspace } from 'coc.nvim';
-import { ExplorerConfig } from '../../config';
-import { diagnosticManager } from '../../diagnostic/manager';
-import { getGitFormatHighlight, gitHighlights } from '../../git/highlights';
-import { gitManager } from '../../git/manager';
-import { GitFormat, GitMixedStatus } from '../../git/types';
-import { fileHighlights } from '../sources/file/fileSource';
+import { ExplorerConfig } from '../config';
+import { diagnosticManager } from '../diagnostic/manager';
+import { getGitFormatHighlight, gitHighlights } from '../git/highlights';
+import { gitManager } from '../git/manager';
+import { GitFormat, GitMixedStatus } from '../git/types';
+import { fileHighlights } from '../source/sources/file/fileSource';
 
 export namespace FilenameHighlight {
   export type HighlightTypes = 'diagnosticError' | 'diagnosticWarning' | 'git';

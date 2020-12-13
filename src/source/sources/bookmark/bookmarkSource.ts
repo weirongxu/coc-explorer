@@ -3,7 +3,7 @@ import pathLib from 'path';
 import { Location, Range } from 'vscode-languageserver-protocol';
 import { internalEvents } from '../../../events';
 import { debounce, fsExists, normalizePath } from '../../../util';
-import { hlGroupManager } from '../../highlights/highlightManager';
+import { hlGroupManager } from '../../../highlight/manager';
 import { BaseTreeNode, ExplorerSource } from '../../source';
 import { sourceManager } from '../../sourceManager';
 import { SourcePainters } from '../../sourcePainters';
@@ -53,7 +53,6 @@ export const bookmarkHighlights = {
 };
 
 export class BookmarkSource extends ExplorerSource<BookmarkNode> {
-  hlSrcId = workspace.createNameSpace('coc-explorer-bookmark');
   rootNode: BookmarkNode = {
     type: 'root',
     isRoot: true,
@@ -65,9 +64,10 @@ export class BookmarkSource extends ExplorerSource<BookmarkNode> {
     line: '',
     annotation: undefined,
   };
-  sourcePainters: SourcePainters<BookmarkNode> = new SourcePainters<
-    BookmarkNode
-  >(this, bookmarkColumnRegistrar);
+  sourcePainters: SourcePainters<BookmarkNode> = new SourcePainters<BookmarkNode>(
+    this,
+    bookmarkColumnRegistrar,
+  );
 
   static get enabled(): boolean | Promise<boolean> {
     return extensions.getExtensionState('coc-bookmark') === 'activated';

@@ -1,6 +1,6 @@
 import { Explorer } from '../explorer';
+import { HighlightCommand, HighlightPosition } from '../highlight/types';
 import {
-  byteLength,
   Drawable,
   DrawBlock,
   DrawContent,
@@ -8,16 +8,16 @@ import {
   DrawFlexible,
   DrawGroup,
   Drawn,
+} from '../painter/types';
+import {
   fetchDisplayWidth,
-  flatten,
   handleGrow,
   handleOmit,
   handlePadding,
   isEmptyDrawableList,
-  sum,
-} from '../util';
+} from '../painter/util';
+import { byteLength, flatten, sum } from '../util';
 import { Column } from './columnRegistrar';
-import { HighlightCommand, HighlightPosition } from './highlights/highlightManager';
 import { BaseTreeNode } from './source';
 import { TemplatePart } from './sourcePainters';
 

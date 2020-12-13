@@ -106,6 +106,10 @@ export class ExplorerActionRegistrar extends ActionRegistrar<Explorer, any> {
   public readonly doActionExpMutex = new Mutex();
   public readonly explorer = this.owner;
 
+  constructor(owner: Explorer) {
+    super(owner);
+  }
+
   async doActionByKey(key: string, mode: MappingMode, count: number = 1) {
     for (let c = 0; c < count; c++) {
       const selectedLineIndexes = await this.explorer.getSelectedOrCursorLineIndexes(

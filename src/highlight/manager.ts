@@ -1,20 +1,7 @@
 import { workspace } from 'coc.nvim';
-
-// Highlight types
-export interface HighlightPosition {
-  group: string;
-  start: number;
-  size: number;
-}
-
-export interface HighlightPositionWithLine extends HighlightPosition {
-  lineIndex: number;
-}
-
-export type HighlightCommand = {
-  group: string;
-  commands: string[];
-};
+import type { Explorer } from '../explorer';
+import { HighlightCommand, HighlightPositionWithLine } from './types';
+import { onError } from '../util';
 
 class HighlightManager {
   nvim = workspace.nvim;
@@ -83,9 +70,3 @@ class HighlightManager {
 }
 
 export const hlGroupManager = new HighlightManager();
-
-/**
- * Avoid import dependence errors, 'explorer' and 'util' must be at the end
- */
-import { Explorer } from '../../explorer';
-import { onError } from '../../util';

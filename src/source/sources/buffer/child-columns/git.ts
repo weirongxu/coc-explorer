@@ -2,7 +2,7 @@ import { getStatusIcons } from '../../../../git/config';
 import { gitHighlights } from '../../../../git/highlights';
 import { gitManager } from '../../../../git/manager';
 import { GitFormat } from '../../../../git/types';
-import { FilenameHighlight } from '../../../highlights/filename';
+import { FilenameHighlight } from '../../../../highlight/filename';
 import { bufferColumnRegistrar } from '../bufferColumnRegistrar';
 
 bufferColumnRegistrar.registerColumn(

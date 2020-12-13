@@ -1,11 +1,12 @@
 import pFilter from 'p-filter';
-import { compactI, Drawn, DrawnWithNodeIndex, groupBy } from '../util';
+import { compactI, groupBy } from '../util';
 import { Column, ColumnRegistrar } from './columnRegistrar';
-import { hlGroupManager } from './highlights/highlightManager';
+import { hlGroupManager } from '../highlight/manager';
 import { OriginalTemplatePart, parseTemplate } from './parseTemplate';
 import { BaseTreeNode, ExplorerSource } from './source';
 import { ViewPainter } from './viewPainter';
 import { Disposable } from 'coc.nvim';
+import { Drawn, DrawnWithNodeIndex } from '../painter/types';
 
 export const labelHighlight = hlGroupManager.linkGroup('Label', 'Label');
 

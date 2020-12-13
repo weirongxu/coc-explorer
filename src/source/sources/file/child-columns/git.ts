@@ -1,7 +1,7 @@
 import { getStatusIcons } from '../../../../git/config';
 import { gitManager } from '../../../../git/manager';
 import { GitFormat } from '../../../../git/types';
-import { FilenameHighlight } from '../../../highlights/filename';
+import { FilenameHighlight } from '../../../../highlight/filename';
 import { fileColumnRegistrar } from '../fileColumnRegistrar';
 import { fileHighlights } from '../fileSource';
 

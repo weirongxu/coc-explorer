@@ -6,11 +6,11 @@ import {
   Range,
 } from 'vscode-languageserver-protocol';
 import { TextDocument } from 'vscode-languageserver-textdocument';
-import { ActionMenu } from './actions/menu';
-import { ExplorerManager } from './explorerManager';
-import { actionListMru } from './lists/actions';
-import { keyMapping } from './mappings';
-import { flatten } from './util';
+import { ActionMenu } from './menu';
+import { ExplorerManager } from '../explorerManager';
+import { actionListMru } from '../lists/actions';
+import { keyMapping } from '../mappings';
+import { flatten } from '../util';
 
 function score(list: string[], key: string): number {
   const idx = list.indexOf(key);

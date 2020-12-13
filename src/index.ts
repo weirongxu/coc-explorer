@@ -6,13 +6,13 @@ import {
   Disposable,
   languages,
 } from 'coc.nvim';
-import { hlGroupManager } from './source/highlights/highlightManager';
+import { hlGroupManager } from './highlight/manager';
 import { ExplorerManager } from './explorerManager';
 import { PresetList } from './lists/presets';
 import { registerVimApi } from './vimApi';
 import { InternalVimEvents } from './events';
 import { asyncCatchError, onError, registerRuntimepath } from './util';
-import { ActionMenuCodeActionProvider } from './codeActionProider';
+import { ActionMenuCodeActionProvider } from './actions/codeActionProider';
 import { activateHelper } from 'coc-helper';
 
 export const activate = async (context: ExtensionContext) => {

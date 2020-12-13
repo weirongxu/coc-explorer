@@ -5,12 +5,12 @@ import { URI } from 'vscode-uri';
 import { argOptions } from '../argOptions';
 import { onBufEnter, onCursorMoved, onEvent } from '../events';
 import { Explorer } from '../explorer';
+import { Drawn } from '../painter/types';
 import { BaseTreeNode, ExplorerSource } from '../source/source';
 import { FloatingOpenOptions } from '../types';
 import { PreviewActionStrategy } from '../types/pkg-config';
 import {
   byteLength,
-  Drawn,
   flatten,
   max,
   min,

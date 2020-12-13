@@ -1,4 +1,4 @@
-import { hlGroupManager } from '../source/highlights/highlightManager';
+import { hlGroupManager } from '../highlight/manager';
 
 const hl = hlGroupManager.linkGroup.bind(hlGroupManager);
 export const diagnosticHighlights = {

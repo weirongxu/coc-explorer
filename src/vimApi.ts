@@ -3,7 +3,7 @@ import pathLib from 'path';
 import { MappingMode, OriginalActionExp } from './actions/types';
 import { Explorer } from './explorer';
 import { ExplorerManager } from './explorerManager';
-import { getDirectoryIcon, getFileIcon } from './icons';
+import { getDirectoryIcon, getFileIcon } from './icon/icons';
 import { actionListMru } from './lists/actions';
 import { parseOriginalActionExp } from './mappings';
 import { BaseTreeNode, ExplorerSource } from './source/source';

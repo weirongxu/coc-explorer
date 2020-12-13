@@ -20,7 +20,7 @@ import {
   Notifier,
   onError,
 } from '../../../util';
-import { hlGroupManager } from '../../highlights/highlightManager';
+import { hlGroupManager } from '../../../highlight/manager';
 import { BaseTreeNode, ExplorerSource } from '../../source';
 import { sourceManager } from '../../sourceManager';
 import { SourcePainters } from '../../sourcePainters';
@@ -83,7 +83,6 @@ export const fileHighlights = {
 
 export class FileSource extends ExplorerSource<FileNode> {
   scheme = 'file';
-  hlSrcId = workspace.createNameSpace('coc-explorer-file');
   showHidden: boolean = this.config.get<boolean>('file.showHiddenFiles')!;
   showOnlyGitChange: boolean = false;
   copiedNodes: Set<FileNode> = new Set();
