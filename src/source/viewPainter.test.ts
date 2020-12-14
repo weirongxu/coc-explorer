@@ -8,6 +8,7 @@ import { workspace } from 'coc.nvim';
 import { buildExplorerConfig, config } from '../config';
 import { jestHelper } from 'coc-helper/JestHelper';
 import { registerRuntimepath } from '../util';
+import { ViewSource } from '../view/viewSource';
 
 let explorer: Explorer;
 
@@ -29,20 +30,19 @@ const testColumnRegistrar = new TestColumnRegistrar();
 
 class TestSource extends ExplorerSource<TestNode> {
   hlSrcId = workspace.createNameSpace('coc-explorer-test');
-
-  sourcePainters: SourcePainters<TestNode> = new SourcePainters(
-    this,
-    testColumnRegistrar,
-  );
-
-  rootNode: TestNode = {
+  view: ViewSource<TestNode> = new ViewSource(this, {
     type: 'root',
     uid: '',
     level: 0,
     directory: false,
     name: '',
     fullpath: '',
-  };
+  });
+
+  sourcePainters: SourcePainters<TestNode> = new SourcePainters(
+    this,
+    testColumnRegistrar,
+  );
 
   async init() {}
 
