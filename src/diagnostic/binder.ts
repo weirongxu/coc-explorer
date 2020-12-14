@@ -1,7 +1,14 @@
 import { Disposable, disposeAll } from 'coc.nvim';
 import { internalEvents } from '../events';
 import { BaseTreeNode, ExplorerSource } from '../source/source';
-import { mapGetWithDefault, sum, throttle } from '../util';
+import {
+  Cancelled,
+  debouncePromise,
+  mapGetWithDefault,
+  onError,
+  sum,
+  throttle,
+} from '../util';
 import { diagnosticManager, DiagnosticType } from './manager';
 import pathLib from 'path';
 
@@ -94,10 +101,25 @@ export class DiagnosticBinder {
             ? node.fullpath
             : node.fullpath && pathLib.dirname(node.fullpath);
         if (directory) {
-          await this.reload([]);
+          this.reload([source]).catch(onError);
         }
       }),
     ];
+  }
+
+  protected reloadDebounceChecker = debouncePromise(1000, () => {});
+  protected reloadDebounceArgs = {
+    sources: new Set<ExplorerSource<any>>(),
+  };
+  protected async reloadDebounce(sources: ExplorerSource<any>[]) {
+    sources.forEach((s) => {
+      this.reloadDebounceArgs.sources.add(s);
+    });
+    const r = await this.reloadDebounceChecker();
+    if (r instanceof Cancelled) {
+      return;
+    }
+    this.reloadDebounceArgs.sources.clear();
   }
 
   protected async reload(sources: ExplorerSource<any>[]) {

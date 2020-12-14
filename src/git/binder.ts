@@ -155,14 +155,14 @@ export class GitBinder {
     ];
   }
 
-  private reloadDebounceChecker = debouncePromise(1000, () => {});
-  private reloadDebounceArgs = {
+  protected reloadDebounceChecker = debouncePromise(1000, () => {});
+  protected reloadDebounceArgs = {
     sources: new Set<ExplorerSource<any>>(),
     directories: new Set<string>(),
     isReloadAll: false,
   };
 
-  async reloadDebounce(
+  protected async reloadDebounce(
     sources: ExplorerSource<any>[],
     directory: string,
     isReloadAll: boolean,
@@ -189,7 +189,7 @@ export class GitBinder {
     return updatePaths;
   }
 
-  async reload(
+  protected async reload(
     sources: ExplorerSource<any>[],
     directories: string[],
     isReloadAll: boolean,
