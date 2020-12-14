@@ -67,7 +67,7 @@ export class ActionSource<
             if (release || isSubAction) {
               continue;
             }
-            release = await this.global.doActionExpMutex.acquire();
+            release = await this.global.actionMutex.acquire();
             continue;
           }
 

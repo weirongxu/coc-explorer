@@ -1,9 +1,12 @@
+import { Mutex } from 'await-semaphore';
 import { Explorer } from '../explorer';
 import { BaseTreeNode, ExplorerSource } from '../source/source';
 import { flatten } from '../util';
 
 export class ViewExplorer {
+  isHelpUI: boolean = false;
   currentLineIndex = 0;
+  renderMutex = new Mutex();
 
   constructor(public readonly explorer: Explorer) {}
 

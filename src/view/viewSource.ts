@@ -19,6 +19,14 @@ export class ViewSource<TreeNode extends BaseTreeNode<TreeNode>> {
   endLineIndex: number = 0;
   private requestedRenderNodes: Set<TreeNode> = new Set();
 
+  get isHelpUI() {
+    return this.explorer.view.isHelpUI;
+  }
+
+  get renderMutex() {
+    return this.explorer.view.renderMutex;
+  }
+
   get config() {
     return this.source.config;
   }
@@ -259,7 +267,11 @@ export class ViewSource<TreeNode extends BaseTreeNode<TreeNode>> {
     return this.nodeStores.getCompact(node);
   }
 
+  // render
   private async expandRender(node: TreeNode) {
+    if (this.isHelpUI) {
+      return;
+    }
     if (!this.isExpanded(node) || !node.children) {
       return;
     }
@@ -371,6 +383,9 @@ export class ViewSource<TreeNode extends BaseTreeNode<TreeNode>> {
   }
 
   private async collapseRender(node: TreeNode) {
+    if (this.isHelpUI) {
+      return;
+    }
     if (this.isExpanded(node)) {
       return;
     }
@@ -431,7 +446,7 @@ export class ViewSource<TreeNode extends BaseTreeNode<TreeNode>> {
     await this.collapseRender(node);
   }
 
-  async drawNodes(nodes: TreeNode[]) {
+  private async drawNodes(nodes: TreeNode[]) {
     const drawnList = await Promise.all(
       nodes.map(async (node) => {
         const nodeIndex = this.flattenedNodes.findIndex(
@@ -511,7 +526,7 @@ export class ViewSource<TreeNode extends BaseTreeNode<TreeNode>> {
     node = this.rootNode,
     force = false,
   }: SourceOptions.Render<TreeNode> = {}) {
-    if (this.explorer.isHelpUI) {
+    if (this.isHelpUI) {
       return Notifier.noop();
     }
 
@@ -571,14 +586,20 @@ export class ViewSource<TreeNode extends BaseTreeNode<TreeNode>> {
     paths: Set<string> | string[],
     renderPathsOptions: SourceOptions.RenderPaths = {},
   ) {
-    return (await this.renderPathsNotifier(paths, renderPathsOptions))?.run();
+    return (await this.renderPathsNotifier(paths, renderPathsOptions)).run();
   }
 
   async renderPathsNotifier(
     paths: Set<string> | string[],
     { withParent: withParnt = false }: SourceOptions.RenderPaths = {},
   ) {
+    if (this.isHelpUI) {
+      return Notifier.noop();
+    }
     const pathArr = Array.from(paths);
+    if (!pathArr.length) {
+      return Notifier.noop();
+    }
     type FilterFn = (node: TreeNode) => boolean;
     const filterFn: FilterFn = withParnt
       ? (node) =>

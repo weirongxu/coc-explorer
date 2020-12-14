@@ -36,6 +36,8 @@ interface MappingActionContext {
   isWait: boolean;
 }
 
+const helpHlSrcId = workspace.createNameSpace('coc-explorer-help');
+
 export class HelpPainter {
   painter: ViewPainter;
   drawnResults: {
@@ -320,7 +322,7 @@ export class HelpPainter {
       }
     }
     this.explorer.highlight.addHighlightsNotify(
-      this.explorer.helpHlSrcId,
+      helpHlSrcId,
       highlightPositions,
     );
     await this.explorer.nvim.resumeNotification();
@@ -331,7 +333,7 @@ export async function showHelp(
   explorer: Explorer,
   source: ExplorerSource<any>,
 ) {
-  explorer.isHelpUI = true;
+  explorer.view.isHelpUI = true;
   const storeNode = await explorer.view.currentNode();
 
   const width = (await (await explorer.win)?.width) ?? 80;
@@ -368,5 +370,5 @@ export async function showHelp(
 
 export async function quitHelp(explorer: Explorer) {
   await explorer.explorerManager.executeMappings();
-  explorer.isHelpUI = false;
+  explorer.view.isHelpUI = false;
 }

@@ -1,4 +1,3 @@
-import { Mutex } from 'await-semaphore';
 import { Notifier } from 'coc-helper';
 import {
   Buffer,
@@ -38,16 +37,12 @@ import { ViewExplorer } from './view/viewExplorer';
 
 export class Explorer implements Disposable {
   nvim = workspace.nvim;
-  isHelpUI: boolean = false;
-  helpHlSrcId = workspace.createNameSpace('coc-explorer-help');
   inited = new BuffuerContextVars<boolean>('inited', this);
   sourceWinid = new BuffuerContextVars<number>('sourceWinid', this);
   sourceBufnr = new BuffuerContextVars<number>('sourceBufnr', this);
   context: ExtensionContext;
   floatingPreview: FloatingPreview;
   contentWidth = 0;
-  // TODO
-  renderMutex = new Mutex();
   action = new ActionExplorer(this);
   highlight = new HighlightExplorer(this);
   view = new ViewExplorer(this);
@@ -384,7 +379,7 @@ export class Explorer implements Disposable {
   async open(args: Args, rootPath: string, isFirst: boolean) {
     await doUserAutocmd('CocExplorerOpenPre');
 
-    if (this.isHelpUI) {
+    if (this.view.isHelpUI) {
       await this.quitHelp();
     }
 

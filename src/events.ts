@@ -3,7 +3,7 @@ import { Disposable, events, workspace } from 'coc.nvim';
 import { LiteralUnion } from 'type-fest';
 import { asyncCatchError, debounce, onError, throttle } from './util';
 
-type EventResult = void | Promise<void>;
+type EventResult = any | Promise<any>;
 type BufEventListener = (bufnr: number) => EventResult;
 
 // event with asyncCatchError

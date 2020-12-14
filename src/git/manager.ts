@@ -1,10 +1,9 @@
-import { Disposable, disposeAll, workspace } from 'coc.nvim';
+import { Disposable } from 'coc.nvim';
 import pathLib from 'path';
 import { config } from '../config';
-import { internalEvents, onEvent } from '../events';
-import { ExplorerManager } from '../explorerManager';
-import { BaseTreeNode, ExplorerSource } from '../source/source';
-import { debounce, mapGetWithDefault, onError, sum } from '../util';
+import { ExplorerSource } from '../source/source';
+import { compactI, onError } from '../util';
+import { GitBinder } from './binder';
 import { GitCommand } from './command';
 import {
   GitFormat,
@@ -12,195 +11,6 @@ import {
   GitRootFormat,
   GitRootStatus,
 } from './types';
-
-const statusEqual = (a: GitMixedStatus, b: GitMixedStatus) => {
-  return a.x === b.x && a.y === b.y;
-};
-
-class Binder {
-  protected sourcesBinding: Map<
-    ExplorerSource<BaseTreeNode<any>>,
-    { refCount: number }
-  > = new Map();
-  private showIgnored: boolean;
-  private showUntrackedFiles: GitCommand.ShowUntrackedFiles;
-  private prevStatuses: Record<string, GitMixedStatus> = {};
-  private registerForSourceDisposables: Disposable[] = [];
-  private registerDisposables: Disposable[] = [];
-  private inited = false;
-
-  explorerManager_?: ExplorerManager;
-  get explorerManager() {
-    if (!this.explorerManager_) {
-      throw new Error('explorerManager not initialized yet');
-    }
-    return this.explorerManager_;
-  }
-
-  get sources() {
-    return Array.from(this.sourcesBinding.keys());
-  }
-
-  get refTotalCount() {
-    return sum(Array.from(this.sourcesBinding.values()).map((b) => b.refCount));
-  }
-
-  constructor() {
-    const deprecatedShowIgnored = config.get<boolean>(
-      'file.column.git.showIgnored',
-    );
-    if (deprecatedShowIgnored !== undefined) {
-      // eslint-disable-next-line no-restricted-properties
-      workspace.showMessage(
-        'explorer.file.column.git.showIgnored has been deprecated, please use explorer.git.showIgnored in coc-settings.json',
-        'warning',
-      );
-      this.showIgnored = deprecatedShowIgnored;
-    } else {
-      this.showIgnored = config.get<boolean>('git.showIgnored')!;
-    }
-
-    this.showUntrackedFiles = config.get<GitCommand.ShowUntrackedFiles>(
-      'file.git.showUntrackedFiles',
-    )!;
-  }
-
-  protected init_(source: ExplorerSource<BaseTreeNode<any>>) {
-    if (!this.inited) {
-      this.inited = true;
-      this.explorerManager_ = source.explorer.explorerManager;
-    }
-  }
-
-  bind(source: ExplorerSource<BaseTreeNode<any>>) {
-    this.init_(source);
-    const binding = mapGetWithDefault(this.sourcesBinding, source, () => ({
-      refCount: 0,
-    }));
-    binding.refCount += 1;
-    if (binding.refCount === 1) {
-      this.registerForSourceDisposables = this.registerForSource(source);
-    }
-    if (this.refTotalCount === 1) {
-      this.registerDisposables = this.register();
-    }
-    return Disposable.create(() => {
-      binding.refCount -= 1;
-      if (binding.refCount === 0) {
-        disposeAll(this.registerForSourceDisposables);
-        this.registerForSourceDisposables = [];
-      }
-      if (this.refTotalCount === 0) {
-        disposeAll(this.registerDisposables);
-        this.registerDisposables = [];
-      }
-    });
-  }
-
-  protected register() {
-    return [
-      ...(['CocGitStatusChange', 'FugitiveChanged'] as const).map((event) =>
-        internalEvents.on(
-          event,
-          debounce(1000, async () => {
-            await this.reload(this.sources, workspace.cwd, false);
-          }),
-        ),
-      ),
-      onEvent(
-        'BufWritePost',
-        debounce(1000, async (bufnr) => {
-          const fullpath = this.explorerManager.bufManager.getBufferNode(bufnr)
-            ?.fullpath;
-          if (fullpath) {
-            const filename = pathLib.basename(fullpath);
-            const dirname = pathLib.dirname(fullpath);
-            const isReloadAll = filename === '.gitignore';
-            await this.reload(this.sources, dirname, isReloadAll);
-          }
-        }),
-      ),
-    ];
-  }
-
-  protected registerForSource(
-    source: ExplorerSource<BaseTreeNode<any, string>>,
-  ) {
-    return [
-      source.events.on('loaded', async (node) => {
-        const directory =
-          'isRoot' in node
-            ? source.root
-            : node.expandable
-            ? node.fullpath
-            : node.fullpath && pathLib.dirname(node.fullpath);
-        if (directory) {
-          (async () => {
-            const renderPaths = await this.reload([], directory, true);
-            await source.view.renderPaths(renderPaths);
-          })().catch(onError);
-          // let isTimeout = false;
-          // await Promise.race([
-          //   (async () => {
-          //     await sleep(200);
-          //     isTimeout = true;
-          //   })(),
-          //   (async () => {
-          //     const renderPaths = await this.reload([], directory, true);
-          //     if (isTimeout) {
-          //       await source.renderPaths(renderPaths);
-          //     }
-          //   })(),
-          // ]);
-        }
-      }),
-    ];
-  }
-
-  async reload(
-    sources: ExplorerSource<any>[],
-    directory: string,
-    isReloadAll: boolean,
-  ) {
-    await gitManager.reload(directory, {
-      showIgnored: this.showIgnored,
-      showUntrackedFiles: this.showUntrackedFiles,
-    });
-
-    // render paths
-    const statuses = await gitManager.getMixedStatuses(directory);
-
-    const updatePaths: Set<string> = new Set();
-    if (isReloadAll) {
-      for (const fullpath of Object.keys(statuses)) {
-        updatePaths.add(fullpath);
-      }
-      for (const fullpath of Object.keys(this.prevStatuses)) {
-        updatePaths.add(fullpath);
-      }
-    } else {
-      for (const [fullpath, status] of Object.entries(statuses)) {
-        if (fullpath in this.prevStatuses) {
-          if (statusEqual(this.prevStatuses[fullpath], status)) {
-            continue;
-          }
-          delete this.prevStatuses[fullpath];
-        }
-        updatePaths.add(fullpath);
-      }
-      for (const fullpath of Object.keys(this.prevStatuses)) {
-        updatePaths.add(fullpath);
-      }
-    }
-
-    for (const source of sources) {
-      await source.view.renderPaths(updatePaths);
-    }
-
-    this.prevStatuses = statuses;
-    return updatePaths;
-  }
-}
 
 class GitManager {
   cmd = new GitCommand();
@@ -224,7 +34,15 @@ class GitManager {
     string,
     { directories: string[]; files: string[] }
   > = {};
-  private binder = new Binder();
+  private binder = new GitBinder();
+
+  async getGitRoots(directories: string[] | Set<string>): Promise<string[]> {
+    const directorySet = [...new Set(directories)];
+    const roots = await Promise.all(
+      directorySet.map((directory) => this.getGitRoot(directory)),
+    );
+    return compactI(roots);
+  }
 
   async getGitRoot(directory: string): Promise<string | undefined> {
     if (directory in this.rootCache) {
@@ -252,7 +70,10 @@ class GitManager {
     return this.rootCache[directory];
   }
 
-  async reload(directory: string, statusOptions: GitCommand.StatusOptions) {
+  async reload(
+    directory: string,
+    statusOptions: GitCommand.StatusOptions,
+  ): Promise<string | undefined> {
     const root = await this.getGitRoot(directory);
     if (root) {
       const statusRecord = await this.cmd.status(root, statusOptions);
@@ -357,6 +178,7 @@ class GitManager {
         }
       });
     }
+    return root;
   }
 
   /**
@@ -382,19 +204,14 @@ class GitManager {
    */
   bindColumn(source: ExplorerSource<any>) {
     const enabled = config.get<boolean>('git.enable')!;
-    if (enabled) {
-      return this.binder.bind(source);
+    if (!enabled) {
+      return Disposable.create(() => {});
     }
-    return Disposable.create(() => {});
+    return this.binder.bind(source);
   }
 
-  async getMixedStatuses(path: string) {
-    const rootPath = await this.getGitRoot(path);
-    if (rootPath) {
-      return this.mixedStatusCache[rootPath] || {};
-    } else {
-      return {};
-    }
+  async getRootMixedStatuses(rootPath: string) {
+    return this.mixedStatusCache[rootPath] || {};
   }
 
   getMixedStatus(

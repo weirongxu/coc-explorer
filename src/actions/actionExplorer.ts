@@ -10,7 +10,7 @@ import { ActionRegistrar } from './registrar';
 import { ActionExp, MappingMode } from './types';
 
 export class ActionExplorer extends ActionRegistrar<Explorer, any> {
-  readonly doActionExpMutex = new Mutex();
+  readonly actionMutex = new Mutex();
   readonly explorer = this.owner;
   readonly locator = this.explorer.locator;
 
