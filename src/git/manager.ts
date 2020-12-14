@@ -7,6 +7,7 @@ import { GitBinder } from './binder';
 import { GitCommand } from './command';
 import {
   GitFormat,
+  GitIgnore,
   GitMixedStatus,
   GitRootFormat,
   GitRootStatus,
@@ -24,16 +25,13 @@ class GitManager {
    **/
   private mixedStatusCache: Record<string, Record<string, GitMixedStatus>> = {};
   /**
+   * ignoreCache[rootPath][filepath] = GitIgnore
+   **/
+  private ignoreCache: Record<string, Record<string, GitIgnore>> = {};
+  /**
    * rootStatusCache[rootPath] = GitRootStatus
    */
   private rootStatusCache: Record<string, GitRootStatus> = {};
-  /**
-   * ignoreCache[rootPath] = {directories: string[], files: string[]}
-   **/
-  private ignoreCache: Record<
-    string,
-    { directories: string[]; files: string[] }
-  > = {};
   private binder = new GitBinder();
 
   async getGitRoots(directories: string[] | Set<string>): Promise<string[]> {
@@ -127,17 +125,14 @@ class GitManager {
 
       // generate mixedstatusCache & ignoreCache
       this.mixedStatusCache[root] = {};
-      this.ignoreCache[root] = {
-        directories: [],
-        files: [],
-      };
+      this.ignoreCache[root] = {};
 
       Object.entries(statusRecord).forEach(([fullpath, status]) => {
         if (status.x === GitFormat.ignored) {
           if (['/', '\\'].includes(fullpath[fullpath.length - 1])) {
-            this.ignoreCache[root].directories.push(fullpath);
+            this.ignoreCache[root][fullpath] = GitIgnore.directory;
           } else {
-            this.ignoreCache[root].files.push(fullpath);
+            this.ignoreCache[root][fullpath] = GitIgnore.file;
           }
           return;
         }
@@ -214,11 +209,15 @@ class GitManager {
     return this.mixedStatusCache[rootPath] || {};
   }
 
+  getIgnoreByRoot(rootPath: string) {
+    return this.ignoreCache[rootPath] || {};
+  }
+
   getMixedStatus(
     fullpath: string,
     isDirectory: boolean,
   ): GitMixedStatus | undefined {
-    // TODO simplify
+    // TODO getMixedStatus by root
     const statusPair = Object.entries(this.mixedStatusCache)
       .sort((a, b) => b[0].localeCompare(a[0]))
       .find(([rootPath]) => fullpath.startsWith(rootPath));
@@ -233,23 +232,20 @@ class GitManager {
       .sort((a, b) => b[0].localeCompare(a[0]))
       .find(([rootPath]) => fullpath.startsWith(rootPath));
     if (ignorePair) {
-      let ignore = false;
+      let isIgnore = false;
+      const gitIgnores = ignorePair[1];
+
       if (isDirectory) {
         const directoryPath = isDirectory ? fullpath + pathLib.sep : fullpath;
-        ignore = ignorePair[1].directories.some((ignorePath) =>
-          directoryPath.startsWith(ignorePath),
+        isIgnore = Object.entries(ignorePair[1]).some(
+          ([ignorePath, gitIgnore]) =>
+            gitIgnore === GitIgnore.directory &&
+            directoryPath.startsWith(ignorePath),
         );
       } else {
-        ignore = ignorePair[1].files.some(
-          (ignorePath) => fullpath === ignorePath,
-        );
-        if (!ignore) {
-          ignore = ignorePair[1].directories.some((ignorePath) =>
-            fullpath.startsWith(ignorePath),
-          );
-        }
+        isIgnore = fullpath in gitIgnores;
       }
-      if (ignore) {
+      if (isIgnore) {
         return { x: GitFormat.ignored, y: GitFormat.unmodified };
       }
     }

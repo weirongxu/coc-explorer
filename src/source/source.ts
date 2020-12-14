@@ -84,6 +84,11 @@ export namespace SourceOptions {
      * @default false
      */
     withParent?: boolean;
+    /**
+     * render children paths
+     * @default false
+     */
+    withChildren?: boolean;
   };
 }
 

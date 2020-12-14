@@ -47,6 +47,11 @@ export type GitMixedStatus = {
   y: GitFormatForY;
 };
 
+export enum GitIgnore {
+  directory,
+  file,
+}
+
 export enum GitRootFormat {
   staged,
   ahead,

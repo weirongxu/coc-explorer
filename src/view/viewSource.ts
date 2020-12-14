@@ -591,7 +591,10 @@ export class ViewSource<TreeNode extends BaseTreeNode<TreeNode>> {
 
   async renderPathsNotifier(
     paths: Set<string> | string[],
-    { withParent: withParnt = false }: SourceOptions.RenderPaths = {},
+    {
+      withParent = false,
+      withChildren = false,
+    }: SourceOptions.RenderPaths = {},
   ) {
     if (this.isHelpUI) {
       return Notifier.noop();
@@ -600,14 +603,26 @@ export class ViewSource<TreeNode extends BaseTreeNode<TreeNode>> {
     if (!pathArr.length) {
       return Notifier.noop();
     }
-    type FilterFn = (node: TreeNode) => boolean;
-    const filterFn: FilterFn = withParnt
-      ? (node) =>
-          pathArr.some(
-            (path) => !!node.fullpath && path.startsWith(node.fullpath),
-          )
-      : (node) => !!node.fullpath && pathArr.includes(node.fullpath);
-    const nodes = this.flattenedNodes.filter(filterFn);
+    const filterFns: ((
+      path: string,
+      node: TreeNode & { fullpath: string },
+    ) => boolean)[] = [];
+    filterFns.push((path, n) => path === n.fullpath);
+    if (withParent) {
+      filterFns.push((path, n) => path.startsWith(n.fullpath));
+    }
+    if (withChildren) {
+      filterFns.push((path, n) => n.fullpath.startsWith(path));
+    }
+    const nodes = this.flattenedNodes.filter(
+      (n) =>
+        n.fullpath &&
+        pathArr.some((path) =>
+          filterFns.some((fn) =>
+            fn(path, n as TreeNode & { fullpath: string }),
+          ),
+        ),
+    );
     return this.renderNodesNotifier(nodes);
   }
 }

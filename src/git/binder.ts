@@ -14,7 +14,7 @@ import {
 } from '../util';
 import { GitCommand } from './command';
 import { gitManager } from './manager';
-import { GitMixedStatus, GitRootStatus } from './types';
+import { GitIgnore, GitMixedStatus, GitRootStatus } from './types';
 
 const statusEqual = (a: GitMixedStatus, b: GitMixedStatus) => {
   return a.x === b.x && a.y === b.y;
@@ -39,7 +39,11 @@ export class GitBinder {
    */
   private prevStatuses: Record<string, Record<string, GitMixedStatus>> = {};
   /**
-   * prevStatuses[root] = GitRootStatus
+   * prevIgnoreStatus[root][path] = GitRootStatus
+   */
+  private prevIgnores: Record<string, Record<string, GitIgnore>> = {};
+  /**
+   * prevRootStatus[root] = GitRootStatus
    */
   private prevRootStatus: Record<string, GitRootStatus> = {};
   private registerForSourceDisposables: Disposable[] = [];
@@ -201,6 +205,7 @@ export class GitBinder {
     }
 
     const updatePaths: Set<string> = new Set();
+    const updateDirs: Set<string> = new Set();
 
     for (const root of roots) {
       await gitManager.reload(root, {
@@ -210,6 +215,7 @@ export class GitBinder {
 
       // render paths
       const statuses = gitManager.getMixedStatusesByRoot(root);
+      const ignores = gitManager.getIgnoreByRoot(root);
       const rootStatus = gitManager.getRootStatus(root) || {
         allStaged: false,
         formats: [],
@@ -223,8 +229,16 @@ export class GitBinder {
           formats: [],
         };
       }
+      const addGitIgnore = (fullpath: string, gitIgnore: GitIgnore) => {
+        if (gitIgnore === GitIgnore.directory) {
+          updateDirs.add(fullpath.replace(/[\\/]$/, ''));
+        } else {
+          updatePaths.add(fullpath);
+        }
+      };
 
       if (isReloadAll) {
+        // status
         for (const fullpath of Object.keys(statuses)) {
           updatePaths.add(fullpath);
         }
@@ -232,21 +246,45 @@ export class GitBinder {
           updatePaths.add(fullpath);
         }
 
+        // ignore
+        for (const [fullpath, gitIgnore] of Object.entries(ignores)) {
+          addGitIgnore(fullpath, gitIgnore);
+        }
+
+        // root
         updatePaths.add(root);
       } else {
+        // status
         for (const [fullpath, status] of Object.entries(statuses)) {
           if (fullpath in this.prevStatuses[root]) {
             if (statusEqual(this.prevStatuses[root][fullpath], status)) {
               continue;
             }
-            delete this.prevStatuses[fullpath];
+            delete this.prevStatuses[root][fullpath];
           }
           updatePaths.add(fullpath);
         }
-        for (const fullpath of Object.keys(this.prevStatuses)) {
+        for (const fullpath of Object.keys(this.prevStatuses[root])) {
           updatePaths.add(fullpath);
         }
 
+        // ignore
+        for (const [fullpath, gitIgnore] of Object.entries(ignores)) {
+          if (fullpath in this.prevIgnores[root]) {
+            if (this.prevIgnores[root][fullpath] === gitIgnore) {
+              continue;
+            }
+            delete this.prevIgnores[root];
+          }
+          addGitIgnore(fullpath, gitIgnore);
+        }
+        for (const [fullpath, gitIgnore] of Object.entries(
+          this.prevIgnores[root],
+        )) {
+          addGitIgnore(fullpath, gitIgnore);
+        }
+
+        // root
         if (
           rootStatus &&
           (!this.prevRootStatus ||
@@ -256,13 +294,14 @@ export class GitBinder {
         }
       }
 
-      for (const source of sources) {
-        await source.view.renderPaths(updatePaths);
-      }
-
       this.prevStatuses[root] = statuses;
+      this.prevIgnores[root] = ignores;
       this.prevRootStatus[root] = rootStatus;
-      return updatePaths;
+    }
+
+    for (const source of sources) {
+      await source.view.renderPaths(updatePaths);
+      await source.view.renderPaths(updateDirs, { withChildren: true });
     }
   }
 }
