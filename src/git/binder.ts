@@ -209,7 +209,7 @@ export class GitBinder {
       });
 
       // render paths
-      const statuses = await gitManager.getRootMixedStatuses(root);
+      const statuses = gitManager.getMixedStatusesByRoot(root);
       const rootStatus = gitManager.getRootStatus(root) || {
         allStaged: false,
         formats: [],

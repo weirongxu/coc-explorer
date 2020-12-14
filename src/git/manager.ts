@@ -210,7 +210,7 @@ class GitManager {
     return this.binder.bind(source);
   }
 
-  async getRootMixedStatuses(rootPath: string) {
+  getMixedStatusesByRoot(rootPath: string) {
     return this.mixedStatusCache[rootPath] || {};
   }
 
