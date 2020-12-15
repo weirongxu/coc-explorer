@@ -73,28 +73,18 @@ export class BufferSource extends ExplorerSource<BufferNode> {
 
   async init() {
     if (this.config.get('activeMode')) {
-      if (workspace.isNvim) {
-        this.disposables.push(
-          this.bufManager.onReload(
-            debounce(500, async () => {
-              await this.load(this.view.rootNode);
-            }),
-          ),
-          this.bufManager.onModified(
-            debounce(500, async () => {
-              await this.load(this.view.rootNode);
-            }),
-          ),
-        );
-      } else {
-        this.disposables.push(
-          onBufEnter(async (bufnr) => {
-            if (bufnr === this.explorer.bufnr) {
-              await this.load(this.view.rootNode, { render: false });
-            }
-          }, 500),
-        );
-      }
+      this.disposables.push(
+        this.bufManager.onReload(
+          debounce(500, async () => {
+            await this.load(this.view.rootNode);
+          }),
+        ),
+        this.bufManager.onModified(
+          debounce(500, async () => {
+            await this.load(this.view.rootNode);
+          }),
+        ),
+      );
     }
 
     loadBufferActions(this.action);

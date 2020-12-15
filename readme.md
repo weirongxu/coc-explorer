@@ -33,7 +33,7 @@ Explorer extension for [coc.nvim](https://github.com/neoclide/coc.nvim)
 ## Feature
 
 - [x] Buffer source
-  - [x] Highlight visible buffers in real time (neovim only)
+  - [x] Highlight visible buffers in real time
 - [x] File tree source
   - [x] Basic actions
     - [x] Open file in select / vsplit / tab
@@ -50,7 +50,7 @@ Explorer extension for [coc.nvim](https://github.com/neoclide/coc.nvim)
     - [x] Delete action use trash by default
     - [x] Other actions, press `?` in explorer to check out the all actions
   - [x] Git status
-  - [x] Reveal current file in real time (neovim only)
+  - [x] Automatically reveal the current file
   - [x] Icons, use [nerdfont](https://github.com/ryanoasis/nerd-fonts)
   - [x] Search files by Coc-list
   - [x] Preview file attributes by floating window

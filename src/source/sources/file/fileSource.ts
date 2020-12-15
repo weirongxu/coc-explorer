@@ -155,38 +155,27 @@ export class FileSource extends ExplorerSource<FileNode> {
 
   async init() {
     if (this.config.get('activeMode')) {
-      if (workspace.isNvim) {
-        if (this.config.get('file.autoReveal')) {
-          this.disposables.push(
-            onBufEnter(async (bufnr) => {
-              if (bufnr === this.explorer.bufnr) {
-                return;
-              }
-              const position = await this.explorer.args.value(
-                argOptions.position,
-              );
-              if (position === 'floating') {
-                return;
-              }
-              const fullpath = this.bufManager.getBufferNode(bufnr)?.fullpath;
-              if (!fullpath) {
-                return;
-              }
-              const [
-                revealNode,
-                notifiers,
-              ] = await this.revealNodeByPathNotifier(fullpath);
-              if (revealNode) {
-                await Notifier.runAll(notifiers);
-              }
-            }, 200),
-          );
-        }
-      } else {
+      if (this.config.get('file.autoReveal')) {
         this.disposables.push(
           onBufEnter(async (bufnr) => {
             if (bufnr === this.explorer.bufnr) {
-              await this.load(this.view.rootNode);
+              return;
+            }
+            const position = await this.explorer.args.value(
+              argOptions.position,
+            );
+            if (position === 'floating') {
+              return;
+            }
+            const fullpath = this.bufManager.getBufferNode(bufnr)?.fullpath;
+            if (!fullpath) {
+              return;
+            }
+            const [revealNode, notifiers] = await this.revealNodeByPathNotifier(
+              fullpath,
+            );
+            if (revealNode) {
+              await Notifier.runAll(notifiers);
             }
           }, 200),
         );
@@ -320,7 +309,13 @@ export class FileSource extends ExplorerSource<FileNode> {
       compact,
     }: {
       node?: FileNode;
+      /**
+       * @default true
+       */
       goto?: boolean;
+      /**
+       * @default true
+       */
       render?: boolean;
       compact?: boolean;
     } = {},
@@ -375,6 +370,9 @@ export class FileSource extends ExplorerSource<FileNode> {
           }
           if (goto) {
             notifiers.push(await this.locator.gotoNodeNotifier(foundNode));
+            notifiers.push(
+              Notifier.create(() => this.nvim.command('redraw!', true)),
+            );
           }
         }
         return foundNode;
