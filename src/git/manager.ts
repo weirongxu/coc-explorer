@@ -232,19 +232,19 @@ class GitManager {
       .sort((a, b) => b[0].localeCompare(a[0]))
       .find(([rootPath]) => fullpath.startsWith(rootPath));
     if (ignorePair) {
-      let isIgnore = false;
       const gitIgnores = ignorePair[1];
-
-      if (isDirectory) {
-        const directoryPath = isDirectory ? fullpath + pathLib.sep : fullpath;
-        isIgnore = Object.entries(ignorePair[1]).some(
-          ([ignorePath, gitIgnore]) =>
-            gitIgnore === GitIgnore.directory &&
-            directoryPath.startsWith(ignorePath),
-        );
-      } else {
-        isIgnore = fullpath in gitIgnores;
-      }
+      const isIgnore = Object.entries(gitIgnores).some(
+        ([ignorePath, gitIgnore]) => {
+          if (gitIgnore === GitIgnore.file) {
+            return ignorePath === fullpath;
+          } else {
+            const directoryPath = isDirectory
+              ? fullpath + pathLib.sep
+              : fullpath;
+            return directoryPath.startsWith(ignorePath);
+          }
+        },
+      );
       if (isIgnore) {
         return { x: GitFormat.ignored, y: GitFormat.unmodified };
       }

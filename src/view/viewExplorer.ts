@@ -1,7 +1,6 @@
 import { Mutex } from 'await-semaphore';
 import { Explorer } from '../explorer';
 import { BaseTreeNode, ExplorerSource } from '../source/source';
-import { flatten } from '../util';
 
 export class ViewExplorer {
   isHelpUI: boolean = false;
@@ -11,7 +10,10 @@ export class ViewExplorer {
   constructor(public readonly explorer: Explorer) {}
 
   get flattenedNodes() {
-    return flatten(this.explorer.sources.map((s) => s.view.flattenedNodes));
+    return this.explorer.sources.reduce<BaseTreeNode<any>[]>((ret, cur) => {
+      ret.concat(cur.view.flattenedNodes);
+      return ret;
+    }, []);
   }
 
   async refreshLineIndex() {

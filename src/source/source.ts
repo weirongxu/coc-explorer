@@ -78,18 +78,24 @@ export namespace SourceOptions {
     node?: TreeNode;
   } & Force;
 
-  export type RenderPaths = {
-    /**
-     * render parent paths
-     * @default false
-     */
-    withParent?: boolean;
-    /**
-     * render children paths
-     * @default false
-     */
-    withChildren?: boolean;
-  };
+  export type RenderPaths =
+    | Set<string>
+    | (
+        | string
+        | {
+            path: string | string[] | Set<string>;
+            /**
+             * render parent paths
+             * @default false
+             */
+            withParent?: boolean;
+            /**
+             * render children paths
+             * @default false
+             */
+            withChildren?: boolean;
+          }
+      )[];
 }
 
 export type NodeUid = string;

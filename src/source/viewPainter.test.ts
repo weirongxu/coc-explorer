@@ -4,7 +4,6 @@ import { ExplorerManager } from '../explorerManager';
 import { BaseTreeNode, ExplorerSource } from './source';
 import { ColumnRegistrar } from './columnRegistrar';
 import { SourcePainters } from './sourcePainters';
-import { workspace } from 'coc.nvim';
 import { buildExplorerConfig, config } from '../config';
 import { jestHelper } from 'coc-helper/JestHelper';
 import { registerRuntimepath } from '../util';
@@ -29,7 +28,6 @@ class TestColumnRegistrar extends ColumnRegistrar<TestNode, any> {}
 const testColumnRegistrar = new TestColumnRegistrar();
 
 class TestSource extends ExplorerSource<TestNode> {
-  hlSrcId = workspace.createNameSpace('coc-explorer-test');
   view: ViewSource<TestNode> = new ViewSource(this, {
     type: 'root',
     uid: '',

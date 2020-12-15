@@ -518,6 +518,73 @@ export class ViewSource<TreeNode extends BaseTreeNode<TreeNode>> {
     });
   }
 
+  async renderPaths(paths: SourceOptions.RenderPaths) {
+    return (await this.renderPathsNotifier(paths)).run();
+  }
+
+  async renderPathsNotifier(paths: SourceOptions.RenderPaths) {
+    if (this.isHelpUI) {
+      return Notifier.noop();
+    }
+    type PathItem = {
+      paths: string[];
+      withParent: boolean;
+      withChildren: boolean;
+    };
+    const pathArr = paths instanceof Set ? Array.from(paths) : paths;
+    const pathItems: PathItem[] = pathArr.map((o) => {
+      if (typeof o === 'string') {
+        return {
+          paths: [o],
+          withParent: false,
+          withChildren: false,
+        };
+      } else if (typeof o.path === 'string') {
+        return {
+          paths: [o.path],
+          withParent: o.withParent ?? false,
+          withChildren: o.withChildren ?? false,
+        };
+      } else {
+        return {
+          paths: Array.from(o.path),
+          withParent: o.withParent ?? false,
+          withChildren: o.withChildren ?? false,
+        };
+      }
+    });
+    if (!pathArr.length) {
+      return Notifier.noop();
+    }
+    const filterFn: (
+      path: string,
+      withParent: boolean,
+      withChildren: boolean,
+      node: TreeNode & { fullpath: string },
+    ) => boolean = (path, withParent, withChildren, node) => {
+      return (
+        path === node.fullpath ||
+        (withParent && path.startsWith(node.fullpath)) ||
+        (withChildren && node.fullpath.startsWith(path))
+      );
+    };
+    const nodes = this.flattenedNodes.filter(
+      (n) =>
+        n.fullpath &&
+        pathItems.some((item) =>
+          item.paths.some((path) =>
+            filterFn(
+              path,
+              item.withParent,
+              item.withChildren,
+              n as TreeNode & { fullpath: string },
+            ),
+          ),
+        ),
+    );
+    return this.renderNodesNotifier(nodes);
+  }
+
   async render(options?: SourceOptions.Render<TreeNode>) {
     return (await this.renderNotifier(options))?.run();
   }
@@ -580,49 +647,5 @@ export class ViewSource<TreeNode extends BaseTreeNode<TreeNode>> {
         workspace.nvim.command('redraw', true);
       }
     });
-  }
-
-  async renderPaths(
-    paths: Set<string> | string[],
-    renderPathsOptions: SourceOptions.RenderPaths = {},
-  ) {
-    return (await this.renderPathsNotifier(paths, renderPathsOptions)).run();
-  }
-
-  async renderPathsNotifier(
-    paths: Set<string> | string[],
-    {
-      withParent = false,
-      withChildren = false,
-    }: SourceOptions.RenderPaths = {},
-  ) {
-    if (this.isHelpUI) {
-      return Notifier.noop();
-    }
-    const pathArr = Array.from(paths);
-    if (!pathArr.length) {
-      return Notifier.noop();
-    }
-    const filterFns: ((
-      path: string,
-      node: TreeNode & { fullpath: string },
-    ) => boolean)[] = [];
-    filterFns.push((path, n) => path === n.fullpath);
-    if (withParent) {
-      filterFns.push((path, n) => path.startsWith(n.fullpath));
-    }
-    if (withChildren) {
-      filterFns.push((path, n) => n.fullpath.startsWith(path));
-    }
-    const nodes = this.flattenedNodes.filter(
-      (n) =>
-        n.fullpath &&
-        pathArr.some((path) =>
-          filterFns.some((fn) =>
-            fn(path, n as TreeNode & { fullpath: string }),
-          ),
-        ),
-    );
-    return this.renderNodesNotifier(nodes);
   }
 }

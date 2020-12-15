@@ -121,9 +121,10 @@ export class GitBinder {
   protected register() {
     return [
       ...(['CocGitStatusChange', 'FugitiveChanged'] as const).map((event) =>
-        internalEvents.on(event, () =>
-          this.reloadDebounce(this.sources, workspace.cwd, false),
-        ),
+        internalEvents.on(event, async () => {
+          debugger;
+          await this.reloadDebounce(this.sources, workspace.cwd);
+        }),
       ),
       onEvent(
         'BufWritePost',
@@ -131,10 +132,8 @@ export class GitBinder {
           const fullpath = this.explorerManager.bufManager.getBufferNode(bufnr)
             ?.fullpath;
           if (fullpath) {
-            const filename = pathLib.basename(fullpath);
             const dirname = pathLib.dirname(fullpath);
-            const isReloadAll = filename === '.gitignore';
-            await this.reloadDebounce(this.sources, dirname, isReloadAll);
+            await this.reloadDebounce(this.sources, dirname);
           }
         }),
       ),
@@ -153,7 +152,7 @@ export class GitBinder {
             ? node.fullpath
             : node.fullpath && pathLib.dirname(node.fullpath);
         if (directory) {
-          this.reloadDebounce([source], directory, true).catch(onError);
+          this.reloadDebounce([source], directory).catch(onError);
         }
       }),
     ];
@@ -163,41 +162,33 @@ export class GitBinder {
   protected reloadDebounceArgs = {
     sources: new Set<ExplorerSource<any>>(),
     directories: new Set<string>(),
-    isReloadAll: false,
   };
 
   protected async reloadDebounce(
     sources: ExplorerSource<any>[],
     directory: string,
-    isReloadAll: boolean,
   ) {
     sources.forEach((s) => {
       this.reloadDebounceArgs.sources.add(s);
     });
     this.reloadDebounceArgs.directories.add(directory);
-    if (isReloadAll) {
-      this.reloadDebounceArgs.isReloadAll = true;
-    }
     const r = await this.reloadDebounceChecker();
     if (r instanceof Cancelled) {
       return;
     }
-    const updatePaths = await this.reload(
+    await this.reload(
       [...this.reloadDebounceArgs.sources],
       [...this.reloadDebounceArgs.directories],
-      this.reloadDebounceArgs.isReloadAll,
     );
     this.reloadDebounceArgs.sources.clear();
     this.reloadDebounceArgs.directories.clear();
-    this.reloadDebounceArgs.isReloadAll = false;
-    return updatePaths;
   }
 
   protected async reload(
     sources: ExplorerSource<any>[],
     directories: string[],
-    isReloadAll: boolean,
   ) {
+    debugger;
     const roots = await gitManager.getGitRoots(directories);
 
     if (!roots.length) {
@@ -223,6 +214,9 @@ export class GitBinder {
       if (!(root in this.prevStatuses)) {
         this.prevStatuses[root] = {};
       }
+      if (!(root in this.prevIgnores)) {
+        this.prevIgnores[root] = {};
+      }
       if (!(root in this.prevRootStatus)) {
         this.prevRootStatus[root] = {
           allStaged: false,
@@ -237,62 +231,62 @@ export class GitBinder {
         }
       };
 
-      if (isReloadAll) {
-        // status
-        for (const fullpath of Object.keys(statuses)) {
-          updatePaths.add(fullpath);
-        }
-        for (const fullpath of Object.keys(this.prevStatuses)) {
-          updatePaths.add(fullpath);
-        }
-
-        // ignore
-        for (const [fullpath, gitIgnore] of Object.entries(ignores)) {
-          addGitIgnore(fullpath, gitIgnore);
-        }
-
-        // root
-        updatePaths.add(root);
-      } else {
-        // status
-        for (const [fullpath, status] of Object.entries(statuses)) {
-          if (fullpath in this.prevStatuses[root]) {
-            if (statusEqual(this.prevStatuses[root][fullpath], status)) {
-              continue;
-            }
+      // if (isReloadAll) {
+      //   // status
+      //   for (const fullpath of Object.keys(statuses)) {
+      //     updatePaths.add(fullpath);
+      //   }
+      //   for (const fullpath of Object.keys(this.prevStatuses)) {
+      //     updatePaths.add(fullpath);
+      //   }
+      //
+      //   // ignore
+      //   for (const [fullpath, gitIgnore] of Object.entries(ignores)) {
+      //     addGitIgnore(fullpath, gitIgnore);
+      //   }
+      //
+      //   // root
+      //   updatePaths.add(root);
+      // } else {
+      // status
+      for (const [fullpath, status] of Object.entries(statuses)) {
+        if (fullpath in this.prevStatuses[root]) {
+          if (statusEqual(this.prevStatuses[root][fullpath], status)) {
             delete this.prevStatuses[root][fullpath];
+            continue;
           }
-          updatePaths.add(fullpath);
         }
-        for (const fullpath of Object.keys(this.prevStatuses[root])) {
-          updatePaths.add(fullpath);
-        }
-
-        // ignore
-        for (const [fullpath, gitIgnore] of Object.entries(ignores)) {
-          if (fullpath in this.prevIgnores[root]) {
-            if (this.prevIgnores[root][fullpath] === gitIgnore) {
-              continue;
-            }
-            delete this.prevIgnores[root];
-          }
-          addGitIgnore(fullpath, gitIgnore);
-        }
-        for (const [fullpath, gitIgnore] of Object.entries(
-          this.prevIgnores[root],
-        )) {
-          addGitIgnore(fullpath, gitIgnore);
-        }
-
-        // root
-        if (
-          rootStatus &&
-          (!this.prevRootStatus ||
-            !rootStatusEqual(this.prevRootStatus[root], rootStatus))
-        ) {
-          updatePaths.add(root);
-        }
+        updatePaths.add(fullpath);
       }
+      for (const fullpath of Object.keys(this.prevStatuses[root])) {
+        updatePaths.add(fullpath);
+      }
+
+      // ignore
+      for (const [fullpath, gitIgnore] of Object.entries(ignores)) {
+        if (fullpath in this.prevIgnores[root]) {
+          if (this.prevIgnores[root][fullpath] === gitIgnore) {
+            delete this.prevIgnores[root][fullpath];
+            continue;
+          }
+        }
+        addGitIgnore(fullpath, gitIgnore);
+      }
+      for (const [fullpath, gitIgnore] of Object.entries(
+        this.prevIgnores[root],
+      )) {
+        addGitIgnore(fullpath, gitIgnore);
+      }
+
+      // root
+      if (
+        rootStatus &&
+        (!this.prevRootStatus ||
+          !rootStatusEqual(this.prevRootStatus[root], rootStatus))
+      ) {
+        updatePaths.add(root);
+      }
+      // }
 
       this.prevStatuses[root] = statuses;
       this.prevIgnores[root] = ignores;
@@ -300,8 +294,13 @@ export class GitBinder {
     }
 
     for (const source of sources) {
-      await source.view.renderPaths(updatePaths);
-      await source.view.renderPaths(updateDirs, { withChildren: true });
+      await source.view.renderPaths([
+        ...updatePaths,
+        {
+          path: updateDirs,
+          withChildren: true,
+        },
+      ]);
     }
   }
 }
