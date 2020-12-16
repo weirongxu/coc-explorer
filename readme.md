@@ -468,16 +468,16 @@ You can use `?` to view all actions of current source
     "[i": ["wait", "indentPrev"],
     "]i": ["wait", "indentNext"],
 
-    "[m": ["wait", "indexPrev:modified"],
-    "]m": ["wait", "indexNext:modified"],
+    "[m": ["wait", "markPrev:modified"],
+    "]m": ["wait", "markNext:modified"],
 
-    "[d": ["wait", "indexPrev:diagnosticError:diagnosticWarning"],
-    "]d": ["wait", "indexNext:diagnosticError:diagnosticWarning"],
-    "[D": ["wait", "indexPrev:diagnosticError"],
-    "]D": ["wait", "indexNext:diagnosticError"],
+    "[d": ["wait", "markPrev:diagnosticError:diagnosticWarning"],
+    "]d": ["wait", "markNext:diagnosticError:diagnosticWarning"],
+    "[D": ["wait", "markPrev:diagnosticError"],
+    "]D": ["wait", "markNext:diagnosticError"],
 
-    "[c": ["wait", "indexPrev:git"],
-    "]c": ["wait", "indexNext:git"],
+    "[c": ["wait", "markPrev:git"],
+    "]c": ["wait", "markNext:git"],
     "<<": "gitStage",
     ">>": "gitUnstage"
   }

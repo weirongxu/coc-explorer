@@ -113,7 +113,7 @@ export class ActionSource<
     }
 
     const {
-      multi = false,
+      select: multi = false,
       render = false,
       reload = false,
       select = false,
@@ -133,7 +133,12 @@ export class ActionSource<
         const nodes = Array.from(source.selectedNodes);
         source.selectedNodes.clear();
         source.view.requestRenderNodes(nodes);
-        await action.callback.call(source, { source, nodes, args, mode });
+        await action.callback.call(source, {
+          source,
+          nodes,
+          args,
+          mode,
+        });
       } else {
         await action.callback.call(source, {
           source,

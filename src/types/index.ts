@@ -32,6 +32,10 @@ export const openStrategyList: OpenStrategy[] = [
   'sourceWindow',
 ];
 
+export const copyOrCutFileTypeList = ['append', 'replace'] as const;
+
+export type CopyOrCutFileType = typeof copyOrCutFileTypeList[number];
+
 export const previewOnHoverActionList = [
   'toggle',
   'enable',

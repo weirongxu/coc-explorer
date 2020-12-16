@@ -3,10 +3,14 @@ import { listManager, workspace } from 'coc.nvim';
 import open from 'open';
 import pathLib from 'path';
 import { ActionSource } from '../../../actions/actionSource';
-import { gitManager } from '../../../git/manager';
 import { driveList } from '../../../lists/drives';
 import { explorerWorkspaceFolderList } from '../../../lists/workspaceFolders';
-import { RevealStrategy, revealStrategyList } from '../../../types';
+import {
+  CopyOrCutFileType,
+  copyOrCutFileTypeList,
+  RevealStrategy,
+  revealStrategyList,
+} from '../../../types';
 import {
   bufnrByWinnrOrWinid,
   fsCopyFileRecursive,
@@ -47,7 +51,7 @@ export function loadFileActions(action: ActionSource<FileSource, FileNode>) {
     },
     'change directory to parent directory',
   );
-  action.addNodesAction(
+  action.addNodeAction(
     'reveal',
     async ({ args }) => {
       const target = args[0];
@@ -209,52 +213,7 @@ export function loadFileActions(action: ActionSource<FileSource, FileNode>) {
       }
     },
     'open file by drop command',
-    { multi: true },
-  );
-  action.addNodeAction(
-    'expandRecursive',
-    async ({ node }) => {
-      // eslint-disable-next-line no-restricted-properties
-      workspace.showMessage(
-        'The action expandRecursive has been deprecated, use expand:recursive instead of it',
-        'warning',
-      );
-      return action.doAction('expand', [node], ['recursive']);
-    },
-    'expand directory recursively (deprecated)',
-    { multi: true },
-  );
-  action.addNodeAction(
-    'collapseRecursive',
-    async ({ node }) => {
-      // eslint-disable-next-line no-restricted-properties
-      workspace.showMessage(
-        'The action collapseRecursive has been deprecated, use collapse:recursive instead of it',
-        'warning',
-      );
-      return action.doAction('collapse', [node], ['recursive']);
-    },
-    'collapse directory recursively (deprecated)',
-    { multi: true },
-  );
-  action.addNodeAction(
-    'expandOrCollapse',
-    async ({ node }) => {
-      // eslint-disable-next-line no-restricted-properties
-      workspace.showMessage(
-        'The action expandOrCollapse has been deprecated, use ["expanded?", "collapse", "expand"] instead of it',
-        'warning',
-      );
-      if (node.directory) {
-        if (file.view.isExpanded(node)) {
-          await action.doAction('collapse', node);
-        } else {
-          await action.doAction('expand', node);
-        }
-      }
-    },
-    'expand or collapse directory',
-    { multi: true },
+    { select: true },
   );
 
   action.addNodesAction(
@@ -281,38 +240,65 @@ export function loadFileActions(action: ActionSource<FileSource, FileNode>) {
     },
     'copy filename to clipboard',
   );
+
+  const copyOrCutFileOptions = {
+    args: [
+      {
+        name: 'type',
+        description: copyOrCutFileTypeList.join(' | '),
+      },
+    ],
+    menus: {
+      append: 'append',
+      replace: 'replace',
+    },
+  };
   action.addNodesAction(
     'copyFile',
-    async ({ nodes }) => {
-      const clearNodes = [...file.copiedNodes, ...file.cutNodes];
-      file.copiedNodes.clear();
-      file.cutNodes.clear();
+    async ({ nodes, args }) => {
+      const type = (args[0] ?? 'append') as CopyOrCutFileType;
+      if (type === 'replace') {
+        file.view.requestRenderNodes([...file.copiedNodes, ...file.cutNodes]);
+        file.copiedNodes.clear();
+        file.cutNodes.clear();
+      }
       nodes.forEach((node) => {
         file.copiedNodes.add(node);
       });
-      file.view.requestRenderNodes(clearNodes.concat(nodes));
+      file.view.requestRenderNodes(nodes);
     },
     'copy file for paste',
+    copyOrCutFileOptions,
   );
   action.addNodesAction(
     'cutFile',
-    async ({ nodes }) => {
-      const clearNodes = [...file.copiedNodes, ...file.cutNodes];
-      file.copiedNodes.clear();
-      file.cutNodes.clear();
+    async ({ nodes, args }) => {
+      const type = (args[0] ?? 'append') as CopyOrCutFileType;
+      if (type === 'replace') {
+        file.view.requestRenderNodes([...file.copiedNodes, ...file.cutNodes]);
+        file.copiedNodes.clear();
+        file.cutNodes.clear();
+      }
       nodes.forEach((node) => {
         file.cutNodes.add(node);
       });
-      file.view.requestRenderNodes(clearNodes.concat(nodes));
+      file.view.requestRenderNodes(nodes);
     },
     'cut file for paste',
+    copyOrCutFileOptions,
   );
   action.addNodeAction(
     'pasteFile',
     async ({ node }) => {
+      if (file.copiedNodes.size <= 0 && file.cutNodes.size <= 0) {
+        // eslint-disable-next-line no-restricted-properties
+        workspace.showMessage('Copied files or cut files is empty', 'error');
+        return;
+      }
       const targetDir = file.getPutTargetDir(node);
+      let loadRoot = false;
       if (file.copiedNodes.size > 0) {
-        const nodes = Array.from(file.copiedNodes);
+        const nodes = [...file.copiedNodes];
         await overwritePrompt(
           'paste',
           nodes.map((node) => ({
@@ -323,9 +309,10 @@ export function loadFileActions(action: ActionSource<FileSource, FileNode>) {
         );
         file.view.requestRenderNodes(nodes);
         file.copiedNodes.clear();
-        await file.load(node.parent ? node.parent : node);
-      } else if (file.cutNodes.size > 0) {
-        const nodes = Array.from(file.cutNodes);
+      }
+      if (file.cutNodes.size > 0) {
+        loadRoot = true;
+        const nodes = [...file.cutNodes];
         await overwritePrompt(
           'paste',
           nodes.map((node) => ({
@@ -335,11 +322,10 @@ export function loadFileActions(action: ActionSource<FileSource, FileNode>) {
           fsRename,
         );
         file.cutNodes.clear();
-        await file.load(file.view.rootNode);
-      } else {
-        // eslint-disable-next-line no-restricted-properties
-        workspace.showMessage('Copied files or cut files is empty', 'error');
       }
+      await file.load(
+        loadRoot ? file.view.rootNode : node.parent ? node.parent : node,
+      );
     },
     'paste files to here',
   );
@@ -582,10 +568,10 @@ export function loadFileActions(action: ActionSource<FileSource, FileNode>) {
         force: true,
       });
 
-      file.nvim.pauseNotification();
+      nvim.pauseNotification();
       file.highlight.clearHighlightsNotify();
       loadNotifier?.notify();
-      await file.nvim.resumeNotification();
+      await nvim.resumeNotification();
     },
     'toggle visibility of git change node',
     { reload: true },

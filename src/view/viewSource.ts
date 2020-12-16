@@ -479,6 +479,9 @@ export class ViewSource<TreeNode extends BaseTreeNode<TreeNode>> {
     };
   }
 
+  /**
+   * request render nodes, it will render the node when finished the action
+   */
   requestRenderNodes(nodes: TreeNode[]) {
     nodes.forEach((node) => {
       this.requestedRenderNodes.add(node);

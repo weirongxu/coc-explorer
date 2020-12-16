@@ -79,7 +79,7 @@ export function loadGlobalActions(action: ActionExplorer) {
     },
     'open file or directory',
     {
-      multi: true,
+      select: true,
       args: openActionArgs,
       menus: openActionMenu,
     },
@@ -104,7 +104,7 @@ export function loadGlobalActions(action: ActionExplorer) {
     },
     'expand node',
     {
-      multi: true,
+      select: true,
       args: [
         {
           name: 'expand options',
@@ -146,7 +146,7 @@ export function loadGlobalActions(action: ActionExplorer) {
     },
     'collapse node',
     {
-      multi: true,
+      select: true,
       args: [
         {
           name: 'collapse options',
@@ -205,7 +205,7 @@ export function loadGlobalActions(action: ActionExplorer) {
   const moveActionMenu = {
     insideSource: 'move inside current source',
   };
-  action.addNodesAction(
+  action.addNodeAction(
     'nodePrev',
     async ({ args }) => {
       const moveStrategy = args[0] as MoveStrategy;
@@ -226,7 +226,7 @@ export function loadGlobalActions(action: ActionExplorer) {
       menus: moveActionMenu,
     },
   );
-  action.addNodesAction(
+  action.addNodeAction(
     'nodeNext',
     async ({ args }) => {
       const moveStrategy = args[0] as MoveStrategy;
@@ -247,7 +247,7 @@ export function loadGlobalActions(action: ActionExplorer) {
       menus: moveActionMenu,
     },
   );
-  action.addNodesAction(
+  action.addNodeAction(
     'expandablePrev',
     async ({ args }) => {
       await explorer.action.nodePrev(
@@ -261,7 +261,7 @@ export function loadGlobalActions(action: ActionExplorer) {
       menus: moveActionMenu,
     },
   );
-  action.addNodesAction(
+  action.addNodeAction(
     'expandableNext',
     async ({ args }) => {
       await action.nodeNext(
@@ -275,7 +275,7 @@ export function loadGlobalActions(action: ActionExplorer) {
       menus: moveActionMenu,
     },
   );
-  action.addNodesAction(
+  action.addNodeAction(
     'indentPrev',
     async ({ args }) => {
       const node = await explorer.view.currentNode();
@@ -291,7 +291,7 @@ export function loadGlobalActions(action: ActionExplorer) {
       menus: moveActionMenu,
     },
   );
-  action.addNodesAction(
+  action.addNodeAction(
     'indentNext',
     async ({ args }) => {
       const node = await explorer.view.currentNode();
@@ -308,7 +308,7 @@ export function loadGlobalActions(action: ActionExplorer) {
     },
   );
 
-  action.addNodesAction(
+  action.addNodeAction(
     'gotoSource',
     async ({ args }) => {
       const source = explorer.sources.find((s) => s.sourceType === args[0]);
@@ -318,7 +318,7 @@ export function loadGlobalActions(action: ActionExplorer) {
     },
     'go to source',
   );
-  action.addNodesAction(
+  action.addNodeAction(
     'sourceNext',
     async () => {
       const nextSource =
@@ -331,7 +331,7 @@ export function loadGlobalActions(action: ActionExplorer) {
     },
     'go to next source',
   );
-  action.addNodesAction(
+  action.addNodeAction(
     'sourcePrev',
     async () => {
       const prevSource =
@@ -347,14 +347,14 @@ export function loadGlobalActions(action: ActionExplorer) {
     'go to previous source',
   );
 
-  action.addNodesAction(
+  action.addNodeAction(
     'modifiedPrev',
     async () => {
       await locator.gotoPrevMark('modified');
     },
     'go to previous modified',
   );
-  action.addNodesAction(
+  action.addNodeAction(
     'modifiedNext',
     async () => {
       await locator.gotoNextMark('modified');
@@ -362,14 +362,14 @@ export function loadGlobalActions(action: ActionExplorer) {
     'go to next modified',
   );
 
-  action.addNodesAction(
+  action.addNodeAction(
     'diagnosticPrev',
     async () => {
       await locator.gotoPrevMark('diagnosticError', 'diagnosticWarning');
     },
     'go to previous diagnostic',
   );
-  action.addNodesAction(
+  action.addNodeAction(
     'diagnosticNext',
     async () => {
       await locator.gotoNextMark('diagnosticError', 'diagnosticWarning');
@@ -377,14 +377,14 @@ export function loadGlobalActions(action: ActionExplorer) {
     'go to next diagnostic',
   );
 
-  action.addNodesAction(
+  action.addNodeAction(
     'gitPrev',
     async () => {
       await locator.gotoPrevMark('git');
     },
     'go to previous git changed',
   );
-  action.addNodesAction(
+  action.addNodeAction(
     'gitNext',
     async () => {
       await locator.gotoNextMark('git');
@@ -392,10 +392,10 @@ export function loadGlobalActions(action: ActionExplorer) {
     'go to next git changed',
   );
 
-  const indexOptions = {
+  const markOptions = {
     args: [
       {
-        name: 'index name',
+        name: 'mark name',
         description: 'string',
       },
     ],
@@ -406,46 +406,42 @@ export function loadGlobalActions(action: ActionExplorer) {
       git: 'git',
     },
   };
-  action.addNodesAction(
-    'indexPrev',
+  action.addNodeAction(
+    'markPrev',
     async ({ args }) => {
       await locator.gotoPrevMark(...args);
     },
-    'go to previous index',
-    indexOptions,
+    'go to previous mark',
+    markOptions,
   );
-  action.addNodesAction(
-    'indexNext',
+  action.addNodeAction(
+    'markNext',
     async ({ args }) => {
       await locator.gotoNextMark(...args);
     },
-    'go to next index',
-    indexOptions,
+    'go to next mark',
+    markOptions,
   );
 
   // preview
-  action.addNodesAction(
+  action.addNodeAction(
     'preview',
-    async ({ nodes, args }) => {
-      const source = await explorer.view.currentSource();
-      if (nodes && nodes[0] && source) {
-        const node = nodes[0];
-        const previewStrategy = args[0] as undefined | PreviewActionStrategy;
-        if (!previewStrategy) {
-          return;
-        }
-        const nodeIndex = source.view.getLineByNode(node);
-        if (nodeIndex === undefined) {
-          return;
-        }
-
-        await explorer.floatingPreview.previewNode(
-          previewStrategy,
-          source,
-          node,
-          nodeIndex,
-        );
+    async ({ source, node, args }) => {
+      const previewStrategy = args[0] as undefined | PreviewActionStrategy;
+      if (!previewStrategy) {
+        return;
       }
+      const nodeIndex = source.view.getLineByNode(node);
+      if (nodeIndex === undefined) {
+        return;
+      }
+
+      await explorer.floatingPreview.previewNode(
+        previewStrategy,
+        source,
+        node,
+        nodeIndex,
+      );
     },
     'preview',
     {
@@ -460,7 +456,7 @@ export function loadGlobalActions(action: ActionExplorer) {
       },
     },
   );
-  action.addNodesAction(
+  action.addNodeAction(
     'previewOnHover',
     async ({ args }) => {
       const previewOnHoverAction = args[0] as undefined | PreviewOnHoverAction;
@@ -517,7 +513,6 @@ export function loadGlobalActions(action: ActionExplorer) {
       source.showHidden = !source.showHidden;
     },
     'toggle visibility of hidden node',
-    { reload: true },
   );
   action.addNodeAction(
     'select',
@@ -526,7 +521,9 @@ export function loadGlobalActions(action: ActionExplorer) {
       source.view.requestRenderNodes([node]);
     },
     'select node',
-    { select: true },
+    {
+      select: 'visual',
+    },
   );
   action.addNodeAction(
     'unselect',
@@ -535,7 +532,9 @@ export function loadGlobalActions(action: ActionExplorer) {
       source.view.requestRenderNodes([node]);
     },
     'unselect node',
-    { select: true },
+    {
+      select: 'visual',
+    },
   );
   action.addNodeAction(
     'toggleSelection',
@@ -547,13 +546,17 @@ export function loadGlobalActions(action: ActionExplorer) {
       }
     },
     'toggle node selection',
-    { select: true },
+    {
+      select: 'visual',
+    },
   );
 
   // other
   action.addNodeAction(
     'refresh',
     async ({ source }) => {
+      source.selectedNodes.clear();
+
       const loadNotifier = await source.loadNotifier(source.view.rootNode, {
         force: true,
       });
@@ -572,14 +575,14 @@ export function loadGlobalActions(action: ActionExplorer) {
     },
     'show help',
   );
-  action.addNodesAction(
+  action.addNodeAction(
     'actionMenu',
-    async ({ source, nodes }) => {
-      await source.action.listActionMenu(nodes);
+    async ({ source, node }) => {
+      await source.action.listActionMenu([node]);
     },
     'show actions in coc-list',
   );
-  action.addNodesAction(
+  action.addNodeAction(
     'normal',
     async ({ args }) => {
       if (args[0]) {
@@ -611,7 +614,7 @@ export function loadGlobalActions(action: ActionExplorer) {
     },
     'esc action',
   );
-  action.addNodesAction(
+  action.addNodeAction(
     'quit',
     async () => {
       await explorer.quit();

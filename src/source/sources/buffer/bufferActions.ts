@@ -11,25 +11,6 @@ export function loadBufferActions(
   const buffer = action.owner;
 
   action.addNodeAction(
-    'expandOrCollapse',
-    async ({ node }) => {
-      // eslint-disable-next-line no-restricted-properties
-      workspace.showMessage(
-        'The action expandOrCollapse has been deprecated, use ["expanded?", "collapse", "expand"] instead of it',
-        'warning',
-      );
-      if (node.expandable) {
-        if (buffer.view.isExpanded(node)) {
-          await action.doAction('collapse', node);
-        } else {
-          await action.doAction('expand', node);
-        }
-      }
-    },
-    'expand or collapse root',
-    { multi: true },
-  );
-  action.addNodeAction(
     'drop',
     async ({ node }) => {
       if (!node.hidden) {
@@ -49,7 +30,7 @@ export function loadBufferActions(
       await nvim.resumeNotification();
     },
     'open buffer by drop command',
-    { multi: true },
+    { select: true },
   );
   action.addNodeAction(
     'delete',
@@ -64,7 +45,7 @@ export function loadBufferActions(
       await buffer.load(node, { force: true });
     },
     'delete buffer',
-    { multi: true },
+    { select: true },
   );
   action.addNodeAction(
     'deleteForever',
@@ -79,24 +60,6 @@ export function loadBufferActions(
       await buffer.load(node, { force: true });
     },
     'bwipeout buffer',
-    { multi: true },
-  );
-
-  action.addNodesAction(
-    'gitStage',
-    async ({ nodes }) => {
-      await gitManager.cmd.stage(nodes.map((node) => node.fullpath));
-      await buffer.load(buffer.view.rootNode);
-    },
-    'add file to git index',
-  );
-
-  action.addNodesAction(
-    'gitUnstage',
-    async ({ nodes }) => {
-      await gitManager.cmd.unstage(nodes.map((node) => node.fullpath));
-      await buffer.load(buffer.view.rootNode);
-    },
-    'reset file from git index',
+    { select: true },
   );
 }

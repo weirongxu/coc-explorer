@@ -7,19 +7,21 @@ export namespace ActionRegistrar {
     /**
      * @default false
      */
-    multi: boolean;
-    /**
-     * @default false
-     */
     render: boolean;
     /**
      * @default false
      */
     reload: boolean;
     /**
+     * use select
+     *
+     * - 'visual': Use all visual nodes or current node
+     * - 'keep': Use all selected node but no clear it
+     * - true: Use selected node and clear it
+     * - false: Append one visual node or current node
      * @default false
      */
-    select: boolean;
+    select: boolean | 'visual' | 'keep';
     args: { name: string; description?: string }[];
     menus: ActionMenu.OptionMenus;
   };
@@ -61,6 +63,9 @@ export class ActionRegistrar<O, TreeNode extends BaseTreeNode<TreeNode>> {
 
   constructor(public readonly owner: O) {}
 
+  /**
+   * add an action that uses the selected node and clear it
+   */
   addNodesAction(
     name: string,
     callback: ActionRegistrar.ActionNodesCallback<TreeNode>,
@@ -71,12 +76,15 @@ export class ActionRegistrar<O, TreeNode extends BaseTreeNode<TreeNode>> {
       callback,
       description,
       options: {
+        select: true,
         ...options,
-        multi: true,
       },
     };
   }
 
+  /**
+   * add an action
+   */
   addNodeAction(
     name: string,
     callback: ActionRegistrar.ActionNodeCallback<TreeNode>,
