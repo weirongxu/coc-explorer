@@ -212,8 +212,8 @@ describe('gitManager status', () => {
   });
 
   test('getMixedStatuses', async () => {
-    await gitManager.reload('/root', { showIgnored: true });
-    expect(gitManager.getMixedStatusesByRoot('/root')).toEqual(
+    await gitManager.reload(normalizePath('/root'), { showIgnored: true });
+    expect(gitManager.getMixedStatusesByRoot(normalizePath('/root'))).toEqual(
       mapKeys(
         {
           src: {

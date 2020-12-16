@@ -122,7 +122,6 @@ export class GitBinder {
     return [
       ...(['CocGitStatusChange', 'FugitiveChanged'] as const).map((event) =>
         internalEvents.on(event, async () => {
-          debugger;
           await this.reloadDebounce(this.sources, workspace.cwd);
         }),
       ),
@@ -188,7 +187,6 @@ export class GitBinder {
     sources: ExplorerSource<any>[],
     directories: string[],
   ) {
-    debugger;
     const roots = await gitManager.getGitRoots(directories);
 
     if (!roots.length) {
@@ -231,24 +229,6 @@ export class GitBinder {
         }
       };
 
-      // if (isReloadAll) {
-      //   // status
-      //   for (const fullpath of Object.keys(statuses)) {
-      //     updatePaths.add(fullpath);
-      //   }
-      //   for (const fullpath of Object.keys(this.prevStatuses)) {
-      //     updatePaths.add(fullpath);
-      //   }
-      //
-      //   // ignore
-      //   for (const [fullpath, gitIgnore] of Object.entries(ignores)) {
-      //     addGitIgnore(fullpath, gitIgnore);
-      //   }
-      //
-      //   // root
-      //   updatePaths.add(root);
-      // } else {
-      // status
       for (const [fullpath, status] of Object.entries(statuses)) {
         if (fullpath in this.prevStatuses[root]) {
           if (statusEqual(this.prevStatuses[root][fullpath], status)) {
@@ -286,7 +266,6 @@ export class GitBinder {
       ) {
         updatePaths.add(root);
       }
-      // }
 
       this.prevStatuses[root] = statuses;
       this.prevIgnores[root] = ignores;

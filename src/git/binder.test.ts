@@ -7,6 +7,7 @@ import { ExplorerManager } from '../explorerManager';
 import { Args } from '../parseArgs';
 import { ExplorerSource } from '../source/source';
 import { FileNode, FileSource } from '../source/sources/file/fileSource';
+import { normalizePath } from '../util';
 import { GitBinder } from './binder';
 import { gitManager } from './manager';
 import { GitFormat, GitMixedStatus } from './types';
@@ -18,19 +19,22 @@ class TestSource extends FileSource {
     const genNode = (node: {
       fullpath: string;
       directory: boolean;
-    }): FileNode => ({
-      ...node,
-      name: pathLib.basename(node.fullpath),
-      uid: this.helper.getUid(node.fullpath),
-      type: 'child',
-      hidden: false,
-      readable: true,
-      readonly: false,
-      writable: true,
-      executable: false,
-      symbolicLink: false,
-    });
-    if (parentNode.fullpath === '/') {
+    }): FileNode => {
+      node.fullpath = normalizePath(node.fullpath);
+      return {
+        ...node,
+        name: pathLib.basename(node.fullpath),
+        uid: this.helper.getUid(node.fullpath),
+        type: 'child',
+        hidden: false,
+        readable: true,
+        readonly: false,
+        writable: true,
+        executable: false,
+        symbolicLink: false,
+      };
+    };
+    if (parentNode.fullpath === pathLib.sep) {
       return [
         {
           directory: true,
@@ -53,7 +57,7 @@ class TestSource extends FileSource {
           fullpath: '/package.json',
         },
       ].map(genNode);
-    } else if (parentNode.fullpath === '/lib') {
+    } else if (parentNode.fullpath === `${pathLib.sep}lib`) {
       return [
         {
           directory: true,
@@ -64,7 +68,7 @@ class TestSource extends FileSource {
           fullpath: 'lib/index.js',
         },
       ].map(genNode);
-    } else if (parentNode.fullpath === '/src') {
+    } else if (parentNode.fullpath === `${pathLib.sep}src`) {
       return [
         {
           directory: false,
@@ -107,8 +111,8 @@ test('GitBinder.reload', async () => {
   // @ts-ignore
   explorer._args = new Args([]);
   // @ts-ignore
-  explorer._rootUri = '/';
-  source.root = '/';
+  explorer._rootUri = pathLib.sep;
+  source.root = pathLib.sep;
   const binder = new GitBinder();
   binder.bind(source as ExplorerSource<any>);
   source.bootInit(true);
@@ -130,7 +134,7 @@ test('GitBinder.reload', async () => {
 
   Object.defineProperty(gitManager, 'getGitRoot', {
     writable: true,
-    value: jest.fn().mockImplementation(() => '/'),
+    value: jest.fn().mockImplementation(() => pathLib.sep),
   });
 
   const expectReloadGit = async (
@@ -150,21 +154,25 @@ test('GitBinder.reload', async () => {
 
   await expectReloadGit(
     ['!! lib/', ' M src/test.ts', 'M  readme.md', ' M package.json'],
-    ['/', '/lib', '/src', '/readme.md', '/package.json'],
+    ['/', '/lib', '/src', '/readme.md', '/package.json'].map(normalizePath),
   );
 
-  expect(gitManager.getMixedStatus('/lib/index.js', false)).toEqual({
+  expect(
+    gitManager.getMixedStatus(normalizePath('/lib/index.js'), false),
+  ).toEqual({
     x: GitFormat.ignored,
     y: GitFormat.unmodified,
   } as GitMixedStatus);
 
-  expect(gitManager.getMixedStatus('/lib/folder', false)).toEqual({
+  expect(
+    gitManager.getMixedStatus(normalizePath('/lib/folder'), false),
+  ).toEqual({
     x: GitFormat.ignored,
     y: GitFormat.unmodified,
   } as GitMixedStatus);
 
   await expectReloadGit(
     ['!! lib/', ' M src/test.ts', 'M  readme.md'],
-    ['/package.json'],
+    ['/package.json'].map(normalizePath),
   );
 });
