@@ -574,24 +574,6 @@ export function loadFileActions(action: ActionSource<FileSource, FileNode>) {
     'search by coc-list recursively',
   );
 
-  action.addNodesAction(
-    'gitStage',
-    async ({ nodes }) => {
-      await gitManager.cmd.stage(nodes.map((node) => node.fullpath));
-      await file.load(file.view.rootNode);
-    },
-    'add file to git index',
-  );
-
-  action.addNodesAction(
-    'gitUnstage',
-    async ({ nodes }) => {
-      await gitManager.cmd.unstage(nodes.map((node) => node.fullpath));
-      await file.load(file.view.rootNode);
-    },
-    'reset file from git index',
-  );
-
   action.addNodeAction(
     'toggleOnlyGitChange',
     async () => {

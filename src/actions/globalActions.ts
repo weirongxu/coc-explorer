@@ -1,5 +1,7 @@
+import { compactI } from 'coc-helper';
 import { workspace } from 'coc.nvim';
 import { argOptions } from '../argOptions';
+import { gitManager } from '../git/manager';
 import { parseOriginalActionExp } from '../mappings';
 import {
   collapseOptionList,
@@ -156,6 +158,41 @@ export function loadGlobalActions(action: ActionExplorer) {
         all: 'for all nodes',
       },
     },
+  );
+
+  // git
+  action.addNodesAction(
+    'gitStage',
+    async ({ nodes, source }) => {
+      const fullpaths = compactI(nodes.map((node) => node.fullpath));
+      if (!fullpaths.length) {
+        return;
+      }
+      await gitManager.cmd.stage(fullpaths);
+      const roots = await gitManager.getGitRoots(fullpaths);
+      for (const root of roots) {
+        await gitManager.reload(root);
+      }
+      source.view.requestRenderNodes([source.view.rootNode, ...nodes]);
+    },
+    'add file to git index',
+  );
+
+  action.addNodesAction(
+    'gitUnstage',
+    async ({ nodes, source }) => {
+      const fullpaths = compactI(nodes.map((node) => node.fullpath));
+      if (!fullpaths.length) {
+        return;
+      }
+      await gitManager.cmd.unstage(fullpaths);
+      const roots = await gitManager.getGitRoots(fullpaths);
+      for (const root of roots) {
+        await gitManager.reload(root);
+      }
+      source.view.requestRenderNodes([source.view.rootNode, ...nodes]);
+    },
+    'reset file from git index',
   );
 
   // move and jump

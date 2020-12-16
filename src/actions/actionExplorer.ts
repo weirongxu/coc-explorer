@@ -9,7 +9,10 @@ import { enableWrapscan, onError, scanIndexNext, scanIndexPrev } from '../util';
 import { ActionRegistrar } from './registrar';
 import { ActionExp, MappingMode } from './types';
 
-export class ActionExplorer extends ActionRegistrar<Explorer, any> {
+export class ActionExplorer extends ActionRegistrar<
+  Explorer,
+  BaseTreeNode<any>
+> {
   readonly actionMutex = new Mutex();
   readonly explorer = this.owner;
   readonly locator = this.explorer.locator;

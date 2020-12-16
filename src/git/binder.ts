@@ -1,6 +1,5 @@
 import { Disposable, disposeAll, workspace } from 'coc.nvim';
 import pathLib from 'path';
-import { config } from '../config';
 import { internalEvents, onEvent } from '../events';
 import { ExplorerManager } from '../explorerManager';
 import { BaseTreeNode, ExplorerSource } from '../source/source';
@@ -12,7 +11,6 @@ import {
   onError,
   sum,
 } from '../util';
-import { GitCommand } from './command';
 import { gitManager } from './manager';
 import { GitIgnore, GitMixedStatus, GitRootStatus } from './types';
 
@@ -32,8 +30,6 @@ export class GitBinder {
     ExplorerSource<BaseTreeNode<any>>,
     { refCount: number }
   > = new Map();
-  private showIgnored: boolean;
-  private showUntrackedFiles: GitCommand.ShowUntrackedFiles;
   /**
    * prevStatuses[root][path] = GitMixedStatus
    */
@@ -64,26 +60,6 @@ export class GitBinder {
 
   get refTotalCount() {
     return sum(Array.from(this.sourcesBinding.values()).map((b) => b.refCount));
-  }
-
-  constructor() {
-    const deprecatedShowIgnored = config.get<boolean>(
-      'file.column.git.showIgnored',
-    );
-    if (deprecatedShowIgnored !== undefined) {
-      // eslint-disable-next-line no-restricted-properties
-      workspace.showMessage(
-        'explorer.file.column.git.showIgnored has been deprecated, please use explorer.git.showIgnored in coc-settings.json',
-        'warning',
-      );
-      this.showIgnored = deprecatedShowIgnored;
-    } else {
-      this.showIgnored = config.get<boolean>('git.showIgnored')!;
-    }
-
-    this.showUntrackedFiles = config.get<GitCommand.ShowUntrackedFiles>(
-      'file.git.showUntrackedFiles',
-    )!;
   }
 
   protected init_(source: ExplorerSource<BaseTreeNode<any>>) {
@@ -127,7 +103,7 @@ export class GitBinder {
       ),
       onEvent(
         'BufWritePost',
-        debounce(1000, async (bufnr) => {
+        debounce(500, async (bufnr) => {
           const fullpath = this.explorerManager.bufManager.getBufferNode(bufnr)
             ?.fullpath;
           if (fullpath) {
@@ -157,7 +133,7 @@ export class GitBinder {
     ];
   }
 
-  protected reloadDebounceChecker = debouncePromise(1000, () => {});
+  protected reloadDebounceChecker = debouncePromise(200, () => {});
   protected reloadDebounceArgs = {
     sources: new Set<ExplorerSource<any>>(),
     directories: new Set<string>(),
@@ -197,10 +173,7 @@ export class GitBinder {
     const updateDirs: Set<string> = new Set();
 
     for (const root of roots) {
-      await gitManager.reload(root, {
-        showIgnored: this.showIgnored,
-        showUntrackedFiles: this.showUntrackedFiles,
-      });
+      await gitManager.reload(root);
 
       // render paths
       const statuses = gitManager.getMixedStatusesByRoot(root);

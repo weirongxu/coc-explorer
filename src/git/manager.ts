@@ -1,4 +1,4 @@
-import { Disposable } from 'coc.nvim';
+import { Disposable, workspace } from 'coc.nvim';
 import pathLib from 'path';
 import { config } from '../config';
 import { ExplorerSource } from '../source/source';
@@ -33,6 +33,29 @@ class GitManager {
    */
   private rootStatusCache: Record<string, GitRootStatus> = {};
   private binder = new GitBinder();
+
+  private showIgnored: boolean;
+  private showUntrackedFiles: GitCommand.ShowUntrackedFiles;
+
+  constructor() {
+    const deprecatedShowIgnored = config.get<boolean>(
+      'file.column.git.showIgnored',
+    );
+    if (deprecatedShowIgnored !== undefined) {
+      // eslint-disable-next-line no-restricted-properties
+      workspace.showMessage(
+        'explorer.file.column.git.showIgnored has been deprecated, please use explorer.git.showIgnored in coc-settings.json',
+        'warning',
+      );
+      this.showIgnored = deprecatedShowIgnored;
+    } else {
+      this.showIgnored = config.get<boolean>('git.showIgnored')!;
+    }
+
+    this.showUntrackedFiles = config.get<GitCommand.ShowUntrackedFiles>(
+      'file.git.showUntrackedFiles',
+    )!;
+  }
 
   async getGitRoots(directories: string[] | Set<string>): Promise<string[]> {
     const directorySet = [...new Set(directories)];
@@ -70,10 +93,16 @@ class GitManager {
 
   async reload(
     directory: string,
-    statusOptions: GitCommand.StatusOptions,
+    options: GitCommand.StatusOptions = {},
   ): Promise<string | undefined> {
     const root = await this.getGitRoot(directory);
     if (root) {
+      const statusOptions = {
+        showIgnored: options.showIgnored ?? this.showIgnored,
+        showUntrackedFiles:
+          options.showUntrackedFiles ?? this.showUntrackedFiles,
+      };
+
       const statusRecord = await this.cmd.status(root, statusOptions);
       const statusArray = Object.values(statusRecord);
 

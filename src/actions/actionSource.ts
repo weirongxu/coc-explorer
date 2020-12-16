@@ -22,7 +22,7 @@ export class ActionSource<
 
   registeredActions(): ActionRegistrar.Map<TreeNode> {
     return {
-      ...(this.global.actions as ActionRegistrar.Map<TreeNode>),
+      ...((this.global.actions as unknown) as ActionRegistrar.Map<TreeNode>),
       ...this.actions,
     };
   }
