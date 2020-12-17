@@ -215,7 +215,7 @@ export class ExplorerManager {
 
   async registerMappings() {
     this.mappings = {};
-    (await keyMapping.getAllKeys()).forEach((key) => {
+    for (const key of await keyMapping.getKeys()) {
       this.mappings[key] = {};
       (['n', 'v'] as const).forEach((mode) => {
         if (mode === 'v' && ['o', 'j', 'k'].includes(key)) {
@@ -236,7 +236,7 @@ export class ExplorerManager {
         );
         this.mappings[key][mode] = `<Plug>(coc-${plugKey})`;
       });
-    });
+    }
     await this.nvim.call('coc_explorer#mappings#register', [this.mappings]);
     await this.events.fire('registeredMapping');
   }

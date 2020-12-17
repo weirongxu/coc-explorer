@@ -47,9 +47,11 @@ export class ActionMenuCodeActionProvider implements CodeActionProvider {
         .sort(([aName], [bName]) => aName.localeCompare(bName))
         .sort(([aName], [bName]) => aName.localeCompare(bName))
         .map(([actionName, { options }]) => {
+          const keys = reverseMappings[actionName];
+          const key = keys ? keys.vmap ?? keys.all : '';
           const list = [
             {
-              title: `${actionName} [${reverseMappings[actionName] ?? ''}]`,
+              title: `${actionName} [${key}]`,
               name: actionName,
               command: 'explorer.doCodeAction',
               arguments: [actionName, actionName, async () => []] as [
@@ -64,10 +66,10 @@ export class ActionMenuCodeActionProvider implements CodeActionProvider {
             list.push(
               ...ActionMenu.getNormalizeMenus(options.menus).map((menu) => {
                 const fullActionName = actionName + ':' + menu.args;
+                const keys = reverseMappings[fullActionName];
+                const key = keys ? keys.vmap ?? keys.all : '';
                 return {
-                  title: `${fullActionName} [${
-                    reverseMappings[fullActionName] ?? ''
-                  }]`,
+                  title: `${fullActionName} [${key}]`,
                   name: fullActionName,
                   command: 'explorer.doCodeAction',
                   arguments: [

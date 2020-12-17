@@ -11,8 +11,7 @@ export class ViewExplorer {
 
   get flattenedNodes() {
     return this.explorer.sources.reduce<BaseTreeNode<any>[]>((ret, cur) => {
-      ret.concat(cur.view.flattenedNodes);
-      return ret;
+      return ret.concat(cur.view.flattenedNodes);
     }, []);
   }
 

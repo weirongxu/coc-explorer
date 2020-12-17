@@ -58,6 +58,21 @@
             }
           }
         },
+        "mapping.keyMappings": {
+          "type": "object",
+          "additionalProperties": {
+            "anyOf": [
+              {
+                "$ref": "#/definitions/mapping.actionExp"
+              },
+              {
+                "enum": [
+                  false
+                ]
+              }
+            ]
+          }
+        },
         "mapping.actionExp": {
           "anyOf": [
             {
@@ -184,39 +199,20 @@
           "default": "default"
         },
         "explorer.keyMappings.global": {
-          "description": "Custom global keymappings",
-          "type": "object",
-          "additionalProperties": {
-            "anyOf": [
-              {
-                "$ref": "#/definitions/mapping.actionExp"
-              },
-              {
-                "enum": [
-                  false
-                ]
-              }
-            ]
-          },
+          "description": "Custom global key mappings",
+          "$ref": "#/definitions/mapping.keyMappings",
+          "default": {}
+        },
+        "explorer.keyMappings.vmap": {
+          "description": "Custom vmap key mappings",
+          "$ref": "#/definitions/mapping.keyMappings",
           "default": {}
         },
         "explorer.keyMappings.sources": {
-          "description": "Custom keymappings in sources",
+          "description": "Custom key mappings in sources",
           "type": "object",
           "additionalProperties": {
-            "type": "object",
-            "additionalProperties": {
-              "anyOf": [
-                {
-                  "$ref": "#/definitions/mapping.actionExp"
-                },
-                {
-                  "enum": [
-                    false
-                  ]
-                }
-              ]
-            },
+            "$ref": "#/definitions/mapping.keyMappings",
             "default": {}
           },
           "default": {}

@@ -15,7 +15,9 @@ export class ActionExplorer extends ActionRegistrar<
 > {
   readonly actionMutex = new Mutex();
   readonly explorer = this.owner;
-  readonly locator = this.explorer.locator;
+  get locator() {
+    return this.explorer.locator;
+  }
 
   constructor(owner: Explorer) {
     super(owner);
@@ -30,7 +32,7 @@ export class ActionExplorer extends ActionRegistrar<
         selectedLineIndexes,
       );
       for (const { source, lineIndexes } of lineIndexesGroups) {
-        const actionExp = keyMapping.getActionExp(source.sourceType, key);
+        const actionExp = keyMapping.getActionExp(source.sourceType, key, mode);
         if (actionExp) {
           await this.doActionExp(actionExp, {
             mode,

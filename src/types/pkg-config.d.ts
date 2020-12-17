@@ -135,13 +135,19 @@ export interface Explorer {
    */
   'explorer.keyMappingMode'?: 'none' | 'default';
   /**
-   * Custom global keymappings
+   * Custom global key mappings
    */
   'explorer.keyMappings.global'?: {
     [k: string]: MappingActionExp | false;
   };
   /**
-   * Custom keymappings in sources
+   * Custom vmap key mappings
+   */
+  'explorer.keyMappings.vmap'?: {
+    [k: string]: MappingActionExp | false;
+  };
+  /**
+   * Custom key mappings in sources
    */
   'explorer.keyMappings.sources'?: {
     [k: string]: {

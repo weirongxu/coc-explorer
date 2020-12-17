@@ -677,13 +677,19 @@ Type: <pre><code>{
 Type: <pre><code>'none' | 'default'</code></pre>Default: <pre><code>"default"</code></pre>
 </details>
 <details>
-<summary><code>explorer.keyMappings.global</code>: Custom global keymappings.</summary>
+<summary><code>explorer.keyMappings.global</code>: Custom global key mappings.</summary>
 Type: <pre><code>{
     [k: string]: MappingActionExp | false;
 }</code></pre>Default: <pre><code>{}</code></pre>
 </details>
 <details>
-<summary><code>explorer.keyMappings.sources</code>: Custom keymappings in sources.</summary>
+<summary><code>explorer.keyMappings.vmap</code>: Custom vmap key mappings.</summary>
+Type: <pre><code>{
+    [k: string]: MappingActionExp | false;
+}</code></pre>Default: <pre><code>{}</code></pre>
+</details>
+<details>
+<summary><code>explorer.keyMappings.sources</code>: Custom key mappings in sources.</summary>
 Type: <pre><code>{
     [k: string]: {
         [k: string]: MappingActionExp | false;

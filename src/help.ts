@@ -5,7 +5,7 @@ import { keyMapping } from './mappings';
 import { hlGroupManager } from './highlight/manager';
 import { BaseTreeNode, ExplorerSource } from './source/source';
 import { ViewPainter, ViewRowPainter } from './source/viewPainter';
-import { Action, ActionExp } from './actions/types';
+import { Action, ActionExp, Mappings } from './actions/types';
 import { ActionRegistrar } from './actions/registrar';
 import { ActionMenu } from './actions/menu';
 import {
@@ -117,7 +117,7 @@ export class HelpPainter {
       row.add(' - ');
     }
     if (ctx.isWait) {
-      row.add(waitAction.helpDescription, { hl: helpHightlights.type });
+      row.add(waitAction.helpDescription + ' ', { hl: helpHightlights.type });
     }
   }
 
@@ -210,23 +210,32 @@ export class HelpPainter {
       });
     });
 
-    const mappings = await keyMapping.getMappings(this.source.sourceType);
-    for (const [key, actionExp] of Object.entries(mappings)) {
-      if (
-        !this.anyAction(
-          actionExp,
-          (action) => action.name in this.registeredActions,
-        )
-      ) {
-        continue;
-      }
+    const drawMappings = async (mappings: Mappings) => {
+      for (const [key, actionExp] of Object.entries(mappings)) {
+        if (
+          !this.anyAction(
+            actionExp,
+            (action) => action.name in this.registeredActions,
+          )
+        ) {
+          continue;
+        }
 
-      await this.drawMappingsActionExp(' '.repeat(key.length + 4), actionExp, {
-        key,
-        isFirstLine: true,
-        isWait: false,
-      });
-    }
+        await this.drawMappingsActionExp(
+          ' '.repeat(key.length + 4),
+          actionExp,
+          {
+            key,
+            isFirstLine: true,
+            isWait: false,
+          },
+        );
+      }
+    };
+
+    const mappings = await keyMapping.getMappings(this.source.sourceType);
+    await drawMappings(mappings.all);
+    await drawMappings(mappings.vmap);
   }
 
   async drawActions() {

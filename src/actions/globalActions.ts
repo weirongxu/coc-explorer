@@ -12,11 +12,17 @@ import {
   PreviewOnHoverAction,
   previewOnHoverActionList,
   previewStrategyList,
+  SelectTarget,
+  selectTargetList,
+  TextobjTarget,
+  textobjTargetList,
+  textobjTypeList,
 } from '../types';
 import { PreviewActionStrategy } from '../types/pkg-config';
-import { enableWrapscan } from '../util';
+import { enableWrapscan, scanIndexNext, scanIndexPrev } from '../util';
 import { ActionExplorer } from './actionExplorer';
 import { openAction } from './openAction';
+import { ActionRegistrar } from './registrar';
 
 export function loadGlobalActions(action: ActionExplorer) {
   const explorer = action.owner;
@@ -277,9 +283,8 @@ export function loadGlobalActions(action: ActionExplorer) {
   );
   action.addNodeAction(
     'indentPrev',
-    async ({ args }) => {
-      const node = await explorer.view.currentNode();
-      const level = node?.level ?? 0;
+    async ({ node, args }) => {
+      const level = node.level ?? 0;
       await action.nodePrev(
         args[0] as MoveStrategy,
         (node) => node.level !== level,
@@ -293,9 +298,8 @@ export function loadGlobalActions(action: ActionExplorer) {
   );
   action.addNodeAction(
     'indentNext',
-    async ({ args }) => {
-      const node = await explorer.view.currentNode();
-      const level = node?.level ?? 0;
+    async ({ node, args }) => {
+      const level = node.level ?? 0;
       await action.nodeNext(
         args[0] as MoveStrategy,
         (node) => node.level !== level,
@@ -506,24 +510,88 @@ export function loadGlobalActions(action: ActionExplorer) {
     },
   );
 
-  // select, hidden
+  // textobj, select, hidden
   action.addNodeAction(
-    'toggleHidden',
-    async ({ source }) => {
-      source.showHidden = !source.showHidden;
+    'textobj',
+    async ({ node: currentNode, args }) => {
+      const currentIndex = explorer.view.currentLineIndex;
+      const textobjTarget = (args[0] ?? 'line') as TextobjTarget;
+      if (textobjTarget === 'line') {
+        await nvim.command('normal! V');
+      } else if (textobjTarget === 'indent') {
+        const flattenedNodes = explorer.view.flattenedNodes;
+        const begin = scanIndexPrev(
+          flattenedNodes,
+          currentIndex,
+          await enableWrapscan(),
+          (node) => {
+            return (currentNode.level ?? 0) > (node.level ?? 0);
+          },
+        );
+        if (begin === undefined) {
+          return;
+        }
+        const end = scanIndexNext(
+          flattenedNodes,
+          currentIndex,
+          await enableWrapscan(),
+          (node) => {
+            return (currentNode.level ?? 0) > (node.level ?? 0);
+          },
+        );
+        if (end === undefined) {
+          return;
+        }
+        await nvim.command(`normal! ${begin + 2}GV${end}G`);
+      }
     },
-    'toggle visibility of hidden node',
+    'use visual mode selects',
+    {
+      args: [
+        {
+          name: 'target',
+          description: textobjTargetList.join(' | '),
+        },
+        {
+          name: 'type',
+          description: textobjTypeList.join(' | '),
+        },
+      ],
+      menus: {
+        'line:i': 'line:i',
+        'line:a': 'line:a',
+        'indent:i': 'indent:i',
+        'indent:a': 'indent:a',
+      },
+    },
   );
+  const selectOptions: Partial<ActionRegistrar.Options> = {
+    select: 'visual',
+    args: [
+      {
+        name: 'target',
+        description: selectTargetList.join(' | '),
+      },
+    ],
+    menus: {
+      sibling: 'siblings',
+      child: 'children',
+    },
+  };
   action.addNodeAction(
     'select',
-    async ({ source, node }) => {
-      source.selectedNodes.add(node);
+    async ({ source, node, args }) => {
+      const selectTarget = (args[0] ?? 'node') as SelectTarget;
+      if (selectTarget === 'node') {
+        source.selectedNodes.add(node);
+      } else if (selectTarget === 'sibling') {
+      } else if (selectTarget === 'child') {
+      }
+      // TODO
       source.view.requestRenderNodes([node]);
     },
     'select node',
-    {
-      select: 'visual',
-    },
+    selectOptions,
   );
   action.addNodeAction(
     'unselect',
@@ -532,9 +600,7 @@ export function loadGlobalActions(action: ActionExplorer) {
       source.view.requestRenderNodes([node]);
     },
     'unselect node',
-    {
-      select: 'visual',
-    },
+    selectOptions,
   );
   action.addNodeAction(
     'toggleSelection',
@@ -549,6 +615,13 @@ export function loadGlobalActions(action: ActionExplorer) {
     {
       select: 'visual',
     },
+  );
+  action.addNodeAction(
+    'toggleHidden',
+    async ({ source }) => {
+      source.showHidden = !source.showHidden;
+    },
+    'toggle visibility of hidden node',
   );
 
   // other

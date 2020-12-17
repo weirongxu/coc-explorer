@@ -177,10 +177,12 @@ export class ActionSource<
           .filter(([actionName]) => actionName !== 'actionMenu')
           .sort(([aName], [bName]) => aName.localeCompare(bName))
           .map(([actionName, { callback, options, description }]) => {
+            const keys = reverseMappings[actionName];
+            const key = keys ? keys.vmap ?? keys.all : '';
             const list = [
               {
                 name: actionName,
-                key: reverseMappings[actionName],
+                key,
                 description,
                 callback: async () => {
                   await task.waitShow();
@@ -197,9 +199,11 @@ export class ActionSource<
               list.push(
                 ...ActionMenu.getNormalizeMenus(options.menus).map((menu) => {
                   const fullActionName = actionName + ':' + menu.args;
+                  const keys = reverseMappings[fullActionName];
+                  const key = keys ? keys.vmap ?? keys.all : '';
                   return {
                     name: fullActionName,
-                    key: reverseMappings[fullActionName],
+                    key,
                     description: description + ' ' + menu.description,
                     callback: async () => {
                       await task.waitShow();

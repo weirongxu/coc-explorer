@@ -3,6 +3,7 @@ import { conditionActionRules, waitAction } from './actions/special';
 import {
   Action,
   ActionExp,
+  MappingMode,
   Mappings,
   OriginalAction,
   OriginalActionExp,
@@ -95,11 +96,13 @@ class KeyMapping {
     MappingConfigMode,
     {
       global: OriginalMappings;
+      vmap: OriginalMappings;
       sources: Record<string, OriginalMappings>;
     }
   > = {
     none: {
       global: {},
+      vmap: {},
       sources: {},
     },
     default: {
@@ -128,6 +131,7 @@ class KeyMapping {
         t: 'open:tab',
         '<bs>': ['wait', 'gotoParent'],
         gs: ['wait', 'reveal:select'],
+
         il: 'preview:labeling',
         ic: 'preview:content',
         Il: 'previewOnHover:toggle:labeling',
@@ -183,6 +187,12 @@ class KeyMapping {
         '<<': 'gitStage',
         '>>': 'gitUnstage',
       },
+      vmap: {
+        il: 'textobj:line:i',
+        al: 'textobj:line:a',
+        ii: 'textobj:indent:i',
+        ai: 'textobj:indent:a',
+      },
       sources: {},
     },
   };
@@ -194,24 +204,21 @@ class KeyMapping {
   private globalMappings_?: Mappings;
   globalMappings() {
     if (!this.globalMappings_) {
-      const {
-        global: _global,
-        sources: _sources,
-        ...deprecatedKeyMappings
-      } = config.get<OriginalUserMappings>('keyMappings', {});
-      if (Object.keys(deprecatedKeyMappings).length > 0) {
-        // eslint-disable-next-line no-restricted-properties
-        workspace.showMessage(
-          'explorer.keyMappings has been deprecated, please use explorer.keyMappings.global in coc-settings.json',
-          'warning',
-        );
-      }
       this.globalMappings_ = mixAndParseMappings(this.config.global, {
-        ...deprecatedKeyMappings,
         ...config.get<OriginalUserMappings>('keyMappings.global', {}),
       });
     }
     return this.globalMappings_;
+  }
+
+  private vmapMappings_?: Mappings;
+  vmapMappings() {
+    if (!this.vmapMappings_) {
+      this.vmapMappings_ = mixAndParseMappings(this.config.vmap, {
+        ...config.get<OriginalUserMappings>('keyMappings.vmap', {}),
+      });
+    }
+    return this.vmapMappings_;
   }
 
   private allSourceMappings_?: Record<string, Mappings>;
@@ -249,28 +256,52 @@ class KeyMapping {
     return this.allSourceMappings()[sourceType];
   }
 
-  async getAllKeys() {
-    let allKeys = Object.keys(this.globalMappings());
+  async getKeys() {
+    const keys = new Set<string>();
+    for (const key of Object.keys(this.globalMappings())) {
+      keys.add(key);
+    }
+    for (const key of Object.keys(this.vmapMappings())) {
+      keys.add(key);
+    }
     for (const sourceMappings of Object.values(this.allSourceMappings())) {
-      allKeys.push(...Object.keys(sourceMappings));
+      for (const key of Object.keys(sourceMappings)) {
+        keys.add(key);
+      }
     }
     if (
       workspace.isVim &&
       !(await workspace.nvim.call('has', ['gui_running']))
     ) {
-      allKeys = allKeys.filter((key) => key !== '<esc>');
+      keys.delete('<esc>');
     }
-    return allKeys;
+    return keys;
   }
 
-  getActionExp(sourceType: string, key: string): ActionExp | undefined {
+  getActionExp(
+    sourceType: string,
+    key: string,
+    mode: MappingMode,
+  ): ActionExp | undefined {
+    const vmapMappings = this.vmapMappings();
     const globalMappings = this.globalMappings();
     const sourceMappings = this.sourceMappings(sourceType);
+    if (mode === 'v') {
+      return (
+        vmapMappings?.[key] ?? sourceMappings?.[key] ?? globalMappings[key]
+      );
+    }
     return sourceMappings?.[key] ?? globalMappings[key];
   }
 
-  async getMappings(sourceType: string): Promise<Mappings> {
+  async getMappings(
+    sourceType: string,
+  ): Promise<{
+    all: Mappings;
+    vmap: Mappings;
+  }> {
     const globalMappings = this.globalMappings();
+    const vmapMappings = this.vmapMappings();
     const sourceMappings = this.sourceMappings(sourceType);
     const mappings: Mappings = { ...globalMappings, ...sourceMappings };
     if (
@@ -279,16 +310,33 @@ class KeyMapping {
     ) {
       delete mappings['<esc>'];
     }
-    return mappings;
+    return {
+      all: mappings,
+      vmap: vmapMappings,
+    };
   }
 
   async getReversedMappings(sourceType: string) {
     const mappings = await this.getMappings(sourceType);
-    const reverseMappings: Record<string, string> = {};
-    Object.entries(mappings).find(([key, actionExp]) => {
+    const reverseMappings: Record<string, { all?: string; vmap?: string }> = {};
+    Object.entries(mappings.all).find(([key, actionExp]) => {
       const action = getSingleAction(actionExp);
       if (action) {
-        reverseMappings[toOriginalAction(action)] = key;
+        const orgAction = toOriginalAction(action);
+        if (!reverseMappings[orgAction]) {
+          reverseMappings[orgAction] = {};
+        }
+        reverseMappings[orgAction].all = key;
+      }
+    });
+    Object.entries(mappings.vmap).find(([key, actionExp]) => {
+      const action = getSingleAction(actionExp);
+      if (action) {
+        const orgAction = toOriginalAction(action);
+        if (!reverseMappings[orgAction]) {
+          reverseMappings[orgAction] = {};
+        }
+        reverseMappings[orgAction].vmap = key;
       }
     });
     return reverseMappings;
