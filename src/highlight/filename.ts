@@ -1,4 +1,3 @@
-import { workspace } from 'coc.nvim';
 import { ExplorerConfig } from '../config';
 import { diagnosticManager } from '../diagnostic/manager';
 import { getGitFormatHighlight, gitHighlights } from '../git/highlights';
@@ -17,17 +16,7 @@ export class FilenameHighlight {
   enabledWarningStatus: boolean;
 
   constructor(config: ExplorerConfig) {
-    let configKey: string;
-    if (config.get<boolean>('file.filename.colored.enable') !== undefined) {
-      // eslint-disable-next-line no-restricted-properties
-      workspace.showMessage(
-        'explorer.file.filename.colored.enable has been deprecated, please use explorer.filename.colored.enable in coc-settings.json',
-        'warning',
-      );
-      configKey = 'file.filename.colored.enable';
-    } else {
-      configKey = 'filename.colored.enable';
-    }
+    const configKey = 'filename.colored.enable';
     const enabledCompletely =
       config.get<boolean>(
         configKey,

@@ -38,19 +38,7 @@ class GitManager {
   private showUntrackedFiles: GitCommand.ShowUntrackedFiles;
 
   constructor() {
-    const deprecatedShowIgnored = config.get<boolean>(
-      'file.column.git.showIgnored',
-    );
-    if (deprecatedShowIgnored !== undefined) {
-      // eslint-disable-next-line no-restricted-properties
-      workspace.showMessage(
-        'explorer.file.column.git.showIgnored has been deprecated, please use explorer.git.showIgnored in coc-settings.json',
-        'warning',
-      );
-      this.showIgnored = deprecatedShowIgnored;
-    } else {
-      this.showIgnored = config.get<boolean>('git.showIgnored')!;
-    }
+    this.showIgnored = config.get<boolean>('git.showIgnored')!;
 
     this.showUntrackedFiles = config.get<GitCommand.ShowUntrackedFiles>(
       'file.git.showUntrackedFiles',

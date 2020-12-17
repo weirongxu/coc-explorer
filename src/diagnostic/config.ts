@@ -1,4 +1,3 @@
-import { workspace } from 'coc.nvim';
 import { ExplorerConfig } from '../config';
 import { toSubscriptNumbers } from '../util';
 
@@ -14,16 +13,6 @@ export const getDiagnosticConfig = (config: ExplorerConfig) => {
       'diagnostic.enableSubscriptNumber',
     ),
   };
-
-  const deprecatedMax = config.get<number>('file.diagnosticCountMax');
-  if (deprecatedMax !== undefined) {
-    // eslint-disable-next-line no-restricted-properties
-    workspace.showMessage(
-      'explorer.file.diagnosticCountMax has been deprecated, please use explorer.diagnostic.displayMax in coc-settings.json',
-      'warning',
-    );
-    diagnosticConfig.displayMax = deprecatedMax;
-  }
 
   return diagnosticConfig;
 };
