@@ -110,8 +110,6 @@ class KeyMapping {
         '*': 'toggleSelection',
         '<tab>': 'actionMenu',
 
-        gk: ['wait', 'expandablePrev'],
-        gj: ['wait', 'expandableNext'],
         h: ['wait', 'collapse'],
         l: ['wait', 'expandable?', 'expand', 'open'],
         J: ['wait', 'toggleSelection', 'normal:j'],
