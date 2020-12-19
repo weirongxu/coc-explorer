@@ -180,8 +180,10 @@ class KeyMapping {
         '[D': ['wait', 'markPrev:diagnosticError'],
         ']D': ['wait', 'markNext:diagnosticError'],
 
-        '[c': ['wait', 'markPrev:git'],
-        ']c': ['wait', 'markNext:git'],
+        '[c': ['wait', 'markPrev:gitUnstaged:gitStaged'],
+        ']c': ['wait', 'markNext:gitUnstaged:gitStaged'],
+        '[C': ['wait', 'markPrev:gitUnstaged'],
+        ']C': ['wait', 'markNext:gitUnstaged'],
         '<<': 'gitStage',
         '>>': 'gitUnstage',
       },

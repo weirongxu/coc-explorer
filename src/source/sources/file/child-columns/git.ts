@@ -74,11 +74,25 @@ fileColumnRegistrar.registerColumn(
               showFormat(status.y, false);
               if (status.x === GitFormat.ignored) {
                 source.locator.mark.remove('git', nodeIndex);
+                source.locator.mark.remove('gitStaged', nodeIndex);
+                source.locator.mark.remove('gitUnstaged', nodeIndex);
               } else {
                 source.locator.mark.add('git', nodeIndex);
+                if (status.x !== GitFormat.unmodified) {
+                  source.locator.mark.add('gitStaged', nodeIndex);
+                } else {
+                  source.locator.mark.remove('gitStaged', nodeIndex);
+                }
+                if (status.y !== GitFormat.unmodified) {
+                  source.locator.mark.add('gitUnstaged', nodeIndex);
+                } else {
+                  source.locator.mark.remove('gitUnstaged', nodeIndex);
+                }
               }
             } else {
               source.locator.mark.remove('git', nodeIndex);
+              source.locator.mark.remove('gitStaged', nodeIndex);
+              source.locator.mark.remove('gitUnstaged', nodeIndex);
             }
           },
         };
