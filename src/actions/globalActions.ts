@@ -622,6 +622,9 @@ export function loadGlobalActions(action: ActionExplorer) {
       source.showHidden = !source.showHidden;
     },
     'toggle visibility of hidden node',
+    {
+      reload: true,
+    },
   );
 
   // other
