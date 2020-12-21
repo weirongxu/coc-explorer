@@ -14,10 +14,15 @@ import { flatten } from '../util';
 
 export class ViewSource<TreeNode extends BaseTreeNode<TreeNode>> {
   readonly explorer: Explorer;
+  /**
+   * rendered nodes
+   */
   flattenedNodes: TreeNode[] = [];
   startLineIndex: number = 0;
   endLineIndex: number = 0;
-  private requestedRenderNodes: Set<TreeNode> = new Set();
+  private requestedRenderNodes: Set<
+    SourceOptions.RenderNode<TreeNode>
+  > = new Set();
 
   get isHelpUI() {
     return this.explorer.view.isHelpUI;
@@ -157,8 +162,37 @@ export class ViewSource<TreeNode extends BaseTreeNode<TreeNode>> {
     );
   }
 
-  flattenByNode(node: TreeNode): TreeNode[] {
-    const stack = [node];
+  /**
+   * get all parents
+   */
+  flattenParents(node: TreeNode): TreeNode[] {
+    let currentNode = node;
+    const result: TreeNode[] = [];
+
+    while (true) {
+      if (currentNode.parent) {
+        result.push(currentNode.parent);
+        currentNode = currentNode.parent;
+      } else {
+        break;
+      }
+    }
+
+    return result;
+  }
+
+  /**
+   * get current node and all children flattened nodes
+   */
+  flattenNodeAndChildren(node: TreeNode): TreeNode[] {
+    return [node, ...this.flattenChildren(node)];
+  }
+
+  /**
+   * get all flattened children
+   */
+  flattenChildren(node: TreeNode): TreeNode[] {
+    const stack = node.children ? [...node.children] : [];
     const result: TreeNode[] = [];
 
     function replaceNodeInSibling<TreeNode extends BaseTreeNode<TreeNode>>(
@@ -280,7 +314,7 @@ export class ViewSource<TreeNode extends BaseTreeNode<TreeNode>> {
       return;
     }
     const { startIndex, endIndex } = range;
-    const needDrawNodes = this.flattenByNode(node);
+    const needDrawNodes = this.flattenNodeAndChildren(node);
 
     await this.source.sourcePainters.beforeDraw(needDrawNodes, {
       draw: async () => {
@@ -482,10 +516,10 @@ export class ViewSource<TreeNode extends BaseTreeNode<TreeNode>> {
   /**
    * request render nodes, it will render the node when finished the action
    */
-  requestRenderNodes(nodes: TreeNode[]) {
-    nodes.forEach((node) => {
+  requestRenderNodes(nodes: SourceOptions.RenderNodes<TreeNode>) {
+    for (const node of nodes) {
       this.requestedRenderNodes.add(node);
-    });
+    }
   }
 
   async emitRequestRenderNodesNotifier() {
@@ -497,10 +531,55 @@ export class ViewSource<TreeNode extends BaseTreeNode<TreeNode>> {
     return this.renderNodesNotifier(nodes);
   }
 
-  async renderNodesNotifier(nodes: TreeNode[]) {
-    return await this.source.sourcePainters.beforeDraw(nodes, {
+  async renderNodes(nodes: SourceOptions.RenderNodes<TreeNode>) {
+    return (await this.renderNodesNotifier(nodes)).run();
+  }
+
+  async renderNodesNotifier(nodes: SourceOptions.RenderNodes<TreeNode>) {
+    type NodeItem = {
+      nodes: TreeNode[];
+      withParents: boolean;
+      withChildren: boolean;
+    };
+
+    const nodeArr = nodes instanceof Set ? Array.from(nodes) : nodes;
+    const nodeItems: NodeItem[] = nodeArr.map((o) => {
+      if ('uid' in o) {
+        return {
+          nodes: [o],
+          withParents: false,
+          withChildren: false,
+        };
+      } else {
+        return {
+          nodes: [...o.nodes],
+          withParents: o.withParents ?? false,
+          withChildren: o.withChildren ?? false,
+        };
+      }
+    });
+
+    const finalNodes: TreeNode[] = [];
+
+    for (const node of nodeItems) {
+      finalNodes.push(...node.nodes);
+      if (node.withParents) {
+        for (const n of node.nodes) {
+          finalNodes.push(...this.flattenParents(n));
+        }
+      }
+      if (node.withChildren) {
+        for (const n of node.nodes) {
+          finalNodes.push(...this.flattenNodeAndChildren(n));
+        }
+      }
+    }
+
+    return await this.source.sourcePainters.beforeDraw(finalNodes, {
       draw: async () => {
-        const { drawnList, highlightPositions } = await this.drawNodes(nodes);
+        const { drawnList, highlightPositions } = await this.drawNodes(
+          finalNodes,
+        );
         const drawnRangeList = drawnWithIndexRange(drawnList);
         return Notifier.create(() => {
           drawnRangeList.forEach((dr) => {
@@ -529,63 +608,30 @@ export class ViewSource<TreeNode extends BaseTreeNode<TreeNode>> {
     if (this.isHelpUI) {
       return Notifier.noop();
     }
-    type PathItem = {
-      paths: string[];
-      withParent: boolean;
-      withChildren: boolean;
-    };
     const pathArr = paths instanceof Set ? Array.from(paths) : paths;
-    const pathItems: PathItem[] = pathArr.map((o) => {
-      if (typeof o === 'string') {
-        return {
-          paths: [o],
-          withParent: false,
-          withChildren: false,
-        };
-      } else if (typeof o.path === 'string') {
-        return {
-          paths: [o.path],
-          withParent: o.withParent ?? false,
-          withChildren: o.withChildren ?? false,
-        };
-      } else {
-        return {
-          paths: Array.from(o.path),
-          withParent: o.withParent ?? false,
-          withChildren: o.withChildren ?? false,
-        };
-      }
-    });
     if (!pathArr.length) {
       return Notifier.noop();
     }
-    const filterFn: (
-      path: string,
-      withParent: boolean,
-      withChildren: boolean,
-      node: TreeNode & { fullpath: string },
-    ) => boolean = (path, withParent, withChildren, node) => {
-      return (
-        path === node.fullpath ||
-        (withParent && path.startsWith(node.fullpath)) ||
-        (withChildren && node.fullpath.startsWith(path))
+    const getNodes = (paths: string[]) =>
+      this.flattenedNodes.filter(
+        (n) => n.fullpath && paths.includes(n.fullpath),
       );
-    };
-    const nodes = this.flattenedNodes.filter(
-      (n) =>
-        n.fullpath &&
-        pathItems.some((item) =>
-          item.paths.some((path) =>
-            filterFn(
-              path,
-              item.withParent,
-              item.withChildren,
-              n as TreeNode & { fullpath: string },
-            ),
-          ),
-        ),
+    const renderNodes: SourceOptions.RenderNode<TreeNode>[] = pathArr.map(
+      (o) => {
+        if (typeof o === 'string') {
+          return {
+            nodes: getNodes([o]),
+          };
+        } else {
+          return {
+            nodes: getNodes([...o.paths]),
+            withParents: o.withParents,
+            withChildren: o.withChildren,
+          };
+        }
+      },
     );
-    return this.renderNodesNotifier(nodes);
+    return this.renderNodesNotifier(renderNodes);
   }
 
   async render(options?: SourceOptions.Render<TreeNode>) {
@@ -609,7 +655,7 @@ export class ViewSource<TreeNode extends BaseTreeNode<TreeNode>> {
       ? range
       : { startIndex: 0, endIndex: this.flattenedNodes.length - 1 };
     const oldHeight = endIndex - nodeIndex + 1;
-    const needDrawNodes = this.flattenByNode(node);
+    const needDrawNodes = this.flattenNodeAndChildren(node);
     const newHeight = needDrawNodes.length;
     this.flattenedNodes = this.flattenedNodes
       .slice(0, nodeIndex)

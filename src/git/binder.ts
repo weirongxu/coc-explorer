@@ -249,7 +249,7 @@ export class GitBinder {
       await source.view.renderPaths([
         ...updatePaths,
         {
-          path: updateDirs,
+          paths: updateDirs,
           withChildren: true,
         },
       ]);

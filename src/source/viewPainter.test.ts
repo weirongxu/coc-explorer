@@ -1,15 +1,11 @@
-import { ViewRowPainter } from './viewPainter';
-import { Explorer } from '../explorer';
-import { ExplorerManager } from '../explorerManager';
-import { BaseTreeNode, ExplorerSource } from './source';
-import { ColumnRegistrar } from './columnRegistrar';
-import { SourcePainters } from './sourcePainters';
-import { buildExplorerConfig, config } from '../config';
 import { jestHelper } from 'coc-helper/JestHelper';
 import { registerRuntimepath } from '../util';
 import { ViewSource } from '../view/viewSource';
-
-let explorer: Explorer;
+import { bootSource } from '../__test__/helpers/helper';
+import { ColumnRegistrar } from './columnRegistrar';
+import { BaseTreeNode, ExplorerSource } from './source';
+import { SourcePainters } from './sourcePainters';
+import { ViewRowPainter } from './viewPainter';
 
 jestHelper.boot();
 
@@ -128,26 +124,10 @@ testColumnRegistrar.registerColumn('child', 'link', () => ({
   },
 }));
 
+const context = bootSource((explorer) => new TestSource('test', explorer));
+
 async function drawColumn(names: string[], width: number) {
-  if (!explorer) {
-    explorer = new Explorer(
-      0,
-      new ExplorerManager({
-        subscriptions: [],
-        extensionPath: '',
-        asAbsolutePath() {
-          return '';
-        },
-        storagePath: '',
-        workspaceState: undefined as any,
-        globalState: undefined as any,
-        logger: undefined as any,
-      }),
-      0,
-      undefined,
-      buildExplorerConfig(config),
-    );
-  }
+  const { explorer, source } = context;
   explorer.contentWidth = width;
   const node: TestNode = {
     type: 'child',
@@ -158,7 +138,6 @@ async function drawColumn(names: string[], width: number) {
     fullpath: '/path/to/file',
     directory: true,
   };
-  const source = new TestSource('test', explorer);
   await source.sourcePainters.parseTemplate(
     'child',
     names.map((n) => `[${n}]`).join(''),

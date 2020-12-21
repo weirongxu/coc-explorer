@@ -78,17 +78,37 @@ export namespace SourceOptions {
     node?: TreeNode;
   } & Force;
 
+  export type RenderNode<TreeNode extends BaseTreeNode<any>> =
+    | TreeNode
+    | {
+        nodes: TreeNode[] | Set<TreeNode>;
+        /**
+         * render parent nodes
+         * @default false
+         */
+        withParents?: boolean;
+        /**
+         * render children nodes
+         * @default false
+         */
+        withChildren?: boolean;
+      };
+
+  export type RenderNodes<TreeNode extends BaseTreeNode<any>> =
+    | Set<RenderNode<TreeNode>>
+    | RenderNode<TreeNode>[];
+
   export type RenderPaths =
     | Set<string>
     | (
         | string
         | {
-            path: string | string[] | Set<string>;
+            paths: string[] | Set<string>;
             /**
              * render parent paths
              * @default false
              */
-            withParent?: boolean;
+            withParents?: boolean;
             /**
              * render children paths
              * @default false
@@ -145,6 +165,8 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>>
   get root() {
     return workspace.cwd;
   }
+
+  set root(_root: string) {}
 
   config = this.explorer.config;
 
@@ -291,17 +313,17 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>>
   ) {
     const children = await this.loadChildren(parentNode, options);
     await Promise.all(
-      children.map(async (child, i) => {
-        child.level = (parentNode.level ?? 0) + 1;
-        child.parent = parentNode;
-        child.prevSiblingNode = children[i - 1];
-        child.nextSiblingNode = children[i + 1];
+      children.map(async (node, i) => {
+        node.level = (parentNode.level ?? 0) + 1;
+        node.parent = parentNode;
+        node.prevSiblingNode = children[i - 1];
+        node.nextSiblingNode = children[i + 1];
         if (
           options?.recursiveExpanded &&
-          child.expandable &&
-          this.view.isExpanded(child)
+          node.expandable &&
+          this.view.isExpanded(node)
         ) {
-          child.children = await this.loadInitedChildren(child, options);
+          node.children = await this.loadInitedChildren(node, options);
         }
       }),
     );

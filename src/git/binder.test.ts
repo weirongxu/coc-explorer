@@ -1,117 +1,66 @@
 import { Notifier } from 'coc-helper';
 import { jestHelper } from 'coc-helper/JestHelper';
 import pathLib from 'path';
-import { buildExplorerConfig, configLocal } from '../config';
-import { Explorer } from '../explorer';
-import { ExplorerManager } from '../explorerManager';
-import { Args } from '../parseArgs';
-import { ExplorerSource } from '../source/source';
+import type {
+  BaseTreeNode,
+  ExplorerSource,
+  SourceOptions,
+} from '../source/source';
 import { FileNode, FileSource } from '../source/sources/file/fileSource';
 import { normalizePath } from '../util';
+import { FileSourceHelper } from '../__test__/helpers/fileSource';
+import { bootSource } from '../__test__/helpers/helper';
 import { GitBinder } from './binder';
 import { gitManager } from './manager';
 import { GitFormat, GitMixedStatus } from './types';
 
 jestHelper.boot();
 
-class TestSource extends FileSource {
+const { loadChildren } = FileSourceHelper.genLoadChildren({
+  name: pathLib.sep,
+  children: [
+    {
+      name: 'lib',
+      children: [
+        {
+          name: 'folder',
+          children: [],
+        },
+        {
+          name: 'index.js',
+        },
+      ],
+    },
+    {
+      name: 'src',
+      children: [
+        {
+          name: 'test.ts',
+        },
+      ],
+    },
+    {
+      name: 'readme.md',
+    },
+    {
+      name: 'jest.js',
+    },
+    {
+      name: 'package.json',
+    },
+  ],
+});
+
+class TestFileSource extends FileSource {
   async loadChildren(parentNode: FileNode): Promise<FileNode[]> {
-    const genNode = (node: {
-      fullpath: string;
-      directory: boolean;
-    }): FileNode => {
-      node.fullpath = normalizePath(node.fullpath);
-      return {
-        ...node,
-        name: pathLib.basename(node.fullpath),
-        uid: this.helper.getUid(node.fullpath),
-        type: 'child',
-        hidden: false,
-        readable: true,
-        readonly: false,
-        writable: true,
-        executable: false,
-        symbolicLink: false,
-      };
-    };
-    if (parentNode.fullpath === pathLib.sep) {
-      return [
-        {
-          directory: true,
-          fullpath: '/lib',
-        },
-        {
-          directory: true,
-          fullpath: '/src',
-        },
-        {
-          directory: false,
-          fullpath: '/readme.md',
-        },
-        {
-          directory: false,
-          fullpath: '/jest.js',
-        },
-        {
-          directory: false,
-          fullpath: '/package.json',
-        },
-      ].map(genNode);
-    } else if (parentNode.fullpath === `${pathLib.sep}lib`) {
-      return [
-        {
-          directory: true,
-          fullpath: 'lib/folder',
-        },
-        {
-          directory: false,
-          fullpath: 'lib/index.js',
-        },
-      ].map(genNode);
-    } else if (parentNode.fullpath === `${pathLib.sep}src`) {
-      return [
-        {
-          directory: false,
-          fullpath: 'src/test.ts',
-        },
-      ].map(genNode);
-    } else {
-      return [];
-    }
+    return loadChildren(parentNode);
   }
 }
 
-let explorer: Explorer;
-
-beforeAll(() => {
-  const config = configLocal();
-  explorer = new Explorer(
-    0,
-    new ExplorerManager({
-      subscriptions: [],
-      extensionPath: '',
-      asAbsolutePath() {
-        return '';
-      },
-      storagePath: '',
-      workspaceState: undefined as any,
-      globalState: undefined as any,
-      logger: undefined as any,
-    }),
-    0,
-    undefined,
-    buildExplorerConfig(config),
-  );
-});
+const context = bootSource((explorer) => new TestFileSource('test', explorer));
 
 test('GitBinder.reload', async () => {
-  const source = new TestSource('test', explorer);
-  // @ts-ignore
-  explorer._sources = [source];
-  // @ts-ignore
-  explorer._args = new Args([]);
-  // @ts-ignore
-  explorer._rootUri = pathLib.sep;
+  const { source } = context;
   source.root = pathLib.sep;
   const binder = new GitBinder();
   binder.bind(source as ExplorerSource<any>);
@@ -124,12 +73,22 @@ test('GitBinder.reload', async () => {
 
   Object.defineProperty(source.view, 'renderNodesNotifier', {
     writable: true,
-    value: jest.fn().mockImplementation((nodes: FileNode[]) => {
-      nodes.forEach((node) => {
-        renderPaths.add(node.fullpath);
-      });
-      return Notifier.noop();
-    }),
+    value: jest
+      .fn()
+      .mockImplementation(
+        (nodes: SourceOptions.RenderNodes<BaseTreeNode<any>>) => {
+          [...nodes].forEach((node) => {
+            if ('uid' in node) {
+              renderPaths.add(node.fullpath!);
+            } else {
+              for (const n of node.nodes) {
+                renderPaths.add(n.fullpath!);
+              }
+            }
+          });
+          return Notifier.noop();
+        },
+      ),
   });
 
   Object.defineProperty(gitManager, 'getGitRoot', {

@@ -179,7 +179,9 @@ export function loadGlobalActions(action: ActionExplorer) {
       for (const root of roots) {
         await gitManager.reload(root);
       }
-      source.view.requestRenderNodes([source.view.rootNode, ...nodes]);
+      source.view.requestRenderNodes([
+        { nodes: nodes, withParents: true, withChildren: true },
+      ]);
     },
     'add file to git index',
   );
@@ -196,7 +198,9 @@ export function loadGlobalActions(action: ActionExplorer) {
       for (const root of roots) {
         await gitManager.reload(root);
       }
-      source.view.requestRenderNodes([source.view.rootNode, ...nodes]);
+      source.view.requestRenderNodes([
+        { nodes: nodes, withParents: true, withChildren: true },
+      ]);
     },
     'reset file from git index',
   );
