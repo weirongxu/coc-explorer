@@ -419,11 +419,13 @@ export function loadFileActions(action: ActionSource<FileSource, FileNode>) {
           await fsTouch(target);
         },
       );
-      await file.load(putTargetNode);
+      const reloadNotifier = await file.loadNotifier(
+        putTargetNode.parent ?? putTargetNode,
+      );
       const [, notifiers] = await file.revealNodeByPathNotifier(targetPath, {
         node: putTargetNode,
       });
-      await Notifier.runAll(notifiers);
+      await Notifier.runAll([reloadNotifier, ...notifiers]);
     },
     'add a new file',
   );
@@ -450,7 +452,9 @@ export function loadFileActions(action: ActionSource<FileSource, FileNode>) {
           await fsMkdirp(target);
         },
       );
-      const reloadNotifier = await file.loadNotifier(putTargetNode);
+      const reloadNotifier = await file.loadNotifier(
+        putTargetNode.parent ?? putTargetNode,
+      );
       const [, revealNotifiers] = await file.revealNodeByPathNotifier(
         targetPath,
         {
