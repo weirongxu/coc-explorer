@@ -112,45 +112,39 @@ export class ActionSource<
       return;
     }
 
-    const {
-      select: multi = false,
-      render = false,
-      reload = false,
-      select = false,
-    } = action.options;
+    const { select = false, render = false, reload = false } = action.options;
 
     const finalNodes = Array.isArray(nodes) ? nodes : [nodes];
     const source = this.source;
-    if (select) {
+    if (select === true) {
+      const allNodes = [...finalNodes, ...source.selectedNodes];
+      source.selectedNodes.clear();
+      source.view.requestRenderNodes(allNodes);
+      await action.callback.call(source, {
+        source,
+        nodes: allNodes,
+        args,
+        mode,
+      });
+    } else if (select === false) {
+      await action.callback.call(source, {
+        source,
+        nodes: [finalNodes[0]],
+        args,
+        mode,
+      });
+    } else if (select === 'visual') {
       await action.callback.call(source, {
         source,
         nodes: finalNodes,
         args,
         mode,
       });
-    } else if (multi) {
-      if (source.selectedNodes.size > 0) {
-        const nodes = Array.from(source.selectedNodes);
-        source.selectedNodes.clear();
-        source.view.requestRenderNodes(nodes);
-        await action.callback.call(source, {
-          source,
-          nodes,
-          args,
-          mode,
-        });
-      } else {
-        await action.callback.call(source, {
-          source,
-          nodes: finalNodes,
-          args,
-          mode,
-        });
-      }
-    } else {
+    } else if (select === 'keep') {
+      const allNodes = [...finalNodes, ...source.selectedNodes];
       await action.callback.call(source, {
         source,
-        nodes: [finalNodes[0]],
+        nodes: allNodes,
         args,
         mode,
       });
