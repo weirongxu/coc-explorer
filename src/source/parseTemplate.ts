@@ -25,6 +25,8 @@
  * '[status-plain] [filepath]'
  */
 
+import { ParserError, ParserSource } from '../parser/parser';
+
 export type OriginalTemplateBlock = {
   column: string;
   modifiers?: { name: string; column: string }[];
@@ -32,29 +34,7 @@ export type OriginalTemplateBlock = {
 
 export type OriginalTemplatePart = OriginalTemplateBlock | string;
 
-class Source {
-  constructor(public readonly s: string, public i: number) {}
-
-  ch() {
-    return this.s[this.i];
-  }
-
-  next() {
-    this.i += 1;
-  }
-
-  end(): boolean {
-    return this.i >= this.s.length;
-  }
-}
-
-class ParseError extends Error {
-  constructor(public source: Source, message: string) {
-    super(message);
-  }
-}
-
-function parseKeyword(name: string, s: Source, endWith: string[]) {
+function parseKeyword(name: string, s: ParserSource, endWith: string[]) {
   let keyword = '';
   while (!s.end()) {
     const ch = s.ch();
@@ -65,25 +45,25 @@ function parseKeyword(name: string, s: Source, endWith: string[]) {
       return keyword;
     }
   }
-  throw new ParseError(s, `Unexpected end when parse ${name}`);
+  throw new ParserError(s, `Unexpected end when parse ${name}`);
 }
 
-function parseModifierName(s: Source) {
+function parseModifierName(s: ParserSource) {
   return parseKeyword('modifier name', s, [' ']);
 }
 
-function parseModifierColumn(s: Source) {
+function parseModifierColumn(s: ParserSource) {
   return parseKeyword('modifier value', s, [' ', ']']);
 }
 
-function parseModifier(s: Source) {
+function parseModifier(s: ParserSource) {
   const name = parseModifierName(s);
   s.next();
   const column = parseModifierColumn(s);
   return { name, column } as const;
 }
 
-function parseModifiers(s: Source) {
+function parseModifiers(s: ParserSource) {
   const modifiers: { name: string; column: string }[] = [];
   do {
     const ch = s.ch();
@@ -96,11 +76,11 @@ function parseModifiers(s: Source) {
   } while (true);
 }
 
-function parseColumnName(s: Source) {
+function parseColumnName(s: ParserSource) {
   return parseKeyword('column name', s, [' ', ']']);
 }
 
-function parseColumn(s: Source): OriginalTemplateBlock {
+function parseColumn(s: ParserSource): OriginalTemplateBlock {
   s.next(); // skip a [
   const parsedColumn: OriginalTemplateBlock = {
     column: parseColumnName(s),
@@ -114,10 +94,10 @@ function parseColumn(s: Source): OriginalTemplateBlock {
       parsedColumn.modifiers = parseModifiers(s);
     }
   } while (!s.end());
-  throw new ParseError(s, 'Unexpected end when parse column block');
+  throw new ParserError(s, 'Unexpected end when parse column block');
 }
 
-function parsePlainString(s: Source): string {
+function parsePlainString(s: ParserSource): string {
   let str = '';
   while (!s.end()) {
     const ch = s.ch();
@@ -135,7 +115,7 @@ function parsePlainString(s: Source): string {
 }
 
 export function parseTemplate(str: string) {
-  const s = new Source(str, 0);
+  const s = new ParserSource(str, 0);
   const parts: OriginalTemplatePart[] = [];
   while (!s.end()) {
     const ch = s.ch();

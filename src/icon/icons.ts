@@ -1,6 +1,6 @@
 import nerdfontJson from './icons.nerdfont.json';
 import { hlGroupManager } from '../highlight/manager';
-import { getExtensions } from '../util';
+import { getExtensions, parseColor } from '../util';
 import { config } from '../config';
 import convert from 'color-convert';
 import { HighlightCommand } from '../highlight/types';
@@ -33,14 +33,9 @@ Object.assign(nerdfont.dirPatternMatches, customIcon.dirPatternMatches);
 export const nerdfontHighlights: Record<string, HighlightCommand> = {};
 Object.entries(nerdfont.icons).forEach(([name, icon]) => {
   const bgExprs: string[] = [];
-  const m = icon.color.slice(1).match(/.{1,2}/g);
-  if (m) {
-    const [r, g, b] = m;
-    const ansiColor = convert.rgb.ansi256([
-      parseInt(r, 16),
-      parseInt(g, 16),
-      parseInt(b, 16),
-    ]);
+  const color = parseColor(icon.color);
+  if (color) {
+    const ansiColor = convert.rgb.ansi256([color.red, color.green, color.blue]);
     bgExprs.push(`ctermfg=${ansiColor}`);
   }
   bgExprs.push(`guifg=${icon.color}`);

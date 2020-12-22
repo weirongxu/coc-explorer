@@ -16,6 +16,7 @@ export * from './platform';
 export * from './cli';
 export * from './function';
 export * from './uri';
+export * from './color';
 
 export const outputChannel = workspace.createOutputChannel('explorer');
 
