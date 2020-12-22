@@ -297,7 +297,6 @@ export function loadFileActions(action: ActionSource<FileSource, FileNode>) {
         return;
       }
       const targetDir = file.getPutTargetDir(node);
-      let loadRoot = false;
       if (file.copiedNodes.size > 0) {
         const nodes = [...file.copiedNodes];
         await overwritePrompt(
@@ -312,7 +311,6 @@ export function loadFileActions(action: ActionSource<FileSource, FileNode>) {
         file.copiedNodes.clear();
       }
       if (file.cutNodes.size > 0) {
-        loadRoot = true;
         const nodes = [...file.cutNodes];
         await overwritePrompt(
           'paste',
@@ -324,9 +322,7 @@ export function loadFileActions(action: ActionSource<FileSource, FileNode>) {
         );
         file.cutNodes.clear();
       }
-      await file.load(
-        loadRoot ? file.view.rootNode : node.parent ? node.parent : node,
-      );
+      await file.load(file.view.rootNode);
     },
     'paste files to here',
   );
