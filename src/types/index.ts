@@ -44,7 +44,7 @@ export const openStrategyList: OpenStrategy[] = [
   'sourceWindow',
 ];
 
-export const copyOrCutFileTypeList = ['append', 'replace'] as const;
+export const copyOrCutFileTypeList = ['toggle', 'append', 'replace'] as const;
 
 export type CopyOrCutFileType = typeof copyOrCutFileTypeList[number];
 

@@ -250,6 +250,7 @@ export function loadFileActions(action: ActionSource<FileSource, FileNode>) {
       },
     ],
     menus: {
+      toggle: 'toggle',
       append: 'append',
       replace: 'replace',
     },
@@ -257,15 +258,28 @@ export function loadFileActions(action: ActionSource<FileSource, FileNode>) {
   action.addNodesAction(
     'copyFile',
     async ({ nodes, args }) => {
-      const type = (args[0] ?? 'append') as CopyOrCutFileType;
+      const type = (args[0] ?? 'toggle') as CopyOrCutFileType;
       if (type === 'replace') {
         file.view.requestRenderNodes([...file.copiedNodes, ...file.cutNodes]);
         file.copiedNodes.clear();
         file.cutNodes.clear();
+
+        for (const node of nodes) {
+          file.copiedNodes.add(node);
+        }
+      } else if (type === 'toggle') {
+        for (const node of nodes) {
+          if (file.copiedNodes.has(node)) {
+            file.copiedNodes.delete(node);
+          } else {
+            file.copiedNodes.add(node);
+          }
+        }
+      } else if (type === 'append') {
+        for (const node of nodes) {
+          file.copiedNodes.add(node);
+        }
       }
-      nodes.forEach((node) => {
-        file.copiedNodes.add(node);
-      });
       file.view.requestRenderNodes(nodes);
     },
     'copy file for paste',
@@ -274,15 +288,28 @@ export function loadFileActions(action: ActionSource<FileSource, FileNode>) {
   action.addNodesAction(
     'cutFile',
     async ({ nodes, args }) => {
-      const type = (args[0] ?? 'append') as CopyOrCutFileType;
+      const type = (args[0] ?? 'toggle') as CopyOrCutFileType;
       if (type === 'replace') {
         file.view.requestRenderNodes([...file.copiedNodes, ...file.cutNodes]);
         file.copiedNodes.clear();
         file.cutNodes.clear();
+
+        for (const node of nodes) {
+          file.cutNodes.add(node);
+        }
+      } else if (type === 'toggle') {
+        for (const node of nodes) {
+          if (file.cutNodes.has(node)) {
+            file.cutNodes.delete(node);
+          } else {
+            file.cutNodes.add(node);
+          }
+        }
+      } else if (type === 'append') {
+        for (const node of nodes) {
+          file.cutNodes.add(node);
+        }
       }
-      nodes.forEach((node) => {
-        file.cutNodes.add(node);
-      });
       file.view.requestRenderNodes(nodes);
     },
     'cut file for paste',
