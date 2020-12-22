@@ -311,7 +311,7 @@ export class HelpPainter {
   }
 
   async render() {
-    this.explorer.nvim.pauseNotification();
+    workspace.nvim.pauseNotification();
     this.explorer
       .setLinesNotifier(
         this.drawnResults.map((n) => n.content),
@@ -334,7 +334,7 @@ export class HelpPainter {
       helpHlSrcId,
       highlightPositions,
     );
-    await this.explorer.nvim.resumeNotification();
+    await workspace.nvim.resumeNotification();
   }
 }
 

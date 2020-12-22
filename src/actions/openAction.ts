@@ -50,16 +50,18 @@ export async function openAction(
   const openByWinnr =
     originalOpenByWinnr ??
     (async (winnr: number) => {
+      const quitNotifier = await explorer.tryQuitOnOpenNotifier();
+      const escapePath = await getEscapePath();
       nvim.pauseNotification();
       nvim.command(`${winnr}wincmd w`, true);
-      nvim.command(`edit ${await getEscapePath()}`, true);
+      nvim.command(`edit ${escapePath}`, true);
       jumpToNotify();
       if (workspace.isVim) {
         // Avoid vim highlight not working,
         // https://github.com/weirongxu/coc-explorer/issues/113
         nvim.command('redraw', true);
       }
-      (await explorer.tryQuitOnOpenNotifier()).notify();
+      quitNotifier.notify();
       await nvim.resumeNotification();
     });
 
@@ -83,12 +85,14 @@ export async function openAction(
           ];
         if (target) {
           const targetWinid = WinLayoutFinder.getFirstLeafWinid(target);
+          const quitNotifier = await explorer.tryQuitOnOpenNotifier();
+          const escapePath = await getEscapePath();
 
           nvim.pauseNotification();
           nvim.call('win_gotoid', [targetWinid], true);
-          nvim.command(`${command} ${await getEscapePath()}`, true);
+          nvim.command(`${command} ${escapePath}`, true);
           jumpToNotify();
-          (await explorer.tryQuitOnOpenNotifier()).notify();
+          quitNotifier.notify();
           await nvim.resumeNotification();
         }
       } else {
@@ -124,10 +128,12 @@ export async function openAction(
 
     split: () => actions['split:intelligent'](),
     'split:plain': async () => {
+      const quitNotifier = await explorer.tryQuitOnOpenNotifier();
+      const escapePath = await getEscapePath();
       nvim.pauseNotification();
-      nvim.command(`split ${await getEscapePath()}`, true);
+      nvim.command(`split ${escapePath}`, true);
       jumpToNotify();
-      (await explorer.tryQuitOnOpenNotifier()).notify();
+      quitNotifier.notify();
       await nvim.resumeNotification();
     },
 
@@ -145,10 +151,12 @@ export async function openAction(
 
     vsplit: () => actions['vsplit:intelligent'](),
     'vsplit:plain': async () => {
+      const quitNotifier = await explorer.tryQuitOnOpenNotifier();
+      const escapePath = await getEscapePath();
       nvim.pauseNotification();
-      nvim.command(`vsplit ${await getEscapePath()}`, true);
+      nvim.command(`vsplit ${escapePath}`, true);
       jumpToNotify();
-      (await explorer.tryQuitOnOpenNotifier()).notify();
+      quitNotifier.notify();
       await nvim.resumeNotification();
     },
 

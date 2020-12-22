@@ -206,9 +206,10 @@ export function loadFileActions(action: ActionSource<FileSource, FileNode>) {
     'drop',
     async ({ node }) => {
       if (!node.directory) {
+        const quitNotifier = await file.explorer.tryQuitOnOpenNotifier();
         nvim.pauseNotification();
-        await nvim.command(`drop ${node.fullpath}`);
-        (await file.explorer.tryQuitOnOpenNotifier()).notify();
+        nvim.command(`drop ${node.fullpath}`, true);
+        quitNotifier.notify();
         await nvim.resumeNotification();
       }
     },
