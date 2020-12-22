@@ -1,7 +1,7 @@
 import { fileColumnRegistrar } from '../fileColumnRegistrar';
 import { fileHighlights } from '../fileSource';
 import { debounce } from '../../../../util';
-import { argOptions } from '../../../../argOptions';
+import { argOptions } from '../../../../arg/argOptions';
 
 fileColumnRegistrar.registerColumn(
   'child',

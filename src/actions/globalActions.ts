@@ -1,6 +1,6 @@
 import { compactI } from 'coc-helper';
 import { workspace } from 'coc.nvim';
-import { argOptions } from '../argOptions';
+import { argOptions } from '../arg/argOptions';
 import { gitManager } from '../git/manager';
 import { parseOriginalActionExp } from '../mappings';
 import {

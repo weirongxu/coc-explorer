@@ -2,7 +2,7 @@ import { BufferHighlight } from '@chemzqm/neovim';
 import { Disposable, disposeAll, workspace } from 'coc.nvim';
 import { Location, Range } from 'vscode-languageserver-protocol';
 import { URI } from 'vscode-uri';
-import { argOptions } from '../argOptions';
+import { argOptions } from '../arg/argOptions';
 import { onBufEnter, onCursorMoved, onEvent } from '../events';
 import { Explorer } from '../explorer';
 import { Drawn } from '../painter/types';

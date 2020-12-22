@@ -1,5 +1,5 @@
 import { config } from '../../../config';
-import { Args } from '../../../parseArgs';
+import { Args } from '../../../arg/parseArgs';
 
 export const bookmarkArgOptions = {
   bookmarkRootTemplate: Args.registerOption<string>('bookmark-root-template', {

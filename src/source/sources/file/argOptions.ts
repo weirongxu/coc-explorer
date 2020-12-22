@@ -1,5 +1,5 @@
 import { config } from '../../../config';
-import { Args } from '../../../parseArgs';
+import { Args } from '../../../arg/parseArgs';
 
 export const fileArgOptions = {
   fileRootTemplate: Args.registerOption<string>('file-root-template', {

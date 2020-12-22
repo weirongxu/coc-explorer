@@ -1,4 +1,4 @@
-import { normalizePath } from './util';
+import { normalizePath } from '../util';
 import {
   Args,
   ArgsSource,
@@ -6,8 +6,8 @@ import {
   ArgContentWidthTypes,
   ArgFloatingPositions,
 } from './parseArgs';
-import { OpenStrategy } from './types';
-import { config } from './config';
+import { OpenStrategy } from '../types';
+import { config } from '../config';
 
 export const argOptions = {
   rootUri: Args.registerOption<string>('root-uri', {

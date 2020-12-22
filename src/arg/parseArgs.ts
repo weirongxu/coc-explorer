@@ -1,6 +1,6 @@
-import { splitCount } from './util';
+import { splitCount } from '../util';
 import { workspace, WorkspaceConfiguration } from 'coc.nvim';
-import { getPresets } from './presets';
+import { getPresets } from '../presets';
 
 export interface ArgsSource {
   name: string;

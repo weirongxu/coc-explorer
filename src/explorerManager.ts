@@ -6,14 +6,14 @@ import {
   workspace,
 } from 'coc.nvim';
 import { HelperEventEmitter } from 'coc-helper';
-import { argOptions } from './argOptions';
+import { argOptions } from './arg/argOptions';
 import { BufManager } from './bufManager';
 import { buildExplorerConfig, configLocal } from './config';
 import { GlobalContextVars } from './contextVariables';
 import { onBufEnter } from './events';
 import { Explorer } from './explorer';
 import { keyMapping } from './mappings';
-import { Args, ArgPosition } from './parseArgs';
+import { Args, ArgPosition } from './arg/parseArgs';
 import { compactI, onError, supportedNvimFloating } from './util';
 
 export class TabContainer {

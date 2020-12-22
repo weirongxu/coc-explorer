@@ -1,9 +1,9 @@
 import { Args } from './parseArgs';
 import { workspace } from 'coc.nvim';
 import { argOptions } from './argOptions';
-import { config } from './config';
-import { normalizePath } from './util';
-import { fileArgOptions } from './source/sources/file/argOptions';
+import { config } from '../config';
+import { normalizePath } from '../util';
+import { fileArgOptions } from '../source/sources/file/argOptions';
 
 it('should parse args', async () => {
   const oldNvim = workspace.nvim;

@@ -2,7 +2,7 @@ import { Uri, workspace } from 'coc.nvim';
 import fs from 'fs';
 import { homedir } from 'os';
 import pathLib from 'path';
-import { argOptions } from '../../../argOptions';
+import { argOptions } from '../../../arg/argOptions';
 import { diagnosticHighlights } from '../../../diagnostic/highlights';
 import { onBufEnter } from '../../../events';
 import { gitHighlights } from '../../../git/highlights';

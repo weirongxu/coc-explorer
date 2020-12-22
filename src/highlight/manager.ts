@@ -1,20 +1,8 @@
 import { workspace } from 'coc.nvim';
-import type { Explorer } from '../explorer';
-import { HighlightCommand, HighlightPositionWithLine } from './types';
-import { onError } from '../util';
-import { LiteralUnion } from 'type-fest';
 import { InternalVimEvents } from '../events';
-import { parseHighlight } from './parseHighlight';
-
-type GroupAttr = LiteralUnion<
-  | 'cterm'
-  | 'start'
-  | 'stop'
-  | `cterm${'fg' | 'bg'}`
-  | 'font'
-  | `gui${'' | 'fg' | 'bg' | 'sp'} | 'blend'`,
-  string
->;
+import type { Explorer } from '../explorer';
+import { onError } from '../util';
+import { HighlightCommand, HighlightPositionWithLine } from './types';
 
 class HighlightManager {
   nvim = workspace.nvim;

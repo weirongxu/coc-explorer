@@ -1,8 +1,8 @@
 import { WinLayoutFinder } from 'coc-helper';
 import { workspace } from 'coc.nvim';
-import { argOptions } from '../argOptions';
+import { argOptions } from '../arg/argOptions';
 import type { Explorer } from '../explorer';
-import { ArgPosition } from '../parseArgs';
+import { ArgPosition } from '../arg/parseArgs';
 import { BaseTreeNode } from '../source/source';
 import { OpenStrategy } from '../types';
 
