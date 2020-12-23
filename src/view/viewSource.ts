@@ -10,7 +10,7 @@ import {
   NodeUid,
   SourceOptions,
 } from '../source/source';
-import { flatten } from '../util';
+import { compactI, flatten } from '../util';
 
 export class ViewSource<TreeNode extends BaseTreeNode<TreeNode>> {
   readonly explorer: Explorer;
@@ -481,16 +481,18 @@ export class ViewSource<TreeNode extends BaseTreeNode<TreeNode>> {
   }
 
   private async drawNodes(nodes: TreeNode[]) {
-    const drawnList = await Promise.all(
-      nodes.map(async (node) => {
-        const nodeIndex = this.flattenedNodes.findIndex(
-          (it) => it.uid === node.uid,
-        );
-        if (nodeIndex < 0) {
-          throw new Error(`node(${node.uid}) not found`);
-        }
-        return this.source.sourcePainters.drawNode(node, nodeIndex);
-      }),
+    const drawnList = compactI(
+      await Promise.all(
+        nodes.map(async (node) => {
+          const nodeIndex = this.flattenedNodes.findIndex(
+            (it) => it.uid === node.uid,
+          );
+          if (nodeIndex < 0) {
+            return;
+          }
+          return this.source.sourcePainters.drawNode(node, nodeIndex);
+        }),
+      ),
     );
 
     const startLineIndex = this.startLineIndex;
