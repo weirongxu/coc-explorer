@@ -12,7 +12,7 @@ Explorer extension for [coc.nvim](https://github.com/neoclide/coc.nvim)
 
 ## Requirements
 
-`>= vim 8.1.0579` or `>= neovim 0.3.1`
+`>= vim 8.1.1418` or `>= neovim 0.3.1`
 
 ## Usage
 
@@ -56,7 +56,7 @@ Explorer extension for [coc.nvim](https://github.com/neoclide/coc.nvim)
   - [x] Preview file attributes by floating window
   - [ ] LSP
     - [x] diagnostic
-    - [ ] file rename
+    - [ ] file rename (won't support, use [watchman](https://github.com/neoclide/coc.nvim/wiki/Install-coc.nvim#optional-install-watchman-for-file-watching))
   - [ ] Exrename, like [defx](https://github.com/Shougo/defx.nvim)
   - [ ] Archive file (use `lsar / unar`)
   - [ ] SSH
