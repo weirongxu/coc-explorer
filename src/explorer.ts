@@ -626,33 +626,6 @@ export class Explorer implements Disposable {
     return Notifier.combine(notifiers);
   }
 
-  /**
-   * select windows from current tabpage
-   */
-  async selectWindowsUI(
-    selected: (winnr: number) => void | Promise<void>,
-    noChoice: () => void | Promise<void> = () => {},
-    cancel: () => void | Promise<void> = () => {},
-  ) {
-    const filterOption = this.config.get<{
-      buftypes: string[];
-      filetypes: string[];
-      floatingWindows: boolean;
-    }>('openAction.select.filter')!;
-    const winnr = await this.nvim.call('coc_explorer#select_wins#start', [
-      filterOption.buftypes,
-      filterOption.filetypes,
-      filterOption.floatingWindows,
-    ]);
-    if (winnr > 0) {
-      await Promise.resolve(selected(winnr));
-    } else if (winnr === 0) {
-      await Promise.resolve(noChoice());
-    } else {
-      await Promise.resolve(cancel());
-    }
-  }
-
   async showHelp(source: ExplorerSource<any>) {
     return showHelp(this, source);
   }

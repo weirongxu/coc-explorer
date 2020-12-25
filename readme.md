@@ -801,15 +801,15 @@ Type: <pre><code>false | PreviewActionStrategy | [
 Type: <pre><code>'select' | 'split' | 'split:plain' | 'split:intelligent' | 'vsplit' | 'vsplit:plain' | 'vsplit:intelligent' | 'tab' | 'previousBuffer' | 'previousWindow' | 'sourceWindow'</code></pre>Default: <pre><code>"select"</code></pre>
 </details>
 <details>
-<summary><code>explorer.openAction.select.filterFloatWindows</code>: Filter floating windows in select strategy.</summary>
-Type: <pre><code>boolean</code></pre>Default: <pre><code>true</code></pre>
-</details>
-<details>
 <summary><code>explorer.openAction.select.filter</code>: Filter windows for select strategy.</summary>
 Type: <pre><code>{
-    buftypes?: string[];
-    filetypes?: string[];
-    floatingWindows?: boolean;
+    [k: string]: unknown;
+} & {
+    sources?: {
+        [k: string]: {
+            [k: string]: unknown;
+        };
+    };
     [k: string]: unknown;
 }</code></pre>Default: <pre><code>{
   "buftypes": [
@@ -819,7 +819,12 @@ Type: <pre><code>{
     "vista_kind",
     "qf"
   ],
-  "floatingWindows": true
+  "floatingWindows": true,
+  "sources": {
+    "buffer": {
+      "buftypes": []
+    }
+  }
 }</code></pre>
 </details>
 <details>

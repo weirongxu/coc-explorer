@@ -1,6 +1,6 @@
 import type { FloatInputType } from 'coc-floatinput';
 import { extensions, workspace } from 'coc.nvim';
-import { config } from '../config';
+import { config, ExplorerConfig } from '../config';
 
 let floatInputApi: FloatInputType | undefined;
 
@@ -149,5 +149,45 @@ export async function input(
     );
   } else {
     return vimInput(prompt, defaultInput, completion);
+  }
+}
+
+/**
+ * select windows from current tabpage
+ */
+export async function selectWindowsUI(
+  config: ExplorerConfig,
+  sourceType: string,
+  {
+    onSelect,
+    noChoice,
+    onCancel,
+  }: {
+    onSelect: (winnr: number) => void | Promise<void>;
+    noChoice?: () => void | Promise<void>;
+    onCancel?: () => void | Promise<void>;
+  },
+) {
+  let filterOption = config.get('openAction.select.filter')!;
+  if (filterOption.sources) {
+    const sourceFilterOption = filterOption.sources[sourceType];
+    if (sourceFilterOption) {
+      filterOption = {
+        ...filterOption,
+        ...sourceFilterOption,
+      };
+    }
+  }
+  const winnr = await workspace.nvim.call('coc_explorer#select_wins#start', [
+    filterOption.buftypes ?? [],
+    filterOption.filetypes ?? [],
+    filterOption.floatingWindows ?? true,
+  ]);
+  if (winnr > 0) {
+    await Promise.resolve(onSelect(winnr));
+  } else if (winnr === 0) {
+    await Promise.resolve(noChoice?.());
+  } else {
+    await Promise.resolve(onCancel?.());
   }
 }

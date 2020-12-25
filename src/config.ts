@@ -21,6 +21,9 @@ export interface ExplorerConfig {
   get(section: 'openAction.for.directory'): OriginalActionExp;
   get(section: 'openAction.relativePath'): boolean;
   get(
+    section: 'openAction.select.filter',
+  ): NonNullable<Explorer['explorer.openAction.select.filter']>;
+  get(
     section: 'previewAction.onHover',
   ): NonNullable<Explorer['explorer.previewAction.onHover']>;
   get(section: 'datetime.format'): string;

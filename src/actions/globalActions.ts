@@ -53,7 +53,7 @@ export function loadGlobalActions(action: ActionExplorer) {
   // open, expand, collapse
   action.addNodeAction(
     'open',
-    async ({ node, args, mode }) => {
+    async ({ source, node, args, mode }) => {
       if (node.expandable) {
         const directoryActionExp = explorer.config.get(
           'openAction.for.directory',
@@ -69,7 +69,7 @@ export function loadGlobalActions(action: ActionExplorer) {
 
       if (node.location) {
         const { range } = node.location;
-        await openAction(explorer, node, () => node.fullpath!, {
+        await openAction(explorer, source, node, () => node.fullpath!, {
           args,
           position: { lineIndex: range.start.line - 1 },
         });
@@ -77,7 +77,7 @@ export function loadGlobalActions(action: ActionExplorer) {
       }
 
       if (node.fullpath) {
-        await openAction(explorer, node, () => node.fullpath!, {
+        await openAction(explorer, source, node, () => node.fullpath!, {
           args,
         });
         return;

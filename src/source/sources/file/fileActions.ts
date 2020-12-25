@@ -24,6 +24,7 @@ import {
   listDrive,
   overwritePrompt,
   prompt,
+  selectWindowsUI,
 } from '../../../util';
 import { FileNode, FileSource } from './fileSource';
 
@@ -70,8 +71,10 @@ export function loadFileActions(action: ActionSource<FileSource, FileNode>) {
           undefined | ((args?: string[]) => void | Promise<void>)
         > = {
           select: async () => {
-            await file.explorer.selectWindowsUI(async (winnr) => {
-              targetBufnr = await bufnrByWinnrOrWinid(winnr);
+            await selectWindowsUI(file.explorer.config, file.sourceType, {
+              onSelect: async (winnr) => {
+                targetBufnr = await bufnrByWinnrOrWinid(winnr);
+              },
             });
           },
           sourceWindow: async () => {

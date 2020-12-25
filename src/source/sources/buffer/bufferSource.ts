@@ -1,4 +1,3 @@
-import { workspace } from 'coc.nvim';
 import { debounce, uniq } from '../../../util';
 import { hlGroupManager } from '../../../highlight/manager';
 import { ExplorerSource, BaseTreeNode } from '../../source';
@@ -7,7 +6,6 @@ import { bufferColumnRegistrar } from './bufferColumnRegistrar';
 import './load';
 import { loadBufferActions } from './bufferActions';
 import { SourcePainters } from '../../sourcePainters';
-import { onBufEnter } from '../../../events';
 import { bufferArgOptions } from './argOptions';
 import { ViewSource } from '../../../view/viewSource';
 

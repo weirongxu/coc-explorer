@@ -3,11 +3,13 @@ import { workspace } from 'coc.nvim';
 import { argOptions } from '../arg/argOptions';
 import type { Explorer } from '../explorer';
 import { ArgPosition } from '../arg/parseArgs';
-import { BaseTreeNode } from '../source/source';
+import { BaseTreeNode, ExplorerSource } from '../source/source';
 import { OpenStrategy } from '../types';
+import { selectWindowsUI } from '../util';
 
 export async function openAction(
   explorer: Explorer,
+  source: ExplorerSource<any>,
   node: BaseTreeNode<any>,
   getFullpath: () => string | Promise<string>,
   {
@@ -111,19 +113,19 @@ export async function openAction(
       if (position === 'floating') {
         await explorer.hide();
       }
-      await explorer.selectWindowsUI(
-        async (winnr) => {
+      await selectWindowsUI(explorer.config, source.sourceType, {
+        onSelect: async (winnr) => {
           await openByWinnr(winnr);
         },
-        async () => {
+        noChoice: async () => {
           await actions.vsplit();
         },
-        async () => {
+        onCancel: async () => {
           if (position === 'floating') {
             await explorer.show();
           }
         },
-      );
+      });
     },
 
     split: () => actions['split:intelligent'](),

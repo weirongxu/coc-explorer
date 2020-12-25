@@ -244,16 +244,12 @@ export interface Explorer {
     | 'previousWindow'
     | 'sourceWindow';
   /**
-   * Filter floating windows in select strategy
-   */
-  'explorer.openAction.select.filterFloatWindows'?: boolean;
-  /**
    * Filter windows for select strategy
    */
-  'explorer.openAction.select.filter'?: {
-    buftypes?: string[];
-    filetypes?: string[];
-    floatingWindows?: boolean;
+  'explorer.openAction.select.filter'?: OpenActionSelectFilter & {
+    sources?: {
+      [k: string]: OpenActionSelectFilter;
+    };
     [k: string]: unknown;
   };
   /**
@@ -567,5 +563,14 @@ export interface Explorer {
    * Enable debug
    */
   'explorer.debug'?: boolean;
+  [k: string]: unknown;
+}
+/**
+ * Filter windows option for select strategy
+ */
+export interface OpenActionSelectFilter {
+  buftypes?: string[];
+  filetypes?: string[];
+  floatingWindows?: boolean;
   [k: string]: unknown;
 }

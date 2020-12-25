@@ -106,6 +106,27 @@
               }
             }
           ]
+        },
+        "openAction.select.filter": {
+          "description": "Filter windows option for select strategy",
+          "type": "object",
+          "properties": {
+            "buftypes": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "filetypes": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "floatingWindows": {
+              "type": "boolean"
+            }
+          }
         }
       },
       "type": "object",
@@ -209,7 +230,7 @@
           "default": {}
         },
         "explorer.keyMappings.sources": {
-          "description": "Custom key mappings in sources",
+          "description": "Custom key mappings in source",
           "type": "object",
           "additionalProperties": {
             "$ref": "#/definitions/mapping.keyMappings",
@@ -428,31 +449,25 @@
             "Open action use the window where explorer opened"
           ]
         },
-        "explorer.openAction.select.filterFloatWindows": {
-          "description": "Filter floating windows in select strategy",
-          "type": "boolean",
-          "default": true
-        },
         "explorer.openAction.select.filter": {
           "description": "Filter windows for select strategy",
-          "type": "object",
-          "properties": {
-            "buftypes": {
-              "type": "array",
-              "items": {
-                "type": "string"
-              }
+          "allOf": [
+            {
+              "$ref": "#/definitions/openAction.select.filter"
             },
-            "filetypes": {
-              "type": "array",
-              "items": {
-                "type": "string"
+            {
+              "type": "object",
+              "properties": {
+                "sources": {
+                  "description": "Filter windows for select strategy in source",
+                  "type": "object",
+                  "additionalProperties": {
+                    "$ref": "#/definitions/openAction.select.filter"
+                  }
+                }
               }
-            },
-            "floatingWindows": {
-              "type": "boolean"
             }
-          },
+          ],
           "default": {
             "buftypes": [
               "terminal"
@@ -461,7 +476,12 @@
               "vista_kind",
               "qf"
             ],
-            "floatingWindows": true
+            "floatingWindows": true,
+            "sources": {
+              "buffer": {
+                "buftypes": []
+              }
+            }
           }
         },
         "explorer.openAction.for.directory": {
