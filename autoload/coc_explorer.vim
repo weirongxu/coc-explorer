@@ -57,7 +57,11 @@ endfunction
 
 function! coc_explorer#resume(bufnr, position, options) abort
   let fallback_winid = win_getid()
-  if a:position ==# 'left'
+  if a:position ==# 'tab'
+    tabnew
+    execute 'silent keepalt buffer'.a:bufnr
+    call s:check_focus(a:options, fallback_winid)
+  elseif a:position ==# 'left'
     wincmd t
     execute 'silent keepalt vertical topleft sb '.a:bufnr
     call coc_explorer#resize(a:bufnr, a:position, a:options)
@@ -70,7 +74,7 @@ function! coc_explorer#resume(bufnr, position, options) abort
   elseif a:position ==# 'floating'
     call coc_explorer#float#resume(a:bufnr, a:options)
   else
-    throw 'No support position '.a:position
+    throw 'No support position "'.a:position.'"'
   endif
 endfunction
 
