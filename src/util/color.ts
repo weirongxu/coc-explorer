@@ -12,8 +12,18 @@ export function colorDistance(c1: Color, c2: Color) {
   );
 }
 
-export function findNearestColor(color: Color, list: Color[]) {
-  return minBy(list, (c) => colorDistance(c, color));
+export function findNearestColor(color: Color, list: Color[]): Color;
+export function findNearestColor<T>(
+  color: Color,
+  list: T[],
+  getColor: (it: T) => Color,
+): T;
+export function findNearestColor<T>(
+  color: Color,
+  list: T[],
+  getColor: (it: T) => Color = (it) => (it as unknown) as Color,
+) {
+  return minBy(list, (it) => colorDistance(getColor(it), color));
 }
 
 export function parseColor(str: string) {
@@ -22,10 +32,11 @@ export function parseColor(str: string) {
     str = str.slice(1);
   }
   const m = str.match(/.{1,2}/g);
-  if (m) {
-    const [r, g, b] = m;
-    return Color.create(parseInt(r, 16), parseInt(g, 16), parseInt(b, 16), 1);
+  if (!m) {
+    return;
   }
+  const [r, g, b] = m;
+  return Color.create(parseInt(r, 16), parseInt(g, 16), parseInt(b, 16), 1);
 }
 
 export function toHex(color: Color) {

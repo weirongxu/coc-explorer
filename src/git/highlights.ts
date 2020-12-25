@@ -2,6 +2,7 @@ import { workspace } from 'coc.nvim';
 import { Color } from 'vscode-languageserver-protocol';
 import { hlGroupManager } from '../highlight/manager';
 import { parseHighlight } from '../highlight/parseHighlight';
+import colorConvert from 'color-convert';
 import {
   compactI,
   findNearestColor,
@@ -55,29 +56,52 @@ hlGroupManager
     const highlights = hiStmts.map((h) => parseHighlight(h.trim()));
     const fgs = compactI(
       highlights.map((h) => {
-        const fg = h.attrs?.['guifg'];
-        if (fg) {
-          return parseColor(fg);
+        if (!h.attrs) {
+          return;
         }
+        const guifgStr = h.attrs['guifg'];
+        if (!guifgStr) {
+          return;
+        }
+        const guifg = parseColor(guifgStr);
+        if (!guifg) {
+          return;
+        }
+        const ctermfgStr = h.attrs['ctermfg'];
+        const ctermfg = ctermfgStr
+          ? parseInt(ctermfgStr, 10)
+          : colorConvert.rgb.ansi256([guifg.red, guifg.green, guifg.blue]);
+        return {
+          guifg,
+          ctermfg,
+        };
       }),
     );
     const { nvim } = workspace;
     nvim.pauseNotification();
-    const green = findNearestColor(Color.create(18, 204, 90, 1), fgs);
+    const green = findNearestColor(
+      Color.create(18, 204, 90, 1),
+      fgs,
+      (it) => it.guifg,
+    );
     if (green) {
       nvim.command(
-        `highlight default CocExplorerGitPathChange_Internal guifg=#${toHex(
-          green,
-        )}`,
+        `highlight default CocExplorerGitPathChange_Internal ctermfg=${
+          green.ctermfg
+        } guifg=#${toHex(green.guifg)}`,
         true,
       );
     }
-    const yellow = findNearestColor(Color.create(209, 177, 15, 1), fgs);
+    const yellow = findNearestColor(
+      Color.create(209, 177, 15, 1),
+      fgs,
+      (it) => it.guifg,
+    );
     if (yellow) {
       nvim.command(
-        `highlight default CocExplorerGitContentChange_Internal guifg=#${toHex(
-          yellow,
-        )}`,
+        `highlight default CocExplorerGitContentChange_Internal ctermfg=${
+          green.ctermfg
+        } guifg=#${toHex(yellow.guifg)}`,
         true,
       );
     }

@@ -32,16 +32,15 @@ Object.assign(nerdfont.dirPatternMatches, customIcon.dirPatternMatches);
 
 export const nerdfontHighlights: Record<string, HighlightCommand> = {};
 Object.entries(nerdfont.icons).forEach(([name, icon]) => {
-  const bgExprs: string[] = [];
   const color = parseColor(icon.color);
-  if (color) {
-    const ansiColor = convert.rgb.ansi256([color.red, color.green, color.blue]);
-    bgExprs.push(`ctermfg=${ansiColor}`);
+  if (!color) {
+    return;
   }
-  bgExprs.push(`guifg=${icon.color}`);
+  const ansiColor = convert.rgb.ansi256([color.red, color.green, color.blue]);
+  const hlExpr = `ctermfg=${ansiColor} guifg=${icon.color}`;
   nerdfontHighlights[name] = hlGroupManager.group(
     `FileIconNerdfont_${name}`,
-    bgExprs.join(' '),
+    hlExpr,
   );
 });
 
