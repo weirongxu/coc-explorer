@@ -689,7 +689,7 @@ Type: <pre><code>{
 }</code></pre>Default: <pre><code>{}</code></pre>
 </details>
 <details>
-<summary><code>explorer.keyMappings.sources</code>: Custom key mappings in sources.</summary>
+<summary><code>explorer.keyMappings.sources</code>: Custom key mappings in source.</summary>
 Type: <pre><code>{
     [k: string]: {
         [k: string]: MappingActionExp | false;
@@ -802,13 +802,12 @@ Type: <pre><code>'select' | 'split' | 'split:plain' | 'split:intelligent' | 'vsp
 </details>
 <details>
 <summary><code>explorer.openAction.select.filter</code>: Filter windows for select strategy.</summary>
-Type: <pre><code>{
-    [k: string]: unknown;
-} & {
+Type: <pre><code>OpenActionSelectFilter & {
+    /**
+     * Filter windows for select strategy in source
+     */
     sources?: {
-        [k: string]: {
-            [k: string]: unknown;
-        };
+        [k: string]: OpenActionSelectFilter;
     };
     [k: string]: unknown;
 }</code></pre>Default: <pre><code>{

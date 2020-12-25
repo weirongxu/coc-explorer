@@ -147,7 +147,7 @@ export interface Explorer {
     [k: string]: MappingActionExp | false;
   };
   /**
-   * Custom key mappings in sources
+   * Custom key mappings in source
    */
   'explorer.keyMappings.sources'?: {
     [k: string]: {
@@ -247,6 +247,9 @@ export interface Explorer {
    * Filter windows for select strategy
    */
   'explorer.openAction.select.filter'?: OpenActionSelectFilter & {
+    /**
+     * Filter windows for select strategy in source
+     */
     sources?: {
       [k: string]: OpenActionSelectFilter;
     };
