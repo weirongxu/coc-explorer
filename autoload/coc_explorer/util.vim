@@ -7,8 +7,10 @@ function! coc_explorer#util#execute_commands(cmds) abort
   endif
 endfunction
 
+let s:is_nvim = has('nvim')
+
 " Is float
-if has('nvim')
+if s:is_nvim
   function! coc_explorer#util#is_float(winnr) abort
     if !exists('*nvim_win_get_config')
       return v:false
@@ -24,18 +26,32 @@ endif
 
 " Setlines
 function! coc_explorer#util#buf_set_lines_skip_cursor(bufnr, start, end, strict_indexing, lines) abort
-  let cursor = v:null
-  let winid = bufwinid(a:bufnr)
-  if winid >= 0
-    let cursor = nvim_win_get_cursor(winid)
+  if !s:is_nvim && !has('patch-8.2.1997') && &buftype == 'terminal'
+    return
   endif
-  call nvim_buf_set_lines(a:bufnr, a:start, a:end, a:strict_indexing, a:lines)
-  if winid >= 0
-    try
-      call nvim_win_set_cursor(winid, cursor)
-    catch
-    endtry
+
+  call setbufvar(a:bufnr, '&modifiable', 1)
+  call setbufvar(a:bufnr, '&readonly', 0)
+
+  if s:is_nvim
+    let cursor = v:null
+    let winid = bufwinid(a:bufnr)
+    if winid >= 0
+      let cursor = nvim_win_get_cursor(winid)
+    endif
+    call nvim_buf_set_lines(a:bufnr, a:start, a:end, a:strict_indexing, a:lines)
+    if winid >= 0
+      try
+        call nvim_win_set_cursor(winid, cursor)
+      catch
+      endtry
+    endif
+  else
+    call coc#api#call('buf_set_lines', [a:bufnr, a:start, a:end, a:strict_indexing, a:lines])
   endif
+
+  call setbufvar(a:bufnr, '&readonly', 1)
+  call setbufvar(a:bufnr, '&modifiable', 0)
 endfunction
 
 " doautocmd

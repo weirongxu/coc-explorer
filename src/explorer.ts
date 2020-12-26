@@ -575,29 +575,11 @@ export class Explorer implements Disposable {
 
   setLinesNotifier(lines: string[], start: number, end: number) {
     return Notifier.create(() => {
-      this.buffer.setOption('modifiable', true, true);
-      this.buffer.setOption('readonly', false, true);
-
-      if (workspace.isVim) {
-        void this.buffer.setLines(
-          lines,
-          {
-            start,
-            end,
-            strictIndexing: false,
-          },
-          true,
-        );
-      } else if (workspace.isNvim) {
-        this.nvim.call(
-          'coc_explorer#util#buf_set_lines_skip_cursor',
-          [this.bufnr, start, end, false, lines],
-          true,
-        );
-      }
-
-      this.buffer.setOption('readonly', true, true);
-      this.buffer.setOption('modifiable', false, true);
+      this.nvim.call(
+        'coc_explorer#util#buf_set_lines_skip_cursor',
+        [this.bufnr, start, end, false, lines],
+        true,
+      );
     });
   }
 
