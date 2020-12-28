@@ -303,12 +303,12 @@ export class FileSource extends ExplorerSource<FileNode> {
   async revealNodeByPathNotifier(
     path: string,
     {
-      node = this.view.rootNode,
+      startNode = this.view.rootNode,
       goto = true,
       render = true,
       compact,
     }: {
-      node?: FileNode;
+      startNode?: FileNode;
       /**
        * @default true
        */
@@ -326,31 +326,31 @@ export class FileSource extends ExplorerSource<FileNode> {
     const revealRecursive = async (
       path: string,
       {
-        node,
+        startNode,
         goto,
         render,
-      }: { node: FileNode; goto: boolean; render: boolean },
+      }: { startNode: FileNode; goto: boolean; render: boolean },
     ): Promise<FileNode | undefined> => {
-      if (path === node.fullpath) {
-        return node;
+      if (path === startNode.fullpath) {
+        return startNode;
       } else if (
-        node.directory &&
-        path.startsWith(node.fullpath + pathLib.sep)
+        startNode.directory &&
+        path.startsWith(startNode.fullpath + pathLib.sep)
       ) {
         let foundNode: FileNode | undefined = undefined;
-        const isRender = render && !this.view.isExpanded(node);
-        if (!node.children) {
-          node.children = await this.loadInitedChildren(node);
+        const isRender = render && !this.view.isExpanded(startNode);
+        if (!startNode.children) {
+          startNode.children = await this.loadInitedChildren(startNode);
         }
-        for (const child of node.children) {
+        for (const child of startNode.children) {
           const childFoundNode = await revealRecursive(path, {
-            node: child,
+            startNode: child,
             goto: false,
             render: isRender ? false : render,
           });
           foundNode = childFoundNode;
           if (foundNode) {
-            await this.view.expand(node, {
+            await this.view.expand(startNode, {
               compact,
               uncompact: false,
               render: false,
@@ -362,7 +362,7 @@ export class FileSource extends ExplorerSource<FileNode> {
         if (foundNode) {
           if (isRender) {
             const renderNotifier = await this.view.renderNotifier({
-              node,
+              node: startNode,
             });
             if (renderNotifier) {
               notifiers.push(renderNotifier);
@@ -380,7 +380,11 @@ export class FileSource extends ExplorerSource<FileNode> {
       return;
     };
 
-    const foundNode = await revealRecursive(path, { node, goto, render });
+    const foundNode = await revealRecursive(path, {
+      startNode,
+      goto,
+      render,
+    });
     return [foundNode, notifiers];
   }
 

@@ -446,11 +446,10 @@ export function loadFileActions(action: ActionSource<FileSource, FileNode>) {
           await fsTouch(target);
         },
       );
-      const reloadNotifier = await file.loadNotifier(
-        putTargetNode.parent ?? putTargetNode,
-      );
+      const loadNode = putTargetNode.parent ?? putTargetNode;
+      const reloadNotifier = await file.loadNotifier(loadNode);
       const [, notifiers] = await file.revealNodeByPathNotifier(targetPath, {
-        node: putTargetNode,
+        startNode: loadNode,
       });
       await Notifier.runAll([reloadNotifier, ...notifiers]);
     },
@@ -485,7 +484,7 @@ export function loadFileActions(action: ActionSource<FileSource, FileNode>) {
       const [, revealNotifiers] = await file.revealNodeByPathNotifier(
         targetPath,
         {
-          node: putTargetNode,
+          startNode: putTargetNode,
         },
       );
       await Notifier.runAll([reloadNotifier, ...revealNotifiers]);
