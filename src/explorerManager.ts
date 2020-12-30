@@ -15,6 +15,7 @@ import { Explorer } from './explorer';
 import { keyMapping } from './mappings';
 import { Args, ArgPosition } from './arg/parseArgs';
 import { compactI, onError, supportedNvimFloating } from './util';
+import { MappingMode } from './actions/types';
 
 export class TabContainer {
   left?: Explorer;
@@ -82,7 +83,7 @@ export class ExplorerManager {
   }))(this);
 
   /**
-   * mappings[key][mode] = '<Plug>(coc-action-mode-key)'
+   * mappings[mode][key] = '<Plug>(coc-action-mode-key)'
    */
   private mappings: Record<string, Record<string, string>> = {};
 
@@ -215,11 +216,19 @@ export class ExplorerManager {
 
   async registerMappings() {
     this.mappings = {};
-    for (const key of await keyMapping.getKeys()) {
-      this.mappings[key] = {};
-      (['n', 'v'] as const).forEach((mode) => {
+    const commonKeys = [...(await keyMapping.getCommonKeys())];
+    const keysModes: [MappingMode, string[]][] = [
+      ['n', commonKeys],
+      ['v', [...commonKeys, ...(await keyMapping.getVisualKeys())]],
+    ];
+    for (const [mode, keys] of keysModes) {
+      this.mappings[mode] = {};
+      for (const key of keys) {
+        if (this.mappings[mode][key]) {
+          continue;
+        }
         if (mode === 'v' && ['o', 'j', 'k'].includes(key)) {
-          return;
+          continue;
         }
         const plugKey = `explorer-key-${mode}-${key.replace(
           /\<(.*)\>/,
@@ -234,8 +243,8 @@ export class ExplorerManager {
               .catch(onError);
           }),
         );
-        this.mappings[key][mode] = `<Plug>(coc-${plugKey})`;
-      });
+        this.mappings[mode][key] = `<Plug>(coc-${plugKey})`;
+      }
     }
     await this.nvim.call('coc_explorer#mappings#register', [this.mappings]);
     await this.events.fire('registeredMapping');

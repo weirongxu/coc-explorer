@@ -8,8 +8,8 @@ endfunction
 
 function! coc_explorer#mappings#execute(mappings) abort
   if &filetype == 'coc-explorer'
-    for [key, mapping] in items(a:mappings)
-      for [mode, target] in items(mapping)
+    for [mode, mapping] in items(a:mappings)
+      for [key, target] in items(mapping)
         execute mode . 'map <buffer> ' . key . ' ' . target
       endfor
     endfor
@@ -18,8 +18,8 @@ endfunction
 
 function! coc_explorer#mappings#clear(mappings) abort
   if &filetype == 'coc-explorer'
-    for [key, mapping] in items(a:mappings)
-      for [mode, target] in items(mapping)
+    for [mode, mapping] in items(a:mappings)
+      for [key, target] in items(mapping)
         execute mode . 'unmap <buffer> ' . key
       endfor
     endfor

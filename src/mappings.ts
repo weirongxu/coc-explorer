@@ -256,12 +256,18 @@ class KeyMapping {
     return this.allSourceMappings()[sourceType];
   }
 
-  async getKeys() {
+  private async filterEscForVim(keys: Set<string>) {
+    if (
+      workspace.isVim &&
+      !(await workspace.nvim.call('has', ['gui_running']))
+    ) {
+      keys.delete('<esc>');
+    }
+  }
+
+  async getCommonKeys() {
     const keys = new Set<string>();
     for (const key of Object.keys(this.globalMappings())) {
-      keys.add(key);
-    }
-    for (const key of Object.keys(this.vmapMappings())) {
       keys.add(key);
     }
     for (const sourceMappings of Object.values(this.allSourceMappings())) {
@@ -269,12 +275,16 @@ class KeyMapping {
         keys.add(key);
       }
     }
-    if (
-      workspace.isVim &&
-      !(await workspace.nvim.call('has', ['gui_running']))
-    ) {
-      keys.delete('<esc>');
+    await this.filterEscForVim(keys);
+    return keys;
+  }
+
+  async getVisualKeys() {
+    const keys = new Set<string>();
+    for (const key of Object.keys(this.vmapMappings())) {
+      keys.add(key);
     }
+    // await this.filterEscForVim(keys);
     return keys;
   }
 
