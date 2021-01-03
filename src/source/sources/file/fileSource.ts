@@ -161,6 +161,9 @@ export class FileSource extends ExplorerSource<FileNode> {
             if (bufnr === this.explorer.bufnr) {
               return;
             }
+            if (!this.explorer.visible()) {
+              return;
+            }
             const position = await this.explorer.args.value(
               argOptions.position,
             );

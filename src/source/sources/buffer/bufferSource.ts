@@ -74,11 +74,17 @@ export class BufferSource extends ExplorerSource<BufferNode> {
       this.disposables.push(
         this.bufManager.onReload(
           debounce(500, async () => {
+            if (!this.explorer.visible()) {
+              return;
+            }
             await this.load(this.view.rootNode);
           }),
         ),
         this.bufManager.onModified(
           debounce(500, async () => {
+            if (!this.explorer.visible()) {
+              return;
+            }
             await this.load(this.view.rootNode);
           }),
         ),

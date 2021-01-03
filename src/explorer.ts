@@ -260,6 +260,11 @@ export class Explorer implements Disposable {
     return this.nvim.createBuffer(bufnr);
   }
 
+  visible() {
+    const node = this.explorerManager.bufManager.getBufferNode(this.bufnr);
+    return node?.visible;
+  }
+
   async refreshWidth() {
     const window = await this.win;
     if (!window) {
