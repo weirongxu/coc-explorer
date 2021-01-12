@@ -1,4 +1,4 @@
-import { HelperEventEmitter, Notifier } from 'coc-helper';
+import { HelperEventEmitter, Notifier, prettyPrint } from 'coc-helper';
 import {
   Disposable,
   Emitter,
@@ -67,11 +67,6 @@ export namespace SourceOptions {
      * @default true
      */
     render?: boolean;
-    /**
-     * Load children
-     * @default true
-     */
-    load?: boolean;
   };
 
   export type Render<TreeNode extends BaseTreeNode<any>> = {
@@ -219,10 +214,10 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>>
     return this.view.flattenedNodes.length;
   }
 
-  bootInit(rootExpanded: boolean) {
+  bootInit(rootExpandedForOpen: boolean) {
     Promise.resolve(this.init()).catch(onError);
 
-    this.view.bootInit(rootExpanded);
+    this.view.bootInit(rootExpandedForOpen);
   }
 
   abstract init(): Promise<void>;
@@ -330,32 +325,28 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>>
     return children;
   }
 
-  async load(
-    parentNode: TreeNode,
-    options?: { render?: boolean; force?: boolean },
-  ) {
-    return (await this.loadNotifier(parentNode, options)).run();
+  async load(node: TreeNode, options?: { render?: boolean; force?: boolean }) {
+    return (await this.loadNotifier(node, options)).run();
   }
 
-  async loadNotifier(
-    parentNode: TreeNode,
-    { render = true, force = false } = {},
-  ) {
+  async loadNotifier(node: TreeNode, { render = true, force = false } = {}) {
     if (this.isDisposed) {
       return Notifier.noop();
     }
     await this.explorer.refreshWidth();
     this.selectedNodes = new Set();
-    if (this.view.isExpanded(parentNode)) {
-      parentNode.children = await this.loadInitedChildren(parentNode, {
+    if (this.view.isExpanded(node)) {
+      node.children = await this.loadInitedChildren(node, {
         recursiveExpanded: true,
         force,
       });
+    } else {
+      node.children = undefined;
     }
-    await this.events.fire('loaded', parentNode);
-    await this.sourcePainters.load(parentNode);
+    await this.events.fire('loaded', node);
+    await this.sourcePainters.load(node);
     if (render) {
-      return this.view.renderNotifier({ node: parentNode, force });
+      return this.view.renderNotifier({ node: node, force });
     }
     return Notifier.noop();
   }

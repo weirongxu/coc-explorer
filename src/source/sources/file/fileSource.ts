@@ -357,7 +357,6 @@ export class FileSource extends ExplorerSource<FileNode> {
               compact,
               uncompact: false,
               render: false,
-              load: false,
             });
             break;
           }

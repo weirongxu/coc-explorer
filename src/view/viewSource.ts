@@ -102,7 +102,7 @@ export class ViewSource<TreeNode extends BaseTreeNode<TreeNode>> {
     return handles;
   })();
 
-  rootExpanded = false;
+  rootExpandedForOpen = false;
 
   constructor(
     public readonly source: ExplorerSource<any>,
@@ -111,13 +111,12 @@ export class ViewSource<TreeNode extends BaseTreeNode<TreeNode>> {
     this.explorer = this.source.explorer;
   }
 
-  bootInit(rootExpanded: boolean) {
-    this.rootExpanded = rootExpanded;
-    this.nodeStores.setExpanded(this.rootNode, rootExpanded);
+  bootInit(rootExpandedForOpen: boolean) {
+    this.rootExpandedForOpen = rootExpandedForOpen;
   }
 
   bootOpen() {
-    this.nodeStores.setExpanded(this.rootNode, this.rootExpanded);
+    this.nodeStores.setExpanded(this.rootNode, this.rootExpandedForOpen);
   }
 
   /**
@@ -192,8 +191,8 @@ export class ViewSource<TreeNode extends BaseTreeNode<TreeNode>> {
    * get all flattened children
    */
   flattenChildren(node: TreeNode): TreeNode[] {
-    const stack = node.children ? [...node.children] : [];
     const result: TreeNode[] = [];
+    const stack = node.children ? [...node.children] : [];
 
     function replaceNodeInSibling<TreeNode extends BaseTreeNode<TreeNode>>(
       oldNode: TreeNode,
@@ -258,7 +257,7 @@ export class ViewSource<TreeNode extends BaseTreeNode<TreeNode>> {
         }
       }
       result.push(node);
-      if (node.children && this.isExpanded(node)) {
+      if (node.children) {
         for (let i = node.children.length - 1; i >= 0; i--) {
           node.children[i].parent = node;
           node.children[i].level = (node.level ?? 0) + 1;
@@ -372,7 +371,7 @@ export class ViewSource<TreeNode extends BaseTreeNode<TreeNode>> {
       }
 
       this.nodeStores.expand(node);
-      if (!node.children || (options.load ?? true)) {
+      if (!node.children) {
         node.children = await this.source.loadInitedChildren(node, {
           recursiveExpanded: true,
         });
@@ -417,10 +416,7 @@ export class ViewSource<TreeNode extends BaseTreeNode<TreeNode>> {
   }
 
   private async collapseRender(node: TreeNode) {
-    if (this.isHelpUI) {
-      return;
-    }
-    if (this.isExpanded(node)) {
+    if (this.isHelpUI || this.isExpanded(node)) {
       return;
     }
     const range = this.nodeAndChildrenRange(node);
@@ -462,14 +458,17 @@ export class ViewSource<TreeNode extends BaseTreeNode<TreeNode>> {
   private async collapseRecursive(node: TreeNode, recursive: boolean) {
     if (node.expandable) {
       this.nodeStores.collapse(node);
+      const children = node.children;
+      if (!children) {
+        return;
+      }
+      node.children = undefined;
       if (
         recursive ||
         this.config.get('autoCollapseOptions').includes('recursive')
       ) {
-        if (node.children) {
-          for (const child of node.children) {
-            await this.collapseRecursive(child, recursive);
-          }
+        for (const child of children) {
+          await this.collapseRecursive(child, recursive);
         }
       }
     }
