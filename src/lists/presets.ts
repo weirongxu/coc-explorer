@@ -1,7 +1,7 @@
 import { BasicList, Neovim } from 'coc.nvim';
 import { getPresets } from '../presets';
 import { configLocal } from '../config';
-import { onError } from '../util';
+import {logger} from '../util';
 
 export class PresetList extends BasicList {
   readonly name = 'explPresets';
@@ -14,7 +14,7 @@ export class PresetList extends BasicList {
     this.addAction('do', async (item) => {
       this.nvim
         .command(`CocCommand explorer --preset ${item.data.name}`)
-        .catch(onError);
+        .catch(logger.error);
     });
   }
 
@@ -33,6 +33,6 @@ export class PresetList extends BasicList {
     nvim.pauseNotification();
     nvim.command('syntax match CocExplorerPreset /.*/', true);
     nvim.command('highlight default link CocExplorerPreset PreProc', true);
-    nvim.resumeNotification().catch(onError);
+    nvim.resumeNotification().catch(logger.error);
   }
 }

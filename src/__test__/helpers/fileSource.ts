@@ -42,7 +42,13 @@ export namespace FileSourceHelper {
         const node = flattenedNodes.find(
           (n) => n.fullpath === parentNode.fullpath,
         );
-        return node?.children ? [...node.children] : [];
+        return node?.children
+          ? [
+              ...node.children.map((child) => {
+                return { ...child, children: undefined };
+              }),
+            ]
+          : [];
       },
     };
   }

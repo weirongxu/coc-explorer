@@ -1,4 +1,4 @@
-import { Uri, workspace } from 'coc.nvim';
+import { Uri, window, workspace } from 'coc.nvim';
 import fs from 'fs';
 import { homedir } from 'os';
 import pathLib from 'path';
@@ -16,8 +16,8 @@ import {
   getExtensions,
   isWindows,
   listDrive,
+  logger,
   normalizePath,
-  onError,
 } from '../../../util';
 import { hlGroupManager } from '../../../highlight/manager';
 import { BaseTreeNode, ExplorerSource } from '../../source';
@@ -218,12 +218,12 @@ export class FileSource extends ExplorerSource<FileNode> {
       if (workspace.isNvim || (await nvim.call('exists', [':tcd']))) {
         await nvim.command('tcd ' + escapePath);
         // eslint-disable-next-line no-restricted-properties
-        workspace.showMessage(`Tab's CWD is: ${fullpath}`);
+        window.showMessage(`Tab's CWD is: ${fullpath}`);
       }
     } else {
       await nvim.command('cd ' + escapePath);
       // eslint-disable-next-line no-restricted-properties
-      workspace.showMessage(`CWD is: ${fullpath}`);
+      window.showMessage(`CWD is: ${fullpath}`);
     }
   }
 
@@ -300,7 +300,7 @@ export class FileSource extends ExplorerSource<FileNode> {
     };
 
     const task = await this.startCocList(fileList);
-    task.waitShow()?.catch(onError);
+    task.waitShow()?.catch(logger.error);
   }
 
   async revealNodeByPathNotifier(
@@ -454,7 +454,7 @@ export class FileSource extends ExplorerSource<FileNode> {
           };
           return child;
         } catch (error) {
-          onError(error);
+          logger.error(error);
           return;
         }
       }),

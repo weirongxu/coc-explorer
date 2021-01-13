@@ -4,8 +4,8 @@ import { BaseTreeNode, ExplorerSource } from '../source/source';
 import {
   Cancelled,
   debouncePromise,
+  logger,
   mapGetWithDefault,
-  onError,
   sum,
   throttle,
 } from '../util';
@@ -101,7 +101,7 @@ export class DiagnosticBinder {
             ? node.fullpath
             : node.fullpath && pathLib.dirname(node.fullpath);
         if (directory) {
-          this.reload([source]).catch(onError);
+          this.reload([source]).catch(logger.error);
         }
       }),
     ];

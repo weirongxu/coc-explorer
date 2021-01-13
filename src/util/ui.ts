@@ -6,8 +6,8 @@ let floatInputApi: FloatInputType | undefined;
 
 async function getFloatInputApi() {
   if (!floatInputApi) {
-    floatInputApi = extensions.getExtensionApi(
-      'coc-floatinput',
+    floatInputApi = extensions.all.find(
+      (e) => e.id === 'coc-floatinput',
     ) as FloatInputType;
   }
   return floatInputApi;
@@ -130,7 +130,7 @@ export async function vimInput(
   return workspace.nvim.callAsync('coc#util#with_callback', [
     'input',
     [prompt + ' ', defaultInput, completion],
-  ]);
+  ]) as Promise<string>;
 }
 
 export async function input(

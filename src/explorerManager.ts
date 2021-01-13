@@ -14,7 +14,7 @@ import { onBufEnter } from './events';
 import { Explorer } from './explorer';
 import { keyMapping } from './mappings';
 import { Args, ArgPosition } from './arg/parseArgs';
-import { compactI, onError, supportedNvimFloating } from './util';
+import { compactI, currentBufnr, logger, supportedNvimFloating } from './util';
 import { MappingMode } from './actions/types';
 
 export class TabContainer {
@@ -62,7 +62,7 @@ export class ExplorerManager {
   events = new HelperEventEmitter<{
     didAutoload: () => void;
     registeredMapping: () => void;
-  }>(onError);
+  }>(logger);
 
   waitAllEvents = ((self) => ({
     didCount: 0,
@@ -91,10 +91,10 @@ export class ExplorerManager {
     this.waitAllEvents.constructor();
 
     this.events.on('didAutoload', () => {
-      this.registerMappings().catch(onError);
+      this.registerMappings().catch(logger.error);
     });
 
-    this.updatePrevCtxVars(workspace.bufnr).catch(onError);
+    currentBufnr().then(this.updatePrevCtxVars.bind(this)).catch(logger.error);
     this.context.subscriptions.push(
       onBufEnter(async (bufnr) => {
         await this.updatePrevCtxVars(bufnr);
@@ -194,8 +194,8 @@ export class ExplorerManager {
     return explorers;
   }
 
-  currentExplorer() {
-    return this.explorerByBufnr(workspace.bufnr);
+  async currentExplorer() {
+    return this.explorerByBufnr(await currentBufnr());
   }
 
   async explorerByWinid(winid: number) {
@@ -210,8 +210,8 @@ export class ExplorerManager {
     return this.explorers().find((e) => e.bufnr === bufnr);
   }
 
-  inExplorer() {
-    return this.currentExplorer() !== undefined;
+  async inExplorer() {
+    return (await this.currentExplorer()) !== undefined;
   }
 
   async registerMappings() {
@@ -237,10 +237,10 @@ export class ExplorerManager {
         this.context.subscriptions.push(
           workspace.registerKeymap([mode], plugKey, async () => {
             const count = (await this.nvim.eval('v:count')) as number;
-            const explorer = this.currentExplorer();
+            const explorer = await this.currentExplorer();
             explorer?.action
               .doActionByKey(key, mode, count || 1)
-              .catch(onError);
+              .catch(logger.error);
           }),
         );
         this.mappings[mode][key] = `<Plug>(coc-${plugKey})`;
@@ -295,8 +295,8 @@ export class ExplorerManager {
     }
 
     const sourceWinid = (await this.nvim.call('win_getid')) as number;
-    const sourceBufnr = workspace.bufnr;
-    const rootPath = workspace.rootPath;
+    const sourceBufnr = await currentBufnr();
+    const rootPath = workspace.root;
 
     if (!explorer || !(await this.nvim.call('bufexists', [explorer.bufnr]))) {
       explorer = await Explorer.create(this, args, explorerConfig);

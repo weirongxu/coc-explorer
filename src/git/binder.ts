@@ -7,8 +7,8 @@ import {
   Cancelled,
   debounce,
   debouncePromise,
+  logger,
   mapGetWithDefault,
-  onError,
   sum,
 } from '../util';
 import { gitManager } from './manager';
@@ -127,7 +127,7 @@ export class GitBinder {
             ? node.fullpath
             : node.fullpath && pathLib.dirname(node.fullpath);
         if (directory) {
-          this.reloadDebounce([source], directory).catch(onError);
+          this.reloadDebounce([source], directory).catch(logger.error);
         }
       }),
     ];

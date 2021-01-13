@@ -1,6 +1,6 @@
 import { BasicList, Neovim, workspace } from 'coc.nvim';
 import { FileSource } from '../source/sources/file/fileSource';
-import { onError } from '../util';
+import {logger} from '../util';
 
 export class ExplorerWorkspaceFolderList extends BasicList {
   readonly defaultAction = 'do';
@@ -25,7 +25,7 @@ export class ExplorerWorkspaceFolderList extends BasicList {
       data: {
         path,
         callback: () => {
-          this.fileSource?.action.doAction('cd', [], [path]).catch(onError);
+          this.fileSource?.action.doAction('cd', [], [path]).catch(logger.error);
         },
       },
     }));
@@ -39,7 +39,7 @@ export class ExplorerWorkspaceFolderList extends BasicList {
       'highlight default link CocExplorerWorkspaceFolder PreProc',
       true,
     );
-    nvim.resumeNotification().catch(onError);
+    nvim.resumeNotification().catch(logger.error);
   }
 }
 

@@ -16,7 +16,7 @@ import {
   handlePadding,
   isEmptyDrawableList,
 } from '../painter/util';
-import { byteLength, flatten, sum } from '../util';
+import { flatten, sum } from '../util';
 import { Column } from './columnRegistrar';
 import { BaseTreeNode } from './source';
 import { TemplatePart } from './sourcePainters';
@@ -88,7 +88,7 @@ export class ViewRowPainter {
     let content = '';
     let col = 0;
     for (const drawContent of drawContents) {
-      const size = byteLength(drawContent.content);
+      const size = drawContent.content.length;
       if (drawContent.group) {
         highlightPositions.push({
           group: drawContent.group,

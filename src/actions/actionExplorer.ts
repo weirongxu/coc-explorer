@@ -1,11 +1,11 @@
 import { Mutex } from 'await-semaphore';
 import { Notifier } from 'coc-helper';
-import { workspace } from 'coc.nvim';
+import { window, workspace } from 'coc.nvim';
 import { Explorer } from '../explorer';
 import { keyMapping } from '../mappings';
 import { BaseTreeNode, ExplorerSource } from '../source/source';
 import { MoveStrategy } from '../types';
-import { enableWrapscan, onError, scanIndexNext, scanIndexPrev } from '../util';
+import { enableWrapscan, logger, scanIndexNext, scanIndexPrev } from '../util';
 import { ActionRegistrar } from './registrar';
 import { ActionExp, MappingMode } from './types';
 
@@ -99,11 +99,11 @@ export class ActionExplorer extends ActionRegistrar<
       }
     } catch (error) {
       // eslint-disable-next-line no-restricted-properties
-      workspace.showMessage(
+      window.showMessage(
         `Error when do action ${JSON.stringify(actionExp)}`,
         'error',
       );
-      onError(error);
+      logger.error(error);
     }
   }
 

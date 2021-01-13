@@ -7,7 +7,7 @@ import { getDirectoryIcon, getFileIcon } from './icon/icons';
 import { actionListMru } from './lists/actions';
 import { parseOriginalActionExp } from './mappings';
 import { BaseTreeNode, ExplorerSource } from './source/source';
-import { asyncCatchError, compactI, onError } from './util';
+import { asyncCatchError, compactI, logger } from './util';
 import { WinLayoutFinder } from './winLayoutFinder';
 
 export function registerApi(
@@ -30,9 +30,7 @@ async function getExplorer(
 ): Promise<undefined | Explorer> {
   if (explorerFinder === 'closest') {
     const winFinder = await WinLayoutFinder.create();
-    const curWinid = (await workspace.nvim.call('bufwinid', [
-      workspace.bufnr,
-    ])) as number;
+    const curWinid = (await workspace.nvim.eval('bufwinid(bufnr())')) as number;
     if (curWinid <= -1) {
       return;
     }
@@ -97,7 +95,8 @@ async function getSourceAndNodeByPosition(
   }
   const source = explorer.sources.find(
     (source) =>
-      lineIndex >= source.view.startLineIndex && lineIndex < source.view.endLineIndex,
+      lineIndex >= source.view.startLineIndex &&
+      lineIndex < source.view.endLineIndex,
   );
   if (!source) {
     return [undefined, undefined];
@@ -135,7 +134,7 @@ export function registerVimApi(
         count,
         lineIndexes,
       })
-      .catch(onError);
+      .catch(logger.error);
   }
 
   context.subscriptions.push(

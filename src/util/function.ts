@@ -1,5 +1,5 @@
 import { setImmediate } from 'timers';
-import { onError } from '.';
+import { logger } from '.';
 
 export function asyncCatchError<R extends any, ARGS extends any[]>(
   fn: (...args: ARGS) => R | Promise<R>,
@@ -8,7 +8,7 @@ export function asyncCatchError<R extends any, ARGS extends any[]>(
     try {
       return await fn(...args);
     } catch (e) {
-      onError(e);
+      logger.error(e);
     }
   };
 }

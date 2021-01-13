@@ -1,5 +1,5 @@
-import { BasicList, Neovim, workspace, Mru } from 'coc.nvim';
-import { onError } from '../util';
+import { BasicList, Neovim, workspace } from 'coc.nvim';
+import { logger } from '../util';
 
 interface ActionData {
   name: string;
@@ -14,7 +14,7 @@ function score(list: string[], key: string): number {
   return idx === -1 ? -1 : list.length - idx;
 }
 
-export const actionListMru = new Mru('explorer-actions');
+export const actionListMru = workspace.createMru('explorer-actions');
 
 export class ExplorerActionList extends BasicList {
   readonly defaultAction = 'do';
@@ -30,7 +30,7 @@ export class ExplorerActionList extends BasicList {
         await data.callback();
         await actionListMru.add(data.name);
         resolve(undefined);
-      }).catch(onError);
+      }).catch(logger.error);
     });
   }
 
@@ -74,7 +74,7 @@ export class ExplorerActionList extends BasicList {
       'highlight default link CocExplorerActionDescription Comment',
       true,
     );
-    nvim.resumeNotification().catch(onError);
+    nvim.resumeNotification().catch(logger.error);
   }
 }
 

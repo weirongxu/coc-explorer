@@ -11,7 +11,7 @@ import { ExplorerManager } from './explorerManager';
 import { PresetList } from './lists/presets';
 import { registerVimApi } from './vimApi';
 import { InternalVimEvents } from './events';
-import { asyncCatchError, onError, registerRuntimepath } from './util';
+import { asyncCatchError, logger, registerRuntimepath } from './util';
 import { ActionMenuCodeActionProvider } from './actions/codeActionProider';
 import { activateHelper } from 'coc-helper';
 
@@ -35,7 +35,7 @@ export const activate = async (context: ExtensionContext) => {
 
   subscriptions.push(
     commands.registerCommand('explorer', (...args) => {
-      explorerManager.open(args).catch(onError);
+      explorerManager.open(args).catch(logger.error);
     }),
     languages.registerCodeActionProvider(
       ['coc-explorer'],
@@ -54,5 +54,5 @@ export const activate = async (context: ExtensionContext) => {
       ),
     );
     await explorerManager.events.fire('didAutoload');
-  })().catch(onError);
+  })().catch(logger.error);
 };

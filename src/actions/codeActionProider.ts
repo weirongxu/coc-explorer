@@ -26,7 +26,7 @@ export class ActionMenuCodeActionProvider implements CodeActionProvider {
     _context: CodeActionContext,
     _token: CancellationToken,
   ): Promise<Command[]> {
-    const explorer = this.explorerManager.currentExplorer();
+    const explorer = await this.explorerManager.currentExplorer();
     if (!explorer) {
       return [];
     }

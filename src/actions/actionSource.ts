@@ -1,7 +1,7 @@
 import { explorerActionList } from '../lists/actions';
 import { keyMapping } from '../mappings';
 import { BaseTreeNode, ExplorerSource } from '../source/source';
-import { flatten, onError, partition } from '../util';
+import { flatten, logger, partition } from '../util';
 import { ActionExplorer } from './actionExplorer';
 import { ActionMenu } from './menu';
 import { ActionRegistrar } from './registrar';
@@ -217,6 +217,6 @@ export class ActionSource<
       ),
     );
     const task = await source.startCocList(explorerActionList);
-    task.waitShow()?.catch(onError);
+    task.waitShow()?.catch(logger.error);
   }
 }

@@ -1,7 +1,7 @@
-import { workspace } from 'coc.nvim';
+import { Position, Range, workspace } from 'coc.nvim';
 import { InternalVimEvents } from '../events';
 import type { Explorer } from '../explorer';
-import { onError } from '../util';
+import { logger } from '../util';
 import { HighlightCommand, HighlightPositionWithLine } from './types';
 
 class HighlightManager {
@@ -53,15 +53,12 @@ class HighlightManager {
       if (hl.size === 0) {
         continue;
       }
-      explorer.buffer
-        .addHighlight({
-          srcId: hlSrcId,
-          hlGroup: hl.group,
-          line: hl.lineIndex,
-          colStart: hl.start,
-          colEnd: hl.start + hl.size,
-        })
-        .catch(onError);
+      explorer.buffer.highlightRanges(hlSrcId, hl.group, [
+        Range.create(
+          Position.create(hl.lineIndex, hl.start),
+          Position.create(hl.lineIndex, hl.start + hl.size),
+        ),
+      ]);
     }
   }
 

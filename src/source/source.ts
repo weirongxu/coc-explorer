@@ -1,4 +1,4 @@
-import { HelperEventEmitter, Notifier, prettyPrint } from 'coc-helper';
+import { HelperEventEmitter, Notifier } from 'coc-helper';
 import {
   Disposable,
   Emitter,
@@ -15,7 +15,7 @@ import { argOptions } from '../arg/argOptions';
 import { Explorer } from '../explorer';
 import { HighlightSource } from '../highlight/highlightSource';
 import { LocatorSource } from '../locator/locatorSource';
-import { delay, generateUri, onError } from '../util';
+import { delay, generateUri, logger } from '../util';
 import { ViewSource } from '../view/viewSource';
 import { SourcePainters } from './sourcePainters';
 
@@ -149,7 +149,7 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>>
   bufManager = this.explorer.explorerManager.bufManager;
   events = new HelperEventEmitter<{
     loaded: (node: TreeNode) => void | Promise<void>;
-  }>(onError);
+  }>(logger);
   action = new ActionSource<this, TreeNode>(this, this.explorer.action);
   highlight: HighlightSource;
   locator = new LocatorSource(this);
@@ -215,7 +215,7 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>>
   }
 
   bootInit(rootExpandedForOpen: boolean) {
-    Promise.resolve(this.init()).catch(onError);
+    Promise.resolve(this.init()).catch(logger.error);
 
     this.view.bootInit(rootExpandedForOpen);
   }
@@ -254,13 +254,17 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>>
 
     const shownExplorerEmitter = new Emitter<void>();
     const listDisposable = listManager.registerList(list);
+    // @ts-ignore TODO
     await listManager.start([list.name]);
     listDisposable.dispose();
 
     const eventDisposable = events.on('BufWinLeave', async () => {
       if (
+        // @ts-ignore TODO
         listManager.ui &&
+        // @ts-ignore TODO
         listManager.ui.shown &&
+        // @ts-ignore TODO
         listManager.ui.window?.id !== undefined
       ) {
         return;

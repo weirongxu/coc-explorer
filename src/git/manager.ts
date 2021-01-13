@@ -1,8 +1,8 @@
-import { Disposable, workspace } from 'coc.nvim';
+import { Disposable } from 'coc.nvim';
 import pathLib from 'path';
 import { config } from '../config';
 import { ExplorerSource } from '../source/source';
-import { compactI, onError } from '../util';
+import { compactI, logger } from '../util';
 import { GitBinder } from './binder';
 import { GitCommand } from './command';
 import {
@@ -72,7 +72,7 @@ class GitManager {
           pathLib.join(directory, gitRoot);
         }
       } catch (error) {
-        onError(error);
+        logger.error(error);
         return;
       }
     }

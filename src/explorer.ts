@@ -27,6 +27,7 @@ import { sourceManager } from './source/sourceManager';
 import { ExplorerOpenOptions } from './types';
 import {
   closeWinByBufnrNotifier,
+  currentBufnr,
   normalizePath,
   sum,
   winByWinid,
@@ -443,8 +444,9 @@ export class Explorer implements Disposable {
       await doUserAutocmd('CocExplorerQuitPre');
     }
     const sourceWinnr = await this.sourceWinnr();
+    const bufnr = await currentBufnr();
     return Notifier.create(() => {
-      if (sourceWinnr && this.bufnr === workspace.bufnr) {
+      if (sourceWinnr && this.bufnr === bufnr) {
         this.nvim.command(`${sourceWinnr}wincmd w`, true);
       }
       closeWinByBufnrNotifier([this.bufnr]).notify();

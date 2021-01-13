@@ -1,9 +1,10 @@
+const jest = require('./node_modules/coc-helper/jest.config.js');
+
 module.exports = {
-  preset: 'ts-jest',
+  ...jest,
   clearMocks: true,
-  globalSetup: './node_modules/coc-helper/tests/jest-setup.js',
   moduleNameMapper: {
     '^lodash-es$': 'lodash',
+    ...jest.moduleNameMapper,
   },
-  testPathIgnorePatterns: ['/node_modules/', '/coc.nvim/'],
 };

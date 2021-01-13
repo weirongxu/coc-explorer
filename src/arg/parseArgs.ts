@@ -1,6 +1,6 @@
-import { splitCount } from '../util';
-import { workspace, WorkspaceConfiguration } from 'coc.nvim';
+import { window, WorkspaceConfiguration } from 'coc.nvim';
 import { getPresets } from '../presets';
+import { splitCount } from '../util';
 
 export interface ArgsSource {
   name: string;
@@ -163,10 +163,7 @@ export class Args {
     const presets = await getPresets(config);
     if (!(preset in presets)) {
       // eslint-disable-next-line no-restricted-properties
-      workspace.showMessage(
-        `coc-explorer preset(${preset}) not found`,
-        'warning',
-      );
+      window.showMessage(`coc-explorer preset(${preset}) not found`, 'warning');
       return self;
     }
 

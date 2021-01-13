@@ -1,5 +1,4 @@
-import { BufferHighlight } from '@chemzqm/neovim';
-import { Disposable, workspace } from 'coc.nvim';
+import { BufferHighlight, Disposable, workspace } from 'coc.nvim';
 import { FloatingCreateOptions, FloatingOpenOptions } from '../types';
 import { FloatingWindow as HelperFloatingWindow } from 'coc-helper';
 

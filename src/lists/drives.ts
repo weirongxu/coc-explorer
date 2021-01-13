@@ -1,5 +1,5 @@
 import { BasicList, Neovim, workspace } from 'coc.nvim';
-import { onError } from '../util';
+import { logger } from '../util';
 
 interface DriveItem {
   name: string;
@@ -38,7 +38,7 @@ export class DriveList extends BasicList {
     nvim.pauseNotification();
     nvim.command('syntax match CocExplorerDriveName /\\v^[\\w:]+/', true);
     nvim.command('highlight default link CocExplorerDriveName PreProc', true);
-    nvim.resumeNotification().catch(onError);
+    nvim.resumeNotification().catch(logger.error);
   }
 }
 

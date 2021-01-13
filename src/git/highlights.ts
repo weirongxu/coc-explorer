@@ -3,13 +3,7 @@ import { Color } from 'vscode-languageserver-protocol';
 import { hlGroupManager } from '../highlight/manager';
 import { parseHighlight } from '../highlight/parseHighlight';
 import colorConvert from 'color-convert';
-import {
-  compactI,
-  findNearestColor,
-  onError,
-  parseColor,
-  toHex,
-} from '../util';
+import { compactI, findNearestColor, logger, parseColor, toHex } from '../util';
 import { GitFormat } from './types';
 
 const hl = hlGroupManager.linkGroup.bind(hlGroupManager);
@@ -107,7 +101,7 @@ hlGroupManager
     }
     await nvim.resumeNotification();
   })
-  .catch(onError);
+  .catch(logger.error);
 
 const gitChangedPath = hl('GitPathChange', 'CocExplorerGitPathChange_Internal');
 

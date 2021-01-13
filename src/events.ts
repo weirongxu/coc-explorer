@@ -1,7 +1,7 @@
 import { HelperVimEvents, Notifier } from 'coc-helper';
 import { Disposable, events, workspace } from 'coc.nvim';
 import { LiteralUnion } from 'type-fest';
-import { asyncCatchError, debounce, onError, throttle } from './util';
+import { asyncCatchError, debounce, logger, throttle } from './util';
 
 type EventResult = any | Promise<any>;
 type BufEventListener = (bufnr: number) => EventResult;
@@ -93,7 +93,7 @@ export const InternalVimEvents = new HelperVimEvents<{
       eventExpr: 'User CocBookmarkChange',
     },
   },
-  onError,
+  logger,
 );
 
 // Internal events

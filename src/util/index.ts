@@ -1,7 +1,4 @@
-import { workspace } from 'coc.nvim';
-import util from 'util';
-import { format } from 'date-fns';
-import { genOnError } from 'coc-helper';
+import { HelperLogger, prettyPrint } from 'coc-helper';
 export * from './string';
 export * from './symbol';
 export * from './number';
@@ -18,15 +15,6 @@ export * from './function';
 export * from './uri';
 export * from './color';
 
-export const outputChannel = workspace.createOutputChannel('explorer');
+export const logger = new HelperLogger('explorer');
 
-export const onError = genOnError(outputChannel);
-
-export function prettyPrint(...data: any[]) {
-  let s = `[${format(new Date(), 'yy/MM/dd HH:mm:ss.SSS')}]`;
-  for (const d of data) {
-    s += ' ' + util.inspect(d);
-  }
-  // eslint-disable-next-line no-restricted-properties
-  workspace.showMessage(s);
-}
+export { prettyPrint };

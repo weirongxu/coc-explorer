@@ -118,3 +118,7 @@ export async function bufnrByWinnrOrWinid(winnrOrWinid: number | undefined) {
     return undefined;
   }
 }
+
+export async function currentBufnr() {
+  return workspace.nvim.call('bufnr') as Promise<number>;
+}

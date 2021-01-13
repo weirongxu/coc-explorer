@@ -876,16 +876,8 @@ Type: <pre><code>{
      * Icons for extension groups
      */
     icons?: {
-        /**
-         * Group icon
-         */
-        code: string;
-        /**
-         * Group icon color
-         */
-        color: string;
         [k: string]: unknown;
-    }[];
+    };
     /**
      * File extension to icon group
      */

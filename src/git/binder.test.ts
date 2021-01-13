@@ -35,6 +35,14 @@ const { loadChildren } = FileSourceHelper.genLoadChildren({
       name: 'src',
       children: [
         {
+          name: 'main.ts',
+        },
+      ],
+    },
+    {
+      name: 'tests',
+      children: [
+        {
           name: 'test.ts',
         },
       ],
@@ -67,7 +75,6 @@ test('GitBinder.reload', async () => {
   source.bootInit(true);
   await source.bootOpen(true);
   await source.load(source.view.rootNode);
-  await source.view.expand(source.view.rootNode.children![0]!);
 
   const renderPaths = new Set<string>();
 
@@ -112,7 +119,7 @@ test('GitBinder.reload', async () => {
   };
 
   await expectReloadGit(
-    ['!! lib/', ' M src/test.ts', 'M  readme.md', ' M package.json'],
+    ['!! lib/', ' M src/main.ts', 'M  readme.md', ' M package.json'],
     ['/', '/lib', '/src', '/readme.md', '/package.json'].map(normalizePath),
   );
 
@@ -131,7 +138,7 @@ test('GitBinder.reload', async () => {
   } as GitMixedStatus);
 
   await expectReloadGit(
-    ['!! lib/', ' M src/test.ts', 'M  readme.md'],
+    ['!! lib/', ' M src/main.ts', 'M  readme.md'],
     ['/package.json'].map(normalizePath),
   );
 });

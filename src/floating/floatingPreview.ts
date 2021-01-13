@@ -1,5 +1,10 @@
-import { BufferHighlight } from '@chemzqm/neovim';
-import { Disposable, disposeAll, workspace } from 'coc.nvim';
+import {
+  BufferHighlight,
+  Disposable,
+  disposeAll,
+  window,
+  workspace,
+} from 'coc.nvim';
 import { Location, Range } from 'vscode-languageserver-protocol';
 import { URI } from 'vscode-uri';
 import { argOptions } from '../arg/argOptions';
@@ -11,10 +16,11 @@ import { FloatingOpenOptions } from '../types';
 import { PreviewActionStrategy } from '../types/pkg-config';
 import {
   byteLength,
+  currentBufnr,
   flatten,
+  logger,
   max,
   min,
-  onError,
   readFileLines,
   supportedFloat,
 } from '../util';
@@ -147,10 +153,10 @@ export class FloatingPreview implements Disposable {
       onBufEnter(onHover, delay),
     );
 
-    onHover(workspace.bufnr).catch(onError);
+    currentBufnr().then(onHover).catch(logger.error);
 
     // eslint-disable-next-line no-restricted-properties
-    workspace.showMessage(`Preivew ${onHoverStrategy} enabled`);
+    window.showMessage(`Preivew ${onHoverStrategy} enabled`);
   }
 
   unregisterOnHover() {
@@ -161,10 +167,10 @@ export class FloatingPreview implements Disposable {
     disposeAll(this.onHoverDisposables);
     this.onHoverDisposables = [];
 
-    this.close().catch(onError);
+    this.close().catch(logger.error);
 
     // eslint-disable-next-line no-restricted-properties
-    workspace.showMessage('Preview disabled ');
+    window.showMessage('Preview disabled ');
   }
 
   private registeredPreviewActions: Record<string, PreviewAction> = {};
@@ -180,7 +186,7 @@ export class FloatingPreview implements Disposable {
         node,
         nodeIndex,
       );
-      if (!drawnList || !this.explorer.explorerManager.inExplorer()) {
+      if (!drawnList || !(await this.explorer.explorerManager.inExplorer())) {
         return;
       }
 
@@ -281,10 +287,9 @@ export class FloatingPreview implements Disposable {
       return;
     }
     let alignTop: boolean = false;
+    const bufnr = await currentBufnr();
     let winline =
-      workspace.bufnr === this.explorer.bufnr
-        ? await this.nvim.call('winline')
-        : 1;
+      bufnr === this.explorer.bufnr ? await this.nvim.call('winline') : 1;
     winline -= 1;
     const containerWin =
       isFloating && this.explorer.config.get('floating.border.enable')
@@ -352,7 +357,7 @@ export class FloatingPreview implements Disposable {
 
     if (!this.registeredPreviewActions[previewStrategy]) {
       // eslint-disable-next-line no-restricted-properties
-      workspace.showMessage(
+      window.showMessage(
         `coc-explorer no support preview strategy(${previewStrategy})`,
       );
       return;

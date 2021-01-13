@@ -41,7 +41,7 @@
     "no-restricted-properties": [
       "error",
       {
-        "object": "workspace",
+        "object": "window",
         "property": "showMessage"
       }
     ],

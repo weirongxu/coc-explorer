@@ -1,4 +1,4 @@
-import { onError } from '.';
+import { logger } from '.';
 
 export class Cancelled {}
 const cancelled = new Cancelled();
@@ -19,7 +19,7 @@ export function throttle<A extends Array<any>, R>(
 ): Cancellable<(...args: A) => void> {
   const throttleFn = throttlePromise(delay, fn, options);
   const wrap = (...args: A) => {
-    throttleFn(...args).catch(onError);
+    throttleFn(...args).catch(logger.error);
   };
   wrap.cancel = throttleFn.cancel;
   return wrap;
@@ -85,7 +85,7 @@ export function debounce<A extends Array<any>, R>(
 ): Cancellable<(...args: A) => void> {
   const debounceFn = debouncePromise(delay, fn);
   const wrap = (...args: A) => {
-    debounceFn(...args).catch(onError);
+    debounceFn(...args).catch(logger.error);
   };
   wrap.cancel = debounceFn.cancel;
   return wrap;

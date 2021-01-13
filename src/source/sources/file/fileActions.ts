@@ -1,5 +1,5 @@
 import { Notifier } from 'coc-helper';
-import { listManager, workspace } from 'coc.nvim';
+import { listManager, window, workspace } from 'coc.nvim';
 import open from 'open';
 import pathLib from 'path';
 import { ActionSource } from '../../../actions/actionSource';
@@ -13,6 +13,7 @@ import {
 } from '../../../types';
 import {
   bufnrByWinnrOrWinid,
+  currentBufnr,
   fsCopyFileRecursive,
   fsMkdirp,
   fsRename,
@@ -61,7 +62,7 @@ export function loadFileActions(action: ActionSource<FileSource, FileNode>) {
       if (/\d+/.test(target)) {
         targetBufnr = parseInt(target, 10);
         if (targetBufnr === 0) {
-          targetBufnr = workspace.bufnr;
+          targetBufnr = await currentBufnr();
         }
       } else {
         const revealStrategy = (target ?? 'previousWindow') as RevealStrategy;
@@ -200,6 +201,7 @@ export function loadFileActions(action: ActionSource<FileSource, FileNode>) {
     async () => {
       explorerWorkspaceFolderList.setFileSource(file);
       const disposable = listManager.registerList(explorerWorkspaceFolderList);
+      // @ts-ignore TODO
       await listManager.start(['--normal', explorerWorkspaceFolderList.name]);
       disposable.dispose();
     },
@@ -227,7 +229,7 @@ export function loadFileActions(action: ActionSource<FileSource, FileNode>) {
         nodes ? nodes.map((it) => it.fullpath).join('\n') : file.root,
       );
       // eslint-disable-next-line no-restricted-properties
-      workspace.showMessage('Copy filepath to clipboard');
+      window.showMessage('Copy filepath to clipboard');
     },
     'copy full filepath to clipboard',
   );
@@ -240,7 +242,7 @@ export function loadFileActions(action: ActionSource<FileSource, FileNode>) {
           : pathLib.basename(file.root),
       );
       // eslint-disable-next-line no-restricted-properties
-      workspace.showMessage('Copy filename to clipboard');
+      window.showMessage('Copy filename to clipboard');
     },
     'copy filename to clipboard',
   );
@@ -323,7 +325,7 @@ export function loadFileActions(action: ActionSource<FileSource, FileNode>) {
     async ({ node }) => {
       if (file.copiedNodes.size <= 0 && file.cutNodes.size <= 0) {
         // eslint-disable-next-line no-restricted-properties
-        workspace.showMessage('Copied files or cut files is empty', 'error');
+        window.showMessage('Copied files or cut files is empty', 'error');
         return;
       }
       const targetDir = file.getPutTargetDir(node);
@@ -560,6 +562,7 @@ export function loadFileActions(action: ActionSource<FileSource, FileNode>) {
           })),
         );
         const disposable = listManager.registerList(driveList);
+        // @ts-ignore TODO
         await listManager.start([
           '--normal',
           '--number-select',
