@@ -75,7 +75,7 @@ if has('nvim')
       call coc_explorer#init#win(border_bufnr)
       call setbufvar(border_bufnr, '&cursorcolumn', 0)
       call setbufvar(border_bufnr, '&cursorline', 0)
-      call nvim_win_set_option(border_winid, 'winhl', 'Normal:CocExplorerNormalFloatBorder')
+      call setwinvar(border_winid, '&winhl', 'Normal:CocExplorerNormalFloatBorder')
       let filetype = 'coc-explorer-border'
       call setbufvar(border_bufnr, '&filetype', filetype)
       if exists('*CocExplorerInited')
@@ -88,7 +88,7 @@ if has('nvim')
     endif
 
     call coc_explorer#init#win(a:bufnr)
-    call nvim_win_set_option(winid, 'winhl', 'Normal:CocExplorerNormalFloat')
+    call setwinvar(winid, '&winhl', 'Normal:CocExplorerNormalFloat')
     return [winid, border_winid]
   endfunction
 

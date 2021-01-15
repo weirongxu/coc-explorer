@@ -30,7 +30,7 @@ async function getExplorer(
 ): Promise<undefined | Explorer> {
   if (explorerFinder === 'closest') {
     const winFinder = await WinLayoutFinder.create();
-    const curWinid = (await workspace.nvim.eval('bufwinid(bufnr())')) as number;
+    const curWinid = (await workspace.nvim.eval('win_getid(winnr())')) as number;
     if (curWinid <= -1) {
       return;
     }

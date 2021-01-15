@@ -42,7 +42,7 @@ export class FloatingWindow implements Disposable {
         const scripts: string[] = [];
         if (workspace.isNvim) {
           scripts.push(`
-            let store_winid = bufwinid(bufnr())
+            let store_winid = win_getid(winnr())
             if store_winid != ${winid}
               noau let successful = win_gotoid(${winid})
               if !successful
