@@ -384,6 +384,10 @@ export interface Explorer {
    */
   'explorer.datetime.format'?: string;
   /**
+   * Explorer will automatically reveal to the current buffer when open explorer
+   */
+  'explorer.file.revealWhenOpen'?: boolean;
+  /**
    * Explorer will automatically expand to the current buffer
    */
   'explorer.file.autoReveal'?: boolean;

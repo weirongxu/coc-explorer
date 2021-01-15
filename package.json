@@ -671,10 +671,15 @@
           "type": "string",
           "default": "yy/MM/dd HH:mm:ss"
         },
+        "explorer.file.revealWhenOpen": {
+          "description": "Explorer will automatically reveal to the current buffer when open explorer",
+          "type": "boolean",
+          "default": true
+        },
         "explorer.file.autoReveal": {
           "description": "Explorer will automatically expand to the current buffer",
           "type": "boolean",
-          "default": true
+          "default": false
         },
         "explorer.file.hiddenRules": {
           "description": "Custom hidden rules for file",

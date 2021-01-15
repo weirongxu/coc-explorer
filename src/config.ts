@@ -15,6 +15,7 @@ export interface ExplorerConfig {
   config: WorkspaceConfiguration;
   get(section: 'activeMode'): boolean;
   get(section: 'file.autoReveal'): boolean;
+  get(section: 'file.revealWhenOpen'): boolean;
   get(section: 'autoExpandMaxDepth'): number;
   get(section: 'autoExpandOptions'): ExpandOption[];
   get(section: 'autoCollapseOptions'): CollapseOption[];

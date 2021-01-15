@@ -87,6 +87,12 @@ Explorer extension for [coc.nvim](https://github.com/neoclide/coc.nvim)
     \ /root/path
 ```
 
+Reveal to current buffer for closest coc-explorer
+
+```vim
+nmap <Leader>er :call CocAction('runCommand', 'explorer.doAction', 'closest', ['reveal:0'], [['relative', 0, 'file']])<CR>
+```
+
 ### Presets
 
 ```vim
@@ -975,8 +981,12 @@ Type: <pre><code>string</code></pre>Default: <pre><code>"[name][bufname][fullpat
 Type: <pre><code>string</code></pre>Default: <pre><code>"yy/MM/dd HH:mm:ss"</code></pre>
 </details>
 <details>
-<summary><code>explorer.file.autoReveal</code>: Explorer will automatically expand to the current buffer.</summary>
+<summary><code>explorer.file.revealWhenOpen</code>: Explorer will automatically reveal to the current buffer when open explorer.</summary>
 Type: <pre><code>boolean</code></pre>Default: <pre><code>true</code></pre>
+</details>
+<details>
+<summary><code>explorer.file.autoReveal</code>: Explorer will automatically expand to the current buffer.</summary>
+Type: <pre><code>boolean</code></pre>Default: <pre><code>false</code></pre>
 </details>
 <details>
 <summary><code>explorer.file.hiddenRules</code>: Custom hidden rules for file.</summary>

@@ -20,6 +20,6 @@
   },
   "explorer.icon.enableNerdfont": true,
   "explorer.buffer.tabOnly": true,
-  "explorer.file.autoReveal": false,
+  "explorer.file.revealWhenOpen": false,
   "explorer.debug": true
 }
