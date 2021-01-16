@@ -1,16 +1,16 @@
 import type { FloatInputType } from 'coc-floatinput';
-import { extensions, workspace } from 'coc.nvim';
+import { extensions, Extension, workspace } from 'coc.nvim';
 import { config, ExplorerConfig } from '../config';
 
-let floatInputApi: FloatInputType | undefined;
+let floatInputExt: Extension<FloatInputType> | undefined;
 
 async function getFloatInputApi() {
-  if (!floatInputApi) {
-    floatInputApi = extensions.all.find(
-      (e) => e.id === 'coc-floatinput',
-    ) as FloatInputType;
+  if (!floatInputExt) {
+    floatInputExt = extensions.all.find((e) => e.id === 'coc-floatinput') as
+      | Extension<FloatInputType>
+      | undefined;
   }
-  return floatInputApi;
+  return floatInputExt?.exports;
 }
 
 async function getFloatUI() {
