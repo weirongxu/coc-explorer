@@ -8,7 +8,13 @@ export type Cancellable<F extends Function> = F & {
 };
 
 export type ThrottleOptions = {
+  /**
+   * @default true
+   **/
   leading?: boolean;
+  /**
+   * @default false
+   **/
   trailing?: boolean;
 };
 

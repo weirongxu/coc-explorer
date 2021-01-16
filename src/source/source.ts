@@ -149,6 +149,7 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>>
   bufManager = this.explorer.explorerManager.bufManager;
   events = new HelperEventEmitter<{
     loaded: (node: TreeNode) => void | Promise<void>;
+    drawn: () => void | Promise<void>;
   }>(logger);
   action = new ActionSource<this, TreeNode>(this, this.explorer.action);
   highlight: HighlightSource;

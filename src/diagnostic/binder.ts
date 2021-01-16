@@ -1,4 +1,5 @@
-import { Disposable, disposeAll } from 'coc.nvim';
+import { Disposable } from 'coc.nvim';
+import pathLib from 'path';
 import { internalEvents } from '../events';
 import { BaseTreeNode, ExplorerSource } from '../source/source';
 import {
@@ -10,7 +11,6 @@ import {
   throttle,
 } from '../util';
 import { diagnosticManager, DiagnosticType } from './manager';
-import pathLib from 'path';
 
 export class DiagnosticBinder {
   protected sourcesBinding: Map<
@@ -23,8 +23,8 @@ export class DiagnosticBinder {
   > = new Map();
   private prevErrorMixedCount: Record<string, number> = {};
   private prevWarningMixedCount: Record<string, number> = {};
-  private registerDisposables: Disposable[] = [];
-  registerForSourceDisposables: any;
+  private registeredDisposable?: Disposable;
+  private registeredForSourceDisposable?: Disposable;
 
   get sources() {
     return Array.from(this.sourcesBinding.keys());
@@ -61,50 +61,82 @@ export class DiagnosticBinder {
     binding.refCount[type] += 1;
     binding.refCount.total += 1;
     if (binding.refCount.total === 1) {
-      this.registerForSourceDisposables = this.registerForSource(source);
+      this.registeredForSourceDisposable = this.registerForSource(source);
     }
     if (this.refTotalCount === 1) {
-      this.registerDisposables = this.register();
+      this.registeredDisposable = this.register();
     }
     return Disposable.create(() => {
       binding.refCount[type] -= 1;
       binding.refCount.total -= 1;
       if (binding.refCount.total === 0) {
-        disposeAll(this.registerForSourceDisposables);
-        this.registerForSourceDisposables = [];
+        this.registeredForSourceDisposable?.dispose();
+        this.registeredForSourceDisposable = undefined;
       }
       if (this.refTotalCount === 0) {
-        disposeAll(this.registerDisposables);
-        this.registerDisposables = [];
+        this.registeredDisposable?.dispose();
+        this.registeredDisposable = undefined;
       }
     });
   }
 
   protected register() {
-    return [
-      internalEvents.on(
-        'CocDiagnosticChange',
-        throttle(100, async () => {
-          await this.reload(this.sources);
-        }),
-      ),
-    ];
+    return internalEvents.on(
+      'CocDiagnosticChange',
+      throttle(100, async () => {
+        await this.reload(this.sources);
+      }),
+    );
   }
 
   protected registerForSource(source: ExplorerSource<any>) {
-    return [
-      source.events.on('loaded', async (node) => {
-        const directory =
-          'isRoot' in node
-            ? source.root
-            : node.expandable
-            ? node.fullpath
-            : node.fullpath && pathLib.dirname(node.fullpath);
-        if (directory) {
-          this.reload([source]).catch(logger.error);
+    const reload = source.events.on('loaded', async (node) => {
+      const directory =
+        'isRoot' in node
+          ? source.root
+          : node.expandable
+          ? node.fullpath
+          : node.fullpath && pathLib.dirname(node.fullpath);
+      if (directory) {
+        this.reload([source]).catch(logger.error);
+      }
+    });
+
+    const updateMark = source.events.on('drawn', () => {
+      for (const [nodeIndex, node] of source.view.flattenedNodes.entries()) {
+        if (!node.fullpath) {
+          continue;
         }
-      }),
-    ];
+        const errorCount = diagnosticManager.getMixedError(node.fullpath);
+        const warningCount = diagnosticManager.getMixedWarning(node.fullpath);
+        let errorMark = false;
+        let warningMark = false;
+        if (errorCount || warningCount) {
+          const display = !(node.expandable && source.view.isExpanded(node));
+          if (errorCount && display) {
+            errorMark = true;
+          }
+          if (warningCount && display) {
+            warningMark = true;
+          }
+        }
+        if (errorMark) {
+          source.locator.mark.add('diagnosticError', nodeIndex);
+        } else {
+          source.locator.mark.remove('diagnosticError', nodeIndex);
+        }
+        if (warningMark) {
+          source.locator.mark.add('diagnosticWarning', nodeIndex);
+        } else {
+          source.locator.mark.remove('diagnosticWarning', nodeIndex);
+        }
+      }
+    });
+
+    return Disposable.create(() => {
+      reload.dispose();
+      updateMark.dispose();
+    });
   }
 
   protected reloadDebounceChecker = debouncePromise(1000, () => {});

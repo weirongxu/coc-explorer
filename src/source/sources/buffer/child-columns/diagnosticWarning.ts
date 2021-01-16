@@ -20,7 +20,7 @@ bufferColumnRegistrar.registerColumn(
         return {
           labelVisible: ({ node }) =>
             !!diagnosticManager.getMixedWarning(node.fullpath),
-          drawNode(row, { node, nodeIndex, isLabeling }) {
+          drawNode(row, { node, isLabeling }) {
             const warningCount = diagnosticManager.getMixedWarning(
               node.fullpath,
             );
@@ -31,15 +31,12 @@ bufferColumnRegistrar.registerColumn(
               });
               return;
             }
-
-            if (warningCount) {
-              row.add(printDiagnosticCount(warningCount, diagnosticConfig), {
-                hl: diagnosticHighlights.diagnosticWarning,
-              });
-              source.locator.mark.add('diagnosticWarning', nodeIndex);
-            } else {
-              source.locator.mark.remove('diagnosticWarning', nodeIndex);
+            if (!warningCount) {
+              return;
             }
+            row.add(printDiagnosticCount(warningCount, diagnosticConfig), {
+              hl: diagnosticHighlights.diagnosticWarning,
+            });
           },
         };
       },

@@ -20,7 +20,7 @@ bufferColumnRegistrar.registerColumn(
         return {
           labelVisible: ({ node }) =>
             !!diagnosticManager.getMixedError(node.fullpath),
-          drawNode(row, { node, nodeIndex, isLabeling }) {
+          drawNode(row, { node, isLabeling }) {
             const errorCount = diagnosticManager.getMixedError(node.fullpath);
 
             if (isLabeling) {
@@ -29,15 +29,12 @@ bufferColumnRegistrar.registerColumn(
               });
               return;
             }
-
-            if (errorCount) {
-              row.add(printDiagnosticCount(errorCount, diagnosticConfig), {
-                hl: diagnosticHighlights.diagnosticError,
-              });
-              source.locator.mark.add('diagnosticError', nodeIndex);
-            } else {
-              source.locator.mark.remove('diagnosticError', nodeIndex);
+            if (!errorCount) {
+              return;
             }
+            row.add(printDiagnosticCount(errorCount, diagnosticConfig), {
+              hl: diagnosticHighlights.diagnosticError,
+            });
           },
         };
       },

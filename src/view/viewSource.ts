@@ -328,6 +328,7 @@ export class ViewSource<TreeNode extends BaseTreeNode<TreeNode>> {
         const { contents, highlightPositions } = await this.drawNodes(
           needDrawNodes,
         );
+        await this.source.events.fire('drawn');
 
         workspace.nvim.pauseNotification();
         this.setLinesNotifier(contents, startIndex, endIndex + 1).notify();
@@ -441,6 +442,7 @@ export class ViewSource<TreeNode extends BaseTreeNode<TreeNode>> {
           0,
         );
         const { contents, highlightPositions } = await this.drawNodes([node]);
+        await this.source.events.fire('drawn');
 
         workspace.nvim.pauseNotification();
         this.setLinesNotifier(contents, startIndex, endIndex + 1).notify();
@@ -582,6 +584,7 @@ export class ViewSource<TreeNode extends BaseTreeNode<TreeNode>> {
           finalNodes,
         );
         const drawnRangeList = drawnWithIndexRange(drawnList);
+        await this.source.events.fire('drawn');
         return Notifier.create(() => {
           drawnRangeList.forEach((dr) => {
             this.setLinesNotifier(
@@ -677,6 +680,7 @@ export class ViewSource<TreeNode extends BaseTreeNode<TreeNode>> {
     const { contents, highlightPositions } = await this.drawNodes(
       needDrawNodes,
     );
+    await this.source.events.fire('drawn');
 
     const sourceIndex = this.currentSourceIndex();
     const isLastSource = this.explorer.sources.length - 1 === sourceIndex;

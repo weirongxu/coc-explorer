@@ -20,7 +20,7 @@ fileColumnRegistrar.registerColumn(
         return {
           labelVisible: ({ node }) =>
             !!diagnosticManager.getMixedWarning(node.fullpath),
-          drawNode(row, { node, nodeIndex, isLabeling }) {
+          drawNode(row, { node, isLabeling }) {
             const warningCount = diagnosticManager.getMixedWarning(
               node.fullpath,
             );
@@ -31,19 +31,15 @@ fileColumnRegistrar.registerColumn(
               });
               return;
             }
-
-            if (warningCount) {
-              if (node.directory && source.view.isExpanded(node)) {
-                source.locator.mark.remove('diagnosticWarning', nodeIndex);
-              } else {
-                row.add(printDiagnosticCount(warningCount, diagnosticConfig), {
-                  hl: fileHighlights.diagnosticWarning,
-                });
-                source.locator.mark.add('diagnosticWarning', nodeIndex);
-              }
-            } else {
-              source.locator.mark.remove('diagnosticWarning', nodeIndex);
+            if (!warningCount) {
+              return;
             }
+            if (node.expandable && source.view.isExpanded(node)) {
+              return;
+            }
+            row.add(printDiagnosticCount(warningCount, diagnosticConfig), {
+              hl: fileHighlights.diagnosticWarning,
+            });
           },
         };
       },
