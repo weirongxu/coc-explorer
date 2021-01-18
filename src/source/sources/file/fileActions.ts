@@ -252,13 +252,13 @@ export function loadFileActions(action: ActionSource<FileSource, FileNode>) {
     args: [
       {
         name: 'type',
-        description: copyOrCutFileTypeList.join(' | '),
+        description: `${copyOrCutFileTypeList.join(' | ')}, default: toggle`,
       },
     ],
     menus: {
-      toggle: 'toggle',
-      append: 'append',
-      replace: 'replace',
+      toggle: 'toggle mark',
+      append: 'append mark',
+      replace: 'remove all mark then add one mark',
     },
   };
   action.addNodesAction(
