@@ -8,6 +8,8 @@ import {
   expandOptionList,
   MoveStrategy,
   moveStrategyList,
+  OpenPosition,
+  OpenStrategy,
   openStrategyList,
   PreviewOnHoverAction,
   previewOnHoverActionList,
@@ -35,15 +37,16 @@ export function loadGlobalActions(action: ActionExplorer) {
     },
     {
       name: 'open with position',
-      description: 'line-number,column-number',
+      description: 'line-number,column-number | keep',
     },
   ];
   const openActionMenu = {
     select: 'use select window UI',
-    'split:plain': 'use vim split',
-    'split:intelligent': 'use split like vscode',
-    'vsplit:plain': 'use vim vsplit',
-    'vsplit:intelligent':
+    'select:keep': 'use select window UI, but keep cursor in explorer',
+    'split.plain': 'use vim split',
+    'split.intelligent': 'use split like vscode',
+    'vsplit.plain': 'use vim vsplit',
+    'vsplit.intelligent':
       'use vim vsplit, but keep the explorer in the original position',
     tab: 'vim tab',
     previousBuffer: 'use last used buffer',
@@ -67,27 +70,39 @@ export function loadGlobalActions(action: ActionExplorer) {
         return;
       }
 
-      if (node.location) {
+      const [openStrategy, positionRaw] = args as [
+        OpenStrategy | undefined,
+        string | undefined,
+      ];
+
+      let position: OpenPosition | undefined;
+      if (positionRaw === 'keep') {
+        position = positionRaw;
+      } else if (positionRaw) {
+        const [line, column] = positionRaw
+          .split(',')
+          .map((n) => parseInt(n, 10));
+        position = {
+          lineIndex: line,
+        };
+        if (column) {
+          position.columnIndex = column;
+        }
+      } else if (node.location) {
         const { range } = node.location;
-        await openAction(explorer, source, node, () => node.fullpath!, {
-          args,
-          position: { lineIndex: range.start.line - 1 },
-        });
-        return;
+        position = { lineIndex: range.start.line - 1 };
       }
 
-      if (node.fullpath) {
-        await openAction(explorer, source, node, () => node.fullpath!, {
-          args,
-        });
-        return;
-      }
+      await openAction(explorer, source, node, () => node.fullpath!, {
+        openStrategy,
+        position,
+      });
     },
     'open file or directory',
     {
       select: true,
       args: openActionArgs,
-      menus: openActionMenu,
+      menus: openActionMenu as Record<string, string>,
     },
   );
   action.addNodeAction(

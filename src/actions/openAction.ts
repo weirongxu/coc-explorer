@@ -1,10 +1,10 @@
-import { WinLayoutFinder } from 'coc-helper';
+import { Notifier, WinLayoutFinder } from 'coc-helper';
 import { workspace } from 'coc.nvim';
 import { argOptions } from '../arg/argOptions';
 import type { Explorer } from '../explorer';
 import { ArgPosition } from '../arg/parseArgs';
 import { BaseTreeNode, ExplorerSource } from '../source/source';
-import { OpenStrategy } from '../types';
+import { OpenPosition, OpenStrategy } from '../types';
 import { selectWindowsUI } from '../util';
 
 export async function openAction(
@@ -14,15 +14,12 @@ export async function openAction(
   getFullpath: () => string | Promise<string>,
   {
     openByWinnr: originalOpenByWinnr,
-    args = [],
+    openStrategy,
     position,
   }: {
     openByWinnr?: (winnr: number) => void | Promise<void>;
-    args?: string[];
-    position?: {
-      lineIndex: number;
-      columnIndex?: number;
-    };
+    openStrategy?: OpenStrategy;
+    position?: OpenPosition;
   },
 ) {
   if (node.expandable) {
@@ -39,8 +36,21 @@ export async function openAction(
     return await nvim.call('fnameescape', [path]);
   };
 
+  let explorerWinid: number | undefined;
+  let quitOnOpenNotifier: () => Notifier | Promise<Notifier> = () =>
+    explorer.tryQuitOnOpenNotifier();
+  if (position === 'keep') {
+    explorerWinid = await explorer.winid;
+    quitOnOpenNotifier = () => Notifier.noop();
+  }
+
   const jumpToNotify = () => {
-    if (position) {
+    if (position === 'keep') {
+      if (!explorerWinid) {
+        return;
+      }
+      nvim.call('win_gotoid', [explorerWinid], true);
+    } else if (position) {
       nvim.call(
         'cursor',
         [position.lineIndex + 1, (position.columnIndex ?? 0) + 1],
@@ -52,7 +62,7 @@ export async function openAction(
   const openByWinnr =
     originalOpenByWinnr ??
     (async (winnr: number) => {
-      const quitNotifier = await explorer.tryQuitOnOpenNotifier();
+      const quitNotifier = await quitOnOpenNotifier();
       const escapePath = await getEscapePath();
       nvim.pauseNotification();
       nvim.command(`${winnr}wincmd w`, true);
@@ -87,7 +97,7 @@ export async function openAction(
           ];
         if (target) {
           const targetWinid = WinLayoutFinder.getFirstLeafWinid(target);
-          const quitNotifier = await explorer.tryQuitOnOpenNotifier();
+          const quitNotifier = await quitOnOpenNotifier();
           const escapePath = await getEscapePath();
 
           nvim.pauseNotification();
@@ -99,7 +109,7 @@ export async function openAction(
         }
       } else {
         // only exlorer window or explorer is arranged in columns
-        await actions['vsplit:plain']();
+        await actions['vsplit.plain']();
       }
     } else {
       // floating
@@ -128,9 +138,9 @@ export async function openAction(
       });
     },
 
-    split: () => actions['split:intelligent'](),
-    'split:plain': async () => {
-      const quitNotifier = await explorer.tryQuitOnOpenNotifier();
+    split: () => actions['split.intelligent'](),
+    'split.plain': async () => {
+      const quitNotifier = await quitOnOpenNotifier();
       const escapePath = await getEscapePath();
       nvim.pauseNotification();
       nvim.command(`split ${escapePath}`, true);
@@ -139,21 +149,21 @@ export async function openAction(
       await nvim.resumeNotification();
     },
 
-    'split:intelligent': async () => {
+    'split.intelligent': async () => {
       const position = await explorer.args.value(argOptions.position);
       if (position === 'floating') {
-        await actions['split:plain']();
+        await actions['split.plain']();
         return;
       } else if (position === 'tab') {
         await actions.vsplit();
         return;
       }
-      await splitIntelligent(position, 'split', 'split:plain');
+      await splitIntelligent(position, 'split', 'split.plain');
     },
 
-    vsplit: () => actions['vsplit:intelligent'](),
-    'vsplit:plain': async () => {
-      const quitNotifier = await explorer.tryQuitOnOpenNotifier();
+    vsplit: () => actions['vsplit.intelligent'](),
+    'vsplit.plain': async () => {
+      const quitNotifier = await quitOnOpenNotifier();
       const escapePath = await getEscapePath();
       nvim.pauseNotification();
       nvim.command(`vsplit ${escapePath}`, true);
@@ -162,16 +172,16 @@ export async function openAction(
       await nvim.resumeNotification();
     },
 
-    'vsplit:intelligent': async () => {
+    'vsplit.intelligent': async () => {
       const position = await explorer.args.value(argOptions.position);
       if (position === 'floating') {
-        await actions['vsplit:plain']();
+        await actions['vsplit.plain']();
         return;
       } else if (position === 'tab') {
-        await actions['vsplit:plain']();
+        await actions['vsplit.plain']();
         return;
       }
-      await splitIntelligent(position, 'vsplit', 'vsplit:plain');
+      await splitIntelligent(position, 'vsplit', 'vsplit.plain');
     },
 
     tab: async () => {
@@ -210,9 +220,8 @@ export async function openAction(
     },
   };
 
-  let openStrategy = await explorer.args.value(argOptions.openActionStrategy);
-  if (args.length) {
-    openStrategy = args.join(':') as OpenStrategy;
+  if (!openStrategy) {
+    openStrategy = await explorer.args.value(argOptions.openActionStrategy);
   }
   if (!(openStrategy in actions)) {
     new Error(`openStrategy(${openStrategy}) is not supported`);

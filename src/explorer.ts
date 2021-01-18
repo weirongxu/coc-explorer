@@ -413,9 +413,9 @@ export class Explorer implements Disposable {
   }
 
   async tryQuitOnOpenNotifier() {
-    const quitonOpen = await this.args.value(argOptions.quitOnOpen);
+    const quitOnOpen = await this.args.value(argOptions.quitOnOpen);
     if (
-      quitonOpen ||
+      quitOnOpen ||
       (await this.args.value(argOptions.position)) === 'floating'
     ) {
       return this.quitNotifier();

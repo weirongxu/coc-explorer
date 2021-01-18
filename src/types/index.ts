@@ -33,16 +33,23 @@ export type OpenStrategy = NonNullable<
 export const openStrategyList: OpenStrategy[] = [
   'select',
   'split',
-  'split:plain',
-  'split:intelligent',
+  'split.plain',
+  'split.intelligent',
   'vsplit',
-  'vsplit:plain',
-  'vsplit:intelligent',
+  'vsplit.plain',
+  'vsplit.intelligent',
   'tab',
   'previousBuffer',
   'previousWindow',
   'sourceWindow',
 ];
+
+export type OpenPosition =
+  | {
+      lineIndex: number;
+      columnIndex?: number;
+    }
+  | 'keep';
 
 export const copyOrCutFileTypeList = ['toggle', 'append', 'replace'] as const;
 

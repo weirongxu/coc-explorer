@@ -10,7 +10,7 @@
   "homepage": "https://github.com/weirongxu/coc-explorer",
   "license": "MIT",
   "engines": {
-    "coc": "^0.0.75"
+    "coc": "^0.0.80"
   },
   "files": [
     "lib",
@@ -428,11 +428,11 @@
           "enum": [
             "select",
             "split",
-            "split:plain",
-            "split:intelligent",
+            "split.plain",
+            "split.intelligent",
             "vsplit",
-            "vsplit:plain",
-            "vsplit:intelligent",
+            "vsplit.plain",
+            "vsplit.intelligent",
             "tab",
             "previousBuffer",
             "previousWindow",
@@ -441,8 +441,12 @@
           "default": "select",
           "enumDescriptions": [
             "Open action use selection UI",
-            "Open action use vsplit",
-            "Open action use split",
+            "Open action use split, intelligent by default",
+            "Open action use plain split",
+            "Open action use intelligent split",
+            "Open action use vsplit, intelligent by default",
+            "Open action use plain vsplit",
+            "Open action use intelligent vsplit",
             "Open action use tab",
             "Open action use last used buffer",
             "Open action use last used window",
@@ -827,7 +831,7 @@
         },
         "explorer.diagnostic.enableSubscriptNumber": {
           "description": "Subscript number for diagnostic count",
-          "type": "boolen",
+          "type": "boolean",
           "default": false
         },
         "explorer.git.enable": {
