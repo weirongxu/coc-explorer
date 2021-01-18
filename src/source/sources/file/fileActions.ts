@@ -201,8 +201,9 @@ export function loadFileActions(action: ActionSource<FileSource, FileNode>) {
     async () => {
       explorerWorkspaceFolderList.setFileSource(file);
       const disposable = listManager.registerList(explorerWorkspaceFolderList);
-      // @ts-ignore TODO
-      await listManager.start(['--normal', explorerWorkspaceFolderList.name]);
+      await nvim.command(
+        `CocList --normal ${explorerWorkspaceFolderList.name}`,
+      );
       disposable.dispose();
     },
     'change directory to current node',
@@ -562,12 +563,9 @@ export function loadFileActions(action: ActionSource<FileSource, FileNode>) {
           })),
         );
         const disposable = listManager.registerList(driveList);
-        // @ts-ignore TODO
-        await listManager.start([
-          '--normal',
-          '--number-select',
-          driveList.name,
-        ]);
+        await nvim.command(
+          `CocList --normal --number-select ${driveList.name}`,
+        );
         disposable.dispose();
       },
       'list drives',

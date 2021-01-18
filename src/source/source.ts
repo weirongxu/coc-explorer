@@ -15,7 +15,7 @@ import { argOptions } from '../arg/argOptions';
 import { Explorer } from '../explorer';
 import { HighlightSource } from '../highlight/highlightSource';
 import { LocatorSource } from '../locator/locatorSource';
-import { delay, generateUri, logger } from '../util';
+import { delay, generateUri, logger, winnrByBufnr } from '../util';
 import { ViewSource } from '../view/viewSource';
 import { SourcePainters } from './sourcePainters';
 
@@ -255,22 +255,16 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>>
 
     const shownExplorerEmitter = new Emitter<void>();
     const listDisposable = listManager.registerList(list);
-    // @ts-ignore TODO
-    await listManager.start([list.name]);
+    await this.nvim.command(`CocList ${list.name}`);
     listDisposable.dispose();
 
-    const eventDisposable = events.on('BufWinLeave', async () => {
-      if (
-        // @ts-ignore TODO
-        listManager.ui &&
-        // @ts-ignore TODO
-        listManager.ui.shown &&
-        // @ts-ignore TODO
-        listManager.ui.window?.id !== undefined
-      ) {
+    await this.bufManager.waitReload();
+
+    const eventDisposable = events.on('BufEnter', async () => {
+      const buf = this.bufManager.getBufferNode(`list:///${list.name}`);
+      if (buf && (await winnrByBufnr(buf.bufnr))) {
         return;
       }
-
       eventDisposable.dispose();
 
       if (isFloating && !isShown) {

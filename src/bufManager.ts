@@ -109,6 +109,16 @@ export class BufManager {
     }
   }
 
+  async waitReload() {
+    return new Promise<void>((resolve) => {
+      const disposable = this.onReload(() => {
+        disposable.dispose();
+        resolve();
+      });
+      setTimeout(resolve, 100);
+    });
+  }
+
   async reload() {
     const lsCommand = 'ls!';
     const content = (await this.nvim.call('execute', lsCommand)) as string;

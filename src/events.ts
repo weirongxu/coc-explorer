@@ -1,5 +1,5 @@
 import { HelperVimEvents, Notifier } from 'coc-helper';
-import { Disposable, events, workspace } from 'coc.nvim';
+import { Disposable, Emitter, events, workspace } from 'coc.nvim';
 import { LiteralUnion } from 'type-fest';
 import { asyncCatchError, debounce, logger, throttle } from './util';
 
@@ -98,6 +98,8 @@ export const InternalVimEvents = new HelperVimEvents<{
 
 // Internal events
 export const internalEvents = InternalVimEvents.events;
+
+export const cocListCloseEmitter = new Emitter<void>();
 
 // User events
 export type CocExplorerUserEvents = LiteralUnion<
