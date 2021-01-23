@@ -14,8 +14,6 @@ import {
   PreviewOnHoverAction,
   previewOnHoverActionList,
   previewStrategyList,
-  SelectTarget,
-  selectTargetList,
   TextobjTarget,
   textobjTargetList,
   textobjTypeList,
@@ -24,7 +22,6 @@ import { PreviewActionStrategy } from '../types/pkg-config';
 import { enableWrapscan, scanIndexNext, scanIndexPrev } from '../util';
 import { ActionExplorer } from './actionExplorer';
 import { openAction } from './openAction';
-import { ActionRegistrar } from './registrar';
 
 export function loadGlobalActions(action: ActionExplorer) {
   const explorer = action.owner;
@@ -584,33 +581,14 @@ export function loadGlobalActions(action: ActionExplorer) {
       },
     },
   );
-  const selectOptions: Partial<ActionRegistrar.Options> = {
-    select: 'visual',
-    args: [
-      {
-        name: 'target',
-        description: selectTargetList.join(' | '),
-      },
-    ],
-    menus: {
-      sibling: 'siblings',
-      child: 'children',
-    },
-  };
   action.addNodeAction(
     'select',
-    async ({ source, node, args }) => {
-      const selectTarget = (args[0] ?? 'node') as SelectTarget;
-      if (selectTarget === 'node') {
-        source.selectedNodes.add(node);
-      } else if (selectTarget === 'sibling') {
-      } else if (selectTarget === 'child') {
-      }
-      // TODO
+    async ({ source, node }) => {
+      source.selectedNodes.add(node);
       source.view.requestRenderNodes([node]);
     },
     'select node',
-    selectOptions,
+    { select: 'visual' },
   );
   action.addNodeAction(
     'unselect',
@@ -619,7 +597,7 @@ export function loadGlobalActions(action: ActionExplorer) {
       source.view.requestRenderNodes([node]);
     },
     'unselect node',
-    selectOptions,
+    { select: 'visual' },
   );
   action.addNodeAction(
     'toggleSelection',

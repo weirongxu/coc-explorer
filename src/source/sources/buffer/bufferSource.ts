@@ -14,7 +14,7 @@ export interface BufferNode extends BaseTreeNode<BufferNode, 'root' | 'child'> {
   bufnrStr: string;
   bufname: string;
   fullpath: string;
-  basename: string;
+  name: string;
   unlisted: boolean;
   current: boolean;
   previous: boolean;
@@ -52,7 +52,7 @@ export class BufferSource extends ExplorerSource<BufferNode> {
     bufnrStr: '0',
     bufname: '',
     fullpath: '',
-    basename: '',
+    name: '',
     unlisted: true,
     current: false,
     previous: false,

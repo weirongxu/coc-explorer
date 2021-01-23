@@ -122,6 +122,7 @@ export interface BaseTreeNode<
   type: Type;
   isRoot?: boolean;
   uid: NodeUid;
+  name: string;
   fullpath?: string;
   location?: Location;
   level?: number;
@@ -131,6 +132,7 @@ export interface BaseTreeNode<
   prevSiblingNode?: TreeNode;
   nextSiblingNode?: TreeNode;
   compacted?: boolean;
+  compactedNodes?: TreeNode[];
 }
 
 export type ExplorerSourceClass = Class<ExplorerSource<any>> & {

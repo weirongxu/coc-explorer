@@ -8,10 +8,6 @@ export const textobjTypeList = ['i', 'a'] as const;
 
 export type textobjTarget = typeof textobjTypeList[number];
 
-export const selectTargetList = ['node', 'sibling', 'child'] as const;
-
-export type SelectTarget = typeof selectTargetList[number];
-
 export const moveStrategyList = ['default', 'insideSource'] as const;
 
 export type MoveStrategy = typeof moveStrategyList[number];

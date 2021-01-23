@@ -19,7 +19,7 @@ bufferColumnRegistrar.registerColumn('child', 'name', ({ source }) => {
     draw() {
       return {
         drawNode(row, { node }) {
-          row.add(node.basename, {
+          row.add(node.name, {
             hl: getHighlight(node.fullpath, node.visible),
           });
         },

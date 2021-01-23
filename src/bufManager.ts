@@ -145,7 +145,7 @@ export class BufManager {
             bufnrStr: bufnr,
             bufname,
             fullpath,
-            basename: pathLib.basename(bufname),
+            name: pathLib.basename(bufname),
             unlisted: flags.includes('u'),
             current: flags.includes('%'),
             previous: flags.includes('#'),

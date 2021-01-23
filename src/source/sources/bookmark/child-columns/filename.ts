@@ -5,7 +5,7 @@ bookmarkColumnRegistrar.registerColumn('child', 'filename', () => ({
   draw() {
     return {
       drawNode(row, { node }) {
-        row.add(node.filename, { hl: bookmarkHighlights.filename });
+        row.add(node.name, { hl: bookmarkHighlights.filename });
       },
     };
   },

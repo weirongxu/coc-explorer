@@ -62,9 +62,10 @@ test('flattenChildren', async () => {
   await source.view.expand(source.view.rootNode, {
     recursive: true,
   });
-  const nodes = source.view.flattenChildren(source.view.rootNode);
+  const nodes = source.view.flattenNode(source.view.rootNode);
   expect(nodes.map((n) => n.fullpath)).toEqual(
     [
+      '/',
       '/src',
       '/src/test',
       '/src/test/fixtures',

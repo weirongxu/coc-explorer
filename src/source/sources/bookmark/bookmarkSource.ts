@@ -17,7 +17,7 @@ import { ViewSource } from '../../../view/viewSource';
 export interface BookmarkNode
   extends BaseTreeNode<BookmarkNode, 'root' | 'child'> {
   fullpath: string;
-  filename: string;
+  name: string;
   lnum: number;
   line: string;
   annotation: string | undefined;
@@ -59,8 +59,8 @@ export class BookmarkSource extends ExplorerSource<BookmarkNode> {
     isRoot: true,
     expandable: true,
     uid: this.helper.getUid('0'),
+    name: '',
     fullpath: '',
-    filename: '',
     lnum: -1,
     line: '',
     annotation: undefined,
@@ -130,7 +130,7 @@ export class BookmarkSource extends ExplorerSource<BookmarkNode> {
           type: 'child',
           uid: this.helper.getUid(fullpath + ':' + lnum),
           fullpath,
-          filename: pathLib.basename(fullpath),
+          name: pathLib.basename(fullpath),
           lnum,
           location: Location.create(fullpath, Range.create(lnum, -1, lnum, -1)),
           line: bookmark.line,

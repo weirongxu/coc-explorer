@@ -1,4 +1,3 @@
-import pathLib from 'path';
 import {
   diagnosticManager,
   DiagnosticType,
@@ -42,28 +41,10 @@ fileColumnRegistrar.registerColumn(
       draw() {
         return {
           async drawNode(row, { node }) {
-            if (node.directory) {
-              const compactStore = source.view.getCompact(node);
-              if (node.compacted && compactStore?.status === 'compacted') {
-                row.add(
-                  compactStore.nodes.map((n) => n.name).join(pathLib.sep),
-                  {
-                    hl: getHighlight(node.fullpath, true),
-                    unicode: true,
-                  },
-                );
-              } else {
-                row.add(node.name, {
-                  hl: getHighlight(node.fullpath, true),
-                  unicode: true,
-                });
-              }
-            } else {
-              row.add(node.name, {
-                hl: getHighlight(node.fullpath, false),
-                unicode: true,
-              });
-            }
+            row.add(node.name, {
+              hl: getHighlight(node.fullpath, node.directory),
+              unicode: true,
+            });
           },
         };
       },
