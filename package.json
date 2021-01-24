@@ -980,6 +980,7 @@
     "command-exists": "^1.2.9",
     "date-fns": "^2.16.1",
     "eslint": "^7.17.0",
+    "isbinaryfile": "^4.0.6",
     "jest": "^26.6.3",
     "json-schema-to-typescript": "^10.1.2",
     "lodash-es": "^4.17.20",

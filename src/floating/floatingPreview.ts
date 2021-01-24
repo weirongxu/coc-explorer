@@ -5,6 +5,7 @@ import {
   window,
   workspace,
 } from 'coc.nvim';
+import { isBinaryFile } from 'isbinaryfile';
 import { Location, Range } from 'vscode-languageserver-protocol';
 import { URI } from 'vscode-uri';
 import { argOptions } from '../arg/argOptions';
@@ -222,6 +223,12 @@ export class FloatingPreview implements Disposable {
         return;
       }
       const { uri: locUri, range } = location;
+
+      if (await isBinaryFile(locUri)) {
+        // Skip binary file, because not supported
+        return;
+      }
+
       const doc = workspace.getDocument(locUri);
       const uri = URI.parse(locUri);
       const lines = doc
