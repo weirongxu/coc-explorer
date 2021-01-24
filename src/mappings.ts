@@ -40,6 +40,10 @@ export function toOriginalAction(action: Action): string {
   return [name, ...args].join(':');
 }
 
+export function parseMappingKey(key: string) {
+  return key.includes('<dot>') ? key.replace(/\<dot\>/g, '.') : key;
+}
+
 export function parseOriginalActionExp(
   originalActionExp: OriginalActionExp,
 ): ActionExp {
@@ -53,7 +57,7 @@ export function parseOriginalActionExp(
 export function parseOriginalMappings(originalMappings: OriginalMappings) {
   const mappings: Mappings = {};
   for (const [key, originalActionExp] of Object.entries(originalMappings)) {
-    mappings[key] = parseOriginalActionExp(originalActionExp);
+    mappings[parseMappingKey(key)] = parseOriginalActionExp(originalActionExp);
   }
   return mappings;
 }
@@ -66,9 +70,9 @@ function mixAndParseMappings(
   for (const [key, originalActionExp] of Object.entries(userMappings)) {
     if (originalActionExp === false) {
       delete mappings[key];
-    } else {
-      mappings[key] = parseOriginalActionExp(originalActionExp);
+      continue;
     }
+    mappings[parseMappingKey(key)] = parseOriginalActionExp(originalActionExp);
   }
   return mappings;
 }
@@ -151,7 +155,7 @@ class KeyMapping {
         r: 'rename',
 
         zh: 'toggleHidden',
-        'g.': 'toggleHidden',
+        'g<dot>': 'toggleHidden',
         R: 'refresh',
 
         '?': 'help',

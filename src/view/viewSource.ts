@@ -347,8 +347,6 @@ export class ViewSource<TreeNode extends BaseTreeNode<TreeNode>> {
         this.nodeStores.setCompact(topNode, 'uncompact');
         if (node.compacted && node.compactedNodes) {
           this.replaceNodeInSibling(node, topNode);
-          // TODO
-          // node = node.compactedNodes[node.compactedNodes.length - 1];
           node = topNode;
           node.children ??= [];
         }
