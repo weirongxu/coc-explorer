@@ -30,6 +30,8 @@ Explorer extension for [coc.nvim](https://github.com/neoclide/coc.nvim)
    ```
 4. Press `?` to show mappings help
 
+More at [Quickstart](https://github.com/weirongxu/coc-explorer/wiki/Quickstart)
+
 ## Feature
 
 - [x] Buffer source
