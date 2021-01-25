@@ -7,7 +7,6 @@ import {
 } from 'coc.nvim';
 import { isBinaryFile } from 'isbinaryfile';
 import { Location, Range } from 'vscode-languageserver-protocol';
-import { URI } from 'vscode-uri';
 import { argOptions } from '../arg/argOptions';
 import { onBufEnter, onCursorMoved, onEvent } from '../events';
 import { Explorer } from '../explorer';
@@ -222,24 +221,25 @@ export class FloatingPreview implements Disposable {
       } else {
         return;
       }
-      const { uri: locUri, range } = location;
+      const { uri, range } = location;
 
-      if (await isBinaryFile(locUri)) {
+      if (await isBinaryFile(uri)) {
         // Skip binary file, because not supported
+        // eslint-disable-next-line no-restricted-properties
+        window.showMessage('Preview content skip binary');
         return;
       }
 
-      const doc = workspace.getDocument(locUri);
-      const uri = URI.parse(locUri);
+      const doc = workspace.getDocument(uri);
       const lines = doc
         ? doc.getLines(0, range.end.line + this.maxHeight)
-        : await readFileLines(uri.fsPath, 0, range.end.line + 30);
+        : await readFileLines(uri, 0, range.end.line + 30);
 
       return {
         lines,
         highlights: [],
         options: {
-          filepath: uri.fsPath,
+          filepath: uri,
           focusLineIndex: range.start.line,
         },
       };
