@@ -29,6 +29,7 @@ import { fileColumnRegistrar } from './fileColumnRegistrar';
 import './load';
 import { Notifier } from 'coc-helper';
 import { ViewSource } from '../../../view/viewSource';
+import { startCocList } from '../../../lists/runner';
 
 export interface FileNode extends BaseTreeNode<FileNode, 'root' | 'child'> {
   name: string;
@@ -252,7 +253,11 @@ export class FileSource extends ExplorerSource<FileNode> {
 
     const hasRevealPath = args.has(argOptions.reveal);
 
-    if (this.config.get('file.revealWhenOpen') || this.config.get('file.autoReveal') || hasRevealPath) {
+    if (
+      this.config.get('file.revealWhenOpen') ||
+      this.config.get('file.autoReveal') ||
+      hasRevealPath
+    ) {
       const [revealNode, notifiers] = await this.revealNodeByPathNotifier(
         revealPath,
       );
@@ -288,19 +293,20 @@ export class FileSource extends ExplorerSource<FileNode> {
   }
 
   async searchByCocList(path: string, recursive: boolean) {
-    fileList.showHidden = this.showHidden;
-    fileList.rootPath = path;
-    fileList.recursive = recursive;
-    fileList.revealCallback = async (loc) => {
-      await task.waitShow();
-      const [, notifiers] = await this.revealNodeByPathNotifier(
-        Uri.parse(loc.uri).fsPath,
-      );
-      await Notifier.runAll(notifiers);
-    };
-
-    const task = await this.startCocList(fileList);
-    task.waitShow()?.catch(logger.error);
+    const task = await startCocList(this.explorer, fileList, {
+      showHidden: this.showHidden,
+      showIgnore: true,
+      rootPath: path,
+      recursive,
+      revealCallback: async (loc) => {
+        await task.waitExplorerShow();
+        const [, notifiers] = await this.revealNodeByPathNotifier(
+          Uri.parse(loc.uri).fsPath,
+        );
+        await Notifier.runAll(notifiers);
+      },
+    });
+    task.waitExplorerShow()?.catch(logger.error);
   }
 
   async revealNodeByPathNotifier(

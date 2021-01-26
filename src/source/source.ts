@@ -1,21 +1,12 @@
 import { HelperEventEmitter, Notifier } from 'coc-helper';
-import {
-  Disposable,
-  Emitter,
-  events,
-  ExtensionContext,
-  IList,
-  listManager,
-  workspace,
-} from 'coc.nvim';
+import { Disposable, ExtensionContext, workspace } from 'coc.nvim';
 import { Class } from 'type-fest';
 import { Location } from 'vscode-languageserver-protocol';
 import { ActionSource } from '../actions/actionSource';
-import { argOptions } from '../arg/argOptions';
 import { Explorer } from '../explorer';
 import { HighlightSource } from '../highlight/highlightSource';
 import { LocatorSource } from '../locator/locatorSource';
-import { delay, generateUri, logger, winnrByBufnr } from '../util';
+import { generateUri, logger } from '../util';
 import { ViewSource } from '../view/viewSource';
 import { SourcePainters } from './sourcePainters';
 
@@ -239,55 +230,6 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>>
   async copyToClipboard(content: string) {
     await this.nvim.call('setreg', ['+', content]);
     await this.nvim.call('setreg', ['"', content]);
-  }
-
-  async startCocList(list: IList) {
-    const isFloating =
-      (await this.explorer.args.value(argOptions.position)) === 'floating';
-    const floatingHideOnCocList = this.config.get(
-      'floating.hideOnCocList',
-      true,
-    );
-
-    let isShown = true;
-    if (isFloating && floatingHideOnCocList) {
-      await this.explorer.hide();
-      isShown = false;
-    }
-
-    const shownExplorerEmitter = new Emitter<void>();
-    const listDisposable = listManager.registerList(list);
-    await this.nvim.command(`CocList ${list.name}`);
-    listDisposable.dispose();
-
-    await this.bufManager.waitReload();
-
-    const eventDisposable = events.on('BufEnter', async () => {
-      const buf = this.bufManager.getBufferNode(`list:///${list.name}`);
-      if (buf && (await winnrByBufnr(buf.bufnr))) {
-        return;
-      }
-      eventDisposable.dispose();
-
-      if (isFloating && !isShown) {
-        await delay(200);
-        await this.explorer.show();
-        shownExplorerEmitter.fire();
-      }
-    });
-    return {
-      waitShow() {
-        if (isShown) {
-          return;
-        }
-        return new Promise((resolve) => {
-          shownExplorerEmitter.event(() => {
-            isShown = true;
-            resolve(undefined);
-          });
-        });
-      },
-    };
   }
 
   isSelectedAny() {

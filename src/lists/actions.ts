@@ -1,5 +1,6 @@
-import { BasicList, Neovim, workspace } from 'coc.nvim';
+import { workspace } from 'coc.nvim';
 import { logger } from '../util';
+import { registerList } from './runner';
 
 interface ActionData {
   name: string;
@@ -16,31 +17,12 @@ function score(list: string[], key: string): number {
 
 export const actionListMru = workspace.createMru('explorer-actions');
 
-export class ExplorerActionList extends BasicList {
-  readonly defaultAction = 'do';
-  readonly name = 'explorerActions';
-  private explorerActions: ActionData[] = [];
-
-  constructor(nvim: Neovim) {
-    super(nvim);
-
-    this.addAction('do', (item) => {
-      new Promise(async (resolve) => {
-        const data = item.data as ActionData;
-        await data.callback();
-        await actionListMru.add(data.name);
-        resolve(undefined);
-      }).catch(logger.error);
-    });
-  }
-
-  setExplorerActions(actions: ActionData[]) {
-    this.explorerActions = actions;
-  }
-
-  async loadItems() {
+export const explorerActionList = registerList<ActionData[], ActionData>({
+  name: 'explorerActionList',
+  defaultAction: 'do',
+  async loadItems(actions) {
     const mruList = await actionListMru.load();
-    const items = this.explorerActions.map((actionData) => ({
+    const items = actions.map((actionData) => ({
       label: `${actionData.name} [${actionData.key || ''}] ${
         actionData.description
       }`,
@@ -51,10 +33,9 @@ export class ExplorerActionList extends BasicList {
     }));
     items.sort((a, b) => b.data.score - a.data.score);
     return items;
-  }
-
+  },
   doHighlight() {
-    const { nvim } = this;
+    const { nvim } = workspace;
     nvim.pauseNotification();
     nvim.command(
       'syntax match CocExplorerActionName /\\v^[a-zA-Z0-9:|<>]+/',
@@ -75,7 +56,15 @@ export class ExplorerActionList extends BasicList {
       true,
     );
     nvim.resumeNotification().catch(logger.error);
-  }
-}
-
-export const explorerActionList = new ExplorerActionList(workspace.nvim);
+  },
+  init() {
+    this.addAction('do', ({ item }) => {
+      new Promise(async (resolve) => {
+        const data = item.data as ActionData;
+        await data.callback();
+        await actionListMru.add(data.name);
+        resolve(undefined);
+      }).catch(logger.error);
+    });
+  },
+});

@@ -1,4 +1,5 @@
 import { explorerActionList } from '../lists/actions';
+import { startCocList } from '../lists/runner';
 import { keyMapping } from '../mappings';
 import { BaseTreeNode, ExplorerSource } from '../source/source';
 import { flatten, logger, partition } from '../util';
@@ -165,7 +166,9 @@ export class ActionSource<
       source.sourceType,
     );
 
-    explorerActionList.setExplorerActions(
+    const task = await startCocList(
+      this.source.explorer,
+      explorerActionList,
       flatten(
         Object.entries(actions)
           .filter(([actionName]) => actionName !== 'actionMenu')
@@ -179,7 +182,7 @@ export class ActionSource<
                 key,
                 description,
                 callback: async () => {
-                  await task.waitShow();
+                  await task.waitExplorerShow();
                   await callback.call(source, {
                     source,
                     nodes,
@@ -200,7 +203,7 @@ export class ActionSource<
                     key,
                     description: description + ' ' + menu.description,
                     callback: async () => {
-                      await task.waitShow();
+                      await task.waitExplorerShow();
                       await callback.call(source, {
                         source,
                         nodes,
@@ -216,7 +219,6 @@ export class ActionSource<
           }),
       ),
     );
-    const task = await source.startCocList(explorerActionList);
-    task.waitShow()?.catch(logger.error);
+    task.waitExplorerShow()?.catch(logger.error);
   }
 }

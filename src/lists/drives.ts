@@ -1,45 +1,31 @@
-import { BasicList, Neovim, workspace } from 'coc.nvim';
+import { workspace } from 'coc.nvim';
 import { logger } from '../util';
+import { registerList } from './runner';
 
 interface DriveItem {
   name: string;
   callback: (drive: string) => void | Promise<void>;
 }
 
-export class DriveList extends BasicList {
-  readonly defaultAction = 'do';
-  readonly name = 'explorerDrives';
-  private explorerDrives: DriveItem[] = [];
-
-  constructor(nvim: Neovim) {
-    super(nvim);
-
-    this.addAction('do', async (item) => {
-      await item.data.callback(item.data.drive);
-    });
-  }
-
-  setExplorerDrives(drives: DriveItem[]) {
-    this.explorerDrives = drives;
-  }
-
-  async loadItems() {
-    return this.explorerDrives.map((drive) => ({
+export const driveList = registerList<DriveItem[], DriveItem>({
+  name: 'explorerDrives',
+  defaultAction: 'do',
+  async loadItems(drives) {
+    return drives.map((drive) => ({
       label: drive.name,
-      data: {
-        drive: drive.name,
-        callback: drive.callback,
-      },
+      data: drive,
     }));
-  }
-
+  },
   doHighlight() {
-    const { nvim } = this;
+    const { nvim } = workspace;
     nvim.pauseNotification();
     nvim.command('syntax match CocExplorerDriveName /\\v^[\\w:]+/', true);
     nvim.command('highlight default link CocExplorerDriveName PreProc', true);
     nvim.resumeNotification().catch(logger.error);
-  }
-}
-
-export const driveList = new DriveList(workspace.nvim);
+  },
+  init() {
+    this.addAction('do', async ({ item }) => {
+      await item.data.callback(item.data.name);
+    });
+  },
+});

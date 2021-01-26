@@ -1,9 +1,10 @@
 import { Notifier } from 'coc-helper';
-import { listManager, window, workspace } from 'coc.nvim';
+import { window, workspace } from 'coc.nvim';
 import open from 'open';
 import pathLib from 'path';
 import { ActionSource } from '../../../actions/actionSource';
 import { driveList } from '../../../lists/drives';
+import { startCocList } from '../../../lists/runner';
 import { explorerWorkspaceFolderList } from '../../../lists/workspaceFolders';
 import {
   CopyOrCutFileType,
@@ -199,12 +200,9 @@ export function loadFileActions(action: ActionSource<FileSource, FileNode>) {
   action.addNodeAction(
     'workspaceFolders',
     async () => {
-      explorerWorkspaceFolderList.setFileSource(file);
-      const disposable = listManager.registerList(explorerWorkspaceFolderList);
-      await nvim.command(
-        `CocList --normal ${explorerWorkspaceFolderList.name}`,
-      );
-      disposable.dispose();
+      await startCocList(file.explorer, explorerWorkspaceFolderList, file, [
+        '--normal',
+      ]);
     },
     'change directory to current node',
   );
@@ -553,7 +551,9 @@ export function loadFileActions(action: ActionSource<FileSource, FileNode>) {
       'listDrive',
       async () => {
         const drives = await listDrive();
-        driveList.setExplorerDrives(
+        await startCocList(
+          file.explorer,
+          driveList,
           drives.map((drive) => ({
             name: drive,
             callback: async (drive) => {
@@ -561,12 +561,8 @@ export function loadFileActions(action: ActionSource<FileSource, FileNode>) {
               await file.view.expand(file.view.rootNode);
             },
           })),
+          ['--normal', '--number-select'],
         );
-        const disposable = listManager.registerList(driveList);
-        await nvim.command(
-          `CocList --normal --number-select ${driveList.name}`,
-        );
-        disposable.dispose();
       },
       'list drives',
     );
