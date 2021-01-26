@@ -99,11 +99,25 @@ type MouseMode = NonNullable<Explorer['explorer.mouseMode']>;
 class KeyMapping {
   mode = config.get<MappingConfigMode>('keyMappingMode', 'default');
 
-  private readonly mouseKey: string = ({
+  private readonly mouseMappings = ({
     none: {},
-    singleclick: '<LeftRelease>',
-    doubleclick: '<2-LeftMouse>',
-  } as Record<MouseMode, string>)[config.get<MouseMode>('mouseMode')!];
+    singleclick: {
+      '<LeftRelease>': [
+        'expandable?',
+        ['expanded?', 'collapse', 'expand'],
+        'open',
+      ],
+    },
+    doubleclick: {
+      '<2-LeftMouse>': [
+        'expandable?',
+        ['expanded?', 'collapse', 'expand'],
+        'open',
+      ],
+    },
+  } as Record<MouseMode, OriginalMappings>)[
+    config.get<MouseMode>('mouseMode')!
+  ];
 
   readonly configByModes: Record<
     MappingConfigMode,
@@ -129,11 +143,7 @@ class KeyMapping {
         K: ['wait', 'toggleSelection', 'normal:k'],
         gl: ['wait', 'expand:recursive'],
         gh: ['wait', 'collapse:recursive'],
-        [this.mouseKey]: [
-          'expandable?',
-          ['expanded?', 'collapse', 'expand'],
-          'open',
-        ],
+        ...this.mouseMappings,
         o: ['wait', 'expanded?', 'collapse', 'expand'],
         '<cr>': ['wait', 'expandable?', 'cd', 'open'],
         e: 'open',
