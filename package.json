@@ -207,6 +207,15 @@
             }
           }
         },
+        "explorer.mouseMode": {
+          "description": "Mouse mode",
+          "enum": [
+            "none",
+            "singleclick",
+            "doubleclick"
+          ],
+          "default": "doubleclick"
+        },
         "explorer.keyMappingMode": {
           "description": "Keymapping mode",
           "enum": [

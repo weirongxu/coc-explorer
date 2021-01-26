@@ -131,6 +131,10 @@ export interface Explorer {
     };
   };
   /**
+   * Mouse mode
+   */
+  'explorer.mouseMode'?: 'none' | 'singleclick' | 'doubleclick';
+  /**
    * Keymapping mode
    */
   'explorer.keyMappingMode'?: 'none' | 'default';

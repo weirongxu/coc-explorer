@@ -11,6 +11,7 @@ import {
   OriginalUserMappings,
 } from './actions/types';
 import { config } from './config';
+import { Explorer } from './types/pkg-config';
 
 type MappingConfigMode = 'none' | 'default';
 
@@ -93,10 +94,18 @@ export function getSingleAction(actionExp: ActionExp): Action | undefined {
   }
 }
 
+type MouseMode = NonNullable<Explorer['explorer.mouseMode']>;
+
 class KeyMapping {
   mode = config.get<MappingConfigMode>('keyMappingMode', 'default');
 
-  configByModes: Record<
+  private readonly mouseKey: string = ({
+    none: {},
+    singleclick: '<LeftRelease>',
+    doubleclick: '<2-LeftMouse>',
+  } as Record<MouseMode, string>)[config.get<MouseMode>('mouseMode')!];
+
+  readonly configByModes: Record<
     MappingConfigMode,
     {
       global: OriginalMappings;
@@ -120,7 +129,7 @@ class KeyMapping {
         K: ['wait', 'toggleSelection', 'normal:k'],
         gl: ['wait', 'expand:recursive'],
         gh: ['wait', 'collapse:recursive'],
-        '<2-LeftMouse>': [
+        [this.mouseKey]: [
           'expandable?',
           ['expanded?', 'collapse', 'expand'],
           'open',

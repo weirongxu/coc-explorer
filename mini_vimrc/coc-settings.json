@@ -21,5 +21,6 @@
   "explorer.icon.enableNerdfont": true,
   "explorer.buffer.tabOnly": true,
   "explorer.file.revealWhenOpen": false,
+  "explorer.mouseMode": "singleclick",
   "explorer.debug": true
 }

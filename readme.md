@@ -681,6 +681,10 @@ Type: <pre><code>{
 }</code></pre>
 </details>
 <details>
+<summary><code>explorer.mouseMode</code>: Mouse mode.</summary>
+Type: <pre><code>'none' | 'singleclick' | 'doubleclick'</code></pre>Default: <pre><code>"doubleclick"</code></pre>
+</details>
+<details>
 <summary><code>explorer.keyMappingMode</code>: Keymapping mode.</summary>
 Type: <pre><code>'none' | 'default'</code></pre>Default: <pre><code>"default"</code></pre>
 </details>
