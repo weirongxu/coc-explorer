@@ -135,25 +135,24 @@ export async function startCocList<Arg, Data>(
   await nvim.command(`CocList ${cmdArgs.join(' ')} ${list.name}`);
   listDisposable.dispose();
 
-  // TODO async?
-  await bufManager.waitReload();
-
-  const eventDisposable = events.on('BufEnter', async () => {
-    const buf = bufManager.getBufferNode(`list:///${list.name}`);
-    if (buf && (await winnrByBufnr(buf.bufnr))) {
-      return;
-    }
-    eventDisposable.dispose();
-
-    if (isFloating && !isExplorerShown) {
-      await delay(200);
-      await explorer.show();
-      shownExplorerEmitter.fire();
-    }
-  });
-
   return {
-    waitExplorerShow() {
+    async waitExplorerShow() {
+      await bufManager.waitReload();
+
+      const eventDisposable = events.on('BufEnter', async () => {
+        const buf = bufManager.getBufferNode(`list:///${list.name}`);
+        if (buf && (await winnrByBufnr(buf.bufnr))) {
+          return;
+        }
+        eventDisposable.dispose();
+
+        if (isFloating && !isExplorerShown) {
+          await delay(200);
+          await explorer.show();
+          shownExplorerEmitter.fire();
+        }
+      });
+
       if (isExplorerShown) {
         return;
       }

@@ -41,7 +41,7 @@ export class ViewSource<TreeNode extends BaseTreeNode<TreeNode>> {
   private readonly nodeStores = (() => {
     type NodeStore = {
       expanded: boolean;
-      compact?: CompactStatus;
+      compact: CompactStatus;
     };
 
     const inner = {
@@ -50,6 +50,7 @@ export class ViewSource<TreeNode extends BaseTreeNode<TreeNode>> {
         if (!inner.records.has(node.uid)) {
           inner.records.set(node.uid, {
             expanded: false,
+            compact: 'uncompact',
           });
         }
         return inner.records.get(node.uid)!;
@@ -79,10 +80,10 @@ export class ViewSource<TreeNode extends BaseTreeNode<TreeNode>> {
       isExpanded(node: TreeNode) {
         return inner.get(node, 'expanded');
       },
-      setCompact(node: TreeNode, compact: CompactStatus | undefined) {
+      setCompact(node: TreeNode, compact: CompactStatus) {
         inner.set(node, 'compact', compact);
       },
-      getCompact(node: TreeNode): CompactStatus | undefined {
+      getCompact(node: TreeNode): CompactStatus {
         return inner.get(node, 'compact');
       },
     };
@@ -194,25 +195,52 @@ export class ViewSource<TreeNode extends BaseTreeNode<TreeNode>> {
       // compact
       if (!node.isRoot) {
         const compactStatus = this.nodeStores.getCompact(node);
-        if (
-          compactStatus === 'compact' &&
-          node.children?.length === 1 &&
-          node.children[0].expandable
-        ) {
-          // Compact node
-          let tail = node.children[0];
-          const compactedNodes = [node, tail];
-          while (tail.children?.length === 1 && tail.children[0].expandable) {
-            this.nodeStores.setCompact(tail, undefined);
-            tail = tail.children[0];
-            compactedNodes.push(tail);
+        if (compactStatus === 'compact') {
+          if (
+            !node.compacted &&
+            node.children?.length === 1 &&
+            node.children[0].expandable
+          ) {
+            /**
+             * compact
+             * --------------------------------------
+             * └──node/         =>   └──node/subnode/
+             *    └──subnode/           └──file
+             *       └──file
+             */
+            let tail = node.children[0];
+            const compactedNodes = [node, tail];
+            while (tail.children?.length === 1 && tail.children[0].expandable) {
+              this.nodeStores.setCompact(tail, 'compact');
+              tail = tail.children[0];
+              compactedNodes.push(tail);
+            }
+            this.nodeStores.setCompact(tail, 'compact');
+            const compactedNode = clone(tail);
+            compactedNode.name = compactedNodes.map((n) => n.name).join('/');
+            compactedNode.compacted = true;
+            compactedNode.compactedNodes = compactedNodes;
+            // use compactedNode instead of node
+            this.replaceNodeInSibling(node, compactedNode);
+            node = compactedNode;
           }
-          const compactedNode = clone(tail);
-          compactedNode.compacted = true;
-          compactedNode.name = compactedNodes.map((n) => n.name).join('/');
-          compactedNode.compactedNodes = compactedNodes;
-          this.replaceNodeInSibling(node, compactedNode);
-          node = compactedNode;
+        } else if (compactStatus === 'uncompact') {
+          if (node.compacted && node.compactedNodes) {
+            /**
+             * uncompact
+             * -------------------------------------
+             * └──topNode/node/  =>   └──topNode/
+             *    └──file                └──node/
+             *                              └──file
+             */
+            const topNode = node.compactedNodes[0];
+            for (const n of node.compactedNodes) {
+              this.nodeStores.setCompact(n, 'uncompact');
+            }
+            // use topNode instead of compactedNode
+            this.replaceNodeInSibling(node, topNode);
+            node = topNode;
+          }
         }
       }
 
@@ -258,27 +286,20 @@ export class ViewSource<TreeNode extends BaseTreeNode<TreeNode>> {
     return this.nodeStores.isExpanded(node);
   }
 
-  getCompact(node: TreeNode) {
-    return this.nodeStores.getCompact(node);
-  }
-
   // render
-  private async expandRender(
-    targetNode: TreeNode,
-    renderNode: TreeNode = targetNode,
-  ) {
+  private async expandRender(node: TreeNode) {
     if (this.isHelpUI) {
       return;
     }
-    if (!this.isExpanded(targetNode) || !targetNode.children) {
+    if (!this.isExpanded(node) || !node.children) {
       return;
     }
-    const range = this.nodeAndChildrenRange(targetNode);
+    const range = this.nodeAndChildrenRange(node);
     if (!range) {
       return;
     }
     const { startIndex, endIndex } = range;
-    const needDrawNodes = this.flattenNode(renderNode);
+    const needDrawNodes = this.flattenNode(node);
 
     await this.source.sourcePainters.beforeDraw(needDrawNodes, {
       draw: async () => {
@@ -310,7 +331,7 @@ export class ViewSource<TreeNode extends BaseTreeNode<TreeNode>> {
   private async expandRecursive(
     node: TreeNode,
     options: SourceOptions.ExpandNode,
-  ): Promise<TreeNode | undefined> {
+  ) {
     const autoExpandOptions = this.config.get('autoExpandOptions');
     const compact = options.compact ?? autoExpandOptions.includes('compact');
     const uncompact =
@@ -320,6 +341,7 @@ export class ViewSource<TreeNode extends BaseTreeNode<TreeNode>> {
       (autoExpandOptions.includes('recursiveSingle') || compact);
     if (node.expandable) {
       const depth = options.depth ?? 1;
+      const isExpanded = this.isExpanded(node);
       this.nodeStores.expand(node);
       if (!node.children) {
         node.children = await this.source.loadInitedChildren(node, {
@@ -334,21 +356,25 @@ export class ViewSource<TreeNode extends BaseTreeNode<TreeNode>> {
       const singleExpandableNode =
         node.children.length === 1 && node.children[0].expandable;
 
-      const topNode =
-        node.compacted && node.compactedNodes ? node.compactedNodes[0] : node;
-      const compactStatus: CompactStatus =
-        this.nodeStores.getCompact(topNode) ?? 'uncompact';
-
-      if (compactStatus === 'uncompact' && compact && singleExpandableNode) {
-        // compact
-        this.nodeStores.setCompact(topNode, 'compact');
-      } else if (compactStatus === 'compact' && uncompact) {
-        // uncompact
-        this.nodeStores.setCompact(topNode, 'uncompact');
-        if (node.compacted && node.compactedNodes) {
-          this.replaceNodeInSibling(node, topNode);
-          node = topNode;
-          node.children ??= [];
+      const compactStatus = this.nodeStores.getCompact(node);
+      if (compactStatus === 'uncompact') {
+        /**
+         * └──topNode&node/
+         *    └──subnode/
+         *       └──file
+         */
+        if (singleExpandableNode && compact) {
+          this.nodeStores.setCompact(node, 'compact');
+        }
+      } else if (compactStatus === 'compact') {
+        /**
+         * └──topNode/node/
+         *    └──file
+         */
+        if (isExpanded && uncompact) {
+          this.nodeStores.setCompact(node, 'uncompact');
+        } else {
+          this.nodeStores.setCompact(node, 'compact');
         }
       }
 
@@ -362,7 +388,6 @@ export class ViewSource<TreeNode extends BaseTreeNode<TreeNode>> {
           }),
         );
       }
-      return topNode;
     }
   }
 
@@ -370,9 +395,9 @@ export class ViewSource<TreeNode extends BaseTreeNode<TreeNode>> {
    * expand node
    */
   async expand(node: TreeNode, options: SourceOptions.ExpandNode = {}) {
-    const resultNode = await this.expandRecursive(node, options);
+    await this.expandRecursive(node, options);
     if (options.render ?? true) {
-      await this.expandRender(node, resultNode);
+      await this.expandRender(node);
     }
   }
 
