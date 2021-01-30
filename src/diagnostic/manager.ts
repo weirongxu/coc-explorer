@@ -6,6 +6,7 @@ import {
 } from 'coc.nvim';
 import pathLib from 'path';
 import { ExplorerSource } from '../source/source';
+import { normalizePath } from '../util';
 import { DiagnosticBinder } from './binder';
 
 export type DiagnosticType = 'error' | 'warning';
@@ -67,7 +68,7 @@ class DiagnosticManager {
 
     for (const diagnostic of cocDiagnosticManager.getDiagnosticList()) {
       const uri = diagnostic.location.uri;
-      const path = Uri.parse(uri).fsPath;
+      const path = normalizePath(Uri.parse(uri).fsPath);
       if (diagnostic.severity === 'Error') {
         if (!(path in errorPathCount)) {
           errorPathCount[path] = 0;
