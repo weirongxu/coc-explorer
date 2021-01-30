@@ -265,7 +265,7 @@ export function loadFileActions(action: ActionSource<FileSource, FileNode>) {
     args: [
       {
         name: 'type',
-        description: `${pasteFileTypeList.join(' | ')}, default: reset`,
+        description: `${pasteFileTypeList.join(' | ')}, default: clear`,
       },
     ],
     menus: {
