@@ -9,6 +9,8 @@ import { explorerWorkspaceFolderList } from '../../../lists/workspaceFolders';
 import {
   CopyOrCutFileType,
   copyOrCutFileTypeList,
+  PasteFileType,
+  pasteFileTypeList,
   RevealStrategy,
   revealStrategyList,
 } from '../../../types';
@@ -259,6 +261,18 @@ export function loadFileActions(action: ActionSource<FileSource, FileNode>) {
       replace: 'remove all mark then add one mark',
     },
   };
+  const pasteFileOptions = {
+    args: [
+      {
+        name: 'type',
+        description: `${pasteFileTypeList.join(' | ')}, default: reset`,
+      },
+    ],
+    menus: {
+      keepCopy: 'keep copy mark',
+      clear: 'clear copy and cut mark',
+    },
+  };
   action.addNodesAction(
     'copyFile',
     async ({ nodes, args }) => {
@@ -321,7 +335,8 @@ export function loadFileActions(action: ActionSource<FileSource, FileNode>) {
   );
   action.addNodeAction(
     'pasteFile',
-    async ({ node }) => {
+    async ({ node, args }) => {
+      const type = (args[0] ?? 'keepCopy') as PasteFileType;
       if (file.copiedNodes.size <= 0 && file.cutNodes.size <= 0) {
         // eslint-disable-next-line no-restricted-properties
         window.showMessage('Copied files or cut files is empty', 'error');
@@ -339,7 +354,9 @@ export function loadFileActions(action: ActionSource<FileSource, FileNode>) {
           fsCopyFileRecursive,
         );
         file.view.requestRenderNodes(nodes);
-        file.copiedNodes.clear();
+        if (type === 'clear') {
+          file.copiedNodes.clear();
+        }
       }
       if (file.cutNodes.size > 0) {
         const nodes = [...file.cutNodes];
@@ -356,6 +373,7 @@ export function loadFileActions(action: ActionSource<FileSource, FileNode>) {
       await file.load(file.view.rootNode);
     },
     'paste files to here',
+    pasteFileOptions,
   );
   action.addNodesAction(
     'delete',
