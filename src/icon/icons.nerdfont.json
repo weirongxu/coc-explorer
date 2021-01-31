@@ -519,7 +519,8 @@
     ".zshrc": "bashrc",
     ".bashprofile": "bashrc",
     "favicon.ico": "favicon",
-    "dockerfile": "docker"
+    "dockerfile": "docker",
+    ".dockerignore": "docker"
   },
   "patternMatches": {
     ".*jquery.*.js$": "jquery",
