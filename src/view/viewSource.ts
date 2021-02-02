@@ -159,6 +159,8 @@ export class ViewSource<TreeNode extends BaseTreeNode<TreeNode>> {
         oldNode.parent.children.splice(index, 1, newNode);
         newNode.level = oldNode.level;
         newNode.parent = oldNode.parent;
+        newNode.prevSiblingNode = oldNode.prevSiblingNode;
+        newNode.nextSiblingNode = oldNode.nextSiblingNode;
       }
     }
   }
@@ -197,7 +199,7 @@ export class ViewSource<TreeNode extends BaseTreeNode<TreeNode>> {
         const compactStatus = this.nodeStores.getCompact(node);
         if (compactStatus === 'compact') {
           if (
-            !node.compacted &&
+            !node.compactedNodes &&
             node.children?.length === 1 &&
             node.children[0].expandable
           ) {
@@ -218,14 +220,13 @@ export class ViewSource<TreeNode extends BaseTreeNode<TreeNode>> {
             this.nodeStores.setCompact(tail, 'compact');
             const compactedNode = clone(tail);
             compactedNode.name = compactedNodes.map((n) => n.name).join('/');
-            compactedNode.compacted = true;
             compactedNode.compactedNodes = compactedNodes;
             // use compactedNode instead of node
             this.replaceNodeInSibling(node, compactedNode);
             node = compactedNode;
           }
         } else if (compactStatus === 'uncompact') {
-          if (node.compacted && node.compactedNodes) {
+          if (node.compactedNodes) {
             /**
              * uncompact
              * -------------------------------------

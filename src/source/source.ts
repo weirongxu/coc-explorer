@@ -122,7 +122,6 @@ export interface BaseTreeNode<
   children?: TreeNode[];
   prevSiblingNode?: TreeNode;
   nextSiblingNode?: TreeNode;
-  compacted?: boolean;
   compactedNodes?: TreeNode[];
 }
 
