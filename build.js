@@ -7,14 +7,7 @@ exports.build = (production) => {
     sourcemap: !production,
     entryPoints: ['./src/index.ts'],
     bundle: true,
-    external: [
-      'coc.nvim',
-      'trash',
-      'open',
-      'vscode-languageserver-types',
-      'vscode-languageserver-protocol',
-      'vscode-languageserver-textdocument',
-    ],
+    external: ['coc.nvim', 'trash', 'open'],
     outfile: 'lib/index.js',
   });
 };
