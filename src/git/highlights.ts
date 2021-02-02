@@ -1,9 +1,15 @@
 import { workspace } from 'coc.nvim';
-import { Color } from 'vscode-languageserver-protocol';
 import { hlGroupManager } from '../highlight/manager';
 import { parseHighlight } from '../highlight/parseHighlight';
 import colorConvert from 'color-convert';
-import { compactI, findNearestColor, logger, parseColor, toHex } from '../util';
+import {
+  compactI,
+  createColor,
+  findNearestColor,
+  logger,
+  parseColor,
+  toHex,
+} from '../util';
 import { GitFormat } from './types';
 
 const hl = hlGroupManager.linkGroup.bind(hlGroupManager);
@@ -74,7 +80,7 @@ hlGroupManager
     const { nvim } = workspace;
     nvim.pauseNotification();
     const green = findNearestColor(
-      Color.create(18, 204, 90, 1),
+      createColor(18, 204, 90, 1),
       fgs,
       (it) => it.guifg,
     );
@@ -87,7 +93,7 @@ hlGroupManager
       );
     }
     const yellow = findNearestColor(
-      Color.create(209, 177, 15, 1),
+      createColor(209, 177, 15, 1),
       fgs,
       (it) => it.guifg,
     );

@@ -2,11 +2,12 @@ import {
   BufferHighlight,
   Disposable,
   disposeAll,
+  Location,
+  Range,
   window,
   workspace,
 } from 'coc.nvim';
 import { isBinaryFile } from 'isbinaryfile';
-import { Location, Range } from 'vscode-languageserver-protocol';
 import { argOptions } from '../arg/argOptions';
 import { onBufEnter, onCursorMoved, onEvent } from '../events';
 import { Explorer } from '../explorer';

@@ -1,12 +1,11 @@
 // modified from: https://github.com/neoclide/coc-lists/blob/3c117046b54130157006f8ddf048304507499260/src/files.ts
 
 import { ChildProcess, spawn } from 'child_process';
-import { ListTask, Uri, workspace } from 'coc.nvim';
+import { ListTask, Location, Range, Uri, workspace } from 'coc.nvim';
 import { EventEmitter } from 'events';
 import minimatch from 'minimatch';
 import pathLib from 'path';
 import readline from 'readline';
-import { Location, Range } from 'vscode-languageserver-types';
 import { executable, isWindows } from '../util';
 import { registerList } from './runner';
 

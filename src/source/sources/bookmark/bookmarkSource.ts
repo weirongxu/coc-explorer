@@ -1,6 +1,5 @@
-import { extensions, workspace } from 'coc.nvim';
+import { extensions, Location, Range, workspace } from 'coc.nvim';
 import pathLib from 'path';
-import { Location, Range } from 'vscode-languageserver-protocol';
 import { internalEvents } from '../../../events';
 import { debounce, fsExists, normalizePath } from '../../../util';
 import { hlGroupManager } from '../../../highlight/manager';

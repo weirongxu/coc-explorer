@@ -1,11 +1,11 @@
-import { CodeActionProvider } from 'coc.nvim';
 import {
   CancellationToken,
   CodeActionContext,
+  CodeActionProvider,
   Command,
   Range,
-} from 'vscode-languageserver-protocol';
-import { TextDocument } from 'vscode-languageserver-textdocument';
+  TextDocument,
+} from 'coc.nvim';
 import { ActionMenu } from './menu';
 import { ExplorerManager } from '../explorerManager';
 import { actionListMru } from '../lists/actions';

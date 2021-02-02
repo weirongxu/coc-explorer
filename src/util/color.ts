@@ -1,6 +1,27 @@
-import { minBy } from 'lodash-es';
-import { Color } from 'vscode-languageserver-protocol';
+import { Color } from 'coc.nvim';
 import colorConvert from 'color-convert';
+import { minBy } from 'lodash-es';
+
+export function createColor(
+  /**
+   * The red component of this color in the range [0-1].
+   */
+  red: number,
+  /**
+   * The green component of this color in the range [0-1].
+   */
+  green: number,
+  /**
+   * The blue component of this color in the range [0-1].
+   */
+  blue: number,
+  /**
+   * The alpha component of this color in the range [0-1].
+   */
+  alpha: number,
+): Color {
+  return { red, green, blue, alpha };
+}
 
 export function colorDistance(c1: Color, c2: Color) {
   const rmean = (c1.red + c2.red) / 2;
@@ -36,7 +57,7 @@ export function parseColor(str: string) {
     return;
   }
   const [r, g, b] = m;
-  return Color.create(parseInt(r, 16), parseInt(g, 16), parseInt(b, 16), 1);
+  return createColor(parseInt(r, 16), parseInt(g, 16), parseInt(b, 16), 1);
 }
 
 export function toHex(color: Color) {

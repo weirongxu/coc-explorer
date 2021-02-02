@@ -1,7 +1,6 @@
 import { HelperEventEmitter, Notifier } from 'coc-helper';
-import { Disposable, ExtensionContext, workspace } from 'coc.nvim';
+import { Disposable, ExtensionContext, Location, workspace } from 'coc.nvim';
 import { Class } from 'type-fest';
-import { Location } from 'vscode-languageserver-protocol';
 import { ActionSource } from '../actions/actionSource';
 import { Explorer } from '../explorer';
 import { HighlightSource } from '../highlight/highlightSource';
