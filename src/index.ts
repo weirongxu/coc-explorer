@@ -14,6 +14,7 @@ import { InternalVimEvents } from './events';
 import { asyncCatchError, logger, registerRuntimepath } from './util';
 import { ActionMenuCodeActionProvider } from './actions/codeActionProider';
 import { activateHelper } from 'coc-helper';
+import { GitCommand } from './git/command';
 
 export const activate = async (context: ExtensionContext) => {
   const { subscriptions } = context;
@@ -32,6 +33,8 @@ export const activate = async (context: ExtensionContext) => {
 
   const explorerManager = new ExplorerManager(context);
   registerVimApi(context, explorerManager);
+
+  GitCommand.preload().catch(logger.error);
 
   subscriptions.push(
     commands.registerCommand('explorer', (...args) => {

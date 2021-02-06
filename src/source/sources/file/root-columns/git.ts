@@ -13,13 +13,13 @@ fileColumnRegistrar.registerColumn(
       init() {
         subscriptions.push(gitManager.bindColumn(source));
       },
-      async available() {
-        return await gitManager.cmd.available();
-      },
       async draw() {
         return {
           labelVisible({ node }) {
             return !!gitManager.getRootStatus(node.fullpath)?.formats.length;
+          },
+          async available() {
+            return await gitManager.cmd.available();
           },
           drawNode(row, { node, isLabeling }) {
             const status = gitManager.getRootStatus(node.fullpath);
