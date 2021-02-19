@@ -22,7 +22,7 @@ Explorer extension for [coc.nvim](https://github.com/neoclide/coc.nvim)
    ```
 2. Configuration custom vim mapping
    ```
-   :nmap <space>e :CocCommand explorer<CR>
+   :nnoremap <space>e :CocCommand explorer<CR>
    ```
 3. Open explorer
    ```
@@ -92,7 +92,7 @@ More at [Quickstart](https://github.com/weirongxu/coc-explorer/wiki/Quickstart)
 Reveal to current buffer for closest coc-explorer
 
 ```vim
-nmap <Leader>er :call CocAction('runCommand', 'explorer.doAction', 'closest', ['reveal:0'], [['relative', 0, 'file']])<CR>
+nnoremap <Leader>er :call CocAction('runCommand', 'explorer.doAction', 'closest', ['reveal:0'], [['relative', 0, 'file']])<CR>
 ```
 
 ### Presets
@@ -139,13 +139,13 @@ let g:coc_explorer_global_presets = {
 \ }
 
 " Use preset argument to open it
-nmap <space>ed :CocCommand explorer --preset .vim<CR>
-nmap <space>ef :CocCommand explorer --preset floating<CR>
-nmap <space>ec :CocCommand explorer --preset cocConfig<CR>
-nmap <space>eb :CocCommand explorer --preset buffer<CR>
+nnoremap <space>ed :CocCommand explorer --preset .vim<CR>
+nnoremap <space>ef :CocCommand explorer --preset floating<CR>
+nnoremap <space>ec :CocCommand explorer --preset cocConfig<CR>
+nnoremap <space>eb :CocCommand explorer --preset buffer<CR>
 
 " List all presets
-nmap <space>el :CocList explPresets
+nnoremap <space>el :CocList explPresets
 ```
 
 ### Options
@@ -494,12 +494,12 @@ You can use `?` to view all actions of current source
 
 ## WIKI
 
-https://github.com/weirongxu/coc-explorer/wiki
+- https://github.com/weirongxu/coc-explorer/wiki
 
 ## FAQ
 
-https://github.com/weirongxu/coc-explorer/wiki/FAQ
-https://github.com/weirongxu/coc-explorer/issues?q=is%3Aissue+sort%3Aupdated-desc+label%3Aquestion
+- https://github.com/weirongxu/coc-explorer/wiki/FAQ
+- https://github.com/weirongxu/coc-explorer/issues?q=is%3Aissue+sort%3Aupdated-desc+label%3Aquestion
 
 ## Example by Vim API and event hooks
 
@@ -521,12 +521,12 @@ function! s:init_explorer()
   " Integration with other plugins
 
   " CocList
-  nmap <buffer> <Leader>fg :call <SID>exec_cur_dir('CocList -I grep')<CR>
-  nmap <buffer> <Leader>fG :call <SID>exec_cur_dir('CocList -I grep -regex')<CR>
-  nmap <buffer> <C-p> :call <SID>exec_cur_dir('CocList files')<CR>
+  nnoremap <buffer> <Leader>fg :call <SID>exec_cur_dir('CocList -I grep')<CR>
+  nnoremap <buffer> <Leader>fG :call <SID>exec_cur_dir('CocList -I grep -regex')<CR>
+  nnoremap <buffer> <C-p> :call <SID>exec_cur_dir('CocList files')<CR>
 
   " vim-floaterm
-  nmap <buffer> <Leader>ft :call <SID>exec_cur_dir('FloatermNew --wintype=floating')<CR>
+  nnoremap <buffer> <Leader>ft :call <SID>exec_cur_dir('FloatermNew --wintype=floating')<CR>
 endfunction
 
 function! s:enter_explorer()
