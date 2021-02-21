@@ -522,6 +522,8 @@ export function loadGlobalActions(action: ActionExplorer) {
         'toggle:labeling': 'toggle labeling',
         'toggle:labeling:200': 'toggle labeling with debounce',
         'toggle:content': 'toggle content',
+        'enable:content': 'enable with content',
+        'enable:labeling': 'enable with labeling',
       },
     },
   );
