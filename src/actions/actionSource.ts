@@ -2,7 +2,7 @@ import { explorerActionList } from '../lists/actions';
 import { startCocList } from '../lists/runner';
 import { keyMapping } from '../mappings';
 import { BaseTreeNode, ExplorerSource } from '../source/source';
-import { flatten, logger, partition } from '../util';
+import { flatten, logger, partition, uniq } from '../util';
 import { ActionExplorer } from './actionExplorer';
 import { ActionMenu } from './menu';
 import { ActionRegistrar } from './registrar';
@@ -117,44 +117,48 @@ export class ActionSource<
 
     const finalNodes = Array.isArray(nodes) ? nodes : [nodes];
     const source = this.source;
-    if (select === true) {
-      const allNodes = [...finalNodes, ...source.selectedNodes];
-      source.selectedNodes.clear();
-      source.view.requestRenderNodes(allNodes);
-      await action.callback.call(source, {
-        source,
-        nodes: allNodes,
-        args,
-        mode,
-      });
-    } else if (select === false) {
-      await action.callback.call(source, {
-        source,
-        nodes: [finalNodes[0]],
-        args,
-        mode,
-      });
-    } else if (select === 'visual') {
-      await action.callback.call(source, {
-        source,
-        nodes: finalNodes,
-        args,
-        mode,
-      });
-    } else if (select === 'keep') {
-      const allNodes = [...finalNodes, ...source.selectedNodes];
-      await action.callback.call(source, {
-        source,
-        nodes: allNodes,
-        args,
-        mode,
-      });
-    }
-
-    if (reload) {
-      await source.load(source.view.rootNode);
-    } else if (render) {
-      await source.view.render();
+    try {
+      if (select === true) {
+        const allNodes = uniq([...finalNodes, ...source.selectedNodes]);
+        source.selectedNodes.clear();
+        source.view.requestRenderNodes(allNodes);
+        await action.callback.call(source, {
+          source,
+          nodes: allNodes,
+          args,
+          mode,
+        });
+      } else if (select === false) {
+        await action.callback.call(source, {
+          source,
+          nodes: [finalNodes[0]],
+          args,
+          mode,
+        });
+      } else if (select === 'visual') {
+        await action.callback.call(source, {
+          source,
+          nodes: finalNodes,
+          args,
+          mode,
+        });
+      } else if (select === 'keep') {
+        const allNodes = uniq([...finalNodes, ...source.selectedNodes]);
+        await action.callback.call(source, {
+          source,
+          nodes: allNodes,
+          args,
+          mode,
+        });
+      }
+    } catch (error) {
+      throw error;
+    } finally {
+      if (reload) {
+        await source.load(source.view.rootNode);
+      } else if (render) {
+        await source.view.render();
+      }
     }
   }
 

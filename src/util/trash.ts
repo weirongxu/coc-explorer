@@ -1,3 +1,4 @@
+import {prettyPrint} from '.';
 import { config } from '../config';
 import { execCmdLine, shellescape, executable } from './cli';
 
