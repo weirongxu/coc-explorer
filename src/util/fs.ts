@@ -3,7 +3,6 @@ import makeDir from 'make-dir';
 import pathLib from 'path';
 import readline from 'readline';
 import rimraf from 'rimraf';
-import trash from 'trash';
 import { promisify } from 'util';
 import { input, prompt } from '.';
 import { execCmd } from './cli';
@@ -35,9 +34,6 @@ export const fsRimraf = promisify(rimraf);
 export const fsTrash = async (paths: string | string[]) => {
   await trashCmd.exec(typeof paths === 'string' ? [paths] : paths);
 };
-
-export const nodejsModuleTrash = (paths: string | string[]) =>
-  trash(paths, { glob: false });
 
 export async function fsCopyFileRecursive(
   sourcePath: string,

@@ -1,9 +1,10 @@
-import trash from 'trash';
 import { config } from '../config';
 import { execCmdLine, shellescape, executable } from './cli';
 
-const nodejsModuleTrash = (paths: string | string[]) =>
-  trash(paths, { glob: false });
+const nodejsModuleTrash = async (paths: string | string[]) => {
+  const { default: trash } = await import('trash');
+  await trash(paths, { glob: false });
+};
 
 class TrashTemplateCmd {
   private inited = false;

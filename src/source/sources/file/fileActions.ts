@@ -1,6 +1,5 @@
 import { Notifier } from 'coc-helper';
 import { window, workspace } from 'coc.nvim';
-import open from 'open';
 import pathLib from 'path';
 import { ActionSource } from '../../../actions/actionSource';
 import { driveList } from '../../../lists/drives';
@@ -555,6 +554,7 @@ export function loadFileActions(action: ActionSource<FileSource, FileNode>) {
   action.addNodesAction(
     'systemExecute',
     async ({ nodes }) => {
+      const { default: open } = await import('open');
       if (nodes) {
         await Promise.all(nodes.map((node) => open(node.fullpath)));
       } else {
