@@ -1,5 +1,6 @@
 import { window, WorkspaceConfiguration } from 'coc.nvim';
 import { getPresets } from '../presets';
+import { Explorer, Position } from '../types/pkg-config';
 import { splitCount } from '../util';
 
 export interface ArgsSource {
@@ -7,25 +8,32 @@ export interface ArgsSource {
   expand: boolean;
 }
 
-export type ArgPosition = 'tab' | 'left' | 'right' | 'floating';
+export type ArgPosition = NonNullable<Explorer['explorer.position']>;
+
+export type ParsedPosition = {
+  name: Position;
+  arg?: string;
+};
 
 export type OptionType = 'boolean' | 'string' | 'positional';
 
-export type ArgOption<T> = {
+export type ArgOption<T, P> = {
   type: OptionType;
   name: string;
   position?: number;
   parseArg?: (value: string) => Promise<T> | T;
+  parsePreset?: (value: P) => Promise<T> | T;
   handler?: (value: T | undefined) => Promise<T | undefined> | T | undefined;
   getDefault?: () => Promise<T> | T;
   description?: string;
 };
 
-export type ArgOptionRequired<T> = {
+export type ArgOptionRequired<T, P> = {
   type: OptionType;
   name: string;
   position?: number;
   parseArg?: (value: string) => Promise<T> | T;
+  parsePreset?: (value: P) => Promise<T> | T;
   handler?: (value: T) => Promise<T> | T;
   getDefault: () => Promise<T> | T;
   description?: string;
@@ -39,8 +47,21 @@ export type ArgFloatingPositions =
   | 'center'
   | 'center-top';
 
+export type ResolveArgValue<T> = T extends ArgOptionRequired<infer V, any>
+  ? V
+  : T extends ArgOption<infer V, any>
+  ? V | undefined
+  : never;
+
+export type ResolveArgValues<T> = {
+  [K in keyof T]: ResolveArgValue<T[K]>;
+};
+
 export class Args {
-  private static registeredOptions: Map<string, ArgOption<any>> = new Map();
+  private static registeredOptions: Map<
+    string,
+    ArgOption<any, any>
+  > = new Map();
   private optionValues: Map<string, any> = new Map();
 
   static registerOption<T>(
@@ -52,7 +73,18 @@ export class Args {
         value: T | undefined,
       ) => T | undefined | Promise<T | undefined>;
     },
-  ): ArgOption<T>;
+  ): ArgOption<T, unknown>;
+  static registerOption<T, P>(
+    name: string,
+    options?: {
+      position?: number;
+      parseArg?: (value: string) => T | Promise<T>;
+      parsePreset: (value: P) => T | Promise<T>;
+      handler?: (
+        value: T | undefined,
+      ) => T | undefined | Promise<T | undefined>;
+    },
+  ): ArgOption<T, P>;
   static registerOption<T>(
     name: string,
     options: {
@@ -61,18 +93,29 @@ export class Args {
       handler?: (value: T) => T | Promise<T>;
       getDefault: () => T | Promise<T>;
     },
-  ): ArgOptionRequired<T>;
-  static registerOption<T>(
+  ): ArgOptionRequired<T, unknown>;
+  static registerOption<T, P>(
     name: string,
     options: {
       position?: number;
+      parseArg?: (value: string) => T | Promise<T>;
+      parsePreset: (value: P) => T | Promise<T>;
+      handler?: (value: T) => T | Promise<T>;
+      getDefault: () => T | Promise<T>;
+    },
+  ): ArgOptionRequired<T, P>;
+  static registerOption<T, P>(
+    name: string,
+    options: {
+      position?: number;
+      parsePreset?: (value: P) => T | Promise<T>;
       parseArg?: (value: string) => T | Promise<T>;
       handler?: (
         value: T | undefined,
       ) => T | undefined | Promise<T | undefined>;
       getDefault?: () => T | Promise<T>;
     } = {},
-  ): ArgOption<T> | ArgOptionRequired<T> {
+  ): ArgOption<T, P> | ArgOptionRequired<T, P> {
     const option = {
       type:
         options.position === undefined
@@ -88,7 +131,7 @@ export class Args {
   static registerBoolOption(
     name: string,
     defaultValue: boolean | (() => boolean | Promise<boolean>),
-  ): ArgOptionRequired<boolean> {
+  ): ArgOptionRequired<boolean, boolean> {
     const option = {
       type: 'boolean' as const,
       name,
@@ -175,8 +218,7 @@ export class Args {
       if (option) {
         self.optionValues.set(
           argName,
-          argValue,
-          // option.parseArg ? option.parseArg(argValue) : argValue,
+          option.parsePreset?.(argValue) ?? argValue,
         );
       }
     }
@@ -186,13 +228,13 @@ export class Args {
 
   constructor(public readonly args: string[]) {}
 
-  has(option: ArgOption<any>): boolean {
+  has(option: ArgOption<any, any>): boolean {
     return this.optionValues.has(option.name);
   }
 
-  async value<T>(option: ArgOptionRequired<T>): Promise<T>;
-  async value<T>(option: ArgOption<T>): Promise<T | undefined>;
-  async value<T>(option: ArgOption<T>): Promise<T | undefined> {
+  async value<T, P>(option: ArgOptionRequired<T, P>): Promise<T>;
+  async value<T, P>(option: ArgOption<T, P>): Promise<T | undefined>;
+  async value<T, P>(option: ArgOption<T, P>): Promise<T | undefined> {
     let result: T;
     if (this.optionValues.has(option.name)) {
       result = this.optionValues.get(option.name);
@@ -204,5 +246,19 @@ export class Args {
       }
     }
     return Args.registeredOptions.get(option.name)?.handler?.(result) ?? result;
+  }
+
+  async values<
+    T extends Record<string, ArgOptionRequired<any, any> | ArgOption<any, any>>
+  >(options: T): Promise<ResolveArgValues<T>> {
+    const entries = await Promise.all(
+      Object.entries(options).map(
+        async ([key, option]) => [key, await this.value(option)] as const,
+      ),
+    );
+    return entries.reduce((ret, [key, value]) => {
+      ret[key as keyof T] = value;
+      return ret;
+    }, {} as ResolveArgValues<T>);
   }
 }

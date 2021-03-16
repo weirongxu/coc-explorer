@@ -165,10 +165,7 @@ export class FileSource extends ExplorerSource<FileNode> {
             if (!this.explorer.visible()) {
               return;
             }
-            const position = await this.explorer.args.value(
-              argOptions.position,
-            );
-            if (position === 'floating') {
+            if (this.explorer.isFloating) {
               return;
             }
             const fullpath = this.bufManager.getBufferNode(bufnr)?.fullpath;

@@ -13,7 +13,6 @@ import {
   ProviderResult,
   workspace,
 } from 'coc.nvim';
-import { argOptions } from '../arg/argOptions';
 import type { Explorer } from '../explorer';
 import { delay, winnrByBufnr } from '../util';
 
@@ -120,12 +119,10 @@ export async function startCocList<Arg, Data>(
   const nvim = explorer.nvim;
   const bufManager = explorer.explorerManager.bufManager;
 
-  const isFloating =
-    (await explorer.args.value(argOptions.position)) === 'floating';
   const floatingHideOnCocList = config.get('floating.hideOnCocList', true);
 
   let isExplorerShown = true;
-  if (isFloating && floatingHideOnCocList) {
+  if (explorer.isFloating && floatingHideOnCocList) {
     await explorer.hide();
     isExplorerShown = false;
   }
@@ -146,7 +143,7 @@ export async function startCocList<Arg, Data>(
         }
         eventDisposable.dispose();
 
-        if (isFloating && !isExplorerShown) {
+        if (explorer.isFloating && !isExplorerShown) {
           await delay(200);
           await explorer.show();
           shownExplorerEmitter.fire();

@@ -5,9 +5,12 @@ import {
   ArgPosition,
   ArgContentWidthTypes,
   ArgFloatingPositions,
+  ResolveArgValues,
+  ParsedPosition,
 } from './parseArgs';
 import { OpenStrategy } from '../types';
 import { config } from '../config';
+import { Position } from '../types/pkg-config';
 
 export const argOptions = {
   rootUri: Args.registerOption<string>('root-uri', {
@@ -54,9 +57,32 @@ export const argOptions = {
       }),
     getDefault: () => config.get<ArgsSource[]>('sources')!,
   }),
-  position: Args.registerOption<ArgPosition>('position', {
-    getDefault: () => config.get<ArgPosition>('position')!,
-  }),
+  position: Args.registerOption<ParsedPosition, ArgPosition | ParsedPosition>(
+    'position',
+    {
+      parseArg: (s) => {
+        const [name, arg] = s.split(':') as [name: Position, arg: string];
+        return { name, arg };
+      },
+      parsePreset: (pos) => {
+        if (Array.isArray(pos)) {
+          return { name: pos[0], arg: pos[0] };
+        } else if (typeof pos === 'string') {
+          return { name: pos };
+        } else {
+          return pos;
+        }
+      },
+      getDefault: () => {
+        const pos = config.get<ArgPosition>('position')!;
+        if (Array.isArray(pos)) {
+          return { name: pos[0], arg: pos[1] };
+        } else {
+          return { name: pos };
+        }
+      },
+    },
+  ),
   width: Args.registerOption('width', {
     parseArg: (s) => parseInt(s, 10),
     getDefault: () => config.get<number>('width')!,
@@ -94,3 +120,5 @@ export const argOptions = {
     getDefault: () => config.get<number>('floating.contentWidth')!,
   }),
 };
+
+export type ResolvedArgs = ResolveArgValues<typeof argOptions>;

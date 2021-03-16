@@ -5,6 +5,7 @@
  * and run json-schema-to-typescript to regenerate this file.
  */
 
+export type Position = 'left' | 'right' | 'tab' | 'floating';
 export type MappingActionExp = MappingAction | MappingActionExp[];
 export type MappingAction =
   | string
@@ -70,7 +71,7 @@ export interface Explorer {
       /**
        * Explorer position
        */
-      position?: 'left' | 'right' | 'tab' | 'floating';
+      position?: Position | [Position] | [Position, string];
       /**
        * Width of explorer window for open in left or right side
        */
@@ -169,7 +170,7 @@ export interface Explorer {
   /**
    * Explorer position
    */
-  'explorer.position'?: 'left' | 'right' | 'tab' | 'floating';
+  'explorer.position'?: Position | [Position] | [Position, string];
   /**
    * Width of explorer window for open in left or right side
    */

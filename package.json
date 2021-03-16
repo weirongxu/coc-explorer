@@ -33,6 +33,14 @@
     ],
     "configuration": {
       "definitions": {
+        "position": {
+          "enum": [
+            "left",
+            "right",
+            "tab",
+            "floating"
+          ]
+        },
         "previewAction.strategy": {
           "description": "Strategy for preview action",
           "enum": [
@@ -259,11 +267,22 @@
         },
         "explorer.position": {
           "description": "Explorer position",
-          "enum": [
-            "left",
-            "right",
-            "tab",
-            "floating"
+          "anyOf": [
+            {
+              "$ref": "#/definitions/position"
+            },
+            {
+              "type": "array",
+              "items": [
+                {
+                  "$ref": "#/definitions/position"
+                },
+                {
+                  "type": "string"
+                }
+              ],
+              "minItems": 1
+            }
           ],
           "default": "left"
         },

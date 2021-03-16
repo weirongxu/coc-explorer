@@ -285,8 +285,8 @@ export class FloatingPreview implements Disposable {
     const env = workspace.env;
     const vimColumns = env.columns;
     const vimLines = env.lines - env.cmdheight - 1;
-    const position = await this.explorer.args.value(argOptions.position);
-    const isFloating = position === 'floating';
+    const position = this.explorer.argValues.position;
+    const isFloating = position.name === 'floating';
     const floatingPosition = await this.explorer.args.value(
       argOptions.floatingPosition,
     );
@@ -331,9 +331,9 @@ export class FloatingPreview implements Disposable {
     const top = winTop + (alignTop ? winline - height + 1 : winline);
 
     let left: number;
-    if (position === 'left') {
+    if (position.name === 'left') {
       left = winLeft + containerWidth + 2;
-    } else if (position === 'right') {
+    } else if (position.name === 'right') {
       left = winLeft - width - 2;
     } else if (isFloating && floatingPosition === 'left-center') {
       left = winLeft + containerWidth + 1;

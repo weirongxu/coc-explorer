@@ -13,7 +13,7 @@ import { GlobalContextVars } from './contextVariables';
 import { onBufEnter } from './events';
 import { Explorer } from './explorer';
 import { keyMapping } from './mappings';
-import { Args, ArgPosition } from './arg/parseArgs';
+import { Args, ParsedPosition } from './arg/parseArgs';
 import { compactI, currentBufnr, logger, supportedNvimFloating } from './util';
 import { MappingMode } from './actions/types';
 
@@ -23,12 +23,12 @@ export class TabContainer {
   tab?: Explorer;
   floating?: Explorer;
 
-  getExplorer(position: ArgPosition) {
-    return this[position];
+  getExplorer(position: ParsedPosition) {
+    return this[position.name];
   }
 
-  setExplorer(position: ArgPosition, explorer: Explorer) {
-    this[position] = explorer;
+  setExplorer(position: ParsedPosition, explorer: Explorer) {
+    this[position.name] = explorer;
   }
 
   all() {
@@ -271,16 +271,17 @@ export class ExplorerManager {
     const explorerConfig = buildExplorerConfig(config);
 
     const args = await Args.parse(argStrs, config);
-    const position = await args.value(argOptions.position);
-    if (position === 'floating') {
+    const argValues = await args.values(argOptions);
+    const position = argValues.position;
+    if (position.name === 'floating') {
       if (!supportedNvimFloating()) {
         throw new Error('not support floating position in vim');
       }
     }
-    const quit = await args.value(argOptions.quit);
+    const quit = argValues.quit;
 
     const tabid =
-      position === 'tab'
+      position.name === 'tab'
         ? (await this.currentTabMaxId()) + 1
         : await this.currentTabId();
     if (!(tabid in this.tabContainer)) {
@@ -299,16 +300,16 @@ export class ExplorerManager {
     const rootPath = workspace.root;
 
     if (!explorer || !(await this.nvim.call('bufexists', [explorer.bufnr]))) {
-      explorer = await Explorer.create(this, args, explorerConfig);
+      explorer = await Explorer.create(this, argValues, explorerConfig);
       tabContainer.setExplorer(position, explorer);
     } else if (!(await explorer.inited.get())) {
       await this.nvim.command(`bwipeout! ${explorer.bufnr}`);
-      explorer = await Explorer.create(this, args, explorerConfig);
+      explorer = await Explorer.create(this, argValues, explorerConfig);
       tabContainer.setExplorer(position, explorer);
     } else {
       const win = await explorer.win;
       if (!win) {
-        await explorer.resume(args);
+        await explorer.resume(argValues);
       } else {
         if (await args.value(argOptions.toggle)) {
           await explorer.quit();

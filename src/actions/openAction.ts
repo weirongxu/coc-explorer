@@ -2,7 +2,6 @@ import { Notifier, WinLayoutFinder } from 'coc-helper';
 import { workspace } from 'coc.nvim';
 import { argOptions } from '../arg/argOptions';
 import type { Explorer } from '../explorer';
-import { ArgPosition } from '../arg/parseArgs';
 import { BaseTreeNode, ExplorerSource } from '../source/source';
 import { OpenPosition, OpenStrategy } from '../types';
 import { selectWindowsUI } from '../util';
@@ -44,6 +43,8 @@ export async function openAction(
     quitOnOpenNotifier = () => Notifier.noop();
   }
 
+  const explorerPosition = explorer.argValues.position;
+
   const jumpToNotify = () => {
     if (position === 'keep') {
       if (!explorerWinid) {
@@ -78,7 +79,6 @@ export async function openAction(
     });
 
   const splitIntelligent = async (
-    position: ArgPosition,
     command: 'split' | 'vsplit',
     fallbackStrategy: OpenStrategy,
   ) => {
@@ -93,7 +93,8 @@ export async function openAction(
       if (node.parent && node.parent.group.type === 'row') {
         const target =
           node.parent.group.children[
-            node.parent.indexInParent + (position === 'left' ? 1 : -1)
+            node.parent.indexInParent +
+              (explorerPosition.name === 'left' ? 1 : -1)
           ];
         if (target) {
           const targetWinid = WinLayoutFinder.getFirstLeafWinid(target);
@@ -119,8 +120,7 @@ export async function openAction(
 
   const actions: Record<OpenStrategy, () => void | Promise<void>> = {
     select: async () => {
-      const position = await explorer.args.value(argOptions.position);
-      if (position === 'floating') {
+      if (explorerPosition.name === 'floating') {
         await explorer.hide();
       }
       await selectWindowsUI(explorer.config, source.sourceType, {
@@ -131,7 +131,7 @@ export async function openAction(
           await actions.vsplit();
         },
         onCancel: async () => {
-          if (position === 'floating') {
+          if (explorerPosition.name === 'floating') {
             await explorer.show();
           }
         },
@@ -150,15 +150,14 @@ export async function openAction(
     },
 
     'split.intelligent': async () => {
-      const position = await explorer.args.value(argOptions.position);
-      if (position === 'floating') {
+      if (explorerPosition.name === 'floating') {
         await actions['split.plain']();
         return;
-      } else if (position === 'tab') {
+      } else if (explorerPosition.name === 'tab') {
         await actions.vsplit();
         return;
       }
-      await splitIntelligent(position, 'split', 'split.plain');
+      await splitIntelligent('split', 'split.plain');
     },
 
     vsplit: () => actions['vsplit.intelligent'](),
@@ -173,15 +172,14 @@ export async function openAction(
     },
 
     'vsplit.intelligent': async () => {
-      const position = await explorer.args.value(argOptions.position);
-      if (position === 'floating') {
+      if (explorerPosition.name === 'floating') {
         await actions['vsplit.plain']();
         return;
-      } else if (position === 'tab') {
+      } else if (explorerPosition.name === 'tab') {
         await actions['vsplit.plain']();
         return;
       }
-      await splitIntelligent(position, 'vsplit', 'vsplit.plain');
+      await splitIntelligent('vsplit', 'vsplit.plain');
     },
 
     tab: async () => {

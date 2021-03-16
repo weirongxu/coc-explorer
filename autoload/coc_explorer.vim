@@ -16,18 +16,27 @@ function! s:init_buf(bufnr) abort
   endif
 endfunction
 
+function! s:tab_cmd(pos) abort
+  if has_key(a:pos, 'arg')
+    return a:pos.arg . 'tabnew'
+  else
+    return 'tabnew'
+  endif
+endfunction
+
 function! coc_explorer#open_explorer(explorer_id, position, options) abort
   let name = get(a:options, 'name', '[coc-explorer]-'.a:explorer_id)
   let border_bufnr = v:null
   let border_winid = v:null
   let fallback_winid = win_getid()
-  if a:position ==# 'tab'
-    execute 'silent noswapfile keepalt tabnew '.name
+  if a:position.name ==# 'tab'
+    echom s:tab_cmd(a:position)
+    execute 'silent noswapfile keepalt '.s:tab_cmd(a:position).' '.name
     let bufnr = bufnr('%')
     let winid = win_getid()
     call s:init_buf(bufnr)
     call s:check_focus(a:options, fallback_winid)
-  elseif a:position ==# 'left'
+  elseif a:position.name ==# 'left'
     wincmd t
     execute 'silent noswapfile keepalt vertical topleft vsplit '.name
     let bufnr = bufnr('%')
@@ -35,7 +44,7 @@ function! coc_explorer#open_explorer(explorer_id, position, options) abort
     call coc_explorer#resize(bufnr, a:position, a:options)
     call s:init_buf(bufnr)
     call s:check_focus(a:options, fallback_winid)
-  elseif a:position ==# 'right'
+  elseif a:position.name ==# 'right'
     wincmd b
     execute 'silent noswapfile keepalt vertical botright vsplit '.name
     let bufnr = bufnr('%')
@@ -43,46 +52,46 @@ function! coc_explorer#open_explorer(explorer_id, position, options) abort
     call coc_explorer#resize(bufnr, a:position, a:options)
     call s:init_buf(bufnr)
     call s:check_focus(a:options, fallback_winid)
-  elseif a:position ==# 'floating'
+  elseif a:position.name ==# 'floating'
     let float_options = extend(a:options, {'name': name, 'focus': v:true})
     let [bufnr, border_bufnr] = coc_explorer#float#create(float_options)
     let float_options = extend({'border_bufnr': border_bufnr}, float_options)
     let [winid, border_winid] = coc_explorer#float#open(bufnr, float_options)
     call s:init_buf(bufnr)
   else
-    throw 'No support position "'.a:position.'"'
+    throw 'No support position "'.a:position.name.'"'
   endif
   return [bufnr, border_bufnr, winid, border_bufnr]
 endfunction
 
 function! coc_explorer#resume(bufnr, position, options) abort
   let fallback_winid = win_getid()
-  if a:position ==# 'tab'
-    tabnew
+  if a:position.name ==# 'tab'
+    execute s:tab_cmd(a:position)
     execute 'silent keepalt buffer'.a:bufnr
     call s:check_focus(a:options, fallback_winid)
-  elseif a:position ==# 'left'
+  elseif a:position.name ==# 'left'
     wincmd t
     execute 'silent keepalt vertical topleft sb '.a:bufnr
     call coc_explorer#resize(a:bufnr, a:position, a:options)
     call s:check_focus(a:options, fallback_winid)
-  elseif a:position ==# 'right'
+  elseif a:position.name ==# 'right'
     wincmd b
     execute 'silent keepalt vertical botright sb '.a:bufnr
     call coc_explorer#resize(a:bufnr, a:position, a:options)
     call s:check_focus(a:options, fallback_winid)
-  elseif a:position ==# 'floating'
+  elseif a:position.name ==# 'floating'
     call coc_explorer#float#resume(a:bufnr, a:options)
   else
-    throw 'No support position "'.a:position.'"'
+    throw 'No support position "'.a:position.name.'"'
   endif
 endfunction
 
 function! coc_explorer#resize(bufnr, position, options) abort
-  if a:position ==# 'tab'
+  if a:position.name ==# 'tab'
     return
   endif
-  if a:position ==# 'floating'
+  if a:position.name ==# 'floating'
     call coc_explorer#float#resize(a:bufnr, a:options)
     return
   endif

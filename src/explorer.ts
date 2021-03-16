@@ -11,7 +11,8 @@ import pFilter from 'p-filter';
 import { ActionExplorer } from './actions/actionExplorer';
 import { loadGlobalActions } from './actions/globalActions';
 import { MappingMode } from './actions/types';
-import { argOptions } from './arg/argOptions';
+import { argOptions, ResolvedArgs } from './arg/argOptions';
+import { ArgContentWidthTypes, Args } from './arg/parseArgs';
 import { ExplorerConfig } from './config';
 import { BuffuerContextVars } from './contextVariables';
 import { doUserAutocmd, doUserAutocmdNotifier, onEvent } from './events';
@@ -20,7 +21,6 @@ import { FloatingPreview } from './floating/floatingPreview';
 import { quitHelp, showHelp } from './help';
 import { HighlightExplorer } from './highlight/highlightExplorer';
 import { LocatorExplorer } from './locator/locatorExplorer';
-import { ArgContentWidthTypes, Args } from './arg/parseArgs';
 import './source/load';
 import { BaseTreeNode, ExplorerSource } from './source/source';
 import { sourceManager } from './source/sourceManager';
@@ -50,25 +50,26 @@ export class Explorer implements Disposable {
   locator = new LocatorExplorer(this);
 
   private disposables: Disposable[] = [];
-  private _buffer?: Buffer;
-  private _rootUri?: string;
-  private _args?: Args;
-  private _sources?: ExplorerSource<any>[];
+  private buffer_?: Buffer;
+  private rootUri_?: string;
+  private args_?: Args;
+  private argValues_?: ResolvedArgs;
+  private isFloating_?: boolean;
+  private sources_?: ExplorerSource<any>[];
   private lastArgSourcesEnabledJson?: string;
   private isHide = false;
 
-  private static async genExplorerPosition(args: Args) {
+  private static async genExplorerPosition(args: ResolvedArgs) {
     let width: number = 0;
     let height: number = 0;
     let left: number = 0;
     let top: number = 0;
-    const position = await args.value(argOptions.position);
 
-    if (position !== 'floating') {
-      width = await args.value(argOptions.width);
+    if (args.position.name !== 'floating') {
+      width = args.width;
     } else {
-      width = await args.value(argOptions.floatingWidth);
-      height = await args.value(argOptions.floatingHeight);
+      width = args.floatingWidth;
+      height = args.floatingHeight;
       const [vimWidth, vimHeight] = [
         workspace.env.columns,
         workspace.env.lines - workspace.env.cmdheight,
@@ -79,7 +80,7 @@ export class Explorer implements Disposable {
       if (height <= 0) {
         height = vimHeight + height;
       }
-      const floatingPosition = await args.value(argOptions.floatingPosition);
+      const floatingPosition = args.floatingPosition;
       if (floatingPosition === 'left-center') {
         left = 0;
         top = (vimHeight - height) / 2;
@@ -101,26 +102,26 @@ export class Explorer implements Disposable {
 
   static async create(
     explorerManager: ExplorerManager,
-    args: Args,
+    argValues: ResolvedArgs,
     config: ExplorerConfig,
   ) {
     explorerManager.maxExplorerID += 1;
 
-    const position = await args.value(argOptions.position);
-    const focus = await args.value(argOptions.focus);
-    const { width, height, top, left } = await this.genExplorerPosition(args);
+    const { width, height, top, left } = await this.genExplorerPosition(
+      argValues,
+    );
     const [bufnr, borderBufnr]: [
       number,
       number | undefined,
     ] = await workspace.nvim.call('coc_explorer#open_explorer', [
       explorerManager.maxExplorerID,
-      position,
+      argValues.position,
       {
         width,
         height,
         left,
         top,
-        focus,
+        focus: argValues.focus,
         border_enable: config.get('floating.border.enable'),
         border_chars: config.get('floating.border.chars'),
         title: config.get('floating.border.title'),
@@ -168,31 +169,45 @@ export class Explorer implements Disposable {
   }
 
   get rootUri(): string {
-    if (!this._rootUri) {
+    if (!this.rootUri_) {
       throw Error('Explorer rootUri not initialized yet');
     }
-    return this._rootUri;
+    return this.rootUri_;
   }
 
   get args(): Args {
-    if (!this._args) {
+    if (!this.args_) {
       throw Error('Explorer args not initialized yet');
     }
-    return this._args;
+    return this.args_;
+  }
+
+  get argValues(): ResolvedArgs {
+    if (!this.argValues_) {
+      throw Error('Explorer argValues not initialized yet');
+    }
+    return this.argValues_;
+  }
+
+  get isFloating(): boolean {
+    if (this.isFloating_ === undefined) {
+      throw Error('Explorer isFloating not initialized yet');
+    }
+    return this.isFloating_;
   }
 
   get buffer(): Buffer {
-    if (!this._buffer) {
-      this._buffer = this.nvim.createBuffer(this.bufnr);
+    if (!this.buffer_) {
+      this.buffer_ = this.nvim.createBuffer(this.bufnr);
     }
-    return this._buffer;
+    return this.buffer_;
   }
 
   get sources(): ExplorerSource<BaseTreeNode<any>>[] {
-    if (!this._sources) {
+    if (!this.sources_) {
       throw Error('Explorer sources not initialized yet');
     }
-    return this._sources;
+    return this.sources_;
   }
 
   get height() {
@@ -301,22 +316,16 @@ export class Explorer implements Disposable {
       }
     };
 
-    const position = await this.args.value(argOptions.position);
-    if (position === 'floating') {
-      if (
-        await setWidth(
-          'win-width',
-          await this.args.value(argOptions.floatingContentWidth),
-        )
-      ) {
+    if (this.isFloating) {
+      if (await setWidth('win-width', this.argValues.floatingContentWidth)) {
         return;
       }
     }
 
     if (
       await setWidth(
-        await this.args.value(argOptions.contentWidthType),
-        await this.args.value(argOptions.contentWidth),
+        this.argValues.contentWidthType,
+        this.argValues.contentWidth,
       )
     ) {
       return;
@@ -324,13 +333,12 @@ export class Explorer implements Disposable {
   }
 
   async resize() {
-    const position = await this.args.value(argOptions.position);
     const { width, height, top, left } = await Explorer.genExplorerPosition(
-      this.args,
+      this.argValues,
     );
     await this.nvim.call('coc_explorer#resize', [
       this.bufnr,
-      position,
+      this.argValues.position,
       {
         width,
         height,
@@ -359,21 +367,19 @@ export class Explorer implements Disposable {
     return false;
   }
 
-  async resume(args: Args) {
-    const position = await args.value(argOptions.position);
-    const focus = await args.value(argOptions.focus);
+  async resume(args: ResolvedArgs) {
     const { width, height, top, left } = await Explorer.genExplorerPosition(
       args,
     );
     await this.nvim.call('coc_explorer#resume', [
       this.bufnr,
-      position,
+      args.position,
       {
         width,
         height,
         left,
         top,
-        focus,
+        focus: args.focus,
         border_bufnr: this.borderBufnr,
         border_enable: this.config.get('floating.border.enable'),
         border_chars: this.config.get('floating.border.chars'),
@@ -413,11 +419,7 @@ export class Explorer implements Disposable {
   }
 
   async tryQuitOnOpenNotifier() {
-    const quitOnOpen = await this.args.value(argOptions.quitOnOpen);
-    if (
-      quitOnOpen ||
-      (await this.args.value(argOptions.position)) === 'floating'
-    ) {
+    if (this.argValues.quitOnOpen || this.isFloating) {
       return this.quitNotifier();
     }
     return Notifier.noop();
@@ -435,7 +437,7 @@ export class Explorer implements Disposable {
   async show() {
     if (this.isHide) {
       this.isHide = false;
-      await this.resume(this.args);
+      await this.resume(this.argValues);
     }
   }
 
@@ -463,29 +465,29 @@ export class Explorer implements Disposable {
   /**
    * initialize rootUri
    */
-  private async initRootUri(args: Args, rootPath: string) {
-    const rootUri = await args.value(argOptions.rootUri);
+  private async initRootUri(argValues: ResolvedArgs, rootPath: string) {
+    const rootUri = argValues.rootUri;
     if (rootUri) {
-      this._rootUri = normalizePath(rootUri);
+      this.rootUri_ = normalizePath(rootUri);
       return;
     }
     const buf = await this.sourceBuffer();
     if (!buf) {
-      this._rootUri = normalizePath(workspace.cwd);
+      this.rootUri_ = normalizePath(workspace.cwd);
       return;
     }
     const buftype = await buf.getVar('&buftype');
     if (buftype === 'nofile') {
-      this._rootUri = normalizePath(workspace.cwd);
+      this.rootUri_ = normalizePath(workspace.cwd);
       return;
     }
     const fullpath = this.explorerManager.bufManager.getBufferNode(buf.id)
       ?.fullpath;
     if (!fullpath) {
-      this._rootUri = normalizePath(workspace.cwd);
+      this.rootUri_ = normalizePath(workspace.cwd);
       return;
     }
-    this._rootUri = normalizePath(rootPath);
+    this.rootUri_ = normalizePath(rootPath);
   }
 
   /**
@@ -494,8 +496,9 @@ export class Explorer implements Disposable {
    * @return sources changed
    */
   private async initArgs(args: Args, rootPath: string): Promise<boolean> {
-    this._args = args;
-    await this.initRootUri(args, rootPath);
+    this.args_ = args;
+    this.argValues_ = await args.values(argOptions);
+    await this.initRootUri(this.argValues_, rootPath);
     this.explorerManager.rootPathRecords.add(this.rootUri);
 
     const argSources = await args.value(argOptions.sources);
@@ -515,11 +518,14 @@ export class Explorer implements Disposable {
     }
     this.lastArgSourcesEnabledJson = argSourcesEnabledJson;
 
-    disposeAll(this._sources ?? []);
+    disposeAll(this.sources_ ?? []);
 
-    this._sources = argSourcesEnabled.map((sourceArg) =>
+    this.sources_ = argSourcesEnabled.map((sourceArg) =>
       sourceManager.createSource(sourceArg.name, this, sourceArg.expand),
     );
+
+    const position = await this.args_.value(argOptions.position);
+    this.isFloating_ = position.name === 'floating';
 
     return true;
   }

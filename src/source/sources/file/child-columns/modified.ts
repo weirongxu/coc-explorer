@@ -1,7 +1,6 @@
 import { fileColumnRegistrar } from '../fileColumnRegistrar';
 import { fileHighlights } from '../fileSource';
 import { debounce } from '../../../../util';
-import { argOptions } from '../../../../arg/argOptions';
 
 fileColumnRegistrar.registerColumn(
   'child',
@@ -9,8 +8,7 @@ fileColumnRegistrar.registerColumn(
   ({ source, subscriptions }) => {
     return {
       async init() {
-        const position = await source.explorer.args.value(argOptions.position);
-        if (position !== 'floating') {
+        if (!source.explorer.isFloating) {
           subscriptions.push(
             source.bufManager.onModified(
               debounce(500, async (fullpath) => {

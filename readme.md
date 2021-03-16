@@ -109,6 +109,10 @@ let g:coc_explorer_global_presets = {
 \     'position': 'tab',
 \     'quit-on-open': v:true,
 \   },
+\   'tab:$': {
+\     'position': 'tab:$',
+\     'quit-on-open': v:true,
+\   },
 \   'floating': {
 \     'position': 'floating',
 \     'open-action-strategy': 'sourceWindow',
@@ -193,7 +197,7 @@ buffer source │
 
 #### `--position <position>`
 
-Explorer position, supported position: `left`, `right`, `tab`, `floating`, default: `left`
+Explorer position, supported position: `left`, `right`, `tab`, `tab:0`, `tab:$`, `floating`, default: `left`
 
 #### `--width <number>`
 
@@ -561,6 +565,10 @@ more API: https://github.com/weirongxu/coc-explorer/wiki/Vim-API
 <!-- prettier-ignore-start -->
 <strong>Definitions</strong>
 <details>
+<summary><code>Position</code>: Position.</summary>
+Type: <pre><code>'left' | 'right' | 'tab' | 'floating'</code></pre>
+</details>
+<details>
 <summary><code>MappingActionExp</code>: MappingActionExp.</summary>
 Type: <pre><code>MappingAction | MappingActionExp[]</code></pre>
 </details>
@@ -616,7 +624,12 @@ Type: <pre><code>{
         /**
          * Explorer position
          */
-        position?: 'left' | 'right' | 'tab' | 'floating';
+        position?: Position | [
+            Position
+        ] | [
+            Position,
+            string
+        ];
         /**
          * Width of explorer window for open in left or right side
          */
@@ -718,7 +731,12 @@ Type: <pre><code>boolean</code></pre>Default: <pre><code>true</code></pre>
 </details>
 <details>
 <summary><code>explorer.position</code>: Explorer position.</summary>
-Type: <pre><code>'left' | 'right' | 'tab' | 'floating'</code></pre>Default: <pre><code>"left"</code></pre>
+Type: <pre><code>Position | [
+    Position
+] | [
+    Position,
+    string
+]</code></pre>Default: <pre><code>"left"</code></pre>
 </details>
 <details>
 <summary><code>explorer.width</code>: Width of explorer window for open in left or right side.</summary>

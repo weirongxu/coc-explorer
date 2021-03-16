@@ -1,6 +1,5 @@
 import { compactI } from 'coc-helper';
 import { workspace } from 'coc.nvim';
-import { argOptions } from '../arg/argOptions';
 import { gitManager } from '../git/manager';
 import { parseOriginalActionExp } from '../mappings';
 import {
@@ -679,8 +678,7 @@ export function loadGlobalActions(action: ActionExplorer) {
   action.addNodeAction(
     'esc',
     async ({ source, mode }) => {
-      const position = await source.explorer.args.value(argOptions.position);
-      if (position === 'floating' && mode === 'n') {
+      if (source.explorer.isFloating && mode === 'n') {
         await source.explorer.quit();
       } else {
         source.view.requestRenderNodes(Array.from(source.selectedNodes));
