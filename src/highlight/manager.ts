@@ -1,7 +1,6 @@
 import { Position, Range, workspace } from 'coc.nvim';
 import { InternalVimEvents } from '../events';
 import type { Explorer } from '../explorer';
-import { logger } from '../util';
 import { HighlightCommand, HighlightPositionWithLine } from './types';
 
 class HighlightManager {

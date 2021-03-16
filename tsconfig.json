@@ -1,16 +1,4 @@
 {
-  "compilerOptions": {
-    "outDir": "lib",
-    "module": "commonjs",
-    "lib": ["es6"],
-    "target": "es2017",
-    "declaration": false,
-    "moduleResolution": "node",
-    "esModuleInterop": true,
-    "resolveJsonModule": true,
-    "strict": true,
-    "skipLibCheck": true
-  },
-  "include": ["src"],
-  "exclude": ["src/tests/**"]
+  "extends": "./src/tsconfig.json",
+  "include": ["."]
 }

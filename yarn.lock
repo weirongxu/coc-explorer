@@ -1449,10 +1449,10 @@ coc-floatinput@^1.5.3:
   resolved "https://registry.yarnpkg.com/coc-floatinput/-/coc-floatinput-1.5.3.tgz#ac6614ec1541f48599b450910f52f6b8ba7c9219"
   integrity sha512-WUp8oMK2I05I0MqWH/wy4gsxeYEN4hjo8cZ9SRv/si6UYAK4glhr9Iz0mfvjfC83B325AsCg4RGJrr1vSPJEEA==
 
-coc-helper@^0.9.2:
-  version "0.9.2"
-  resolved "https://registry.yarnpkg.com/coc-helper/-/coc-helper-0.9.2.tgz#125cd0c0e458134966e452f131de5669bd28367b"
-  integrity sha512-D1UUQWo86kG5u5BbRFmrK0RAy1ahQfuEOz36hAOAQkvj9wec0ETXNrUlxS6pNk7AFEPLbRw4LphlywM5P/VP+w==
+coc-helper@^0.9.3:
+  version "0.9.3"
+  resolved "https://registry.yarnpkg.com/coc-helper/-/coc-helper-0.9.3.tgz#1e6e0f5a99695d927c47009f97fd2d14a4530c35"
+  integrity sha512-SIh6nHw8fG4Ai8/OBstJ/n4fgF6RgM7lM3xvLhcN3ljYGNWid2hgS2IjHDJbhcl2re790mA/sMv2f3oIqfRWNg==
   dependencies:
     rimraf "^3.0.2"
 

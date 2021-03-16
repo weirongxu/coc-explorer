@@ -1,8 +1,8 @@
-import { workspace, ExtensionContext, Emitter } from 'coc.nvim';
+import { Emitter, ExtensionContext, workspace } from 'coc.nvim';
 import pathLib from 'path';
-import { compactI, throttle } from './util';
+import { internalEvents, onEvent } from './events';
 import { BufferNode } from './source/sources/buffer/bufferSource';
-import { onEvent, internalEvents } from './events';
+import { compactI, throttle } from './util';
 
 const regex = /^\s*(\d+)(.+?)"(.+?)".*/;
 

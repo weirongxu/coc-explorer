@@ -11,10 +11,12 @@ exports.build = (production) => {
       external: ['coc.nvim', 'trash', 'open'],
       outfile: 'lib/index.js',
     })
+    // eslint-disable-next-line no-console
     .catch(console.error);
 };
 
 if (require.main === module) {
   exports.build(true);
+  // eslint-disable-next-line no-console
   console.log('build done');
 }

@@ -6,6 +6,7 @@ chokidar
     ignoreInitial: true,
   })
   .on('all', (event, path) => {
+    // eslint-disable-next-line no-console
     console.log(path, event);
     build(false);
   });
