@@ -47,13 +47,13 @@ export function bootSource<S extends ExplorerSource<any>>(
     context.explorer = getExplorer();
     const args = new Args(options.args ?? []);
     // @ts-ignore
-    context.explorer._args = args;
+    context.explorer.args_ = args;
     const rootUri = options.rootUri ?? pathLib.sep;
     // @ts-ignore
-    context.explorer._rootUri = rootUri;
+    context.explorer.rootUri_ = rootUri;
     context.source = getSource(context.explorer);
     // @ts-ignore
-    context.explorer._sources = [context.source];
+    context.explorer.sources_ = [context.source];
     context.source.root = rootUri;
   });
 
