@@ -544,11 +544,9 @@ export function loadFileActions(action: ActionSource<FileSource, FileNode>) {
       );
 
       await file.bufManager.remove(node.fullpath, true);
-
-      await file.load(file.view.rootNode);
     },
-
     'rename a file or directory',
+    { reload: true },
   );
 
   action.addNodesAction(
