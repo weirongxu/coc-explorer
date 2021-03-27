@@ -1072,8 +1072,8 @@ Type: <pre><code>string</code></pre>Default: <pre><code>"  "</code></pre>
 Type: <pre><code>boolean</code></pre>
 </details>
 <details>
-<summary><code>explorer.file.tabCD</code>: Change tab directory when performing the cd action.</summary>
-Type: <pre><code>boolean</code></pre>Default: <pre><code>true</code></pre>
+<summary><code>explorer.file.cdCommand</code>: Change directory when performing the cd action.</summary>
+Type: <pre><code>false | 'cd' | 'tcd'</code></pre>Default: <pre><code>"false"</code></pre>
 </details>
 <details>
 <summary><code>explorer.filename.colored.enable</code>: Enable colored filenames based on status.</summary>

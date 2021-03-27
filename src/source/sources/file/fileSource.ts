@@ -30,6 +30,7 @@ import './load';
 import { Notifier } from 'coc-helper';
 import { ViewSource } from '../../../view/viewSource';
 import { startCocList } from '../../../lists/runner';
+import { Explorer } from '../../../types/pkg-config';
 
 export interface FileNode extends BaseTreeNode<FileNode, 'root' | 'child'> {
   name: string;
@@ -212,13 +213,28 @@ export class FileSource extends ExplorerSource<FileNode> {
   async cd(fullpath: string) {
     const { nvim } = this;
     const escapePath = (await nvim.call('fnameescape', fullpath)) as string;
-    if (this.config.get<boolean>('file.tabCD')) {
+    type CdCmd = Explorer['explorer.file.cdCommand'];
+    let cdCmd: CdCmd;
+    const tabCd = this.config.get<boolean>('file.tabCD');
+    if (tabCd !== undefined) {
+      logger.error(
+        'explorer.file.tabCD has been deprecated, please use explorer.file.cdCommand instead of it',
+      );
+      if (tabCd) {
+        cdCmd = 'tcd';
+      } else {
+        cdCmd = 'cd';
+      }
+    } else {
+      cdCmd = this.config.get<CdCmd>('file.cdCommand');
+    }
+    if (cdCmd === 'tcd') {
       if (workspace.isNvim || (await nvim.call('exists', [':tcd']))) {
         await nvim.command('tcd ' + escapePath);
         // eslint-disable-next-line no-restricted-properties
         window.showMessage(`Tab's CWD is: ${fullpath}`);
       }
-    } else {
+    } else if (cdCmd === 'cd') {
       await nvim.command('cd ' + escapePath);
       // eslint-disable-next-line no-restricted-properties
       window.showMessage(`CWD is: ${fullpath}`);

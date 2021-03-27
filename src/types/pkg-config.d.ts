@@ -445,9 +445,9 @@ export interface Explorer {
    */
   'explorer.file.column.indent.indentLine'?: boolean;
   /**
-   * Change tab directory when performing the cd action
+   * Change directory when performing the cd action
    */
-  'explorer.file.tabCD'?: boolean;
+  'explorer.file.cdCommand'?: false | 'cd' | 'tcd';
   /**
    * Enable colored filenames based on status
    */

@@ -789,10 +789,20 @@
           "description": "Whether to display the alignment line",
           "type": "boolean"
         },
-        "explorer.file.tabCD": {
-          "description": "Change tab directory when performing the cd action",
+        "explorer.file.cdCommand": {
+          "description": "Change directory when performing the cd action",
+          "enum": [
+            false,
+            "cd",
+            "tcd"
+          ],
+          "enumDescriptions": [
+            "do nothing",
+            "cd command",
+            "tcd command (nvim only)"
+          ],
           "type": "boolean",
-          "default": true
+          "default": "false"
         },
         "explorer.filename.colored.enable": {
           "description": "Enable colored filenames based on status",
