@@ -802,7 +802,7 @@
             "tcd command (nvim only)"
           ],
           "type": "boolean",
-          "default": "false"
+          "default": false
         },
         "explorer.filename.colored.enable": {
           "description": "Enable colored filenames based on status",
