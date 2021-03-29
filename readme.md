@@ -906,7 +906,10 @@ Type: <pre><code>{
      * Icons for extension groups
      */
     icons?: {
-        [k: string]: unknown;
+        [k: string]: {
+            "code": "",
+            "color": ""
+        };
     };
     /**
      * File extension to icon group
