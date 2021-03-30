@@ -584,7 +584,7 @@
             "icons": {
               "type": "object",
               "description": "Icons for extension groups",
-              "items": {
+              "additionalProperties": {
                 "type": "object",
                 "description": "Icon for an extension group",
                 "required": [

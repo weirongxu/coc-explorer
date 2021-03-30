@@ -298,7 +298,20 @@ export interface Explorer {
      * Icons for extension groups
      */
     icons?: {
-      [k: string]: unknown;
+      /**
+       * Icon for an extension group
+       */
+      [k: string]: {
+        /**
+         * Group icon
+         */
+        code: string;
+        /**
+         * Group icon color
+         */
+        color: string;
+        [k: string]: unknown;
+      };
     };
     /**
      * File extension to icon group

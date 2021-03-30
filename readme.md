@@ -906,7 +906,20 @@ Type: <pre><code>{
      * Icons for extension groups
      */
     icons?: {
-        [k: string]: unknown;
+        /**
+         * Icon for an extension group
+         */
+        [k: string]: {
+            /**
+             * Group icon
+             */
+            code: string;
+            /**
+             * Group icon color
+             */
+            color: string;
+            [k: string]: unknown;
+        };
     };
     /**
      * File extension to icon group
@@ -1073,7 +1086,7 @@ Type: <pre><code>boolean</code></pre>
 </details>
 <details>
 <summary><code>explorer.file.cdCommand</code>: Change directory when performing the cd action.</summary>
-Type: <pre><code>false | 'cd' | 'tcd'</code></pre>Default: <pre><code>"false"</code></pre>
+Type: <pre><code>false | 'cd' | 'tcd'</code></pre>Default: <pre><code>false</code></pre>
 </details>
 <details>
 <summary><code>explorer.filename.colored.enable</code>: Enable colored filenames based on status.</summary>
