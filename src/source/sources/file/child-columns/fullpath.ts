@@ -1,4 +1,5 @@
 import pathLib from 'path';
+import { displayedFullpath } from '../../../../util';
 import { fileColumnRegistrar } from '../fileColumnRegistrar';
 import { fileHighlights } from '../fileSource';
 
@@ -7,7 +8,7 @@ fileColumnRegistrar.registerColumn('child', 'fullpath', () => ({
     return {
       drawNode(row, { node }) {
         if (node.directory) {
-          row.add(node.fullpath + pathLib.sep, {
+          row.add(displayedFullpath(node.fullpath) + pathLib.sep, {
             hl: fileHighlights.directory,
           });
         } else {

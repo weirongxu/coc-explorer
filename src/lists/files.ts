@@ -12,7 +12,12 @@ import { registerList } from './runner';
 class Task extends EventEmitter implements ListTask {
   private processes: ChildProcess[] = [];
 
-  start(cmd: string, args: string[], cwds: string[], patterns: string[]): void {
+  start(
+    cmd: string,
+    args: string[],
+    cwds: string[],
+    excludePatterns: string[],
+  ): void {
     let remain = cwds.length;
     for (const cwd of cwds) {
       const process = spawn(cmd, args, { cwd });
@@ -22,7 +27,7 @@ class Task extends EventEmitter implements ListTask {
       });
       const rl = readline.createInterface(process.stdout);
       const range = Range.create(0, 0, 0, 0);
-      const hasPattern = patterns.length > 0;
+      const hasPattern = excludePatterns.length > 0;
       process.stderr.on('data', (chunk) => {
         // eslint-disable-next-line no-console
         console.error(chunk.toString('utf8'));
@@ -30,7 +35,7 @@ class Task extends EventEmitter implements ListTask {
 
       rl.on('line', (line) => {
         const file = pathLib.join(cwd, line);
-        if (hasPattern && patterns.some((p) => minimatch(file, p))) {
+        if (hasPattern && excludePatterns.some((p) => minimatch(file, p))) {
           return;
         }
         const location = Location.create(Uri.file(file).toString(), range);
@@ -67,7 +72,7 @@ type Arg = {
   showHidden: boolean;
 };
 
-async function getCommand(arg: Arg): Promise<{ cmd: string; args: string[] }> {
+async function getCommand(arg: Arg): Promise<{ name: string; args: string[] }> {
   const args: string[] = [];
   if (await executable('fd')) {
     args.push('--color', 'never');
@@ -80,19 +85,19 @@ async function getCommand(arg: Arg): Promise<{ cmd: string; args: string[] }> {
     if (!arg.recursive) {
       args.push('--max-depth', '1');
     }
-    return { cmd: 'fd', args };
+    return { name: 'fd', args };
   } else if (isWindows) {
     args.push('/a-D', '/B');
     if (arg.recursive) {
       args.push('/S');
     }
-    return { cmd: 'dir', args };
+    return { name: 'dir', args };
   } else if (await executable('find')) {
     args.push('.');
     if (!arg.recursive) {
       args.push('-maxdepth', '1');
     }
-    return { cmd: 'find', args };
+    return { name: 'find', args };
   } else {
     throw new Error('Unable to find command for files list.');
   }
@@ -105,13 +110,13 @@ export const fileList = registerList<Arg, any>({
     if (!arg.rootPath) {
       return;
     }
-    const res = await getCommand(arg);
-    if (!res) {
+    const cmd = await getCommand(arg);
+    if (!cmd) {
       return;
     }
     const task = new Task();
     const excludePatterns = config.get<string[]>('excludePatterns', []);
-    task.start(res.cmd, res.args, [arg.rootPath], excludePatterns);
+    task.start(cmd.name, cmd.args, [arg.rootPath], excludePatterns);
     return task;
   },
   init() {

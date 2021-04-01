@@ -1,4 +1,5 @@
 import fs from 'fs';
+import os from 'os';
 import makeDir from 'make-dir';
 import pathLib from 'path';
 import readline from 'readline';
@@ -203,6 +204,14 @@ export function readFileLines(
     });
     rl.on('error', reject);
   });
+}
+
+export function displayedFullpath(s: string) {
+  const homePath = os.homedir();
+  if (s.startsWith(homePath)) {
+    return '~' + s.slice(homePath.length);
+  }
+  return s;
 }
 
 export async function listDrive(): Promise<string[]> {
