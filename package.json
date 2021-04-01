@@ -801,7 +801,6 @@
             "cd command",
             "tcd command (nvim only)"
           ],
-          "type": "boolean",
           "default": false
         },
         "explorer.filename.colored.enable": {
