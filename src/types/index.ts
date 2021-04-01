@@ -68,6 +68,10 @@ export const previewStrategyList: PreviewActionStrategy[] = [
   'content',
 ];
 
+export const searchOptionList = ['recursive', 'strict'] as const;
+
+export type SearchOption = typeof searchOptionList[number];
+
 export const expandOptionList = [
   'recursive',
   'compact',

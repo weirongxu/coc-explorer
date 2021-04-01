@@ -111,7 +111,7 @@ export async function startCocList<Arg, Data>(
   explorer: Explorer,
   list: ProxyList<Arg, Data>,
   arg: Arg,
-  cmdArgs: string[] = [],
+  listArgs: string[] = [],
 ) {
   list[argSym] = arg;
 
@@ -129,7 +129,7 @@ export async function startCocList<Arg, Data>(
 
   const shownExplorerEmitter = new Emitter<void>();
   const listDisposable = listManager.registerList(list);
-  await nvim.command(`CocList ${cmdArgs.join(' ')} ${list.name}`);
+  await nvim.command(`CocList ${listArgs.join(' ')} ${list.name}`);
   listDisposable.dispose();
 
   return {

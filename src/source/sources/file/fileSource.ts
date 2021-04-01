@@ -305,20 +305,29 @@ export class FileSource extends ExplorerSource<FileNode> {
     return this.getPutTargetNode(node).fullpath;
   }
 
-  async searchByCocList(path: string, recursive: boolean) {
-    const task = await startCocList(this.explorer, fileList, {
-      showHidden: this.showHidden,
-      showIgnore: true,
-      rootPath: path,
-      recursive,
-      revealCallback: async (loc) => {
-        await task.waitExplorerShow();
-        const [, notifiers] = await this.revealNodeByPathNotifier(
-          Uri.parse(loc.uri).fsPath,
-        );
-        await Notifier.runAll(notifiers);
+  async searchByCocList(
+    path: string,
+    { recursive, strict }: { recursive: boolean; strict: boolean },
+  ) {
+    const listArgs = strict ? ['--strict'] : [];
+    const task = await startCocList(
+      this.explorer,
+      fileList,
+      {
+        showHidden: this.showHidden,
+        showIgnore: true,
+        rootPath: path,
+        recursive,
+        revealCallback: async (loc) => {
+          await task.waitExplorerShow();
+          const [, notifiers] = await this.revealNodeByPathNotifier(
+            Uri.parse(loc.uri).fsPath,
+          );
+          await Notifier.runAll(notifiers);
+        },
       },
-    });
+      listArgs,
+    );
     task.waitExplorerShow()?.catch(logger.error);
   }
 

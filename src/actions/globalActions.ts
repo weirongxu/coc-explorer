@@ -3,7 +3,9 @@ import { workspace } from 'coc.nvim';
 import { gitManager } from '../git/manager';
 import { parseOriginalActionExp } from '../mappings';
 import {
+  CollapseOption,
   collapseOptionList,
+  ExpandOption,
   expandOptionList,
   MoveStrategy,
   moveStrategyList,
@@ -105,7 +107,7 @@ export function loadGlobalActions(action: ActionExplorer) {
     'expand',
     async ({ source, node, args }) => {
       if (node.expandable) {
-        const options = (args[0] ?? '').split('|');
+        const options = (args[0] ?? '').split('|') as ExpandOption[];
         const recursive = options.includes('recursive') || undefined;
         const compact = options.includes('compact') || undefined;
         const uncompact = options.includes('uncompact') || undefined;
@@ -140,7 +142,7 @@ export function loadGlobalActions(action: ActionExplorer) {
   action.addNodeAction(
     'collapse',
     async ({ source, node, args }) => {
-      const options = (args[0] ?? '').split('|');
+      const options = (args[0] ?? '').split('|') as CollapseOption[];
       const all = options.includes('all');
       const recursive = options.includes('recursive');
       if (all && source.view.rootNode.children) {

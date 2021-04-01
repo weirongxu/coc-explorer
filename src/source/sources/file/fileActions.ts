@@ -12,6 +12,8 @@ import {
   pasteFileTypeList,
   RevealStrategy,
   revealStrategyList,
+  SearchOption,
+  searchOptionList,
 } from '../../../types';
 import {
   bufnrByWinnrOrWinid,
@@ -25,6 +27,7 @@ import {
   input,
   isWindows,
   listDrive,
+  logger,
   overwritePrompt,
   prompt,
   selectWindowsUI,
@@ -586,19 +589,42 @@ export function loadFileActions(action: ActionSource<FileSource, FileNode>) {
 
   action.addNodeAction(
     'search',
-    async ({ node }) => {
+    async ({ node, args }) => {
+      const searchOptions = (args[0] ?? '').split('|') as SearchOption[];
+      const recursive = searchOptions.includes('recursive');
+      const strict = searchOptions.includes('strict');
+
       await file.searchByCocList(
         node.isRoot ? node.fullpath : pathLib.dirname(node.fullpath),
-        false,
+        { recursive, strict },
       );
     },
     'search by coc-list',
+    {
+      args: [
+        {
+          name: 'search options',
+          description: searchOptionList.join(' | '),
+        },
+      ],
+      menus: {
+        recursive: 'recursively',
+        strict: 'exact match',
+        'recursive|strict': 'recursively and strict',
+      },
+    },
   );
 
   action.addNodeAction(
     'searchRecursive',
     async ({ node }) => {
-      await file.searchByCocList(pathLib.dirname(node.fullpath), true);
+      logger.error(
+        'searchRecursive action has been deprecated, please use "search:recursive" instead of it',
+      );
+      await file.searchByCocList(pathLib.dirname(node.fullpath), {
+        recursive: true,
+        strict: false,
+      });
     },
     'search by coc-list recursively',
   );

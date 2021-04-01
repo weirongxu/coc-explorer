@@ -184,7 +184,7 @@ class KeyMapping {
         gd: 'listDrive',
 
         f: 'search',
-        F: 'searchRecursive',
+        F: 'search:recursive',
 
         gf: 'gotoSource:file',
         gb: 'gotoSource:buffer',
