@@ -27,18 +27,18 @@ export interface BufferNode extends BaseTreeNode<BufferNode, 'root' | 'child'> {
   readErrors: boolean;
 }
 
-const hl = hlGroupManager.linkGroup.bind(hlGroupManager);
+const hlg = hlGroupManager.linkGroup.bind(hlGroupManager);
 
 export const bufferHighlights = {
-  title: hl('BufferRoot', 'Constant'),
-  hidden: hl('BufferHidden', 'Comment'),
-  expandIcon: hl('BufferExpandIcon', 'Directory'),
-  nameVisible: hl('BufferNameVisible', 'String'),
-  bufname: hl('BufferBufname', 'Comment'),
-  modified: hl('BufferModified', 'Operator'),
-  bufnr: hl('BufferBufnr', 'Special'),
-  readonly: hl('BufferReadonly', 'Operator'),
-  fullpath: hl('BufferFullpath', 'Comment'),
+  title: hlg('BufferRoot', 'Constant'),
+  hidden: hlg('BufferHidden', 'Comment'),
+  expandIcon: hlg('BufferExpandIcon', 'Directory'),
+  nameVisible: hlg('BufferNameVisible', 'String'),
+  bufname: hlg('BufferBufname', 'Comment'),
+  modified: hlg('BufferModified', 'Operator'),
+  bufnr: hlg('BufferBufnr', 'Special'),
+  readonly: hlg('BufferReadonly', 'Operator'),
+  fullpath: hlg('BufferFullpath', 'Comment'),
 };
 
 export class BufferSource extends ExplorerSource<BufferNode> {

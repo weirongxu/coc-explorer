@@ -38,7 +38,7 @@ Object.entries(nerdfont.icons).forEach(([name, icon]) => {
   }
   const ansiColor = convert.rgb.ansi256([color.red, color.green, color.blue]);
   const hlExpr = `ctermfg=${ansiColor} guifg=${icon.color}`;
-  nerdfontHighlights[name] = hlGroupManager.group(
+  nerdfontHighlights[name] = hlGroupManager.createGroup(
     `FileIconNerdfont_${name}`,
     hlExpr,
   );

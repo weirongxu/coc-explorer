@@ -1,22 +1,21 @@
 import { workspace } from 'coc.nvim';
-import { hlGroupManager } from '../highlight/manager';
-import { parseHighlight } from '../highlight/parseHighlight';
 import colorConvert from 'color-convert';
+import { extractHighlightsColor } from '../highlight/extractColors';
+import { hlGroupManager } from '../highlight/manager';
 import {
   compactI,
   createColor,
   findNearestColor,
   logger,
-  parseColor,
   toHex,
 } from '../util';
 import { GitFormat } from './types';
 
-const hl = hlGroupManager.linkGroup.bind(hlGroupManager);
+const hlg = hlGroupManager.linkGroup.bind(hlGroupManager);
 
 hlGroupManager
-  .registerGroup(async () => {
-    const groupsExecute = [
+  .watchColorScheme(async () => {
+    const groups = [
       'String',
       'Character',
       'Number',
@@ -47,30 +46,18 @@ hlGroupManager
       'SpecialComment',
       'Debug',
       'Todo',
-    ]
-      .map((g) => `execute('hi ${g}')`)
-      .join(',');
-    const hiStmts = (await workspace.nvim.eval(
-      `[${groupsExecute}]`,
-    )) as string[];
-    const highlights = hiStmts.map((h) => parseHighlight(h.trim()));
+    ];
+
+    const highlights = await extractHighlightsColor(groups);
     const fgs = compactI(
-      highlights.map((h) => {
-        if (!h.attrs) {
-          return;
-        }
-        const guifgStr = h.attrs['guifg'];
-        if (!guifgStr) {
-          return;
-        }
-        const guifg = parseColor(guifgStr);
+      Object.values(highlights).map((h) => {
+        const guifg = h.guifg;
         if (!guifg) {
           return;
         }
-        const ctermfgStr = h.attrs['ctermfg'];
-        const ctermfg = ctermfgStr
-          ? parseInt(ctermfgStr, 10)
-          : colorConvert.rgb.ansi256([guifg.red, guifg.green, guifg.blue]);
+        const ctermfg =
+          h.ctermfg ??
+          colorConvert.rgb.ansi256([guifg.red, guifg.green, guifg.blue]);
         return {
           guifg,
           ctermfg,
@@ -109,29 +96,32 @@ hlGroupManager
   })
   .catch(logger.error);
 
-const gitChangedPath = hl('GitPathChange', 'CocExplorerGitPathChange_Internal');
+const gitChangedPath = hlg(
+  'GitPathChange',
+  'CocExplorerGitPathChange_Internal',
+);
 
-const gitContentChange = hl(
+const gitContentChange = hlg(
   'GitContentChange',
   'CocExplorerGitContentChange_Internal',
 );
 
 export const gitHighlights = {
-  gitRenamed: hl('GitRenamed', gitChangedPath.group),
-  gitCopied: hl('GitCopied', gitChangedPath.group),
-  gitAdded: hl('GitAdded', gitChangedPath.group),
-  gitUntracked: hl('GitUntracked', gitChangedPath.group),
-  gitUnmerged: hl('GitUnmerged', gitChangedPath.group),
+  gitRenamed: hlg('GitRenamed', gitChangedPath.group),
+  gitCopied: hlg('GitCopied', gitChangedPath.group),
+  gitAdded: hlg('GitAdded', gitChangedPath.group),
+  gitUntracked: hlg('GitUntracked', gitChangedPath.group),
+  gitUnmerged: hlg('GitUnmerged', gitChangedPath.group),
 
-  gitMixed: hl('GitMixed', gitContentChange.group),
-  gitModified: hl('GitModified', gitContentChange.group),
+  gitMixed: hlg('GitMixed', gitContentChange.group),
+  gitModified: hlg('GitModified', gitContentChange.group),
 
-  gitDeleted: hl('GitDeleted', 'Error'),
+  gitDeleted: hlg('GitDeleted', 'Error'),
 
-  gitIgnored: hl('GitIgnored', 'Comment'),
+  gitIgnored: hlg('GitIgnored', 'Comment'),
 
-  gitStaged: hl('GitStaged', 'Comment'),
-  gitUnstaged: hl('GitUnstaged', 'Operator'),
+  gitStaged: hlg('GitStaged', 'Comment'),
+  gitUnstaged: hlg('GitUnstaged', 'Operator'),
 };
 
 export const getGitFormatHighlight = (format: GitFormat) => {

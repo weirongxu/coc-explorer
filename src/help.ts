@@ -15,19 +15,19 @@ import {
 import { DrawBlock } from './painter/types';
 import { Notifier } from 'coc-helper';
 
-const hl = hlGroupManager.linkGroup.bind(hlGroupManager);
+const hlg = hlGroupManager.linkGroup.bind(hlGroupManager);
 const helpHightlights = {
-  line: hl('HelpLine', 'Operator'),
-  hint: hl('HelpHint', 'Comment'),
-  title: hl('HelpTitle', 'Boolean'),
-  subtitle: hl('HelpSubTitle', 'Label'),
-  mappingKey: hl('HelpMappingKey', 'PreProc'),
-  action: hl('HelpAction', 'Identifier'),
-  column: hl('HelpColumn', 'Identifier'),
-  arg: hl('HelpArg', 'Identifier'),
-  description: hl('HelpDescription', 'Comment'),
-  type: hl('HelperType', 'Type'),
-  conditional: hl('HelpConditional', 'Conditional'),
+  line: hlg('HelpLine', 'Operator'),
+  hint: hlg('HelpHint', 'Comment'),
+  title: hlg('HelpTitle', 'Boolean'),
+  subtitle: hlg('HelpSubTitle', 'Label'),
+  mappingKey: hlg('HelpMappingKey', 'PreProc'),
+  action: hlg('HelpAction', 'Identifier'),
+  column: hlg('HelpColumn', 'Identifier'),
+  arg: hlg('HelpArg', 'Identifier'),
+  description: hlg('HelpDescription', 'Comment'),
+  type: hlg('HelperType', 'Type'),
+  conditional: hlg('HelpConditional', 'Conditional'),
 };
 
 interface MappingActionContext {

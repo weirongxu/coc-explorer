@@ -36,20 +36,20 @@ export namespace BookmarkDB {
   export type Data = Record<Filepath, Collection>;
 }
 
-const hl = hlGroupManager.linkGroup.bind(hlGroupManager);
+const hlg = hlGroupManager.linkGroup.bind(hlGroupManager);
 
 export const bookmarkHighlights = {
-  title: hl('BookmarkRoot', 'Constant'),
-  hidden: hl('BookmarkHidden', 'Commment'),
-  expandIcon: hl('BookmarkExpandIcon', 'Directory'),
-  filename: hl('BookmarkFilename', 'String'),
-  fullpath: hl('BookmarkFullpath', 'Special'),
-  position: hl('BookmarkPosition', 'Comment'),
-  line: hlGroupManager.group(
+  title: hlg('BookmarkRoot', 'Constant'),
+  hidden: hlg('BookmarkHidden', 'Commment'),
+  expandIcon: hlg('BookmarkExpandIcon', 'Directory'),
+  filename: hlg('BookmarkFilename', 'String'),
+  fullpath: hlg('BookmarkFullpath', 'Special'),
+  position: hlg('BookmarkPosition', 'Comment'),
+  line: hlGroupManager.createGroup(
     'BookmarkLine',
     'ctermbg=27 ctermfg=0 guibg=#1593e5 guifg=#ffffff',
   ),
-  annotation: hl('BookmarkAnnotation', 'Comment'),
+  annotation: hlg('BookmarkAnnotation', 'Comment'),
 };
 
 export class BookmarkSource extends ExplorerSource<BookmarkNode> {

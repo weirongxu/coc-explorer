@@ -22,7 +22,7 @@ export class HighlightExplorer {
     hlGroupManager.addHighlightsNotify(this.explorer, hlSrcId, highlights);
   }
 
-  async addSyntax() {
+  async bootSyntax() {
     const winnr = await this.explorer.winnr;
     const curWinnr = await workspace.nvim.call('winnr');
     if (winnr) {
@@ -30,7 +30,7 @@ export class HighlightExplorer {
       if (winnr !== curWinnr) {
         workspace.nvim.command(`${winnr}wincmd w`, true);
       }
-      hlGroupManager.addHighlightSyntaxNotify();
+      hlGroupManager.bootHighlightSyntaxNotify();
       if (winnr !== curWinnr) {
         workspace.nvim.command(`${curWinnr}wincmd w`, true);
       }

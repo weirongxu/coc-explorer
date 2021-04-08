@@ -87,6 +87,9 @@ export type HighlightStatement = {
   linkTo?: string;
 };
 
+/**
+ * @deprecated use src/highlight/extractColors.ts extractHighlightsColor() instead of it
+ */
 export function parseHighlight(str: string): HighlightStatement {
   const s = new ParserSource(str, 0);
   const group = parseGroup(s);

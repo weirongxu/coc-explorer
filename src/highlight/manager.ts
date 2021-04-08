@@ -7,11 +7,9 @@ class HighlightManager {
   nvim = workspace.nvim;
   highlights: HighlightCommand[] = [];
 
-  async registerGroup(update: () => void | Promise<void>) {
-    InternalVimEvents.events.on('ColorScheme', update);
-    await update();
-  }
-
+  /**
+   * Link highlight group to another one
+   */
   linkGroup(groupName: string, targetGroup: string): HighlightCommand {
     const group = `CocExplorer${groupName}`;
     const commands = [`highlight default link ${group} ${targetGroup}`];
@@ -23,7 +21,10 @@ class HighlightManager {
     return highlight;
   }
 
-  group(groupName: string, hlCommand: string): HighlightCommand {
+  /**
+   * Create a new highlight group
+   */
+  createGroup(groupName: string, hlCommand: string): HighlightCommand {
     const group = `CocExplorer${groupName}`;
     const commands = [`highlight default ${group} ${hlCommand}`];
     const highlight = {
@@ -32,6 +33,13 @@ class HighlightManager {
     };
     this.highlights.push(highlight);
     return highlight;
+  }
+
+  async watchColorScheme(update: () => void | Promise<void>, immediate = true) {
+    InternalVimEvents.events.on('ColorScheme', update);
+    if (immediate) {
+      await update();
+    }
   }
 
   clearHighlightsNotify(
@@ -61,11 +69,11 @@ class HighlightManager {
     }
   }
 
-  addHighlightSyntaxNotify() {
+  bootHighlightSyntaxNotify() {
     const commands: string[] = [];
-    for (const highlight of this.highlights) {
-      this.nvim.command(`silent! syntax clear ${highlight.group}`, true);
-      commands.push(...highlight.commands);
+    for (const hl of this.highlights) {
+      this.nvim.command(`silent! syntax clear ${hl.group}`, true);
+      commands.push(...hl.commands);
     }
     this.nvim.call('coc_explorer#util#execute_commands', [commands], true);
   }

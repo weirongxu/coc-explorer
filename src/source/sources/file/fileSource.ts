@@ -31,6 +31,7 @@ import { Notifier } from 'coc-helper';
 import { ViewSource } from '../../../view/viewSource';
 import { startCocList } from '../../../lists/runner';
 import { Explorer } from '../../../types/pkg-config';
+import { internalHighlightGroups } from '../../../highlight/internalColors';
 
 export interface FileNode extends BaseTreeNode<FileNode, 'root' | 'child'> {
   name: string;
@@ -45,40 +46,40 @@ export interface FileNode extends BaseTreeNode<FileNode, 'root' | 'child'> {
   lstat?: fs.Stats;
 }
 
-const hl = hlGroupManager.linkGroup.bind(hlGroupManager);
+const hlg = hlGroupManager.linkGroup.bind(hlGroupManager);
 export const fileHighlights = {
-  title: hl('FileRoot', 'Constant'),
-  hidden: hl('FileHidden', 'Comment'),
-  rootName: hl('FileRootName', 'Identifier'),
-  expandIcon: hl('FileExpandIcon', 'Directory'),
-  fullpath: hl('FileFullpath', 'Comment'),
-  filename: hl('FileFilename', 'None'),
-  directory: hl('FileDirectory', 'Directory'),
-  directoryExpanded: hl('FileDirectoryExpanded', 'Directory'),
-  directoryCollapsed: hl('FileDirectoryCollapsed', 'Directory'),
-  linkTarget: hl('FileLinkTarget', 'Comment'),
-  gitStaged: hl('FileGitStaged', gitHighlights.gitStaged.group),
-  gitUnstaged: hl('FileGitUnstaged', gitHighlights.gitUnstaged.group),
-  gitRootStaged: hl('FileGitRootStaged', 'Comment'),
-  gitRootUnstaged: hl('FileGitRootUnstaged', 'Operator'),
-  indentLine: hl('IndentLine', 'Comment'),
-  clip: hl('FileClip', 'Statement'),
-  size: hl('FileSize', 'Constant'),
-  readonly: hl('FileReadonly', 'Operator'),
-  modified: hl('FileModified', 'Operator'),
-  timeAccessed: hl('TimeAccessed', 'Identifier'),
-  timeModified: hl('TimeModified', 'Identifier'),
-  timeCreated: hl('TimeCreated', 'Identifier'),
-  diagnosticError: hl(
+  title: hlg('FileRoot', 'Constant'),
+  hidden: hlg('FileHidden', 'Comment'),
+  rootName: hlg('FileRootName', 'Identifier'),
+  expandIcon: hlg('FileExpandIcon', 'Directory'),
+  fullpath: hlg('FileFullpath', 'Comment'),
+  filename: hlg('FileFilename', 'None'),
+  directory: hlg('FileDirectory', 'Directory'),
+  directoryExpanded: hlg('FileDirectoryExpanded', 'Directory'),
+  directoryCollapsed: hlg('FileDirectoryCollapsed', 'Directory'),
+  linkTarget: hlg('FileLinkTarget', 'Comment'),
+  gitStaged: hlg('FileGitStaged', gitHighlights.gitStaged.group),
+  gitUnstaged: hlg('FileGitUnstaged', gitHighlights.gitUnstaged.group),
+  gitRootStaged: hlg('FileGitRootStaged', 'Comment'),
+  gitRootUnstaged: hlg('FileGitRootUnstaged', 'Operator'),
+  indentLine: hlg('IndentLine', internalHighlightGroups.CommentColor),
+  clip: hlg('FileClip', 'Statement'),
+  size: hlg('FileSize', 'Constant'),
+  readonly: hlg('FileReadonly', 'Operator'),
+  modified: hlg('FileModified', 'Operator'),
+  timeAccessed: hlg('TimeAccessed', 'Identifier'),
+  timeModified: hlg('TimeModified', 'Identifier'),
+  timeCreated: hlg('TimeCreated', 'Identifier'),
+  diagnosticError: hlg(
     'FileDiagnosticError',
     diagnosticHighlights.diagnosticError.group,
   ),
-  diagnosticWarning: hl(
+  diagnosticWarning: hlg(
     'FileDiagnosticWarning',
     diagnosticHighlights.diagnosticWarning.group,
   ),
-  filenameDiagnosticError: hl('FileFilenameDiagnosticError', 'CocErrorSign'),
-  filenameDiagnosticWarning: hl(
+  filenameDiagnosticError: hlg('FileFilenameDiagnosticError', 'CocErrorSign'),
+  filenameDiagnosticWarning: hlg(
     'FileFilenameDiagnosticWarning',
     'CocWarningSign',
   ),

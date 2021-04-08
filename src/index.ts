@@ -22,7 +22,7 @@ export const activate = async (context: ExtensionContext) => {
   await activateHelper(context);
   await InternalVimEvents.register(context);
 
-  hlGroupManager.group(
+  hlGroupManager.createGroup(
     'SelectUI',
     'ctermbg=27 ctermfg=0 guibg=#1593e5 guifg=#ffffff',
   );

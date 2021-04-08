@@ -395,7 +395,7 @@ export class Explorer implements Disposable {
       await this.quitHelp();
     }
 
-    await this.highlight.addSyntax();
+    await this.highlight.bootSyntax();
 
     const sourcesChanged = await this.initArgs(args, rootPath);
 
