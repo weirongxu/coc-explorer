@@ -47,6 +47,7 @@ export interface FileNode extends BaseTreeNode<FileNode, 'root' | 'child'> {
 }
 
 const hlg = hlGroupManager.linkGroup.bind(hlGroupManager);
+const directoryHighlight = hlg('FileDirectory', 'Directory');
 export const fileHighlights = {
   title: hlg('FileRoot', 'Constant'),
   hidden: hlg('FileHidden', 'Comment'),
@@ -54,9 +55,9 @@ export const fileHighlights = {
   expandIcon: hlg('FileExpandIcon', 'Directory'),
   fullpath: hlg('FileFullpath', 'Comment'),
   filename: hlg('FileFilename', 'None'),
-  directory: hlg('FileDirectory', 'Directory'),
-  directoryExpanded: hlg('FileDirectoryExpanded', 'Directory'),
-  directoryCollapsed: hlg('FileDirectoryCollapsed', 'Directory'),
+  directory: directoryHighlight,
+  directoryExpanded: hlg('FileDirectoryExpanded', directoryHighlight.group),
+  directoryCollapsed: hlg('FileDirectoryCollapsed', directoryHighlight.group),
   linkTarget: hlg('FileLinkTarget', 'Comment'),
   gitStaged: hlg('FileGitStaged', gitHighlights.gitStaged.group),
   gitUnstaged: hlg('FileGitUnstaged', gitHighlights.gitUnstaged.group),
