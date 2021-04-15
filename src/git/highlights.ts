@@ -1,4 +1,4 @@
-import { workspace } from 'coc.nvim';
+import { Disposable, workspace } from 'coc.nvim';
 import colorConvert from 'color-convert';
 import { extractHighlightsColor } from '../highlight/extractColors';
 import { hlGroupManager } from '../highlight/manager';
@@ -13,88 +13,90 @@ import { GitFormat } from './types';
 
 const hlg = hlGroupManager.linkGroup.bind(hlGroupManager);
 
-hlGroupManager
-  .watchColorScheme(async () => {
-    const groups = [
-      'String',
-      'Character',
-      'Number',
-      'Boolean',
-      'Float',
-      'Identifier',
-      'Function',
-      'Statement',
-      'Conditional',
-      'Repeat',
-      'Label',
-      'Operator',
-      'Keyword',
-      'Exception',
-      'PreProc',
-      'Include',
-      'Define',
-      'Macro',
-      'PreCondit',
-      'Type',
-      'StorageClass',
-      'Structure',
-      'Typedef',
-      'Special',
-      'SpecialChar',
-      'Tag',
-      'Delimiter',
-      'SpecialComment',
-      'Debug',
-      'Todo',
-    ];
+export const registerGitHighlights = (disposables: Disposable[]) => {
+  hlGroupManager
+    .watchColorScheme(disposables, async () => {
+      const groups = [
+        'String',
+        'Character',
+        'Number',
+        'Boolean',
+        'Float',
+        'Identifier',
+        'Function',
+        'Statement',
+        'Conditional',
+        'Repeat',
+        'Label',
+        'Operator',
+        'Keyword',
+        'Exception',
+        'PreProc',
+        'Include',
+        'Define',
+        'Macro',
+        'PreCondit',
+        'Type',
+        'StorageClass',
+        'Structure',
+        'Typedef',
+        'Special',
+        'SpecialChar',
+        'Tag',
+        'Delimiter',
+        'SpecialComment',
+        'Debug',
+        'Todo',
+      ];
 
-    const highlights = await extractHighlightsColor(groups);
-    const fgs = compactI(
-      Object.values(highlights).map((h) => {
-        const guifg = h.guifg;
-        if (!guifg) {
-          return;
-        }
-        const ctermfg =
-          h.ctermfg ??
-          colorConvert.rgb.ansi256([guifg.red, guifg.green, guifg.blue]);
-        return {
-          guifg,
-          ctermfg,
-        };
-      }),
-    );
-    const { nvim } = workspace;
-    nvim.pauseNotification();
-    const green = findNearestColor(
-      createColor(18, 204, 90, 1),
-      fgs,
-      (it) => it.guifg,
-    );
-    if (green) {
-      nvim.command(
-        `highlight default CocExplorerGitPathChange_Internal ctermfg=${
-          green.ctermfg
-        } guifg=#${toHex(green.guifg)}`,
-        true,
+      const highlights = await extractHighlightsColor(groups);
+      const fgs = compactI(
+        Object.values(highlights).map((h) => {
+          const guifg = h.guifg;
+          if (!guifg) {
+            return;
+          }
+          const ctermfg =
+            h.ctermfg ??
+            colorConvert.rgb.ansi256([guifg.red, guifg.green, guifg.blue]);
+          return {
+            guifg,
+            ctermfg,
+          };
+        }),
       );
-    }
-    const yellow = findNearestColor(
-      createColor(209, 177, 15, 1),
-      fgs,
-      (it) => it.guifg,
-    );
-    if (yellow) {
-      nvim.command(
-        `highlight default CocExplorerGitContentChange_Internal ctermfg=${
-          green.ctermfg
-        } guifg=#${toHex(yellow.guifg)}`,
-        true,
+      const { nvim } = workspace;
+      nvim.pauseNotification();
+      const green = findNearestColor(
+        createColor(18, 204, 90, 1),
+        fgs,
+        (it) => it.guifg,
       );
-    }
-    await nvim.resumeNotification();
-  })
-  .catch(logger.error);
+      if (green) {
+        nvim.command(
+          `highlight default CocExplorerGitPathChange_Internal ctermfg=${
+            green.ctermfg
+          } guifg=#${toHex(green.guifg)}`,
+          true,
+        );
+      }
+      const yellow = findNearestColor(
+        createColor(209, 177, 15, 1),
+        fgs,
+        (it) => it.guifg,
+      );
+      if (yellow) {
+        nvim.command(
+          `highlight default CocExplorerGitContentChange_Internal ctermfg=${
+            green.ctermfg
+          } guifg=#${toHex(yellow.guifg)}`,
+          true,
+        );
+      }
+      await nvim.resumeNotification();
+    })
+    .catch(logger.error);
+};
 
 const gitChangedPath = hlg(
   'GitPathChange',

@@ -1,4 +1,4 @@
-import { workspace } from 'coc.nvim';
+import { Disposable, workspace } from 'coc.nvim';
 import colorConvert from 'color-convert';
 import { logger, toHex } from '../util';
 import { extractHighlightsColor } from './extractColors';
@@ -11,36 +11,38 @@ type GroupConfig = typeof groupConfigs;
 type GroupConfigKey = keyof GroupConfig;
 type GroupConfigValue = GroupConfig[GroupConfigKey];
 
-hlGroupManager
-  .watchColorScheme(async () => {
-    const groups = Object.keys(groupConfigs) as GroupConfigKey[];
-    const highlights = await extractHighlightsColor(groups);
+export const registerInternalColors = (disposables: Disposable[]) => {
+  hlGroupManager
+    .watchColorScheme(disposables, async () => {
+      const groups = Object.keys(groupConfigs) as GroupConfigKey[];
+      const highlights = await extractHighlightsColor(groups);
 
-    const { nvim } = workspace;
-    nvim.pauseNotification();
-    for (const group of groups) {
-      const hl = highlights[group];
-      if (!hl) {
-        continue;
-      }
-      const guifg = hl.guifg;
-      if (!guifg) {
-        continue;
-      }
-      const ctermfg =
-        hl.ctermfg ??
-        colorConvert.rgb.ansi256([guifg.red, guifg.green, guifg.blue]);
+      const { nvim } = workspace;
+      nvim.pauseNotification();
+      for (const group of groups) {
+        const hl = highlights[group];
+        if (!hl) {
+          continue;
+        }
+        const guifg = hl.guifg;
+        if (!guifg) {
+          continue;
+        }
+        const ctermfg =
+          hl.ctermfg ??
+          colorConvert.rgb.ansi256([guifg.red, guifg.green, guifg.blue]);
 
-      nvim.command(
-        `highlight default CocExplorer${
-          groupConfigs[group]
-        }_Internal ctermfg=${ctermfg} guifg=#${toHex(guifg)}`,
-        true,
-      );
-    }
-    await nvim.resumeNotification();
-  })
-  .catch(logger.error);
+        nvim.command(
+          `highlight default CocExplorer${
+            groupConfigs[group]
+          }_Internal ctermfg=${ctermfg} guifg=#${toHex(guifg)}`,
+          true,
+        );
+      }
+      await nvim.resumeNotification();
+    })
+    .catch(logger.error);
+};
 
 const internalHighlightGroups = {} as Record<GroupConfigValue, string>;
 

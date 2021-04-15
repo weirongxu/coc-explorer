@@ -15,6 +15,8 @@ import { asyncCatchError, logger, registerRuntimepath } from './util';
 import { ActionMenuCodeActionProvider } from './actions/codeActionProider';
 import { activateHelper } from 'coc-helper';
 import { GitCommand } from './git/command';
+import { registerInternalColors } from './highlight/internalColors';
+import { registerGitHighlights } from './git/highlights';
 
 export const activate = async (context: ExtensionContext) => {
   const { subscriptions } = context;
@@ -56,6 +58,8 @@ export const activate = async (context: ExtensionContext) => {
         }),
       ),
     );
+    registerGitHighlights(subscriptions);
+    registerInternalColors(subscriptions);
     await explorerManager.events.fire('didAutoload');
   })().catch(logger.error);
 };
