@@ -1,3 +1,4 @@
+import { HelperEventEmitter } from 'coc-helper';
 import {
   Disposable,
   disposeAll,
@@ -5,17 +6,16 @@ import {
   ExtensionContext,
   workspace,
 } from 'coc.nvim';
-import { HelperEventEmitter } from 'coc-helper';
+import { MappingMode } from './actions/types';
 import { argOptions } from './arg/argOptions';
+import { Args, ParsedPosition } from './arg/parseArgs';
 import { BufManager } from './bufManager';
 import { buildExplorerConfig, configLocal } from './config';
 import { GlobalContextVars } from './contextVariables';
 import { onBufEnter } from './events';
 import { Explorer } from './explorer';
 import { keyMapping } from './mappings';
-import { Args, ParsedPosition } from './arg/parseArgs';
 import { compactI, currentBufnr, logger, supportedNvimFloating } from './util';
-import { MappingMode } from './actions/types';
 
 export class TabContainer {
   left?: Explorer;
@@ -122,6 +122,13 @@ export class ExplorerManager {
 
   private async updatePrevCtxVars(bufnr: number) {
     if (!this.bufnrs().includes(bufnr)) {
+      const bufname = (await this.nvim.call('bufname')) as string;
+      if (
+        bufname.startsWith('list://') ||
+        bufname.startsWith('[coc-explorer]')
+      ) {
+        return;
+      }
       const filetype = await this.nvim.getVar('&filetype');
       if (filetype !== this.filetype) {
         await this.previousBufnr.set(bufnr);
