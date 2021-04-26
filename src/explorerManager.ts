@@ -105,7 +105,7 @@ export class ExplorerManager {
       Disposable.create(() => disposeAll(this.explorers())),
     );
 
-    this.bufManager = new BufManager(this.context);
+    this.bufManager = new BufManager(this.context, this);
   }
 
   async currentTabId() {

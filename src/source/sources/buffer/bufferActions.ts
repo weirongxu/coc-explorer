@@ -42,7 +42,10 @@ export function loadBufferActions(
       ) {
         return;
       }
-      await nvim.command(`bdelete! ${node.bufnr}`);
+      await buffer.bufManager.removeBufNode(node, {
+        skipModified: true,
+        bwipeout: false,
+      });
       await buffer.load(node, { force: true });
     },
     'delete buffer',
@@ -57,7 +60,10 @@ export function loadBufferActions(
       ) {
         return;
       }
-      await nvim.command(`bwipeout! ${node.bufnr}`);
+      await buffer.bufManager.removeBufNode(node, {
+        skipModified: true,
+        bwipeout: true,
+      });
       await buffer.load(node, { force: true });
     },
     'bwipeout buffer',

@@ -398,7 +398,10 @@ export function loadFileActions(action: ActionSource<FileSource, FileNode>) {
       await fsTrash(nodes.map((node) => node.fullpath));
 
       for (const node of nodes) {
-        await file.bufManager.remove(node.fullpath, true);
+        await file.bufManager.remove(node.fullpath, {
+          skipModified: true,
+          bwipeout: true,
+        });
       }
     },
     'move file or directory to trash',
@@ -425,7 +428,10 @@ export function loadFileActions(action: ActionSource<FileSource, FileNode>) {
 
       for (const node of nodes) {
         await fsRimraf(node.fullpath);
-        await file.bufManager.remove(node.fullpath, true);
+        await file.bufManager.remove(node.fullpath, {
+          skipModified: true,
+          bwipeout: true,
+        });
       }
     },
     'delete file or directory forever',
@@ -546,7 +552,10 @@ export function loadFileActions(action: ActionSource<FileSource, FileNode>) {
         fsRename,
       );
 
-      await file.bufManager.remove(node.fullpath, true);
+      await file.bufManager.remove(node.fullpath, {
+        skipModified: true,
+        bwipeout: true,
+      });
     },
     'rename a file or directory',
     { reload: true },

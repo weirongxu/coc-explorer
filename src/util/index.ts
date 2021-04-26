@@ -1,4 +1,4 @@
-import { HelperLogger, prettyPrint } from 'coc-helper';
+import { HelperLogger } from 'coc-helper';
 export * from './string';
 export * from './symbol';
 export * from './number';
@@ -16,5 +16,3 @@ export * from './uri';
 export * from './color';
 
 export const logger = new HelperLogger('explorer');
-
-export { prettyPrint };

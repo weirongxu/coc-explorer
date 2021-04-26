@@ -1,10 +1,22 @@
 import { Emitter, ExtensionContext, workspace } from 'coc.nvim';
 import pathLib from 'path';
 import { internalEvents, onEvent } from './events';
+import { ExplorerManager } from './explorerManager';
 import { BufferNode } from './source/sources/buffer/bufferSource';
-import { compactI, throttle } from './util';
+import { compactI, throttle, winnrByBufnr } from './util';
 
 const regex = /^\s*(\d+)(.+?)"(.+?)".*/;
+
+export interface BufRemoveOptions {
+  /**
+   * Throw exception when skipModified is false and buffer is modified
+   */
+  skipModified: boolean;
+  /**
+   * Use bwipeout to remove the buffer otherwise is bdelete
+   */
+  bwipeout: boolean;
+}
 
 export class BufManager {
   bufferNodes: BufferNode[] = [];
@@ -17,7 +29,10 @@ export class BufManager {
   private reloadEvent = new Emitter<void>();
   private modifiedEvent = new Emitter<string>();
 
-  constructor(context: ExtensionContext) {
+  constructor(
+    context: ExtensionContext,
+    public readonly explorerManager: ExplorerManager,
+  ) {
     context.subscriptions.push(
       onEvent(
         ['BufCreate', 'BufHidden', 'BufUnload', 'BufWinEnter', 'BufWinLeave'],
@@ -54,30 +69,51 @@ export class BufManager {
     );
   }
 
-  async removeBufNode(bufNode: BufferNode, skipModified: boolean) {
-    if (!skipModified && bufNode.modified) {
+  async removeBufNode(bufNode: BufferNode, options: BufRemoveOptions) {
+    if (!options.skipModified && bufNode.modified) {
       throw new Error('The content of buffer has not been saved!');
     }
 
-    await this.nvim.command(`bwipeout! ${bufNode.bufnr}`);
+    const { nvim } = this;
+    const explorerBufnrs = this.explorerManager.bufnrs();
+    const tabBufnrs = (await nvim.call('tabpagebuflist')) as number[];
+    const bufnrs = tabBufnrs.filter((buf) => !explorerBufnrs.includes(buf));
+    if (bufnrs.length === 1) {
+      // When the only buffer in this tab, try to keep an empty buffer
+      const bufnr = bufnrs[0];
+      const winnr = await winnrByBufnr(bufnr);
+
+      nvim.pauseNotification();
+      nvim.command(`${winnr}wincmd w`, true);
+      nvim.command('enew', true);
+      if (workspace.isVim) {
+        nvim.command('redraw', true);
+      }
+      await nvim.resumeNotification();
+    }
+    if (options.bwipeout) {
+      await nvim.command(`bwipeout! ${bufNode.bufnr}`);
+    } else {
+      await nvim.command(`bdelete! ${bufNode.bufnr}`);
+    }
   }
 
-  async remove(fullpath: string, skipModified: boolean) {
+  async remove(fullpath: string, options: BufRemoveOptions) {
     if (fullpath.endsWith(pathLib.sep)) {
-      return this.removePrefix(fullpath, skipModified);
+      return this.removePrefix(fullpath, options);
     } else {
       const bufNode = this.bufferNodeMapByFullpath.get(fullpath);
       if (!bufNode) {
         return;
       }
-      await this.removeBufNode(bufNode, skipModified);
+      await this.removeBufNode(bufNode, options);
     }
   }
 
-  async removePrefix(prefixFullpath: string, skipModified: boolean) {
+  async removePrefix(prefixFullpath: string, options: BufRemoveOptions) {
     for (const [fullpath, bufNode] of this.bufferNodeMapByFullpath) {
       if (fullpath.startsWith(prefixFullpath)) {
-        await this.removeBufNode(bufNode, skipModified);
+        await this.removeBufNode(bufNode, options);
       }
     }
   }
