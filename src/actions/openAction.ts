@@ -64,10 +64,10 @@ export async function openAction(
     originalOpenByWinnr ??
     (async (winnr: number) => {
       const quitNotifier = await quitOnOpenNotifier();
-      const escapePath = await getEscapePath();
+      const escapedPath = await getEscapePath();
       nvim.pauseNotification();
       nvim.command(`${winnr}wincmd w`, true);
-      nvim.command(`edit ${escapePath}`, true);
+      nvim.command(`edit ${escapedPath}`, true);
       jumpToNotify();
       if (workspace.isVim) {
         // Avoid vim highlight not working,
@@ -99,11 +99,11 @@ export async function openAction(
         if (target) {
           const targetWinid = WinLayoutFinder.getFirstLeafWinid(target);
           const quitNotifier = await quitOnOpenNotifier();
-          const escapePath = await getEscapePath();
+          const escapedPath = await getEscapePath();
 
           nvim.pauseNotification();
           nvim.call('win_gotoid', [targetWinid], true);
-          nvim.command(`${command} ${escapePath}`, true);
+          nvim.command(`${command} ${escapedPath}`, true);
           jumpToNotify();
           quitNotifier.notify();
           await nvim.resumeNotification();
@@ -141,9 +141,9 @@ export async function openAction(
     split: () => actions['split.intelligent'](),
     'split.plain': async () => {
       const quitNotifier = await quitOnOpenNotifier();
-      const escapePath = await getEscapePath();
+      const escapedPath = await getEscapePath();
       nvim.pauseNotification();
-      nvim.command(`split ${escapePath}`, true);
+      nvim.command(`split ${escapedPath}`, true);
       jumpToNotify();
       quitNotifier.notify();
       await nvim.resumeNotification();
@@ -163,9 +163,9 @@ export async function openAction(
     vsplit: () => actions['vsplit.intelligent'](),
     'vsplit.plain': async () => {
       const quitNotifier = await quitOnOpenNotifier();
-      const escapePath = await getEscapePath();
+      const escapedPath = await getEscapePath();
       nvim.pauseNotification();
-      nvim.command(`vsplit ${escapePath}`, true);
+      nvim.command(`vsplit ${escapedPath}`, true);
       jumpToNotify();
       quitNotifier.notify();
       await nvim.resumeNotification();

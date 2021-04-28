@@ -552,7 +552,7 @@ export function loadFileActions(action: ActionSource<FileSource, FileNode>) {
         fsRename,
       );
 
-      await file.bufManager.remove(node.fullpath, {
+      await file.bufManager.replace(node.fullpath, targetPath, {
         skipModified: true,
         bwipeout: true,
       });

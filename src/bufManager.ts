@@ -3,7 +3,7 @@ import pathLib from 'path';
 import { internalEvents, onEvent } from './events';
 import { ExplorerManager } from './explorerManager';
 import { BufferNode } from './source/sources/buffer/bufferSource';
-import { compactI, throttle, winnrByBufnr } from './util';
+import { compactI, throttle, winidsByBufnr } from './util';
 
 const regex = /^\s*(\d+)(.+?)"(.+?)".*/;
 
@@ -75,19 +75,23 @@ export class BufManager {
     }
 
     const { nvim } = this;
+    const curWinid = (await nvim.call('win_getid', [])) as number;
     const explorerBufnrs = this.explorerManager.bufnrs();
     const tabBufnrs = (await nvim.call('tabpagebuflist')) as number[];
     const bufnrs = tabBufnrs.filter((buf) => !explorerBufnrs.includes(buf));
     if (bufnrs.length === 1) {
       // When the only buffer in this tab, try to keep an empty buffer
       const bufnr = bufnrs[0];
-      const winnr = await winnrByBufnr(bufnr);
+      const winids = await winidsByBufnr(bufnr);
 
       nvim.pauseNotification();
-      nvim.command(`${winnr}wincmd w`, true);
-      nvim.command('enew', true);
-      if (workspace.isVim) {
-        nvim.command('redraw', true);
+      for (const winid of winids) {
+        nvim.call('win_gotoid', [winid], true);
+        nvim.command('enew', true);
+        nvim.call('win_gotoid', [curWinid], true);
+        if (workspace.isVim) {
+          nvim.command('redraw', true);
+        }
       }
       await nvim.resumeNotification();
     }
@@ -95,6 +99,14 @@ export class BufManager {
       await nvim.command(`bwipeout! ${bufNode.bufnr}`);
     } else {
       await nvim.command(`bdelete! ${bufNode.bufnr}`);
+    }
+  }
+
+  async removePrefix(prefixFullpath: string, options: BufRemoveOptions) {
+    for (const [fullpath, bufNode] of this.bufferNodeMapByFullpath) {
+      if (fullpath.startsWith(prefixFullpath)) {
+        await this.removeBufNode(bufNode, options);
+      }
     }
   }
 
@@ -110,12 +122,72 @@ export class BufManager {
     }
   }
 
-  async removePrefix(prefixFullpath: string, options: BufRemoveOptions) {
-    for (const [fullpath, bufNode] of this.bufferNodeMapByFullpath) {
-      if (fullpath.startsWith(prefixFullpath)) {
-        await this.removeBufNode(bufNode, options);
+  async replaceBufNode(
+    bufNode: BufferNode,
+    targetFullpath: string,
+    options: BufRemoveOptions,
+  ) {
+    if (!options.skipModified && bufNode.modified) {
+      throw new Error('The content of buffer has not been saved!');
+    }
+
+    const { nvim } = this;
+    const curWinid = (await nvim.call('win_getid', [])) as number;
+    const explorerBufnrs = this.explorerManager.bufnrs();
+    const tabBufnrs = (await nvim.call('tabpagebuflist')) as number[];
+    const bufnrs = tabBufnrs.filter((buf) => !explorerBufnrs.includes(buf));
+
+    const list = await Promise.all(
+      bufnrs.map(async (bufnr) => {
+        const winids = await winidsByBufnr(bufnr);
+        const escapedPath = (await nvim.call('fnameescape', [
+          targetFullpath,
+        ])) as string;
+        return { winids, escapedPath };
+      }),
+    );
+    nvim.pauseNotification();
+    for (const { winids, escapedPath } of list) {
+      for (const winid of winids) {
+        nvim.call('win_gotoid', [winid], true);
+        nvim.command(`edit ${escapedPath}`, true);
+        nvim.call('win_gotoid', [curWinid], true);
+        if (workspace.isVim) {
+          nvim.command('redraw', true);
+        }
       }
     }
+    await nvim.resumeNotification();
+
+    if (options.bwipeout) {
+      await nvim.command(`bwipeout! ${bufNode.bufnr}`);
+    } else {
+      await nvim.command(`bdelete! ${bufNode.bufnr}`);
+    }
+  }
+
+  async replacePrefix(
+    sourceFullpath: string,
+    targetFullpath: string,
+    options: BufRemoveOptions,
+  ) {
+    for (const [fullpath, bufNode] of this.bufferNodeMapByFullpath) {
+      if (fullpath.startsWith(sourceFullpath)) {
+        const newTargetFullpath = bufNode.fullpath.replace(
+          sourceFullpath,
+          targetFullpath,
+        );
+        await this.replaceBufNode(bufNode, newTargetFullpath, options);
+      }
+    }
+  }
+
+  async replace(
+    sourceFullpath: string,
+    targetFullpath: string,
+    options: BufRemoveOptions,
+  ) {
+    return this.replacePrefix(sourceFullpath, targetFullpath, options);
   }
 
   modified(fullpath: string): boolean {

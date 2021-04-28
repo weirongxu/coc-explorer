@@ -85,13 +85,18 @@ export async function winidByWinnr(winnr: number | undefined) {
 }
 
 export async function winidByBufnr(bufnr: number | undefined) {
-  return winnrByBufnr(bufnr).then(async (winnr) => {
-    if (winnr) {
-      return winidByWinnr(winnr);
-    } else {
-      return undefined;
-    }
-  });
+  if (!bufnr) {
+    return undefined;
+  }
+  const winnr = await winnrByBufnr(bufnr);
+  if (winnr) {
+    return winidByWinnr(winnr);
+  }
+
+  const winid = (await workspace.nvim.call('bufwinid', [bufnr])) as number;
+  if (winid === -1) {
+    return undefined;
+  }
 }
 
 export function winByWinid(winid: number): Promise<Window>;
@@ -117,6 +122,10 @@ export async function bufnrByWinnrOrWinid(winnrOrWinid: number | undefined) {
   } else {
     return undefined;
   }
+}
+
+export async function winidsByBufnr(bufnr: number) {
+  return (await workspace.nvim.call('win_findbuf', [bufnr])) as number[];
 }
 
 export async function currentBufnr() {
