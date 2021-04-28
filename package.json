@@ -506,7 +506,8 @@
             ],
             "filetypes": [
               "vista_kind",
-              "qf"
+              "qf",
+              "tagbar"
             ],
             "floatingWindows": true,
             "sources": {
