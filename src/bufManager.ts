@@ -88,11 +88,11 @@ export class BufManager {
       for (const winid of winids) {
         nvim.call('win_gotoid', [winid], true);
         nvim.command('enew', true);
-        nvim.call('win_gotoid', [curWinid], true);
         if (workspace.isVim) {
           nvim.command('redraw', true);
         }
       }
+      nvim.call('win_gotoid', [curWinid], true);
       await nvim.resumeNotification();
     }
     if (options.bwipeout) {
@@ -151,12 +151,12 @@ export class BufManager {
       for (const winid of winids) {
         nvim.call('win_gotoid', [winid], true);
         nvim.command(`edit ${escapedPath}`, true);
-        nvim.call('win_gotoid', [curWinid], true);
         if (workspace.isVim) {
           nvim.command('redraw', true);
         }
       }
     }
+    nvim.call('win_gotoid', [curWinid], true);
     await nvim.resumeNotification();
 
     if (options.bwipeout) {
