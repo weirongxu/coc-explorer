@@ -76,14 +76,9 @@ export class BufManager {
 
     const { nvim } = this;
     const curWinid = (await nvim.call('win_getid', [])) as number;
-    const explorerBufnrs = this.explorerManager.bufnrs();
-    const tabBufnrs = (await nvim.call('tabpagebuflist')) as number[];
-    const bufnrs = tabBufnrs.filter((buf) => !explorerBufnrs.includes(buf));
-    if (bufnrs.length === 1) {
-      // When the only buffer in this tab, try to keep an empty buffer
-      const bufnr = bufnrs[0];
-      const winids = await winidsByBufnr(bufnr);
+    const winids = await winidsByBufnr(bufNode.bufnr);
 
+    if (winids.length) {
       nvim.pauseNotification();
       for (const winid of winids) {
         nvim.call('win_gotoid', [winid], true);
@@ -133,21 +128,13 @@ export class BufManager {
 
     const { nvim } = this;
     const curWinid = (await nvim.call('win_getid', [])) as number;
-    const explorerBufnrs = this.explorerManager.bufnrs();
-    const tabBufnrs = (await nvim.call('tabpagebuflist')) as number[];
-    const bufnrs = tabBufnrs.filter((buf) => !explorerBufnrs.includes(buf));
+    const winids = await winidsByBufnr(bufNode.bufnr);
 
-    const list = await Promise.all(
-      bufnrs.map(async (bufnr) => {
-        const winids = await winidsByBufnr(bufnr);
-        const escapedPath = (await nvim.call('fnameescape', [
-          targetFullpath,
-        ])) as string;
-        return { winids, escapedPath };
-      }),
-    );
-    nvim.pauseNotification();
-    for (const { winids, escapedPath } of list) {
+    if (winids.length) {
+      const escapedPath = (await nvim.call('fnameescape', [
+        targetFullpath,
+      ])) as string;
+      nvim.pauseNotification();
       for (const winid of winids) {
         nvim.call('win_gotoid', [winid], true);
         nvim.command(`edit ${escapedPath}`, true);
@@ -155,9 +142,9 @@ export class BufManager {
           nvim.command('redraw', true);
         }
       }
+      nvim.call('win_gotoid', [curWinid], true);
+      await nvim.resumeNotification();
     }
-    nvim.call('win_gotoid', [curWinid], true);
-    await nvim.resumeNotification();
 
     if (options.bwipeout) {
       await nvim.command(`bwipeout! ${bufNode.bufnr}`);
