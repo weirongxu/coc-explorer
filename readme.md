@@ -846,7 +846,8 @@ Type: <pre><code>OpenActionSelectFilter & {
   ],
   "filetypes": [
     "vista_kind",
-    "qf"
+    "qf",
+    "tagbar"
   ],
   "floatingWindows": true,
   "sources": {
@@ -863,6 +864,14 @@ Type: <pre><code>MappingAction | MappingActionExp[]</code></pre>Default: <pre><c
 <details>
 <summary><code>explorer.openAction.relativePath</code>: Use relative path when open a file with openAction.</summary>
 Type: <pre><code>boolean</code></pre>Default: <pre><code>false</code></pre>
+</details>
+<details>
+<summary><code>explorer.expandStores</code>: The expand stores of sources.</summary>
+Type: <pre><code>boolean | {
+    includes: string[];
+} | {
+    excludes: string[];
+}</code></pre>Default: <pre><code>true</code></pre>
 </details>
 <details>
 <summary><code>explorer.sources</code>: Explorer sources.</summary>

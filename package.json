@@ -527,6 +527,48 @@
           "type": "boolean",
           "default": false
         },
+        "explorer.expandStores": {
+          "description": "The expand stores of sources",
+          "anyOf": [
+            {
+              "type": "boolean",
+              "description": "enable all expand store or not"
+            },
+            {
+              "type": "object",
+              "description": "enable expand stores for specified sources",
+              "required": [
+                "includes"
+              ],
+              "properties": {
+                "includes": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                }
+              },
+              "additionalProperties": false
+            },
+            {
+              "type": "object",
+              "description": "disable expand stores for specified sources",
+              "required": [
+                "excludes"
+              ],
+              "properties": {
+                "excludes": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                }
+              },
+              "additionalProperties": false
+            }
+          ],
+          "default": true
+        },
         "explorer.sources": {
           "description": "Explorer sources",
           "type": "array",

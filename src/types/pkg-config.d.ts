@@ -269,6 +269,17 @@ export interface Explorer {
    */
   'explorer.openAction.relativePath'?: boolean;
   /**
+   * The expand stores of sources
+   */
+  'explorer.expandStores'?:
+    | boolean
+    | {
+        includes: string[];
+      }
+    | {
+        excludes: string[];
+      };
+  /**
    * Explorer sources
    */
   'explorer.sources'?: {

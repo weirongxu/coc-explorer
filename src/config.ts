@@ -33,6 +33,7 @@ export interface ExplorerConfig {
   get(section: 'floating.border.enable'): boolean;
   get(section: 'floating.border.chars'): string[];
   get(section: 'floating.border.title'): string;
+  get(section: 'expandStores'): NonNullable<Explorer['explorer.expandStores']>;
   get<T = void>(section: string, defaultValue?: T): T;
 }
 

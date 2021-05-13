@@ -4,15 +4,9 @@ import { clone } from 'lodash-es';
 import { Explorer } from '../explorer';
 import { HighlightPositionWithLine } from '../highlight/types';
 import { drawnWithIndexRange } from '../painter/util';
-import {
-  BaseTreeNode,
-  ExplorerSource,
-  NodeUid,
-  SourceOptions,
-} from '../source/source';
+import { BaseTreeNode, ExplorerSource, SourceOptions } from '../source/source';
 import { compactI, flatten } from '../util';
-
-type CompactStatus = 'compact' | 'uncompact';
+import { ViewNodeStores } from './viewNodeStores';
 
 export class ViewSource<TreeNode extends BaseTreeNode<TreeNode>> {
   readonly explorer: Explorer;
@@ -38,57 +32,7 @@ export class ViewSource<TreeNode extends BaseTreeNode<TreeNode>> {
     return this.source.config;
   }
 
-  private readonly nodeStores = (() => {
-    type NodeStore = {
-      expanded: boolean;
-      compact: CompactStatus;
-    };
-
-    const inner = {
-      records: new Map<NodeUid, NodeStore>(),
-      store(node: TreeNode): NodeStore {
-        if (!inner.records.has(node.uid)) {
-          inner.records.set(node.uid, {
-            expanded: false,
-            compact: 'uncompact',
-          });
-        }
-        return inner.records.get(node.uid)!;
-      },
-      get<K extends keyof NodeStore>(node: TreeNode, key: K): NodeStore[K] {
-        return inner.store(node)[key];
-      },
-      set<K extends keyof NodeStore>(
-        node: TreeNode,
-        key: K,
-        value: NodeStore[K],
-      ) {
-        inner.store(node)[key] = value;
-      },
-    };
-
-    const handles = {
-      setExpanded(node: TreeNode, expanded: boolean) {
-        expanded ? handles.expand(node) : handles.collapse(node);
-      },
-      expand(node: TreeNode) {
-        inner.set(node, 'expanded', true);
-      },
-      collapse(node: TreeNode) {
-        inner.set(node, 'expanded', false);
-      },
-      isExpanded(node: TreeNode) {
-        return inner.get(node, 'expanded');
-      },
-      setCompact(node: TreeNode, compact: CompactStatus) {
-        inner.set(node, 'compact', compact);
-      },
-      getCompact(node: TreeNode): CompactStatus {
-        return inner.get(node, 'compact');
-      },
-    };
-    return handles;
-  })();
+  private readonly nodeStores: ViewNodeStores<TreeNode>;
 
   rootExpandedForOpen = false;
 
@@ -97,6 +41,7 @@ export class ViewSource<TreeNode extends BaseTreeNode<TreeNode>> {
     public readonly rootNode: TreeNode,
   ) {
     this.explorer = this.source.explorer;
+    this.nodeStores = new ViewNodeStores(this);
   }
 
   bootInit(rootExpandedForOpen: boolean) {

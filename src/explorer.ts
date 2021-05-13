@@ -1,4 +1,4 @@
-import { Notifier } from 'coc-helper';
+import { HelperEventEmitter, Notifier } from 'coc-helper';
 import {
   Buffer,
   Disposable,
@@ -28,6 +28,7 @@ import { ExplorerOpenOptions } from './types';
 import {
   closeWinByBufnrNotifier,
   currentBufnr,
+  logger,
   normalizePath,
   sum,
   winByWinid,
@@ -48,6 +49,10 @@ export class Explorer implements Disposable {
   highlight = new HighlightExplorer(this);
   view = new ViewExplorer(this);
   locator = new LocatorExplorer(this);
+  events = new HelperEventEmitter<{
+    'open-pre': () => void | Promise<void>;
+    'open-post': () => void | Promise<void>;
+  }>(logger);
 
   private disposables: Disposable[] = [];
   private buffer_?: Buffer;
@@ -389,6 +394,7 @@ export class Explorer implements Disposable {
   }
 
   async open(args: Args, rootPath: string, isFirst: boolean) {
+    await this.events.fire('open-pre');
     await doUserAutocmd('CocExplorerOpenPre');
 
     if (this.view.isHelpUI) {
@@ -416,6 +422,7 @@ export class Explorer implements Disposable {
     await Notifier.runAll(notifiers);
 
     await doUserAutocmd('CocExplorerOpenPost');
+    await this.events.fire('open-post');
   }
 
   async tryQuitOnOpenNotifier() {
