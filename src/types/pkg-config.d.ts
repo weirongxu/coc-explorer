@@ -234,6 +234,10 @@ export interface Explorer {
    */
   'explorer.previewAction.onHover'?: false | PreviewActionStrategy | [PreviewActionStrategy, number];
   /**
+   * Preview content maximum height
+   */
+  'explorer.previewAction.content.maxHeight'?: number;
+  /**
    * Strategy for open action
    */
   'explorer.openAction.strategy'?:

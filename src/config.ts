@@ -27,6 +27,9 @@ export interface ExplorerConfig {
   get(
     section: 'previewAction.onHover',
   ): NonNullable<Explorer['explorer.previewAction.onHover']>;
+  get(
+    section: 'previewAction.content.maxHeight',
+  ): NonNullable<Explorer['explorer.previewAction.content.maxHeight']>;
   get(section: 'datetime.format'): string;
   get(section: 'icon.enableVimDevicons'): boolean;
   get(section: 'icon.enableNerdfont'): boolean;

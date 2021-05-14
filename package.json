@@ -451,6 +451,11 @@
           ],
           "default": false
         },
+        "explorer.previewAction.content.maxHeight": {
+          "description": "Preview content maximum height",
+          "type": "number",
+          "default": 30
+        },
         "explorer.openAction.strategy": {
           "description": "Strategy for open action",
           "enum": [

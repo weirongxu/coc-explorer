@@ -827,6 +827,10 @@ Type: <pre><code>false | PreviewActionStrategy | [
 ]</code></pre>Default: <pre><code>false</code></pre>
 </details>
 <details>
+<summary><code>explorer.previewAction.content.maxHeight</code>: Preview content maximum height.</summary>
+Type: <pre><code>number</code></pre>Default: <pre><code>30</code></pre>
+</details>
+<details>
 <summary><code>explorer.openAction.strategy</code>: Strategy for open action.</summary>
 Type: <pre><code>'select' | 'split' | 'split.plain' | 'split.intelligent' | 'vsplit' | 'vsplit.plain' | 'vsplit.intelligent' | 'tab' | 'previousBuffer' | 'previousWindow' | 'sourceWindow'</code></pre>Default: <pre><code>"select"</code></pre>
 </details>

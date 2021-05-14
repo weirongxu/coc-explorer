@@ -474,6 +474,7 @@ export function loadGlobalActions(action: ActionExplorer) {
       ],
       menus: {
         labeling: 'preview for node labeling',
+        content: 'preview for node content',
       },
     },
   );

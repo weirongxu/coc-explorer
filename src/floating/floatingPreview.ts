@@ -46,13 +46,14 @@ type PreviewAction = (options: {
 export class FloatingPreview implements Disposable {
   shown: boolean = false;
   disposables: Disposable[] = [];
-  maxHeight = 30;
+  maxHeight: number;
   preferTop = false;
   onHoverStrategy: false | PreviewActionStrategy = false;
 
   private nvim = workspace.nvim;
 
   constructor(public explorer: Explorer) {
+    this.maxHeight = explorer.config.get('previewAction.content.maxHeight');
     this.disposables.push(
       onEvent('BufWinLeave', async (bufnr) => {
         if (bufnr === this.explorer.bufnr) {
@@ -234,7 +235,7 @@ export class FloatingPreview implements Disposable {
       const doc = workspace.getDocument(uri);
       const lines = doc
         ? doc.getLines(0, range.end.line + this.maxHeight)
-        : await readFileLines(uri, 0, range.end.line + 30);
+        : await readFileLines(uri, 0, range.end.line + this.maxHeight);
 
       return {
         lines,
