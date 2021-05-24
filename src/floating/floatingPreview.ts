@@ -58,7 +58,7 @@ export class FloatingPreview implements Disposable {
     this.registerActions();
 
     this.disposables.push(
-      explorer.events.on('open-post', () => {
+      explorer.events.on('first-open-post', () => {
         this.disposables.push(
           onEvent('BufWinLeave', async (bufnr) => {
             if (bufnr === this.explorer.bufnr) {

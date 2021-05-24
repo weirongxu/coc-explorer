@@ -52,8 +52,11 @@ export class Explorer implements Disposable {
   locator = new LocatorExplorer(this);
   events = new HelperEventEmitter<{
     'open-pre': () => void | Promise<void>;
+    'first-open-pre': () => void | Promise<void>;
     'open-post': () => void | Promise<void>;
+    'first-open-post': () => void | Promise<void>;
   }>(logger);
+  firstOpened = false;
 
   private disposables: Disposable[] = [];
   private rootUri_?: string;
@@ -397,6 +400,16 @@ export class Explorer implements Disposable {
   }
 
   async open(args: Args, rootPath: string, isFirst: boolean) {
+    let firstOpen: boolean;
+    if (!this.firstOpened) {
+      firstOpen = true;
+      this.firstOpened = true;
+    } else {
+      firstOpen = false;
+    }
+    if (firstOpen) {
+      await this.events.fire('first-open-pre');
+    }
     await this.events.fire('open-pre');
     await doUserAutocmd('CocExplorerOpenPre');
 
@@ -426,6 +439,9 @@ export class Explorer implements Disposable {
 
     await doUserAutocmd('CocExplorerOpenPost');
     await this.events.fire('open-post');
+    if (firstOpen) {
+      await this.events.fire('first-open-post');
+    }
   }
 
   async tryQuitOnOpenNotifier() {
