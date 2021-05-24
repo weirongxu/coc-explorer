@@ -54,42 +54,47 @@ export class FloatingPreview implements Disposable {
 
   constructor(public explorer: Explorer) {
     this.maxHeight = explorer.config.get('previewAction.content.maxHeight');
-    this.disposables.push(
-      onEvent('BufWinLeave', async (bufnr) => {
-        if (bufnr === this.explorer.bufnr) {
-          await this.close();
-        }
-      }),
-      onBufEnter(async (bufnr) => {
-        if (
-          bufnr !== this.explorer.bufnr &&
-          bufnr !== this.previewWindow?.bufnr
-        ) {
-          await this.close();
-        }
-      }, 200),
-      onCursorMoved(async (bufnr) => {
-        if (this.onHoverStrategy || bufnr !== this.explorer.bufnr) {
-          return;
-        }
-        await this.close();
-      }, 200),
-      Disposable.create(() => {
-        disposeAll(this.onHoverDisposables);
-      }),
-    );
 
     this.registerActions();
 
-    const onHover = explorer.config.get('previewAction.onHover');
-    if (!onHover) {
-      return;
-    }
-    if (Array.isArray(onHover)) {
-      this.registerOnHover(onHover[0], onHover[1]);
-    } else {
-      this.registerOnHover(onHover);
-    }
+    this.disposables.push(
+      explorer.events.on('open-post', () => {
+        this.disposables.push(
+          onEvent('BufWinLeave', async (bufnr) => {
+            if (bufnr === this.explorer.bufnr) {
+              await this.close();
+            }
+          }),
+          onBufEnter(async (bufnr) => {
+            if (
+              bufnr !== this.explorer.bufnr &&
+              bufnr !== this.previewWindow?.bufnr
+            ) {
+              await this.close();
+            }
+          }, 200),
+          onCursorMoved(async (bufnr) => {
+            if (this.onHoverStrategy || bufnr !== this.explorer.bufnr) {
+              return;
+            }
+            await this.close();
+          }, 200),
+          Disposable.create(() => {
+            disposeAll(this.onHoverDisposables);
+          }),
+        );
+
+        const onHover = explorer.config.get('previewAction.onHover');
+        if (!onHover) {
+          return;
+        }
+        if (Array.isArray(onHover)) {
+          this.registerOnHover(onHover[0], onHover[1]);
+        } else {
+          this.registerOnHover(onHover);
+        }
+      }),
+    );
   }
 
   dispose() {

@@ -49,7 +49,7 @@ export class GitBinder {
   explorerManager_?: ExplorerManager;
   get explorerManager() {
     if (!this.explorerManager_) {
-      throw new Error('explorerManager not initialized yet');
+      throw new Error('ExplorerSource(explorerManager) is not bound yet');
     }
     return this.explorerManager_;
   }

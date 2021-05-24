@@ -1,5 +1,4 @@
-import { workspace } from 'coc.nvim';
-import { Explorer } from './explorer';
+import { Buffer, Window, workspace } from 'coc.nvim';
 
 const variableName = 'coc_explorer_context';
 
@@ -27,32 +26,30 @@ export abstract class ContextVars<T> {
 }
 
 export class BuffuerContextVars<T> extends ContextVars<T> {
-  constructor(public name: string, public explorer: Explorer) {
+  constructor(public name: string, public buffer: Buffer) {
     super(name);
   }
 
   async read(): Promise<object> {
-    return ((await this.explorer.buffer.getVar(variableName)) as object) || {};
+    return ((await this.buffer.getVar(variableName)) as object) || {};
   }
 
   async write(obj: object) {
-    await this.explorer.buffer.setVar(variableName, obj);
+    await this.buffer.setVar(variableName, obj);
   }
 }
 
 export class WindowContextVars<T> extends ContextVars<T> {
-  constructor(public name: string, public explorer: Explorer) {
+  constructor(public name: string, public win: Window) {
     super(name);
   }
 
   async read(): Promise<object> {
-    const win = await this.explorer.win;
-    return ((await win?.getVar(variableName)) as object) || {};
+    return ((await this.win.getVar(variableName)) as object) || {};
   }
 
   async write(obj: object) {
-    const win = await this.explorer.win;
-    await win?.setVar(variableName, obj);
+    await this.win.setVar(variableName, obj);
   }
 }
 

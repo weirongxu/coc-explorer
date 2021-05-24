@@ -8,46 +8,15 @@ import {
 } from 'coc.nvim';
 import { MappingMode } from './actions/types';
 import { argOptions } from './arg/argOptions';
-import { Args, ParsedPosition } from './arg/parseArgs';
+import { Args } from './arg/parseArgs';
 import { BufManager } from './bufManager';
 import { buildExplorerConfig, configLocal } from './config';
+import { TabContainer } from './container';
 import { GlobalContextVars } from './contextVariables';
 import { onBufEnter } from './events';
 import { Explorer } from './explorer';
 import { keyMapping } from './mappings';
 import { compactI, currentBufnr, logger, supportedNvimFloating } from './util';
-
-export class TabContainer {
-  left?: Explorer;
-  right?: Explorer;
-  tab?: Explorer;
-  floating?: Explorer;
-
-  getExplorer(position: ParsedPosition) {
-    return this[position.name];
-  }
-
-  setExplorer(position: ParsedPosition, explorer: Explorer) {
-    this[position.name] = explorer;
-  }
-
-  all() {
-    const explorers = [];
-    if (this.left) {
-      explorers.push(this.left);
-    }
-    if (this.right) {
-      explorers.push(this.right);
-    }
-    if (this.tab) {
-      explorers.push(this.tab);
-    }
-    if (this.floating) {
-      explorers.push(this.floating);
-    }
-    return explorers;
-  }
-}
 
 export class ExplorerManager {
   filetype = 'coc-explorer';

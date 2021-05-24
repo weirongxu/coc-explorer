@@ -39,10 +39,11 @@ import { ViewExplorer } from './view/viewExplorer';
 
 export class Explorer implements Disposable {
   nvim = workspace.nvim;
-  inited = new BuffuerContextVars<boolean>('inited', this);
-  sourceWinid = new BuffuerContextVars<number>('sourceWinid', this);
-  sourceBufnr = new BuffuerContextVars<number>('sourceBufnr', this);
   context: ExtensionContext;
+  inited: BuffuerContextVars<boolean>;
+  sourceWinid: BuffuerContextVars<number>;
+  sourceBufnr: BuffuerContextVars<number>;
+  buffer: Buffer;
   floatingPreview: FloatingPreview;
   contentWidth = 0;
   action = new ActionExplorer(this);
@@ -55,13 +56,12 @@ export class Explorer implements Disposable {
   }>(logger);
 
   private disposables: Disposable[] = [];
-  private buffer_?: Buffer;
   private rootUri_?: string;
   private args_?: Args;
   private argValues_?: ResolvedArgs;
   private isFloating_?: boolean;
   private sources_?: ExplorerSource<any>[];
-  private lastArgSourcesEnabledJson?: string;
+  private prevArgSourcesEnabledJson?: string;
   private isHide = false;
 
   private static async genExplorerPosition(args: ResolvedArgs) {
@@ -153,6 +153,16 @@ export class Explorer implements Disposable {
     public config: ExplorerConfig,
   ) {
     this.context = explorerManager.context;
+    this.buffer = this.nvim.createBuffer(this.bufnr);
+    this.inited = new BuffuerContextVars<boolean>('inited', this.buffer);
+    this.sourceWinid = new BuffuerContextVars<number>(
+      'sourceWinid',
+      this.buffer,
+    );
+    this.sourceBufnr = new BuffuerContextVars<number>(
+      'sourceBufnr',
+      this.buffer,
+    );
     this.floatingPreview = new FloatingPreview(this);
 
     if (borderBufnr) {
@@ -199,13 +209,6 @@ export class Explorer implements Disposable {
       throw Error('Explorer isFloating not initialized yet');
     }
     return this.isFloating_;
-  }
-
-  get buffer(): Buffer {
-    if (!this.buffer_) {
-      this.buffer_ = this.nvim.createBuffer(this.bufnr);
-    }
-    return this.buffer_;
   }
 
   get sources(): ExplorerSource<BaseTreeNode<any>>[] {
@@ -513,21 +516,21 @@ export class Explorer implements Disposable {
       return false;
     }
 
-    const argSourcesEnabled = await pFilter(argSources, (s) =>
+    const enabledArgSources = await pFilter(argSources, (s) =>
       sourceManager.enabled(s.name),
     );
-    const argSourcesEnabledJson = JSON.stringify(argSourcesEnabled);
+    const argSourcesEnabledJson = JSON.stringify(enabledArgSources);
     if (
-      this.lastArgSourcesEnabledJson &&
-      this.lastArgSourcesEnabledJson === argSourcesEnabledJson
+      this.prevArgSourcesEnabledJson &&
+      this.prevArgSourcesEnabledJson === argSourcesEnabledJson
     ) {
       return false;
     }
-    this.lastArgSourcesEnabledJson = argSourcesEnabledJson;
+    this.prevArgSourcesEnabledJson = argSourcesEnabledJson;
 
     disposeAll(this.sources_ ?? []);
 
-    this.sources_ = argSourcesEnabled.map((sourceArg) =>
+    this.sources_ = enabledArgSources.map((sourceArg) =>
       sourceManager.createSource(sourceArg.name, this, sourceArg.expand),
     );
 
