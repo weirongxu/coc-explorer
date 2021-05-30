@@ -3,6 +3,7 @@ import { buildExplorerConfig, configLocal } from '../../config';
 import { Explorer } from '../../explorer';
 import { ExplorerManager } from '../../explorerManager';
 import { Args } from '../../arg/parseArgs';
+import { argOptions } from '../../arg/argOptions';
 import { ExplorerSource } from '../../source/source';
 
 export function getExplorer() {
@@ -46,15 +47,17 @@ export function bootSource<S extends ExplorerSource<any>>(
   beforeAll(() => {
     context.explorer = getExplorer();
     const args = new Args(options.args ?? []);
+    const root = options.rootUri ?? pathLib.sep;
     // @ts-ignore
     context.explorer.args_ = args;
-    const rootUri = options.rootUri ?? pathLib.sep;
     // @ts-ignore
-    context.explorer.rootUri_ = rootUri;
+    context.explorer.argValues_ = { rootUri: root };
+    // @ts-ignore
+    context.explorer.root_ = root;
     context.source = getSource(context.explorer);
     // @ts-ignore
     context.explorer.sources_ = [context.source];
-    context.source.root = rootUri;
+    context.source.root = root;
   });
 
   return context;
