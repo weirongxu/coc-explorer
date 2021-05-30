@@ -21,6 +21,7 @@ import { FloatingPreview } from './floating/floatingPreview';
 import { quitHelp, showHelp } from './help';
 import { HighlightExplorer } from './highlight/highlightExplorer';
 import { LocatorExplorer } from './locator/locatorExplorer';
+import { Rooter, RooterOpened } from './rooter';
 import './source/load';
 import { BaseTreeNode, ExplorerSource } from './source/source';
 import { sourceManager } from './source/sourceManager';
@@ -57,9 +58,10 @@ export class Explorer implements Disposable {
     'first-open-post': () => void | Promise<void>;
   }>(logger);
   firstOpened = false;
+  rooter?: RooterOpened;
 
   private disposables: Disposable[] = [];
-  private rootUri_?: string;
+  private root_?: string;
   private args_?: Args;
   private argValues_?: ResolvedArgs;
   private isFloating_?: boolean;
@@ -186,11 +188,11 @@ export class Explorer implements Disposable {
     this.disposables.forEach((s) => s.dispose());
   }
 
-  get rootUri(): string {
-    if (!this.rootUri_) {
-      throw Error('Explorer rootUri not initialized yet');
+  get root(): string {
+    if (!this.root_) {
+      throw Error('Explorer root not initialized yet');
     }
-    return this.rootUri_;
+    return this.root_;
   }
 
   get args(): Args {
@@ -399,7 +401,7 @@ export class Explorer implements Disposable {
     ]);
   }
 
-  async open(args: Args, rootPath: string, isFirst: boolean) {
+  async open(args: Args, rooter: Rooter, isFirst: boolean) {
     let firstOpen: boolean;
     if (!this.firstOpened) {
       firstOpen = true;
@@ -413,13 +415,15 @@ export class Explorer implements Disposable {
     await this.events.fire('open-pre');
     await doUserAutocmd('CocExplorerOpenPre');
 
+    this.rooter = rooter.open(this);
+
     if (this.view.isHelpUI) {
       await this.quitHelp();
     }
 
     await this.highlight.bootSyntax();
 
-    const sourcesChanged = await this.initArgs(args, rootPath);
+    const sourcesChanged = await this.initArgs(args, this.rooter);
 
     for (const source of this.sources) {
       await source.bootOpen(isFirst);
@@ -489,31 +493,29 @@ export class Explorer implements Disposable {
   }
 
   /**
-   * initialize rootUri
+   * initialize root
    */
-  private async initRootUri(argValues: ResolvedArgs, rootPath: string) {
-    const rootUri = argValues.rootUri;
-    if (rootUri) {
-      this.rootUri_ = normalizePath(rootUri);
+  private async initRoot(argValues: ResolvedArgs, rooter: RooterOpened) {
+    const root = argValues.rootUri;
+    if (root) {
+      this.root_ = normalizePath(root);
       return;
     }
-    const buf = await this.sourceBuffer();
-    if (!buf) {
-      this.rootUri_ = normalizePath(workspace.cwd);
+
+    let reveal: string | undefined;
+    if (this.config.get('file.revealWhenOpen')) {
+      reveal = await this.revealPath();
+    }
+    const resolvedRoot = await rooter.resolveRoot(
+      reveal,
+      this.argValues.rootStrategies,
+    );
+    if (resolvedRoot) {
+      this.root_ = normalizePath(resolvedRoot);
       return;
     }
-    const buftype = await buf.getVar('&buftype');
-    if (buftype === 'nofile') {
-      this.rootUri_ = normalizePath(workspace.cwd);
-      return;
-    }
-    const fullpath = this.explorerManager.bufManager.getBufferNode(buf.id)
-      ?.fullpath;
-    if (!fullpath) {
-      this.rootUri_ = normalizePath(workspace.cwd);
-      return;
-    }
-    this.rootUri_ = normalizePath(rootPath);
+
+    this.root_ = normalizePath(workspace.cwd);
   }
 
   /**
@@ -521,11 +523,11 @@ export class Explorer implements Disposable {
    *
    * @return sources changed
    */
-  private async initArgs(args: Args, rootPath: string): Promise<boolean> {
+  private async initArgs(args: Args, rooter: RooterOpened): Promise<boolean> {
     this.args_ = args;
     this.argValues_ = await args.values(argOptions);
-    await this.initRootUri(this.argValues_, rootPath);
-    this.explorerManager.rootPathRecords.add(this.rootUri);
+    await this.initRoot(this.argValues_, rooter);
+    this.explorerManager.rootPathRecords.add(this.root);
 
     const argSources = await args.value(argOptions.sources);
     if (!argSources) {
@@ -554,6 +556,22 @@ export class Explorer implements Disposable {
     this.isFloating_ = position.name === 'floating';
 
     return true;
+  }
+
+  async revealPath() {
+    const revealPath = await this.args.value(argOptions.reveal);
+    if (revealPath) {
+      return revealPath;
+    } else {
+      const buf = await this.sourceBuffer();
+      if (buf) {
+        return (
+          this.explorerManager.bufManager.getBufferNode(buf.id)?.fullpath ??
+          undefined
+        );
+      }
+      return;
+    }
   }
 
   async getSelectedOrCursorLineIndexes(mode: MappingMode) {

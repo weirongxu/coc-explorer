@@ -16,6 +16,7 @@ import { GlobalContextVars } from './contextVariables';
 import { onBufEnter } from './events';
 import { Explorer } from './explorer';
 import { keyMapping } from './mappings';
+import { Rooter } from './rooter';
 import { compactI, currentBufnr, logger, supportedNvimFloating } from './util';
 
 export class ExplorerManager {
@@ -24,6 +25,7 @@ export class ExplorerManager {
   previousWindowID = new GlobalContextVars<number>('previousWindowID');
   maxExplorerID = 0;
   tabContainer: Record<number, TabContainer> = {};
+  // TODO: remove
   rootPathRecords: Set<string> = new Set();
   nvim = workspace.nvim;
   bufManager: BufManager;
@@ -273,7 +275,7 @@ export class ExplorerManager {
 
     const sourceWinid = (await this.nvim.call('win_getid')) as number;
     const sourceBufnr = await currentBufnr();
-    const rootPath = workspace.root;
+    const rooter = new Rooter(workspace.root);
 
     if (!explorer || !(await this.nvim.call('bufexists', [explorer.bufnr]))) {
       explorer = await Explorer.create(this, argValues, explorerConfig);
@@ -301,6 +303,6 @@ export class ExplorerManager {
     }
     await explorer.sourceWinid.set(sourceWinid);
     await explorer.sourceBufnr.set(sourceBufnr);
-    await explorer.open(args, rootPath, isFirst);
+    await explorer.open(args, rooter, isFirst);
   }
 }

@@ -9,6 +9,7 @@ import { input, prompt } from '.';
 import { execCmd } from './cli';
 import { isWindows } from './platform';
 import { trashCmd } from './trash';
+import minimatch from 'minimatch';
 
 export const fsOpen = promisify(fs.open);
 export const fsClose = promisify(fs.close);
@@ -204,6 +205,32 @@ export function readFileLines(
     });
     rl.on('error', reject);
   });
+}
+
+export async function inDirectory(
+  dir: string,
+  patterns: string[],
+): Promise<boolean> {
+  try {
+    const files = await fsReaddir(dir);
+    for (const pattern of patterns) {
+      // note, only '*' expanded
+      const isWildcard = pattern.includes('*');
+      const ret = isWildcard
+        ? minimatch.match(files, pattern, {
+            nobrace: true,
+            noext: true,
+            nocomment: true,
+            nonegate: true,
+            dot: true,
+          }).length !== 0
+        : files.includes(pattern);
+      if (ret) return true;
+    }
+  } catch {
+    // could be failed when without permission
+  }
+  return false;
 }
 
 export function displayedFullpath(s: string) {

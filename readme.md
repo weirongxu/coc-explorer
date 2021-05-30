@@ -161,6 +161,42 @@ Explorer root, default:
 - `getcwd()` when `buftype` is `nofile`
 - `workspace.rootPath`
 
+#### `--root-strategies <root-strategies>`
+
+Strategies for root uri, types `list of keep | workspace | cwd | sourceBuffer | reveal | custom:name`
+
+- `keep`: never change the root path
+- `workspace`: `workspace.root`
+- `cwd`: `getcwd()`
+- `sourceBuffer`: directory of buffer
+- `reveal`: directory of reveal path
+
+**Custom root patterns settings**
+
+```jsonc
+{
+  "explorer.root.customRules": {
+    "vcs": {
+      "pattern": [".git", ".hg", ".projections.json"]
+    },
+    "vcs-r": {
+      "pattern": [".git", ".hg", ".projections.json"],
+      "bottomUp": true
+    }
+  }
+}
+```
+
+**Using custom root patterns**
+
+```jsonc
+{
+  "explorer.root.strategies": ["workspace", "custom:vcs", "custom:vcs-r"]
+}
+```
+
+or `:CocCommand explorer --root-strategies workspace,custom:vcs,custom:vcs-r`
+
 #### `--preset <name>`
 
 Open explorer use presets
@@ -496,6 +532,25 @@ You can use `?` to view all actions of current source
 }
 ```
 
+### Custom root patterns
+
+Example
+
+```jsonc
+{
+  "explorer.root.customRules": {
+    "vcs": {
+      "pattern": [".git", ".hg", ".projections.json"]
+    },
+    "vcs-r": {
+      "pattern": [".git", ".hg", ".projections.json"],
+      "bottomUp": true
+    }
+  },
+  "explorer.root.strategies": ["workspace", "custom:vcs", "custom:vcs-r"]
+}
+```
+
 ## WIKI
 
 - https://github.com/weirongxu/coc-explorer/wiki
@@ -583,6 +638,10 @@ Type: <pre><code>string | {
 <details>
 <summary><code>PreviewActionStrategy</code>: PreviewActionStrategy.</summary>
 Type: <pre><code>'labeling' | 'content'</code></pre>
+</details>
+<details>
+<summary><code>RootStrategy</code>: RootStrategy.</summary>
+Type: <pre><code>'keep' | 'workspace' | 'cwd' | 'sourceBuffer' | 'reveal'</code></pre>
 </details>
 <strong>Properties</strong>
 <details>
@@ -903,6 +962,28 @@ Type: <pre><code>{
     "expand": true
   }
 ]</code></pre>
+</details>
+<details>
+<summary><code>explorer.root.strategies</code>: Strategies for root uri.</summary>
+Type: <pre><code>(RootStrategy | string)[]</code></pre>Default: <pre><code>[
+  "workspace",
+  "cwd",
+  "sourceBuffer",
+  "reveal"
+]</code></pre>
+</details>
+<details>
+<summary><code>explorer.root.customRules</code>: Patterns for root uri.</summary>
+Type: <pre><code>{
+    [k: string]: {
+        patterns: string[];
+        /**
+         * Search outward from the current buffer, default is false
+         */
+        bottomUp?: boolean;
+        [k: string]: unknown;
+    };
+}</code></pre>
 </details>
 <details>
 <summary><code>explorer.enableFloatinput</code>: Enable integrated with coc-floatinput.</summary>

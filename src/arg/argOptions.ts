@@ -8,13 +8,18 @@ import {
   ResolveArgValues,
   ParsedPosition,
 } from './parseArgs';
-import { OpenStrategy } from '../types';
+import { OpenStrategy, RootStrategyStr } from '../types';
 import { config } from '../config';
 import { Position } from '../types/pkg-config';
 
 export const argOptions = {
   rootUri: Args.registerOption<string>('root-uri', {
     position: 1,
+  }),
+  rootStrategies: Args.registerOption<RootStrategyStr[]>('root-strategies', {
+    parseArg: (originalStrategies) =>
+      originalStrategies.split(',') as RootStrategyStr[],
+    getDefault: () => config.get<RootStrategyStr[]>('root.strategies')!,
   }),
   toggle: Args.registerBoolOption(
     'toggle',

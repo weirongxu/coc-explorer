@@ -1,4 +1,5 @@
-import { Explorer, PreviewActionStrategy } from './pkg-config';
+import { Explorer, PreviewActionStrategy, RootStrategy } from './pkg-config';
+import { LiteralUnion } from 'type-fest';
 
 export const textobjTargetList = ['line', 'indent'] as const;
 
@@ -67,6 +68,16 @@ export const previewStrategyList: PreviewActionStrategy[] = [
   'labeling',
   'content',
 ];
+
+export const rootStrategyList: RootStrategy[] = [
+  'keep',
+  'workspace',
+  'cwd',
+  'sourceBuffer',
+  'reveal',
+];
+
+export type RootStrategyStr = LiteralUnion<RootStrategy, string>;
 
 export const searchOptionList = ['recursive', 'strict'] as const;
 

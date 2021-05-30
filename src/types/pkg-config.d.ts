@@ -18,6 +18,7 @@ export type MappingAction =
  * Strategy for preview action
  */
 export type PreviewActionStrategy = 'labeling' | 'content';
+export type RootStrategy = 'keep' | 'workspace' | 'cwd' | 'sourceBuffer' | 'reveal';
 
 export interface Explorer {
   /**
@@ -297,6 +298,23 @@ export interface Explorer {
     expand: boolean;
     [k: string]: unknown;
   }[];
+  /**
+   * Strategies for root uri
+   */
+  'explorer.root.strategies'?: (RootStrategy | string)[];
+  /**
+   * Patterns for root uri
+   */
+  'explorer.root.customRules'?: {
+    [k: string]: {
+      patterns: string[];
+      /**
+       * Search outward from the current buffer, default is false
+       */
+      bottomUp?: boolean;
+      [k: string]: unknown;
+    };
+  };
   /**
    * Enable integrated with coc-floatinput
    */

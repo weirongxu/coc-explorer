@@ -135,6 +135,22 @@
               "type": "boolean"
             }
           }
+        },
+        "root.strategy": {
+          "enum": [
+            "keep",
+            "workspace",
+            "cwd",
+            "sourceBuffer",
+            "reveal"
+          ],
+          "enumDescriptions": [
+            "Keep current root",
+            "Coc workspace root",
+            "Current working directory",
+            "Source buffer directory",
+            "Reveal file directory"
+          ]
         }
       },
       "type": "object",
@@ -612,6 +628,62 @@
             {
               "name": "file",
               "expand": true
+            }
+          ]
+        },
+        "explorer.root.strategies": {
+          "description": "Strategies for root uri",
+          "type": "array",
+          "items": {
+            "anyOf": [
+              {
+                "$ref": "#/definitions/root.strategy"
+              },
+              {
+                "type": "string",
+                "pattern": "custom:.+",
+                "description": "Custom strategy by name"
+              }
+            ]
+          },
+          "default": [
+            "workspace",
+            "cwd",
+            "sourceBuffer",
+            "reveal"
+          ]
+        },
+        "explorer.root.customRules": {
+          "description": "Patterns for root uri",
+          "type": "object",
+          "additionalProperties": {
+            "type": "object",
+            "properties": {
+              "patterns": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "bottomUp": {
+                "type": "boolean",
+                "description": "Search outward from the current buffer, default is false",
+                "default": false
+              }
+            },
+            "required": [
+              "patterns"
+            ]
+          },
+          "defaultSnippets": [
+            {
+              "vcs": {
+                "pattern": [
+                  ".git",
+                  ".hg",
+                  ".projections.json"
+                ]
+              }
             }
           ]
         },

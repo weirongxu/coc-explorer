@@ -1,4 +1,5 @@
 import { getExtensions } from '.';
+import { isParentFolder } from './path';
 
 test('getExtensions', () => {
   expect(getExtensions('test.png')).toEqual({
@@ -25,4 +26,11 @@ test('getExtensions', () => {
     extensions: ['js', 'ts', 'erb'],
     basename: '.temp',
   });
+});
+
+test('isParentFolder', () => {
+  expect(isParentFolder('/path', '/path/to/test.md')).toEqual(true);
+  expect(isParentFolder('/path/', '/path/to/test.md')).toEqual(true);
+  expect(isParentFolder('/path-test', '/path/to/test.md')).toEqual(false);
+  expect(isParentFolder('/path-test/', '/path/to/test.md')).toEqual(false);
 });

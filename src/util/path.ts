@@ -33,3 +33,15 @@ export function normalizePath(path: string): string {
   }
   return _path;
 }
+
+export function isParentFolder(folder: string, filepath: string): boolean {
+  let finalFolder = normalizePath(pathLib.resolve(folder));
+  const finalFilepath = normalizePath(pathLib.resolve(filepath));
+  if (finalFolder === '//') finalFolder = '/';
+  if (finalFolder.endsWith(pathLib.sep))
+    return finalFilepath.startsWith(finalFolder);
+  return (
+    finalFilepath.startsWith(finalFolder) &&
+    finalFilepath[finalFolder.length] === pathLib.sep
+  );
+}

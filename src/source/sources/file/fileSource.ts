@@ -32,6 +32,7 @@ import { ViewSource } from '../../../view/viewSource';
 import { startCocList } from '../../../lists/runner';
 import { Explorer } from '../../../types/pkg-config';
 import { internalHighlightGroups } from '../../../highlight/internalColors';
+import { RootStrategyStr } from '../../../types';
 
 export interface FileNode extends BaseTreeNode<FileNode, 'root' | 'child'> {
   name: string;
@@ -112,6 +113,7 @@ export class FileSource extends ExplorerSource<FileNode> {
     this,
     fileColumnRegistrar,
   );
+  rootStrategies: RootStrategyStr[] = [];
 
   get root() {
     return this.view.rootNode.fullpath;
@@ -209,7 +211,8 @@ export class FileSource extends ExplorerSource<FileNode> {
       await this.explorer.args.value(fileArgOptions.fileChildLabelingTemplate),
     );
 
-    this.root = this.explorer.rootUri;
+    this.root = this.explorer.root;
+    this.rootStrategies = this.explorer.argValues.rootStrategies;
   }
 
   async cd(fullpath: string) {
@@ -243,22 +246,9 @@ export class FileSource extends ExplorerSource<FileNode> {
     }
   }
 
-  async revealPath() {
-    const revealPath = await this.explorer.args.value(argOptions.reveal);
-    if (revealPath) {
-      return revealPath;
-    } else {
-      const bufnr = await this.explorer.sourceBufnrBySourceWinid();
-      if (bufnr) {
-        return this.bufManager.getBufferNode(bufnr)?.fullpath ?? undefined;
-      }
-      return;
-    }
-  }
-
   async openedNotifier(isFirst: boolean) {
     const args = this.explorer.args;
-    const revealPath = await this.revealPath();
+    const revealPath = await this.explorer.revealPath();
     if (!revealPath) {
       if (isFirst) {
         return this.locator.gotoRootNotifier({ col: 1 });

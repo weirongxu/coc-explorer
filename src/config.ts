@@ -1,8 +1,8 @@
 import { workspace, WorkspaceConfiguration } from 'coc.nvim';
-import { generateUri } from './util';
-import { ExpandOption, CollapseOption } from './types';
 import { OriginalActionExp } from './actions/types';
+import { CollapseOption, ExpandOption, RootStrategyStr } from './types';
 import { Explorer } from './types/pkg-config';
+import { generateUri } from './util';
 
 export const config = workspace.getConfiguration('explorer');
 
@@ -37,6 +37,10 @@ export interface ExplorerConfig {
   get(section: 'floating.border.chars'): string[];
   get(section: 'floating.border.title'): string;
   get(section: 'expandStores'): NonNullable<Explorer['explorer.expandStores']>;
+  get(section: 'root.strategies'): NonNullable<RootStrategyStr[]>;
+  get(
+    section: 'root.customRules',
+  ): NonNullable<Explorer['explorer.root.customRules']>;
   get<T = void>(section: string, defaultValue?: T): T;
 }
 

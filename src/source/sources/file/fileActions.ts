@@ -12,6 +12,7 @@ import {
   pasteFileTypeList,
   RevealStrategy,
   revealStrategyList,
+  rootStrategyList,
   SearchOption,
   searchOptionList,
 } from '../../../types';
@@ -25,6 +26,7 @@ import {
   fsTouch,
   fsTrash,
   input,
+  isParentFolder,
   isWindows,
   listDrive,
   logger,
@@ -59,9 +61,65 @@ export function loadFileActions(action: ActionSource<FileSource, FileNode>) {
     'change directory to parent directory',
   );
   action.addNodeAction(
+    'rootStrategies',
+    ({ args }) => {
+      const originalRootStrategies: string | undefined = args[0];
+      if (originalRootStrategies)
+        file.rootStrategies = originalRootStrategies.split(',');
+    },
+    'change root strategies',
+    {
+      args: [
+        {
+          name: 'root strategies',
+          description: `root strategies of ${rootStrategyList.join(' | ')}`,
+        },
+      ],
+      menus: {
+        'workspace,cwd,sourceBuffer,reveal': 'default',
+        keep: 'keep current root',
+      },
+    },
+  );
+  action.addNodeAction(
+    'resolveRoot',
+    async ({ args, node }) => {
+      const targetPath: string | undefined = args[0];
+      const root = await file.explorer.rooter?.resolveRoot(
+        targetPath,
+        file.rootStrategies,
+      );
+      if (root) await action.doAction('cd', node, [root]);
+    },
+    'resolve and change directory to root',
+    {
+      args: [
+        {
+          name: 'reveal path',
+          description: 'path string',
+        },
+      ],
+      menus: {
+        path: {
+          description: 'use custom path',
+          args: '<reveal-path>',
+          async actionArgs() {
+            return [
+              await input(
+                'input a reveal path:',
+                file.view.currentNode()?.fullpath ?? '',
+                'file',
+              ),
+            ];
+          },
+        },
+      },
+    },
+  );
+  action.addNodeAction(
     'reveal',
-    async ({ args }) => {
-      const target = args[0];
+    async ({ node, args }) => {
+      const target: string | undefined = args[0];
       let targetBufnr: number | undefined;
       let targetPath: string | undefined;
       if (/\d+/.test(target)) {
@@ -121,6 +179,10 @@ export function loadFileActions(action: ActionSource<FileSource, FileNode>) {
 
       if (!targetPath) {
         return;
+      }
+
+      if (!isParentFolder(file.root, targetPath)) {
+        await action.doAction('resolveRoot', node, [targetPath]);
       }
 
       const expandOptions = args[1] ?? '';

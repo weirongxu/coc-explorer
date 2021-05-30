@@ -15,7 +15,6 @@
     "guard-for-in": "error",
     "comma-dangle": ["error", "always-multiline"],
     "quotes": ["error", "single", { "avoidEscape": true }],
-    "curly": ["error", "all"],
     "eqeqeq": ["error", "always", { "null": "ignore" }],
     "prefer-const": [
       "error",

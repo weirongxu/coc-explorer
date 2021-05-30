@@ -99,7 +99,7 @@ export class BookmarkSource extends ExplorerSource<BookmarkNode> {
       ),
     );
 
-    this.view.rootNode.fullpath = this.explorer.rootUri;
+    this.view.rootNode.fullpath = this.explorer.root;
   }
 
   async loadChildren(parentNode: BookmarkNode) {
