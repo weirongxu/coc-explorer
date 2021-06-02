@@ -163,7 +163,7 @@ Explorer root, default:
 
 #### `--root-strategies <root-strategies>`
 
-Strategies for root uri, types `list of keep | workspace | cwd | sourceBuffer | reveal | custom:name`
+Strategies for root uri, types `list of (keep | workspace | cwd | sourceBuffer | reveal | custom:name)`
 
 - `keep`: never change the root path
 - `workspace`: `workspace.root`
