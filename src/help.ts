@@ -295,7 +295,7 @@ export class HelpPainter {
         hl: helpHightlights.title,
       });
     });
-    const allColumns = this.source.sourcePainters.columnRegistrar
+    const allColumns = this.source.view.sourcePainters.columnRegistrar
       .registeredColumns;
     for (const [type, columns] of allColumns) {
       await this.drawRow((row) => {
@@ -366,10 +366,12 @@ export async function showHelp(
         async () => {
           disposeAll(disposables);
           await quitHelp(explorer);
-          await Notifier.runAll([
-            await explorer.renderAllNotifier(),
-            await source.locator.gotoNodeNotifier(storeNode),
-          ]);
+          await explorer.view.sync(async (r) => {
+            await Notifier.runAll([
+              await r.renderAllNotifier(),
+              await source.locator.gotoNodeNotifier(storeNode),
+            ]);
+          });
         },
         true,
       ),

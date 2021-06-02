@@ -1,5 +1,5 @@
 import { throttlePromise, debouncePromise } from './throttleDebounce';
-import { delay } from './async';
+import { sleep } from './async';
 
 describe('throttlePromise', () => {
   test('leading & trailing', async () => {
@@ -18,7 +18,7 @@ describe('throttlePromise', () => {
     void fn();
     void fn();
     expect(sentCount).toEqual(1);
-    await delay(105);
+    await sleep(105);
     expect(sentCount).toEqual(2);
   });
 
@@ -37,11 +37,11 @@ describe('throttlePromise', () => {
     void fn();
     void fn();
     expect(sentCount).toEqual(1);
-    await delay(105);
+    await sleep(105);
     expect(sentCount).toEqual(1);
     void fn();
     expect(sentCount).toEqual(2);
-    await delay(105);
+    await sleep(105);
     expect(sentCount).toEqual(2);
   });
 
@@ -60,11 +60,11 @@ describe('throttlePromise', () => {
     void fn();
     void fn();
     expect(sentCount).toEqual(0);
-    await delay(105);
+    await sleep(105);
     expect(sentCount).toEqual(1);
     void fn();
     expect(sentCount).toEqual(1);
-    await delay(105);
+    await sleep(105);
     expect(sentCount).toEqual(2);
   });
 });
@@ -83,27 +83,27 @@ describe('debounce', () => {
     void fn();
     void fn();
     void fn();
-    await delay(50);
+    await sleep(50);
     void fn();
-    await delay(50);
+    await sleep(50);
     expect(mockFn).toHaveBeenCalledTimes(0);
-    await delay(480);
+    await sleep(480);
     expect(mockFn).toHaveBeenCalledTimes(1);
 
     void fn();
-    await delay(100);
+    await sleep(100);
     expect(mockFn).toHaveBeenCalledTimes(1);
     void fn();
-    await delay(100);
+    await sleep(100);
     expect(mockFn).toHaveBeenCalledTimes(1);
-    await delay(430);
+    await sleep(430);
     expect(mockFn).toHaveBeenCalledTimes(2);
 
-    await delay(1000);
+    await sleep(1000);
     expect(mockFn).toHaveBeenCalledTimes(2);
 
     void fn();
-    await delay(510);
+    await sleep(510);
     expect(mockFn).toHaveBeenCalledTimes(3);
   });
 });

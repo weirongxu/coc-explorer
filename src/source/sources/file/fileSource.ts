@@ -22,7 +22,6 @@ import {
 import { hlGroupManager } from '../../../highlight/manager';
 import { BaseTreeNode, ExplorerSource } from '../../source';
 import { sourceManager } from '../../sourceManager';
-import { SourcePainters } from '../../sourcePainters';
 import { fileArgOptions } from './argOptions';
 import { loadFileActions } from './fileActions';
 import { fileColumnRegistrar } from './fileColumnRegistrar';
@@ -33,6 +32,7 @@ import { startCocList } from '../../../lists/runner';
 import { Explorer } from '../../../types/pkg-config';
 import { internalHighlightGroups } from '../../../highlight/internalColors';
 import { RootStrategyStr } from '../../../types';
+import { RendererSource } from '../../../view/rendererSource';
 
 export interface FileNode extends BaseTreeNode<FileNode, 'root' | 'child'> {
   name: string;
@@ -93,25 +93,25 @@ export class FileSource extends ExplorerSource<FileNode> {
   showOnlyGitChange: boolean = false;
   copiedNodes: Set<FileNode> = new Set();
   cutNodes: Set<FileNode> = new Set();
-  view: ViewSource<FileNode> = new ViewSource<FileNode>(this, {
-    type: 'root',
-    isRoot: true,
-    uid: this.helper.getUid(pathLib.sep),
-    name: 'root',
-    fullpath: homedir(),
-    expandable: true,
-    directory: true,
-    readonly: true,
-    executable: false,
-    readable: true,
-    writable: true,
-    hidden: false,
-    symbolicLink: true,
-    lstat: undefined,
-  });
-  sourcePainters: SourcePainters<FileNode> = new SourcePainters<FileNode>(
+  view: ViewSource<FileNode> = new ViewSource<FileNode>(
     this,
     fileColumnRegistrar,
+    {
+      type: 'root',
+      isRoot: true,
+      uid: this.helper.getUid(pathLib.sep),
+      name: 'root',
+      fullpath: homedir(),
+      expandable: true,
+      directory: true,
+      readonly: true,
+      executable: false,
+      readable: true,
+      writable: true,
+      hidden: false,
+      symbolicLink: true,
+      lstat: undefined,
+    },
   );
   rootStrategies: RootStrategyStr[] = [];
 
@@ -173,16 +173,19 @@ export class FileSource extends ExplorerSource<FileNode> {
             if (this.explorer.isFloating) {
               return;
             }
-            const fullpath = this.bufManager.getBufferNode(bufnr)?.fullpath;
-            if (!fullpath) {
-              return;
-            }
-            const [revealNode, notifiers] = await this.revealNodeByPathNotifier(
-              fullpath,
-            );
-            if (revealNode) {
-              await Notifier.runAll(notifiers);
-            }
+            await this.view.sync(async (r) => {
+              const fullpath = this.bufManager.getBufferNode(bufnr)?.fullpath;
+              if (!fullpath) {
+                return;
+              }
+              const [
+                revealNode,
+                notifiers,
+              ] = await this.revealNodeByPathNotifier(r, fullpath);
+              if (revealNode) {
+                await Notifier.runAll(notifiers);
+              }
+            });
           }, 200),
         );
       }
@@ -199,13 +202,13 @@ export class FileSource extends ExplorerSource<FileNode> {
   }
 
   async open() {
-    await this.sourcePainters.parseTemplate(
+    await this.view.parseTemplate(
       'root',
       await this.explorer.args.value(fileArgOptions.fileRootTemplate),
       await this.explorer.args.value(fileArgOptions.fileRootLabelingTemplate),
     );
 
-    await this.sourcePainters.parseTemplate(
+    await this.view.parseTemplate(
       'child',
       await this.explorer.args.value(fileArgOptions.fileChildTemplate),
       await this.explorer.args.value(fileArgOptions.fileChildLabelingTemplate),
@@ -246,7 +249,7 @@ export class FileSource extends ExplorerSource<FileNode> {
     }
   }
 
-  async openedNotifier(isFirst: boolean) {
+  async openedNotifier(renderer: RendererSource<FileNode>, isFirst: boolean) {
     const args = this.explorer.args;
     const revealPath = await this.explorer.revealPath();
     if (!revealPath) {
@@ -264,6 +267,7 @@ export class FileSource extends ExplorerSource<FileNode> {
       hasRevealPath
     ) {
       const [revealNode, notifiers] = await this.revealNodeByPathNotifier(
+        renderer,
         revealPath,
       );
       if (revealNode !== undefined) {
@@ -312,10 +316,13 @@ export class FileSource extends ExplorerSource<FileNode> {
         recursive,
         revealCallback: async (loc) => {
           await task.waitExplorerShow();
-          const [, notifiers] = await this.revealNodeByPathNotifier(
-            Uri.parse(loc.uri).fsPath,
-          );
-          await Notifier.runAll(notifiers);
+          await this.view.sync(async (r) => {
+            const [, notifiers] = await this.revealNodeByPathNotifier(
+              r,
+              Uri.parse(loc.uri).fsPath,
+            );
+            await Notifier.runAll(notifiers);
+          });
         },
       },
       listArgs,
@@ -324,6 +331,7 @@ export class FileSource extends ExplorerSource<FileNode> {
   }
 
   async revealNodeByPathNotifier(
+    renderer: RendererSource<FileNode>,
     path: string,
     {
       startNode = this.view.rootNode,
@@ -383,7 +391,7 @@ export class FileSource extends ExplorerSource<FileNode> {
         }
         if (foundNode) {
           if (isRender) {
-            const renderNotifier = await this.view.renderNotifier({
+            const renderNotifier = await renderer.renderNotifier({
               node: startNode,
             });
             if (renderNotifier) {

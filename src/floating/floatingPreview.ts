@@ -189,7 +189,7 @@ export class FloatingPreview implements Disposable {
     this.registerAction('labeling', async ({ source, node, nodeIndex }) => {
       const drawnList:
         | Drawn[]
-        | undefined = await source.sourcePainters?.drawNodeLabeling(
+        | undefined = await source.view.sourcePainters?.drawNodeLabeling(
         node,
         nodeIndex,
       );

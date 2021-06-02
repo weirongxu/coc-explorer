@@ -1,9 +1,8 @@
 import pathLib from 'path';
+import { Args } from '../../arg/parseArgs';
 import { buildExplorerConfig, configLocal } from '../../config';
 import { Explorer } from '../../explorer';
 import { ExplorerManager } from '../../explorerManager';
-import { Args } from '../../arg/parseArgs';
-import { argOptions } from '../../arg/argOptions';
 import { ExplorerSource } from '../../source/source';
 
 export function getExplorer() {

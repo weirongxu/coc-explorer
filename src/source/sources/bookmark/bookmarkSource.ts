@@ -5,7 +5,6 @@ import { debounce, fsExists, normalizePath } from '../../../util';
 import { hlGroupManager } from '../../../highlight/manager';
 import { BaseTreeNode, ExplorerSource } from '../../source';
 import { sourceManager } from '../../sourceManager';
-import { SourcePainters } from '../../sourcePainters';
 import { bookmarkArgOptions } from './argOptions';
 import { bookmarkColumnRegistrar } from './bookmarkColumnRegistrar';
 import './load';
@@ -53,20 +52,20 @@ export const bookmarkHighlights = {
 };
 
 export class BookmarkSource extends ExplorerSource<BookmarkNode> {
-  view: ViewSource<BookmarkNode> = new ViewSource<BookmarkNode>(this, {
-    type: 'root',
-    isRoot: true,
-    expandable: true,
-    uid: this.helper.getUid('0'),
-    name: '',
-    fullpath: '',
-    lnum: -1,
-    line: '',
-    annotation: undefined,
-  });
-  sourcePainters: SourcePainters<BookmarkNode> = new SourcePainters<BookmarkNode>(
+  view: ViewSource<BookmarkNode> = new ViewSource<BookmarkNode>(
     this,
     bookmarkColumnRegistrar,
+    {
+      type: 'root',
+      isRoot: true,
+      expandable: true,
+      uid: this.helper.getUid('0'),
+      name: '',
+      fullpath: '',
+      lnum: -1,
+      line: '',
+      annotation: undefined,
+    },
   );
 
   static get enabled(): boolean | Promise<boolean> {
@@ -87,11 +86,11 @@ export class BookmarkSource extends ExplorerSource<BookmarkNode> {
   }
 
   async open() {
-    await this.sourcePainters.parseTemplate(
+    await this.view.parseTemplate(
       'root',
       await this.explorer.args.value(bookmarkArgOptions.bookmarkRootTemplate),
     );
-    await this.sourcePainters.parseTemplate(
+    await this.view.parseTemplate(
       'child',
       await this.explorer.args.value(bookmarkArgOptions.bookmarkChildTemplate),
       await this.explorer.args.value(

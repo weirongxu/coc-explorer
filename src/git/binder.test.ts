@@ -8,6 +8,7 @@ import type {
 } from '../source/source';
 import { FileNode, FileSource } from '../source/sources/file/fileSource';
 import { normalizePath } from '../util';
+import { rendererSourceSymbol } from '../view/rendererSource';
 import { FileSourceHelper } from '../__test__/helpers/fileSource';
 import { bootSource } from '../__test__/helpers/helper';
 import { GitBinder } from './binder';
@@ -78,25 +79,29 @@ test('GitBinder.reload', async () => {
 
   const renderPaths = new Set<string>();
 
-  Object.defineProperty(source.view, 'renderNodesNotifier', {
-    writable: true,
-    value: jest
-      .fn()
-      .mockImplementation(
-        (nodes: SourceOptions.RenderNodes<BaseTreeNode<any>>) => {
-          [...nodes].forEach((node) => {
-            if ('uid' in node) {
-              renderPaths.add(node.fullpath!);
-            } else {
-              for (const n of node.nodes) {
-                renderPaths.add(n.fullpath!);
+  Object.defineProperty(
+    source.view[rendererSourceSymbol],
+    'renderNodesNotifier',
+    {
+      writable: true,
+      value: jest
+        .fn()
+        .mockImplementation(
+          (nodes: SourceOptions.RenderNodes<BaseTreeNode<any>>) => {
+            [...nodes].forEach((node) => {
+              if ('uid' in node) {
+                renderPaths.add(node.fullpath!);
+              } else {
+                for (const n of node.nodes) {
+                  renderPaths.add(n.fullpath!);
+                }
               }
-            }
-          });
-          return Notifier.noop();
-        },
-      ),
-  });
+            });
+            return Notifier.noop();
+          },
+        ),
+    },
+  );
 
   Object.defineProperty(gitManager, 'getGitRoot', {
     writable: true,

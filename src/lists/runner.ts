@@ -14,7 +14,7 @@ import {
   workspace,
 } from 'coc.nvim';
 import type { Explorer } from '../explorer';
-import { delay, winnrByBufnr } from '../util';
+import { sleep, winnrByBufnr } from '../util';
 
 interface ExplListItem<Data> extends ListItem {
   data: Data;
@@ -144,7 +144,7 @@ export async function startCocList<Arg, Data>(
         eventDisposable.dispose();
 
         if (explorer.isFloating && !isExplorerShown) {
-          await delay(200);
+          await sleep(200);
           await explorer.show();
           shownExplorerEmitter.fire();
         }

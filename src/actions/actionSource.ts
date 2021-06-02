@@ -48,7 +48,7 @@ export class ActionSource<
   ) {
     const mode = options.mode ?? 'n';
     const isSubAction = options.isSubAction ?? false;
-    let release: undefined | (() => void);
+    let waitRelease: undefined | (() => void);
 
     const subOptions = {
       mode: mode,
@@ -65,10 +65,10 @@ export class ActionSource<
           }
 
           if (action.name === waitAction.name) {
-            if (release || isSubAction) {
+            if (waitRelease || isSubAction) {
               continue;
             }
-            release = await this.global.actionMutex.acquire();
+            waitRelease = await this.global.waitActionMutex.acquire();
             continue;
           }
 
@@ -98,7 +98,7 @@ export class ActionSource<
     } catch (error) {
       throw error;
     } finally {
-      release?.();
+      waitRelease?.();
     }
   }
 

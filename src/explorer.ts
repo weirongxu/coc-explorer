@@ -36,6 +36,7 @@ import {
   winidByWinnr,
   winnrByBufnr,
 } from './util';
+import { RendererExplorer } from './view/rendererExplorer';
 import { ViewExplorer } from './view/viewExplorer';
 
 export class Explorer implements Disposable {
@@ -429,23 +430,27 @@ export class Explorer implements Disposable {
       await source.bootOpen(isFirst);
     }
 
-    const notifiers: Notifier[] = [];
-    if (sourcesChanged) {
-      notifiers.push(this.clearLinesNotifier());
-    }
-    notifiers.push(
-      await this.loadAllNotifier(),
-      ...(await Promise.all(
-        this.sources.map((s) => s.openedNotifier(isFirst)),
-      )),
-    );
-    await Notifier.runAll(notifiers);
+    await this.view.sync(async (r) => {
+      const notifiers: Notifier[] = [];
+      if (sourcesChanged) {
+        notifiers.push(this.clearLinesNotifier());
+      }
+      notifiers.push(
+        await this.loadAllNotifier(r),
+        ...(await Promise.all(
+          r
+            .rendererSources()
+            .map((rs) => rs.source.openedNotifier(rs, isFirst)),
+        )),
+      );
+      await Notifier.runAll(notifiers);
 
-    await doUserAutocmd('CocExplorerOpenPost');
-    await this.events.fire('open-post');
-    if (firstOpen) {
-      await this.events.fire('first-open-post');
-    }
+      await doUserAutocmd('CocExplorerOpenPost');
+      await this.events.fire('open-post');
+      if (firstOpen) {
+        await this.events.fire('first-open-post');
+      }
+    });
   }
 
   async tryQuitOnOpenNotifier() {
@@ -527,7 +532,6 @@ export class Explorer implements Disposable {
     this.args_ = args;
     this.argValues_ = await args.values(argOptions);
     await this.initRoot(this.argValues_, rooter);
-    this.explorerManager.rootPathRecords.add(this.root);
 
     const argSources = await args.value(argOptions.sources);
     if (!argSources) {
@@ -644,24 +648,18 @@ export class Explorer implements Disposable {
     return this.setLinesNotifier([], 0, -1);
   }
 
-  async loadAllNotifier({ render = true } = {}) {
+  async loadAllNotifier(renderer: RendererExplorer, { render = true } = {}) {
     this.locator.mark.removeAll();
     const notifiers = await Promise.all(
-      this.sources.map((source) =>
-        source.loadNotifier(source.view.rootNode, { render: false }),
-      ),
+      renderer
+        .rendererSources()
+        .map((r) =>
+          r.source.loadNotifier(r, r.view.rootNode, { render: false }),
+        ),
     );
     if (render) {
-      notifiers.push(await this.renderAllNotifier());
+      notifiers.push(await renderer.renderAllNotifier());
     }
-    return Notifier.combine(notifiers);
-  }
-
-  async renderAllNotifier() {
-    const notifiers = await Promise.all(
-      this.sources.map((s) => s.view.renderNotifier({ force: true })),
-    );
-
     return Notifier.combine(notifiers);
   }
 

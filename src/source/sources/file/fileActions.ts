@@ -177,25 +177,28 @@ export function loadFileActions(action: ActionSource<FileSource, FileNode>) {
         targetPath = bufinfo[0].name;
       }
 
-      if (!targetPath) {
-        return;
-      }
+      await file.view.sync(async (r) => {
+        if (!targetPath) {
+          return;
+        }
 
-      if (!isParentFolder(file.root, targetPath)) {
-        await action.doAction('resolveRoot', node, [targetPath]);
-      }
+        if (!isParentFolder(file.root, targetPath)) {
+          await action.doAction('resolveRoot', node, [targetPath]);
+        }
 
-      const expandOptions = args[1] ?? '';
-      const compact = expandOptions.includes('compact') || undefined;
-      const [revealNode, notifiers] = await file.revealNodeByPathNotifier(
-        targetPath,
-        {
-          compact,
-        },
-      );
-      if (revealNode) {
-        await Notifier.runAll(notifiers);
-      }
+        const expandOptions = args[1] ?? '';
+        const compact = expandOptions.includes('compact') || undefined;
+        const [revealNode, notifiers] = await file.revealNodeByPathNotifier(
+          r,
+          targetPath,
+          {
+            compact,
+          },
+        );
+        if (revealNode) {
+          await Notifier.runAll(notifiers);
+        }
+      });
     },
     'reveal buffer in explorer',
     {
@@ -535,12 +538,18 @@ export function loadFileActions(action: ActionSource<FileSource, FileNode>) {
           await fsTouch(target);
         },
       );
-      const loadNode = putTargetNode.parent ?? putTargetNode;
-      const reloadNotifier = await file.loadNotifier(loadNode);
-      const [, notifiers] = await file.revealNodeByPathNotifier(targetPath, {
-        startNode: loadNode,
+      await file.view.sync(async (r) => {
+        const loadNode = putTargetNode.parent ?? putTargetNode;
+        const reloadNotifier = await file.loadNotifier(r, loadNode);
+        const [, notifiers] = await file.revealNodeByPathNotifier(
+          r,
+          targetPath,
+          {
+            startNode: loadNode,
+          },
+        );
+        await Notifier.runAll([reloadNotifier, ...notifiers]);
       });
-      await Notifier.runAll([reloadNotifier, ...notifiers]);
     },
     'add a new file',
   );
@@ -567,16 +576,20 @@ export function loadFileActions(action: ActionSource<FileSource, FileNode>) {
           await fsMkdirp(target);
         },
       );
-      const reloadNotifier = await file.loadNotifier(
-        putTargetNode.parent ?? putTargetNode,
-      );
-      const [, revealNotifiers] = await file.revealNodeByPathNotifier(
-        targetPath,
-        {
-          startNode: putTargetNode,
-        },
-      );
-      await Notifier.runAll([reloadNotifier, ...revealNotifiers]);
+      await file.view.sync(async (r) => {
+        const reloadNotifier = await file.loadNotifier(
+          r,
+          putTargetNode.parent ?? putTargetNode,
+        );
+        const [, revealNotifiers] = await file.revealNodeByPathNotifier(
+          r,
+          targetPath,
+          {
+            startNode: putTargetNode,
+          },
+        );
+        await Notifier.runAll([reloadNotifier, ...revealNotifiers]);
+      });
     },
     'add a new directory',
   );
@@ -704,14 +717,16 @@ export function loadFileActions(action: ActionSource<FileSource, FileNode>) {
     'toggleOnlyGitChange',
     async () => {
       file.showOnlyGitChange = !file.showOnlyGitChange;
-      const loadNotifier = await file.loadNotifier(file.view.rootNode, {
-        force: true,
-      });
+      await file.view.sync(async (r) => {
+        const loadNotifier = await file.loadNotifier(r, file.view.rootNode, {
+          force: true,
+        });
 
-      nvim.pauseNotification();
-      file.highlight.clearHighlightsNotify();
-      loadNotifier?.notify();
-      await nvim.resumeNotification();
+        nvim.pauseNotification();
+        file.highlight.clearHighlightsNotify();
+        loadNotifier?.notify();
+        await nvim.resumeNotification();
+      });
     },
     'toggle visibility of git change node',
     { reload: true },

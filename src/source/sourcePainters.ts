@@ -201,7 +201,7 @@ export class SourcePainters<
     }
   }
 
-  async beforeDraw<T = undefined, R = undefined, A = undefined>(
+  async drawPre<T = undefined, R = undefined, A = undefined>(
     nodes: TreeNode[],
     {
       draw,

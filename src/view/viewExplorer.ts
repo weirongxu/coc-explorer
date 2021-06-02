@@ -1,13 +1,21 @@
-import { Mutex } from 'await-semaphore';
+import { Notifier } from 'coc-helper';
 import { Explorer } from '../explorer';
 import { BaseTreeNode, ExplorerSource } from '../source/source';
+import { RendererExplorer, rendererExplorerSymbol } from './rendererExplorer';
 
 export class ViewExplorer {
   isHelpUI: boolean = false;
   currentLineIndex = 0;
-  renderMutex = new Mutex();
 
-  constructor(public readonly explorer: Explorer) {}
+  [rendererExplorerSymbol]: RendererExplorer;
+
+  constructor(public readonly explorer: Explorer) {
+    this[rendererExplorerSymbol] = new RendererExplorer(this);
+  }
+
+  async sync<T>(block: (renderer: RendererExplorer) => Promise<T>) {
+    return await block(this[rendererExplorerSymbol]);
+  }
 
   get flattenedNodes() {
     return this.explorer.sources.reduce<BaseTreeNode<any>[]>((ret, cur) => {
@@ -46,5 +54,15 @@ export class ViewExplorer {
         | BaseTreeNode<any, string>
         | undefined;
     }
+  }
+
+  async emitRequestRenderNodes() {
+    await this.sync(async (r) => {
+      const notifiers = await Promise.all(
+        r.rendererSources().map((s) => s.emitRequestRenderNodesNotifier()),
+      );
+
+      await Notifier.runAll(notifiers);
+    });
   }
 }

@@ -1,6 +1,5 @@
 import { Mutex } from 'await-semaphore';
-import { Notifier } from 'coc-helper';
-import { window, workspace } from 'coc.nvim';
+import { window } from 'coc.nvim';
 import { Explorer } from '../explorer';
 import { keyMapping } from '../mappings';
 import { BaseTreeNode, ExplorerSource } from '../source/source';
@@ -13,7 +12,7 @@ export class ActionExplorer extends ActionRegistrar<
   Explorer,
   BaseTreeNode<any>
 > {
-  readonly actionMutex = new Mutex();
+  readonly waitActionMutex = new Mutex();
   readonly explorer = this.owner;
   get locator() {
     return this.explorer.locator;
@@ -41,12 +40,7 @@ export class ActionExplorer extends ActionRegistrar<
         }
       }
     }
-    const notifiers = await Promise.all(
-      this.explorer.sources.map((source) =>
-        source.view.emitRequestRenderNodesNotifier(),
-      ),
-    );
-    await Notifier.runAll(notifiers);
+    await this.explorer.view.emitRequestRenderNodes();
   }
 
   async doActionExp(

@@ -6,8 +6,8 @@ import { Explorer } from '../explorer';
 import { HighlightSource } from '../highlight/highlightSource';
 import { LocatorSource } from '../locator/locatorSource';
 import { generateUri, logger } from '../util';
+import { RendererSource } from '../view/rendererSource';
 import { ViewSource } from '../view/viewSource';
-import { SourcePainters } from './sourcePainters';
 
 export namespace SourceOptions {
   export interface Force {
@@ -130,7 +130,6 @@ export type ExplorerSourceClass = Class<ExplorerSource<any>> & {
 
 export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>>
   implements Disposable {
-  abstract sourcePainters: SourcePainters<TreeNode>;
   abstract view: ViewSource<TreeNode>;
   width: number = 0;
   showHidden: boolean = false;
@@ -146,8 +145,9 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>>
   highlight: HighlightSource;
   locator = new LocatorSource(this);
 
-  private isDisposed: boolean = false;
   protected disposables: Disposable[] = [];
+
+  private isDisposed: boolean = false;
 
   get root() {
     return workspace.cwd;
@@ -198,7 +198,7 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>>
 
   dispose() {
     this.isDisposed = true;
-    this.sourcePainters.dispose();
+    this.view.dispose();
     this.disposables.forEach((s) => s.dispose());
   }
 
@@ -221,7 +221,10 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>>
 
   protected abstract open(isFirst: boolean): Promise<void>;
 
-  async openedNotifier(_isFirst: boolean): Promise<Notifier> {
+  async openedNotifier(
+    renderer: RendererSource<TreeNode>,
+    _isFirst: boolean,
+  ): Promise<Notifier> {
     return Notifier.noop();
   }
 
@@ -267,10 +270,16 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>>
   }
 
   async load(node: TreeNode, options?: { render?: boolean; force?: boolean }) {
-    return (await this.loadNotifier(node, options)).run();
+    await this.view.sync(async (r) => {
+      return (await this.loadNotifier(r, node, options)).run();
+    });
   }
 
-  async loadNotifier(node: TreeNode, { render = true, force = false } = {}) {
+  async loadNotifier(
+    renderer: RendererSource<TreeNode>,
+    node: TreeNode,
+    { render = true, force = false } = {},
+  ) {
     if (this.isDisposed) {
       return Notifier.noop();
     }
@@ -285,9 +294,9 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>>
       node.children = undefined;
     }
     await this.events.fire('loaded', node);
-    await this.sourcePainters.load(node);
+    await this.view.load(node);
     if (render) {
-      return this.view.renderNotifier({ node: node, force });
+      return renderer.renderNotifier({ node: node, force });
     }
     return Notifier.noop();
   }

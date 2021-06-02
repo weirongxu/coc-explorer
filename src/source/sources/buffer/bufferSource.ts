@@ -5,7 +5,6 @@ import { sourceManager } from '../../sourceManager';
 import { bufferColumnRegistrar } from './bufferColumnRegistrar';
 import './load';
 import { loadBufferActions } from './bufferActions';
-import { SourcePainters } from '../../sourcePainters';
 import { bufferArgOptions } from './argOptions';
 import { ViewSource } from '../../../view/viewSource';
 
@@ -43,30 +42,30 @@ export const bufferHighlights = {
 
 export class BufferSource extends ExplorerSource<BufferNode> {
   showHidden: boolean = this.config.get<boolean>('file.showHiddenBuffers')!;
-  view: ViewSource<BufferNode> = new ViewSource<BufferNode>(this, {
-    type: 'root',
-    isRoot: true,
-    expandable: true,
-    uid: this.helper.getUid('0'),
-    bufnr: 0,
-    bufnrStr: '0',
-    bufname: '',
-    fullpath: '',
-    name: '',
-    unlisted: true,
-    current: false,
-    previous: false,
-    visible: false,
-    hidden: false,
-    modifiable: false,
-    readonly: true,
-    terminal: false,
-    modified: false,
-    readErrors: false,
-  });
-  sourcePainters: SourcePainters<BufferNode> = new SourcePainters<BufferNode>(
+  view: ViewSource<BufferNode> = new ViewSource<BufferNode>(
     this,
     bufferColumnRegistrar,
+    {
+      type: 'root',
+      isRoot: true,
+      expandable: true,
+      uid: this.helper.getUid('0'),
+      bufnr: 0,
+      bufnrStr: '0',
+      bufname: '',
+      fullpath: '',
+      name: '',
+      unlisted: true,
+      current: false,
+      previous: false,
+      visible: false,
+      hidden: false,
+      modifiable: false,
+      readonly: true,
+      terminal: false,
+      modified: false,
+      readErrors: false,
+    },
   );
 
   async init() {
@@ -95,11 +94,11 @@ export class BufferSource extends ExplorerSource<BufferNode> {
   }
 
   async open() {
-    await this.sourcePainters.parseTemplate(
+    await this.view.parseTemplate(
       'root',
       await this.explorer.args.value(bufferArgOptions.bufferRootTemplate),
     );
-    await this.sourcePainters.parseTemplate(
+    await this.view.parseTemplate(
       'child',
       await this.explorer.args.value(bufferArgOptions.bufferChildTemplate),
       await this.explorer.args.value(

@@ -25,8 +25,6 @@ export class ExplorerManager {
   previousWindowID = new GlobalContextVars<number>('previousWindowID');
   maxExplorerID = 0;
   tabContainer: Record<number, TabContainer> = {};
-  // TODO: remove
-  rootPathRecords: Set<string> = new Set();
   nvim = workspace.nvim;
   bufManager: BufManager;
 

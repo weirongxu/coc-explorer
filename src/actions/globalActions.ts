@@ -634,14 +634,20 @@ export function loadGlobalActions(action: ActionExplorer) {
     async ({ source }) => {
       source.selectedNodes.clear();
 
-      const loadNotifier = await source.loadNotifier(source.view.rootNode, {
-        force: true,
-      });
+      await source.view.sync(async (r) => {
+        const loadNotifier = await source.loadNotifier(
+          r,
+          source.view.rootNode,
+          {
+            force: true,
+          },
+        );
 
-      nvim.pauseNotification();
-      source.highlight.clearHighlightsNotify();
-      loadNotifier?.notify();
-      await nvim.resumeNotification();
+        nvim.pauseNotification();
+        source.highlight.clearHighlightsNotify();
+        loadNotifier?.notify();
+        await nvim.resumeNotification();
+      });
     },
     'refresh',
   );

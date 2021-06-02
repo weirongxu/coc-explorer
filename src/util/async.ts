@@ -1,4 +1,4 @@
-export const delay = (ms: number) => {
+export const sleep = (ms: number) => {
   return new Promise((resolve) => {
     setTimeout(resolve, ms);
   });
@@ -9,3 +9,5 @@ export const nextTick = () => {
     process.nextTick(resolve);
   });
 };
+
+export const timeoutPromise = () => {};
