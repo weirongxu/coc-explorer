@@ -177,10 +177,10 @@ Strategies for root uri, types `list of (keep | workspace | cwd | sourceBuffer |
 {
   "explorer.root.customRules": {
     "vcs": {
-      "pattern": [".git", ".hg", ".projections.json"]
+      "patterns": [".git", ".hg", ".projections.json"]
     },
     "vcs-r": {
-      "pattern": [".git", ".hg", ".projections.json"],
+      "patterns": [".git", ".hg", ".projections.json"],
       "bottomUp": true
     }
   }
@@ -529,25 +529,6 @@ You can use `?` to view all actions of current source
     "<<": "gitStage",
     ">>": "gitUnstage"
   }
-}
-```
-
-### Custom root patterns
-
-Example
-
-```jsonc
-{
-  "explorer.root.customRules": {
-    "vcs": {
-      "pattern": [".git", ".hg", ".projections.json"]
-    },
-    "vcs-r": {
-      "pattern": [".git", ".hg", ".projections.json"],
-      "bottomUp": true
-    }
-  },
-  "explorer.root.strategies": ["workspace", "custom:vcs", "custom:vcs-r"]
 }
 ```
 

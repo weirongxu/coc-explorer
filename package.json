@@ -678,7 +678,7 @@
           "defaultSnippets": [
             {
               "vcs": {
-                "pattern": [
+                "patterns": [
                   ".git",
                   ".hg",
                   ".projections.json"
