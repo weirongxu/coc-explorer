@@ -286,7 +286,7 @@ export class ViewSource<
           }
           await workspace.nvim.resumeNotification();
         },
-        drawAll: () => this.render(),
+        drawAll: async () => (await r.renderNotifier()).run(),
       });
     });
   }
@@ -403,7 +403,7 @@ export class ViewSource<
           }
           await workspace.nvim.resumeNotification();
         },
-        drawAll: () => this.render(),
+        drawAll: async () => (await r.renderNotifier()).run(),
       });
     });
   }
