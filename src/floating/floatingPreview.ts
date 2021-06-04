@@ -133,6 +133,10 @@ export class FloatingPreview implements Disposable {
     this.onHoverDisposables = [];
 
     const onHover = async (bufnr: number) => {
+      if (this.explorer.view.isHelpUI) {
+        await this.close();
+        return;
+      }
       if (bufnr !== this.explorer.bufnr) {
         return;
       }
