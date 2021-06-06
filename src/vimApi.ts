@@ -30,7 +30,9 @@ async function getExplorer(
 ): Promise<undefined | Explorer> {
   if (explorerFinder === 'closest') {
     const winFinder = await WinLayoutFinder.create();
-    const curWinid = (await workspace.nvim.eval('win_getid(winnr())')) as number;
+    const curWinid = (await workspace.nvim.eval(
+      'win_getid(winnr())',
+    )) as number;
     if (curWinid <= -1) {
       return;
     }
@@ -171,6 +173,7 @@ export function registerVimApi(
         }
         return {
           ...node,
+          compactedNodes: undefined,
           parent: undefined,
           children: undefined,
           prevSiblingNode: undefined,
