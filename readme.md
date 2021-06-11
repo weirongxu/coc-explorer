@@ -625,6 +625,9 @@ Type: <pre><code>'labeling' | 'content'</code></pre>
 Type: <pre><code>'keep' | 'workspace' | 'cwd' | 'sourceBuffer' | 'reveal'</code></pre>
 </details>
 <strong>Properties</strong>
+
+You should put the following properties inside your `coc-settings.json`.  
+
 <details>
 <summary><code>explorer.presets</code>: Explorer presets.</summary>
 Type: <pre><code>{
