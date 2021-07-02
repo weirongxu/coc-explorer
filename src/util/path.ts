@@ -6,8 +6,18 @@ import { isWindows } from './platform';
  * get extensions and basename
  */
 export function getExtensions(filename: string) {
-  const [basename, ...extensions] = pathLib.basename(filename).split('.');
-  return { basename, extensions };
+  const parts = pathLib.basename(filename).split('.');
+  const [basename, ...extensions] = parts;
+  if (basename) {
+    return { basename, extensions };
+  } else {
+    // special case for hidden files
+    const [basename2, ...extensions2] = extensions;
+    return {
+      basename: [basename, basename2].join('.'),
+      extensions: extensions2,
+    };
+  }
 }
 
 export function normalizePath(path: string): string {

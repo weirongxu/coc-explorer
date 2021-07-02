@@ -22,6 +22,12 @@ test('getExtensions', () => {
     basename: 'temp',
   });
 
+  // special case for hidden files
+  expect(getExtensions('.temp')).toEqual({
+    extensions: [],
+    basename: '.temp',
+  });
+
   expect(getExtensions('.temp.js.ts.erb')).toEqual({
     extensions: ['js', 'ts', 'erb'],
     basename: '.temp',
