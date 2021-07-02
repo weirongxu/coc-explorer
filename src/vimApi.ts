@@ -3,7 +3,7 @@ import pathLib from 'path';
 import { MappingMode, OriginalActionExp } from './actions/types';
 import { Explorer } from './explorer';
 import { ExplorerManager } from './explorerManager';
-import { loadIcons, IconLoadedIcons, IconTarget } from './icon/icons';
+import { IconLoadedResult, IconTarget, loadIcons } from './icon/icons';
 import { actionListMru } from './lists/actions';
 import { parseOriginalActionExp } from './mappings';
 import { BaseTreeNode, ExplorerSource } from './source/source';
@@ -228,7 +228,8 @@ export function registerVimApi(
         if (!icons) {
           return;
         }
-        const result: IconLoadedIcons = {
+        // convert the key from fullname to filepath
+        const result: IconLoadedResult = {
           files: {},
           directories: {},
         };

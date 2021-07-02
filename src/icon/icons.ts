@@ -26,7 +26,7 @@ export type IconInfo = {
   highlight?: string | HighlightCommand;
 };
 
-export type IconLoadedIcons = {
+export type IconLoadedResult = {
   files: Record<string, IconInfo>;
   directories: Record<string, IconInfo>;
 };
@@ -68,7 +68,7 @@ export async function loadIcons(
     (it) => it.target.fullname,
   );
   const fullname2fileIcon = keyBy(fileIcons, (it) => it.target.fullname);
-  const result: IconLoadedIcons = {
+  const result: IconLoadedResult = {
     files: {},
     directories: {},
   };
