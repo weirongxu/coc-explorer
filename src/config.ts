@@ -70,7 +70,7 @@ export const getRevealWhenOpen = (config: ExplorerConfig) => {
   let revealWhenOpen: boolean | undefined = config.get('file.revealWhenOpen');
   if (revealWhenOpen !== undefined) {
     logger.error(
-      '`explorer.file.autoReveal` has been deprecated, please use explorer.file.reveal.auto instead of it',
+      '`explorer.file.autoReveal` has been deprecated, please use explorer.file.reveal.whenOpen instead of it',
     );
   } else {
     revealWhenOpen = config.get('file.reveal.whenOpen');
