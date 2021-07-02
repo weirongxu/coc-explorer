@@ -14,7 +14,6 @@ export const getEnableDebug = () => config.get<boolean>('debug')!;
 
 export interface ExplorerConfig {
   config: WorkspaceConfiguration;
-  get(section: 'activeMode'): boolean;
   get(section: 'file.reveal.auto'): boolean;
   get(section: 'file.reveal.whenOpen'): boolean;
   get(

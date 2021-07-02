@@ -429,11 +429,6 @@
             "recursive"
           ]
         },
-        "explorer.activeMode": {
-          "description": "Render explorer when after open or save buffer",
-          "type": "boolean",
-          "default": true
-        },
         "explorer.quitOnOpen": {
           "description": "quit explorer when open action",
           "type": "boolean",

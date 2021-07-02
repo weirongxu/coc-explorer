@@ -161,35 +161,33 @@ export class FileSource extends ExplorerSource<FileNode> {
   }
 
   async init() {
-    if (this.config.get('activeMode')) {
-      if (getRevealAuto(this.config)) {
-        this.disposables.push(
-          onBufEnter(async (bufnr) => {
-            if (bufnr === this.explorer.bufnr) {
+    if (getRevealAuto(this.config)) {
+      this.disposables.push(
+        onBufEnter(async (bufnr) => {
+          if (bufnr === this.explorer.bufnr) {
+            return;
+          }
+          if (!this.explorer.visible()) {
+            return;
+          }
+          if (this.explorer.isFloating) {
+            return;
+          }
+          await this.view.sync(async (r) => {
+            const fullpath = this.bufManager.getBufferNode(bufnr)?.fullpath;
+            if (!fullpath) {
               return;
             }
-            if (!this.explorer.visible()) {
-              return;
+            const [revealNode, notifiers] = await this.revealNodeByPathNotifier(
+              r,
+              fullpath,
+            );
+            if (revealNode) {
+              await Notifier.runAll(notifiers);
             }
-            if (this.explorer.isFloating) {
-              return;
-            }
-            await this.view.sync(async (r) => {
-              const fullpath = this.bufManager.getBufferNode(bufnr)?.fullpath;
-              if (!fullpath) {
-                return;
-              }
-              const [
-                revealNode,
-                notifiers,
-              ] = await this.revealNodeByPathNotifier(r, fullpath);
-              if (revealNode) {
-                await Notifier.runAll(notifiers);
-              }
-            });
-          }, 200),
-        );
-      }
+          });
+        }, 200),
+      );
     }
 
     this.disposables.push(

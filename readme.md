@@ -852,10 +852,6 @@ Type: <pre><code>'recursive'[]</code></pre>Default: <pre><code>[
 ]</code></pre>
 </details>
 <details>
-<summary><code>explorer.activeMode</code>: Render explorer when after open or save buffer.</summary>
-Type: <pre><code>boolean</code></pre>Default: <pre><code>true</code></pre>
-</details>
-<details>
 <summary><code>explorer.quitOnOpen</code>: quit explorer when open action.</summary>
 Type: <pre><code>boolean</code></pre>Default: <pre><code>false</code></pre>
 </details>

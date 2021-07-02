@@ -73,16 +73,14 @@ export class BookmarkSource extends ExplorerSource<BookmarkNode> {
   }
 
   async init() {
-    if (this.config.get('activeMode')) {
-      this.disposables.push(
-        internalEvents.on(
-          'CocBookmarkChange',
-          debounce(500, async () => {
-            await this.load(this.view.rootNode);
-          }),
-        ),
-      );
-    }
+    this.disposables.push(
+      internalEvents.on(
+        'CocBookmarkChange',
+        debounce(500, async () => {
+          await this.load(this.view.rootNode);
+        }),
+      ),
+    );
   }
 
   async open() {

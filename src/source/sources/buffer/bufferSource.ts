@@ -69,26 +69,24 @@ export class BufferSource extends ExplorerSource<BufferNode> {
   );
 
   async init() {
-    if (this.config.get('activeMode')) {
-      this.disposables.push(
-        this.bufManager.onReload(
-          debounce(500, async () => {
-            if (!this.explorer.visible()) {
-              return;
-            }
-            await this.load(this.view.rootNode);
-          }),
-        ),
-        this.bufManager.onModified(
-          debounce(500, async () => {
-            if (!this.explorer.visible()) {
-              return;
-            }
-            await this.load(this.view.rootNode);
-          }),
-        ),
-      );
-    }
+    this.disposables.push(
+      this.bufManager.onReload(
+        debounce(500, async () => {
+          if (!this.explorer.visible()) {
+            return;
+          }
+          await this.load(this.view.rootNode);
+        }),
+      ),
+      this.bufManager.onModified(
+        debounce(500, async () => {
+          if (!this.explorer.visible()) {
+            return;
+          }
+          await this.load(this.view.rootNode);
+        }),
+      ),
+    );
 
     loadBufferActions(this.action);
   }

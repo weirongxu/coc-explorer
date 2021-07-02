@@ -223,10 +223,6 @@ export interface Explorer {
    */
   'explorer.autoCollapseOptions'?: 'recursive'[];
   /**
-   * Render explorer when after open or save buffer
-   */
-  'explorer.activeMode'?: boolean;
-  /**
    * quit explorer when open action
    */
   'explorer.quitOnOpen'?: boolean;
