@@ -1,8 +1,9 @@
+import { prettyPrint } from 'coc-helper';
 import { workspace, WorkspaceConfiguration } from 'coc.nvim';
 import { OriginalActionExp } from './actions/types';
 import { CollapseOption, ExpandOption, RootStrategyStr } from './types';
 import { Explorer } from './types/pkg-config';
-import { generateUri } from './util';
+import { generateUri, logger } from './util';
 
 export const config = workspace.getConfiguration('explorer');
 
@@ -14,8 +15,11 @@ export const getEnableDebug = () => config.get<boolean>('debug')!;
 export interface ExplorerConfig {
   config: WorkspaceConfiguration;
   get(section: 'activeMode'): boolean;
-  get(section: 'file.autoReveal'): boolean;
-  get(section: 'file.revealWhenOpen'): boolean;
+  get(section: 'file.reveal.auto'): boolean;
+  get(section: 'file.reveal.whenOpen'): boolean;
+  get(
+    section: 'file.reveal.filter',
+  ): NonNullable<Explorer['explorer.file.reveal.filter']>;
   get(section: 'autoExpandMaxDepth'): number;
   get(section: 'autoExpandOptions'): ExpandOption[];
   get(section: 'autoCollapseOptions'): CollapseOption[];
@@ -44,6 +48,36 @@ export interface ExplorerConfig {
   ): NonNullable<Explorer['explorer.root.customRules']>;
   get<T = void>(section: string, defaultValue?: T): T;
 }
+
+/**
+ * @deprecated
+ */
+export const getRevealAuto = (config: ExplorerConfig) => {
+  let revealAuto = config.get('file.autoReveal') as boolean | undefined;
+  if (revealAuto !== undefined) {
+    logger.error(
+      '`explorer.file.autoReveal` has been deprecated, please use explorer.file.reveal.auto instead of it',
+    );
+  } else {
+    revealAuto = config.get('file.reveal.auto');
+  }
+  return revealAuto;
+};
+
+/**
+ * @deprecated
+ */
+export const getRevealWhenOpen = (config: ExplorerConfig) => {
+  let revealWhenOpen: boolean | undefined = config.get('file.revealWhenOpen');
+  if (revealWhenOpen !== undefined) {
+    logger.error(
+      '`explorer.file.autoReveal` has been deprecated, please use explorer.file.reveal.auto instead of it',
+    );
+  } else {
+    revealWhenOpen = config.get('file.reveal.whenOpen');
+  }
+  return revealWhenOpen;
+};
 
 export function buildExplorerConfig(
   config: WorkspaceConfiguration,

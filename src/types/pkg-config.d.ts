@@ -256,12 +256,12 @@ export interface Explorer {
   /**
    * Filter windows for select strategy
    */
-  'explorer.openAction.select.filter'?: OpenActionSelectFilter & {
+  'explorer.openAction.select.filter'?: BufferFilter & {
     /**
      * Filter windows for select strategy in source
      */
     sources?: {
-      [k: string]: OpenActionSelectFilter;
+      [k: string]: BufferFilter;
     };
     [k: string]: unknown;
   };
@@ -447,6 +447,28 @@ export interface Explorer {
    */
   'explorer.file.autoReveal'?: boolean;
   /**
+   * Explorer will automatically reveal to the current buffer when open explorer
+   */
+  'explorer.file.reveal.whenOpen'?: boolean;
+  /**
+   * Explorer will automatically reveal to the current buffer when enter a buffer
+   */
+  'explorer.file.reveal.auto'?: boolean;
+  /**
+   * Exlorer will not automatically reveal to these buffers
+   */
+  'explorer.file.reveal.filter'?: {
+    /**
+     * Filter buffer by RegExp
+     */
+    patterns?: string[];
+    /**
+     * Filter buffer by literal string
+     */
+    literals?: string[];
+    [k: string]: unknown;
+  };
+  /**
    * Custom hidden rules for file
    */
   'explorer.file.hiddenRules'?: {
@@ -622,7 +644,7 @@ export interface Explorer {
 /**
  * Filter windows option for select strategy
  */
-export interface OpenActionSelectFilter {
+export interface BufferFilter {
   buftypes?: string[];
   filetypes?: string[];
   floatingWindows?: boolean;

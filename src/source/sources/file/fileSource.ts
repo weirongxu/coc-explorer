@@ -1,13 +1,20 @@
+import { Notifier } from 'coc-helper';
 import { Uri, window, workspace } from 'coc.nvim';
 import fs from 'fs';
 import { homedir } from 'os';
 import pathLib from 'path';
 import { argOptions } from '../../../arg/argOptions';
+import { getRevealAuto, getRevealWhenOpen } from '../../../config';
 import { diagnosticHighlights } from '../../../diagnostic/highlights';
 import { onBufEnter } from '../../../events';
 import { gitHighlights } from '../../../git/highlights';
 import { gitManager } from '../../../git/manager';
+import { internalHighlightGroups } from '../../../highlight/internalColors';
+import { hlGroupManager } from '../../../highlight/manager';
 import { fileList } from '../../../lists/files';
+import { startCocList } from '../../../lists/runner';
+import { RootStrategyStr } from '../../../types';
+import { Explorer } from '../../../types/pkg-config';
 import {
   fsAccess,
   fsLstat,
@@ -19,20 +26,14 @@ import {
   logger,
   normalizePath,
 } from '../../../util';
-import { hlGroupManager } from '../../../highlight/manager';
+import { RendererSource } from '../../../view/rendererSource';
+import { ViewSource } from '../../../view/viewSource';
 import { BaseTreeNode, ExplorerSource } from '../../source';
 import { sourceManager } from '../../sourceManager';
 import { fileArgOptions } from './argOptions';
 import { loadFileActions } from './fileActions';
 import { fileColumnRegistrar } from './fileColumnRegistrar';
 import './load';
-import { Notifier } from 'coc-helper';
-import { ViewSource } from '../../../view/viewSource';
-import { startCocList } from '../../../lists/runner';
-import { Explorer } from '../../../types/pkg-config';
-import { internalHighlightGroups } from '../../../highlight/internalColors';
-import { RootStrategyStr } from '../../../types';
-import { RendererSource } from '../../../view/rendererSource';
 
 export interface FileNode extends BaseTreeNode<FileNode, 'root' | 'child'> {
   name: string;
@@ -161,7 +162,7 @@ export class FileSource extends ExplorerSource<FileNode> {
 
   async init() {
     if (this.config.get('activeMode')) {
-      if (this.config.get('file.autoReveal')) {
+      if (getRevealAuto(this.config)) {
         this.disposables.push(
           onBufEnter(async (bufnr) => {
             if (bufnr === this.explorer.bufnr) {
@@ -262,8 +263,8 @@ export class FileSource extends ExplorerSource<FileNode> {
     const hasRevealPath = args.has(argOptions.reveal);
 
     if (
-      this.config.get('file.revealWhenOpen') ||
-      this.config.get('file.autoReveal') ||
+      getRevealAuto(this.config) ||
+      getRevealWhenOpen(this.config) ||
       hasRevealPath
     ) {
       const [revealNode, notifiers] = await this.revealNodeByPathNotifier(
@@ -330,6 +331,24 @@ export class FileSource extends ExplorerSource<FileNode> {
     task.waitExplorerShow()?.catch(logger.error);
   }
 
+  filterForReveal(path: string, root: string) {
+    const filter = this.config.get('file.reveal.filter');
+    const relativePath = path.slice(root.length);
+    // filter by literals
+    for (const literal of filter.literals ?? []) {
+      if (path.includes(literal)) {
+        return true;
+      }
+    }
+    // filter by patterns
+    for (const pattern of filter.patterns ?? []) {
+      if (new RegExp(pattern).test(path)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
   async revealNodeByPathNotifier(
     renderer: RendererSource<FileNode>,
     path: string,
@@ -352,6 +371,9 @@ export class FileSource extends ExplorerSource<FileNode> {
     } = {},
   ): Promise<[FileNode | undefined, Notifier[]]> {
     path = normalizePath(path);
+    if (this.filterForReveal(path, startNode.fullpath)) {
+      return [undefined, []];
+    }
     const notifiers: Notifier[] = [];
 
     const revealRecursive = async (

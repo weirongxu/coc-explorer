@@ -876,12 +876,12 @@ Type: <pre><code>'select' | 'split' | 'split.plain' | 'split.intelligent' | 'vsp
 </details>
 <details>
 <summary><code>explorer.openAction.select.filter</code>: Filter windows for select strategy.</summary>
-Type: <pre><code>OpenActionSelectFilter & {
+Type: <pre><code>BufferFilter & {
     /**
      * Filter windows for select strategy in source
      */
     sources?: {
-        [k: string]: OpenActionSelectFilter;
+        [k: string]: BufferFilter;
     };
     [k: string]: unknown;
 }</code></pre>Default: <pre><code>{
@@ -1041,10 +1041,6 @@ Type: <pre><code>{
 }</code></pre>
 </details>
 <details>
-<summary><code>explorer.icon.enableVimDevicons</code>: Enable use vim-devicons instead of built-in icon configuration.</summary>
-Type: <pre><code>boolean</code></pre>Default: <pre><code>false</code></pre>
-</details>
-<details>
 <summary><code>explorer.icon.expanded</code>: Icon for expanded node.</summary>
 Type: <pre><code>string</code></pre>Default: <pre><code>"-"</code></pre>
 </details>
@@ -1097,12 +1093,26 @@ Type: <pre><code>string</code></pre>Default: <pre><code>"[name][bufname][fullpat
 Type: <pre><code>string</code></pre>Default: <pre><code>"yy/MM/dd HH:mm:ss"</code></pre>
 </details>
 <details>
-<summary><code>explorer.file.revealWhenOpen</code>: Explorer will automatically reveal to the current buffer when open explorer.</summary>
+<summary><code>explorer.file.reveal.whenOpen</code>: Explorer will automatically reveal to the current buffer when open explorer.</summary>
 Type: <pre><code>boolean</code></pre>Default: <pre><code>true</code></pre>
 </details>
 <details>
-<summary><code>explorer.file.autoReveal</code>: Explorer will automatically expand to the current buffer.</summary>
+<summary><code>explorer.file.reveal.auto</code>: Explorer will automatically reveal to the current buffer when enter a buffer.</summary>
 Type: <pre><code>boolean</code></pre>Default: <pre><code>false</code></pre>
+</details>
+<details>
+<summary><code>explorer.file.reveal.filter</code>: Exlorer will not automatically reveal to these buffers.</summary>
+Type: <pre><code>{
+    /**
+     * Filter buffer by RegExp
+     */
+    patterns?: string[];
+    /**
+     * Filter buffer by literal string
+     */
+    literals?: string[];
+    [k: string]: unknown;
+}</code></pre>Default: <pre><code>{}</code></pre>
 </details>
 <details>
 <summary><code>explorer.file.hiddenRules</code>: Custom hidden rules for file.</summary>

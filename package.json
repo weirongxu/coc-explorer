@@ -115,7 +115,7 @@
             }
           ]
         },
-        "openAction.select.filter": {
+        "bufferFilter": {
           "description": "Filter windows option for select strategy",
           "type": "object",
           "properties": {
@@ -506,7 +506,7 @@
           "description": "Filter windows for select strategy",
           "allOf": [
             {
-              "$ref": "#/definitions/openAction.select.filter"
+              "$ref": "#/definitions/bufferFilter"
             },
             {
               "type": "object",
@@ -515,7 +515,7 @@
                   "description": "Filter windows for select strategy in source",
                   "type": "object",
                   "additionalProperties": {
-                    "$ref": "#/definitions/openAction.select.filter"
+                    "$ref": "#/definitions/bufferFilter"
                   }
                 }
               }
@@ -765,8 +765,7 @@
         "explorer.icon.enableVimDevicons": {
           "deprecationMessage": "The configuration `explorer.icon.enableVimDevicons` has been deprecated, please use `{\"explorer.icon.enabledNerdFont\": true, \"explorer.icon.source\": \"vim-devicons\"}` instead of it",
           "description": "Enable use vim-devicons instead of built-in icon configuration",
-          "type": "boolean",
-          "default": false
+          "type": "boolean"
         },
         "explorer.icon.expanded": {
           "description": "Icon for expanded node",
@@ -834,14 +833,45 @@
           "default": "yy/MM/dd HH:mm:ss"
         },
         "explorer.file.revealWhenOpen": {
+          "deprecationMessage": "Use explorer.file.reveal.whenOpen instead of it",
+          "description": "Explorer will automatically reveal to the current buffer when open explorer",
+          "type": "boolean"
+        },
+        "explorer.file.autoReveal": {
+          "deprecationMessage": "Use explorer.file.reveal.auto instead of it",
+          "description": "Explorer will automatically expand to the current buffer",
+          "type": "boolean"
+        },
+        "explorer.file.reveal.whenOpen": {
           "description": "Explorer will automatically reveal to the current buffer when open explorer",
           "type": "boolean",
           "default": true
         },
-        "explorer.file.autoReveal": {
-          "description": "Explorer will automatically expand to the current buffer",
+        "explorer.file.reveal.auto": {
+          "description": "Explorer will automatically reveal to the current buffer when enter a buffer",
           "type": "boolean",
           "default": false
+        },
+        "explorer.file.reveal.filter": {
+          "description": "Exlorer will not automatically reveal to these buffers",
+          "type": "object",
+          "properties": {
+            "patterns": {
+              "description": "Filter buffer by RegExp",
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "literals": {
+              "description": "Filter buffer by literal string",
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          },
+          "default": {}
         },
         "explorer.file.hiddenRules": {
           "description": "Custom hidden rules for file",

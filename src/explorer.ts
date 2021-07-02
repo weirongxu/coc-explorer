@@ -13,7 +13,7 @@ import { loadGlobalActions } from './actions/globalActions';
 import { MappingMode } from './actions/types';
 import { argOptions, ResolvedArgs } from './arg/argOptions';
 import { ArgContentWidthTypes, Args } from './arg/parseArgs';
-import { ExplorerConfig } from './config';
+import { ExplorerConfig, getRevealWhenOpen } from './config';
 import { BuffuerContextVars } from './contextVariables';
 import { doUserAutocmd, doUserAutocmdNotifier, onEvent } from './events';
 import { ExplorerManager } from './explorerManager';
@@ -508,7 +508,7 @@ export class Explorer implements Disposable {
     }
 
     let reveal: string | undefined;
-    if (this.config.get('file.revealWhenOpen')) {
+    if (getRevealWhenOpen(this.config)) {
       reveal = await this.revealPath();
     }
     const resolvedRoot = await rooter.resolveRoot(

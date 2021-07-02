@@ -194,7 +194,9 @@ class ConfigurationDocGenerator extends DocGenerator {
             // @ts-ignore
             const jsonProp = conf.properties[name as any] as Definition & {
               default_doc?: string;
+              deprecationMessage?: string;
             };
+            if (jsonProp.deprecationMessage) return;
             propRows.push({
               name,
               description: ts.displayPartsToString(
