@@ -17,9 +17,13 @@ export class RendererExplorer {
 
   async runQueue<T>(fn: () => Promise<T>): Promise<T> {
     const release = await this.renderMutex.acquire();
-    const ret = await fn();
-    release();
-    return ret;
+    try {
+      return await fn();
+    } catch (error) {
+      throw error;
+    } finally {
+      release();
+    }
   }
 
   rendererSources(): RendererSource<BaseTreeNode<any, string>>[] {

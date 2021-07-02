@@ -33,6 +33,7 @@ export interface ExplorerConfig {
   get(section: 'datetime.format'): string;
   get(section: 'icon.enableVimDevicons'): boolean;
   get(section: 'icon.enableNerdfont'): boolean;
+  get(section: 'icon.source'): NonNullable<Explorer['explorer.icon.source']>;
   get(section: 'floating.border.enable'): boolean;
   get(section: 'floating.border.chars'): string[];
   get(section: 'floating.border.title'): string;

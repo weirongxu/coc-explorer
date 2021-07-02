@@ -1,122 +1,119 @@
-import nerdfontJson from './icons.nerdfont.json';
-import { hlGroupManager } from '../highlight/manager';
-import { getExtensions, parseColor } from '../util';
-import { config } from '../config';
-import convert from 'color-convert';
+import { keyBy } from 'lodash-es';
+import { ExplorerConfig } from '../config';
+import { IconSourceType } from '../types';
+import { getExtensions, logger, partition } from '../util';
+import { getLoader } from './loader';
+import { nerdfont } from './nerdfont';
+import './load';
 import { HighlightCommand } from '../highlight/types';
 
-export interface NerdFontOption {
-  icons?: Record<
-    string,
-    {
-      code: string;
-      color: string;
-    }
-  >;
-  extensions?: Record<string, string>;
-  filenames?: Record<string, string>;
-  dirnames?: Record<string, string>;
-  patternMatches?: Record<string, string>;
-  dirPatternMatches?: Record<string, string>;
+export type IconTarget = {
+  fullname: string;
+  isDirectory: boolean;
+  hidden: boolean;
+  expanded?: boolean;
+};
+
+export type IconParsedTarget = {
+  basename: string;
+  extensions: string[];
+} & IconTarget;
+
+export type IconInfo = {
+  code: string;
+  name?: string;
+  color?: string;
+  highlight?: string | HighlightCommand;
+};
+
+export type IconLoadedIcons = {
+  files: Record<string, IconInfo>;
+  directories: Record<string, IconInfo>;
+};
+
+export type IconInternalLoadedItem = {
+  target: IconParsedTarget;
+  icon: IconInfo;
+};
+
+function parseTargets(targets: IconTarget[]): IconParsedTarget[] {
+  return targets.map((target) => {
+    const fullname = target.fullname.toLowerCase();
+    return {
+      fullname,
+      ...getExtensions(fullname),
+      isDirectory: target.isDirectory,
+      hidden: target.hidden,
+      expanded: target.expanded,
+    };
+  });
 }
-type NerdFont = Required<NerdFontOption>;
 
-export const nerdfont = nerdfontJson as NerdFont;
-const customIcon = config.get<NerdFontOption>('icon.customIcons', {})!;
-Object.assign(nerdfont.icons, customIcon.icons);
-Object.assign(nerdfont.extensions, customIcon.extensions);
-Object.assign(nerdfont.filenames, customIcon.filenames);
-Object.assign(nerdfont.dirnames, customIcon.dirnames);
-Object.assign(nerdfont.patternMatches, customIcon.patternMatches);
-Object.assign(nerdfont.dirPatternMatches, customIcon.dirPatternMatches);
-
-export const nerdfontHighlights: Record<string, HighlightCommand> = {};
-Object.entries(nerdfont.icons).forEach(([name, icon]) => {
-  const color = parseColor(icon.color);
-  if (!color) {
+export async function loadIcons(
+  sourceType: IconSourceType,
+  targets: IconTarget[],
+) {
+  const parsedTargets = parseTargets(targets);
+  const loader = getLoader(sourceType);
+  if (!loader) {
     return;
   }
-  const ansiColor = convert.rgb.ansi256([color.red, color.green, color.blue]);
-  const hlExpr = `ctermfg=${ansiColor} guifg=${icon.color}`;
-  nerdfontHighlights[name] = hlGroupManager.createGroup(
-    `FileIconNerdfont_${name}`,
-    hlExpr,
+  const loadedIcons = await loader.loadIcons(parsedTargets);
+  const [directoryIcons, fileIcons] = partition(
+    loadedIcons,
+    (it) => it.target.isDirectory,
   );
-});
-
-export function getFileIcon(
-  originalFilename: string,
-): undefined | { name: string; code: string; color: string } {
-  const filename = originalFilename.toLowerCase();
-  const { extensions, basename } = getExtensions(filename);
-  const extname = extensions[extensions.length - 1];
-
-  if (nerdfont.filenames.hasOwnProperty(basename)) {
-    const name = nerdfont.filenames[basename];
-    return {
-      name,
-      ...nerdfont.icons[name],
-    };
+  const fullname2directoryIcon = keyBy(
+    directoryIcons,
+    (it) => it.target.fullname,
+  );
+  const fullname2fileIcon = keyBy(fileIcons, (it) => it.target.fullname);
+  const result: IconLoadedIcons = {
+    files: {},
+    directories: {},
+  };
+  for (const target of targets) {
+    if (target.fullname in fullname2directoryIcon) {
+      result.directories[target.fullname] =
+        fullname2directoryIcon[target.fullname].icon;
+    } else if (target.fullname in fullname2fileIcon) {
+      result.files[target.fullname] = fullname2fileIcon[target.fullname].icon;
+    } else if (target.isDirectory) {
+      // get the defeault icon for directory
+      const code = target.expanded
+        ? nerdfont.icons.folderOpened.code
+        : nerdfont.icons.folderClosed.code;
+      result.directories[target.fullname] = {
+        code,
+      };
+    } else {
+      // get defeault icon for file
+      const code = target.hidden
+        ? nerdfont.icons.fileHidden.code
+        : nerdfont.icons.file.code;
+      result.files[target.fullname] = {
+        code,
+      };
+    }
   }
-
-  if (nerdfont.filenames.hasOwnProperty(filename)) {
-    const name = nerdfont.filenames[filename];
-    return {
-      name,
-      ...nerdfont.icons[name],
-    };
-  }
-
-  const matched = Object.entries(
-    nerdfont.patternMatches,
-  ).find(([pattern]: [string, string]) => new RegExp(pattern).test(filename));
-  if (matched) {
-    const name = matched[1];
-    return {
-      name,
-      ...nerdfont.icons[name],
-    };
-  }
-
-  if (nerdfont.extensions.hasOwnProperty(extname)) {
-    const name = nerdfont.extensions[extname];
-    return {
-      name,
-      ...nerdfont.icons[name],
-    };
-  }
+  return result;
 }
 
-export function getDirectoryIcon(
-  originalDirname: string,
-): undefined | { name: string; code: string; color: string } {
-  const dirname = originalDirname.toLowerCase();
-  const { basename } = getExtensions(dirname);
-
-  if (nerdfont.dirnames.hasOwnProperty(basename)) {
-    const name = nerdfont.dirnames[basename];
-    return {
-      name,
-      ...nerdfont.icons[name],
-    };
+export async function loadIconsByConfig(
+  config: ExplorerConfig,
+  targets: IconTarget[],
+) {
+  const enabledVimDevicons = config.get('icon.enableVimDevicons');
+  if (enabledVimDevicons) {
+    logger.error(
+      'The configuration `explorer.icon.enableVimDevicons` has been deprecated, please use `{"explorer.icon.enabledNerdFont": true, "explorer.icon.source": "vim-devicons"}` instead of it',
+    );
+    return loadIcons('vim-devicons', targets);
   }
-
-  if (nerdfont.dirnames.hasOwnProperty(dirname)) {
-    const name = nerdfont.dirnames[dirname];
-    return {
-      name,
-      ...nerdfont.icons[name],
-    };
+  const enabledNerdFont = config.get('icon.enableNerdfont');
+  if (!enabledNerdFont) {
+    return;
   }
-
-  const matched = Object.entries(
-    nerdfont.dirPatternMatches,
-  ).find(([pattern]: [string, string]) => new RegExp(pattern).test(dirname));
-  if (matched) {
-    const name = matched[1];
-    return {
-      name,
-      ...nerdfont.icons[name],
-    };
-  }
+  const source = config.get('icon.source');
+  return loadIcons(source, targets);
 }

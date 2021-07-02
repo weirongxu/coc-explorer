@@ -3,7 +3,7 @@ import pathLib from 'path';
 import { MappingMode, OriginalActionExp } from './actions/types';
 import { Explorer } from './explorer';
 import { ExplorerManager } from './explorerManager';
-import { getDirectoryIcon, getFileIcon } from './icon/icons';
+import { loadIcons, IconLoadedIcons, IconTarget } from './icon/icons';
 import { actionListMru } from './lists/actions';
 import { parseOriginalActionExp } from './mappings';
 import { BaseTreeNode, ExplorerSource } from './source/source';
@@ -183,9 +183,62 @@ export function registerVimApi(
     ),
     registerApi(
       'explorer.getIcon',
-      async (filepath: string, isDirectory: boolean = false) => {
+      async (
+        filepath: string,
+        isDirectory: boolean = false,
+        isExpanded?: boolean,
+      ) => {
         const basename = pathLib.basename(filepath);
-        return isDirectory ? getDirectoryIcon(basename) : getFileIcon(basename);
+        const type = isDirectory
+          ? ('directories' as const)
+          : ('files' as const);
+        const nodes: IconTarget[] = [
+          {
+            fullname: basename,
+            isDirectory,
+            expanded: isExpanded,
+            hidden: false,
+          },
+        ];
+        const icons = await loadIcons('builtin', nodes);
+        return icons?.[type][basename];
+      },
+    ),
+    registerApi(
+      'explorer.getIcons',
+      async (
+        paths: {
+          filepath: string;
+          isDirectory: boolean;
+          isExpanded?: boolean;
+        }[],
+      ) => {
+        const fullname2filepath: Record<string, string> = {};
+        const targets: IconTarget[] = paths.map((it) => {
+          const fullname = pathLib.basename(it.filepath);
+          fullname2filepath[fullname] = it.filepath;
+          return {
+            fullname,
+            isDirectory: it.isDirectory,
+            expanded: it.isExpanded,
+            hidden: false,
+          };
+        });
+        const icons = await loadIcons('builtin', targets);
+        if (!icons) {
+          return;
+        }
+        const result: IconLoadedIcons = {
+          files: {},
+          directories: {},
+        };
+        for (const [fullname, file] of Object.entries(icons.files)) {
+          result.files[fullname2filepath[fullname]] = file;
+        }
+        for (const [fullname, directory] of Object.entries(icons.directories)) {
+          result.directories[fullname2filepath[fullname]] = directory;
+        }
+        return result;
       },
     ),
   );

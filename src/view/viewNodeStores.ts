@@ -9,33 +9,33 @@ type NodeStore = {
 };
 
 export class ViewNodeStores<TreeNode extends BaseTreeNode<TreeNode>> {
-  private inner = (() => {
-    const inner = {
+  private internal = (() => {
+    const internal = {
       records: new Map<NodeUid, NodeStore>(),
       store(node: TreeNode): NodeStore {
-        if (!inner.records.has(node.uid)) {
-          inner.records.set(node.uid, {
+        if (!internal.records.has(node.uid)) {
+          internal.records.set(node.uid, {
             expanded: false,
             compact: 'uncompact',
           });
         }
-        return inner.records.get(node.uid)!;
+        return internal.records.get(node.uid)!;
       },
       clear(): void {
-        inner.records.clear();
+        internal.records.clear();
       },
       get<K extends keyof NodeStore>(node: TreeNode, key: K): NodeStore[K] {
-        return inner.store(node)[key];
+        return internal.store(node)[key];
       },
       set<K extends keyof NodeStore>(
         node: TreeNode,
         key: K,
         value: NodeStore[K],
       ): void {
-        inner.store(node)[key] = value;
+        internal.store(node)[key] = value;
       },
     };
-    return inner;
+    return internal;
   })();
 
   enabled: boolean;
@@ -59,7 +59,7 @@ export class ViewNodeStores<TreeNode extends BaseTreeNode<TreeNode>> {
     context.subscriptions.push(
       viewSource.source.explorer.events.on('open-pre', () => {
         if (!this.enabled) {
-          this.inner.clear();
+          this.internal.clear();
         }
       }),
     );
@@ -70,22 +70,22 @@ export class ViewNodeStores<TreeNode extends BaseTreeNode<TreeNode>> {
   }
 
   expand(node: TreeNode) {
-    this.inner.set(node, 'expanded', true);
+    this.internal.set(node, 'expanded', true);
   }
 
   collapse(node: TreeNode) {
-    this.inner.set(node, 'expanded', false);
+    this.internal.set(node, 'expanded', false);
   }
 
   isExpanded(node: TreeNode) {
-    return this.inner.get(node, 'expanded');
+    return this.internal.get(node, 'expanded');
   }
 
   setCompact(node: TreeNode, compact: CompactStatus) {
-    this.inner.set(node, 'compact', compact);
+    this.internal.set(node, 'compact', compact);
   }
 
   getCompact(node: TreeNode): CompactStatus {
-    return this.inner.get(node, 'compact');
+    return this.internal.get(node, 'compact');
   }
 }

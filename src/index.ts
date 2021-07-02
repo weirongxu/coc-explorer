@@ -39,9 +39,12 @@ export const activate = async (context: ExtensionContext) => {
   GitCommand.preload().catch(logger.error);
 
   subscriptions.push(
-    commands.registerCommand('explorer', (...args) => {
-      explorerManager.open(args).catch(logger.error);
-    }),
+    commands.registerCommand(
+      'explorer',
+      asyncCatchError((...args) => {
+        explorerManager.open(args).catch(logger.error);
+      }),
+    ),
     languages.registerCodeActionProvider(
       ['coc-explorer'],
       new ActionMenuCodeActionProvider(explorerManager),

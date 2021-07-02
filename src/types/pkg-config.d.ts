@@ -324,6 +324,10 @@ export interface Explorer {
    */
   'explorer.icon.enableNerdfont'?: boolean;
   /**
+   * The source or file type icon and color
+   */
+  'explorer.icon.source'?: 'builtin' | 'vim-devicons' | 'nvim-web-devicons';
+  /**
    * Custom icons and color highlights
    */
   'explorer.icon.customIcons'?: {

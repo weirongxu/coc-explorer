@@ -133,3 +133,5 @@ export type FloatingCreateOptions = {
 export type FloatingOpenOptions = {
   filepath?: string;
 } & ExplorerOpenOptions;
+
+export type IconSourceType = NonNullable<Explorer['explorer.icon.source']>;

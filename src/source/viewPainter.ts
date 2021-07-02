@@ -116,17 +116,18 @@ export class ViewRowPainter {
       drawGroup,
       unicode = false,
     }: {
-      hl?: HighlightCommand;
+      hl?: string | HighlightCommand;
       width?: number;
       drawGroup?: DrawGroup;
       unicode?: boolean;
     } = {},
   ) {
+    const group = hl ? (typeof hl === 'string' ? hl : hl.group) : undefined;
     const drawContent: DrawContent = {
       type: 'content',
       content,
       unicode,
-      group: hl?.group,
+      group,
       width,
     };
     if (drawGroup) {

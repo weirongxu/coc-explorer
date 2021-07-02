@@ -697,6 +697,15 @@
           "type": "boolean",
           "default": false
         },
+        "explorer.icon.source": {
+          "description": "The source or file type icon and color",
+          "enum": [
+            "builtin",
+            "vim-devicons",
+            "nvim-web-devicons"
+          ],
+          "default": "builtin"
+        },
         "explorer.icon.customIcons": {
           "description": "Custom icons and color highlights",
           "type": "object",
@@ -754,6 +763,7 @@
           }
         },
         "explorer.icon.enableVimDevicons": {
+          "deprecationMessage": "The configuration `explorer.icon.enableVimDevicons` has been deprecated, please use `{\"explorer.icon.enabledNerdFont\": true, \"explorer.icon.source\": \"vim-devicons\"}` instead of it",
           "description": "Enable use vim-devicons instead of built-in icon configuration",
           "type": "boolean",
           "default": false
