@@ -70,17 +70,20 @@ export class Explorer implements Disposable {
   private prevArgSourcesEnabledJson?: string;
   private isHide = false;
 
-  private static async genExplorerPosition(args: ResolvedArgs) {
+  private static async genExplorerPosition(
+    args: ResolvedArgs,
+    specialSize?: [width?: number, height?: number],
+  ) {
     let width: number = 0;
     let height: number = 0;
     let left: number = 0;
     let top: number = 0;
 
     if (args.position.name !== 'floating') {
-      width = args.width;
+      width = specialSize?.[0] ?? args.width;
     } else {
-      width = args.floatingWidth;
-      height = args.floatingHeight;
+      width = specialSize?.[0] ?? args.floatingWidth;
+      height = specialSize?.[1] ?? args.floatingHeight;
       const [vimWidth, vimHeight] = [
         workspace.env.columns,
         workspace.env.lines - workspace.env.cmdheight,
@@ -346,10 +349,9 @@ export class Explorer implements Disposable {
     }
   }
 
-  async resize() {
-    const { width, height, top, left } = await Explorer.genExplorerPosition(
-      this.argValues,
-    );
+  async resize(size?: [width?: number, height?: number]) {
+    const dimension = await Explorer.genExplorerPosition(this.argValues, size);
+    const { top, left, width, height } = dimension;
     await this.nvim.call('coc_explorer#resize', [
       this.bufnr,
       this.argValues.position,
@@ -661,6 +663,12 @@ export class Explorer implements Disposable {
       notifiers.push(await renderer.renderAllNotifier());
     }
     return Notifier.combine(notifiers);
+  }
+
+  async render() {
+    return this.view.sync((renderer) =>
+      Notifier.run(renderer.renderAllNotifier()),
+    );
   }
 
   async showHelp(source: ExplorerSource<any>) {

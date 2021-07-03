@@ -20,7 +20,7 @@ import {
   textobjTypeList,
 } from '../types';
 import { PreviewActionStrategy } from '../types/pkg-config';
-import { enableWrapscan, scanIndexNext, scanIndexPrev } from '../util';
+import { enableWrapscan, input, scanIndexNext, scanIndexPrev } from '../util';
 import { ActionExplorer } from './actionExplorer';
 import { openAction } from './openAction';
 
@@ -650,6 +650,60 @@ export function loadGlobalActions(action: ActionExplorer) {
       });
     },
     'refresh',
+  );
+  action.addNodeAction(
+    'render',
+    async ({ source, node }) => {
+      await source.view.render({ node });
+    },
+    'render',
+  );
+  action.addNodeAction(
+    'resize',
+    async ({ source, node, args }) => {
+      await (async () => {
+        if (explorer.isFloating) {
+          const [sizeStr] = args as [string | undefined];
+          if (!sizeStr) {
+            return;
+          }
+          const [widthStr, heightStr] = sizeStr
+            .split(/,|x/)
+            .map((it) => it.trim()) as [string | undefined, string | undefined];
+          const [width, height] = [
+            widthStr ? parseInt(widthStr) : undefined,
+            heightStr ? parseInt(heightStr) : undefined,
+          ];
+          await explorer.resize([width, height]);
+        } else {
+          const [widthStr] = args as [string | undefined];
+          if (!widthStr) {
+            return;
+          }
+          const width = parseInt(widthStr);
+          await explorer.resize([width]);
+        }
+      })();
+      await explorer.render();
+    },
+    'resize',
+    {
+      args: [
+        {
+          name: 'size',
+          description: 'widthxheight | width,height',
+        },
+      ],
+      menus: {
+        path: {
+          description: 'resize the explorer window',
+          args: '[size]',
+          async actionArgs() {
+            return [await input('input a the size:', '20,10', 'file')];
+          },
+        },
+      },
+    },
   );
   action.addNodeAction(
     'help',
