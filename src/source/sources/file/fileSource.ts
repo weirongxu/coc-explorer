@@ -334,13 +334,13 @@ export class FileSource extends ExplorerSource<FileNode> {
     const relativePath = path.slice(root.length);
     // filter by literals
     for (const literal of filter.literals ?? []) {
-      if (path.includes(literal)) {
+      if (relativePath.includes(literal)) {
         return true;
       }
     }
     // filter by patterns
     for (const pattern of filter.patterns ?? []) {
-      if (new RegExp(pattern).test(path)) {
+      if (new RegExp(pattern).test(relativePath)) {
         return true;
       }
     }
