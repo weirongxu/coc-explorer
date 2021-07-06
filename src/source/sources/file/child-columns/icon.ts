@@ -6,7 +6,6 @@ import { fileHighlights, FileNode } from '../fileSource';
 
 fileColumnRegistrar.registerColumn('child', 'icon', ({ source }) => ({
   async draw(nodes): Promise<ColumnDrawHandle<FileNode>> {
-    const enabledNerdFont = source.config.get('icon.enableNerdfont');
     const iconTargets: IconTarget[] = nodes.map((node) => ({
       fullname: node.name,
       hidden: node.hidden,

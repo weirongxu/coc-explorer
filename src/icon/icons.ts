@@ -6,6 +6,7 @@ import { getLoader } from './loader';
 import { nerdfont } from './nerdfont';
 import './load';
 import { HighlightCommand } from '../highlight/types';
+import { prettyPrint } from 'coc-helper';
 
 export type IconTarget = {
   fullname: string;
@@ -38,10 +39,9 @@ export type IconInternalLoadedItem = {
 
 function parseTargets(targets: IconTarget[]): IconParsedTarget[] {
   return targets.map((target) => {
-    const fullname = target.fullname.toLowerCase();
     return {
-      fullname,
-      ...getExtensions(fullname),
+      fullname: target.fullname,
+      ...getExtensions(target.fullname.toLowerCase()),
       isDirectory: target.isDirectory,
       hidden: target.hidden,
       expanded: target.expanded,
