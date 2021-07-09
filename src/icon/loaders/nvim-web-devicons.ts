@@ -1,4 +1,3 @@
-import { prettyPrint } from 'coc-helper';
 import { workspace } from 'coc.nvim';
 import { IconInternalLoadedItem, IconParsedTarget } from '../icons';
 import { IconLoader, registerLoader } from '../loader';
@@ -14,6 +13,9 @@ export class NvimWebDeviconsLoader extends IconLoader {
     const loaded: IconInternalLoadedItem[] = [];
     await Promise.all(
       targets.map(async (target) => {
+        if (target.isDirectory) {
+          return;
+        }
         const ext: string | undefined =
           target.extensions[target.extensions.length - 1];
         const result = (await workspace.nvim.call('luaeval', [
