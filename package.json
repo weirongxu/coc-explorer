@@ -22,7 +22,7 @@
     "explorer"
   ],
   "activationEvents": [
-    "*"
+    "onCommand:explorer"
   ],
   "contributes": {
     "commands": [

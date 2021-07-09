@@ -69,6 +69,8 @@ nnoremap <Leader>pa :CocCommand explorer --preset a<CR>
 nnoremap <Leader>pb :CocCommand explorer --preset b<CR>
 nnoremap <Leader>b  :CocCommand explorer --preset buffer<CR>
 
+autocmd User CocNvimInit CocCommand explorer --preset floating
+
 set hidden
 set cmdheight=2
 set termguicolors
