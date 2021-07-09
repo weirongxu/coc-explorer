@@ -18,11 +18,9 @@ import { GitCommand } from './git/command';
 import { registerInternalColors } from './highlight/internalColors';
 import { registerGitHighlights } from './git/highlights';
 
-export const activate = async (context: ExtensionContext) => {
+export const activate = (context: ExtensionContext) => {
   const { subscriptions } = context;
   const { nvim } = workspace;
-  await activateHelper(context);
-  await InternalVimEvents.register(context);
 
   hlGroupManager.createGroup(
     'SelectUI',
@@ -52,6 +50,8 @@ export const activate = async (context: ExtensionContext) => {
     ),
   );
   (async () => {
+    await activateHelper(context);
+    await InternalVimEvents.register(context);
     await registerRuntimepath(context.extensionPath);
     await nvim.command('runtime plugin/coc_explorer.vim');
     subscriptions.push(
