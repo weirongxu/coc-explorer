@@ -10,7 +10,12 @@
     }
   ],
   "explorer.keyMappings.global": {
-    "<space>": "toggleSelection"
+    "<space>": "toggleSelection",
+    "L": [
+      "expandable?",
+      ["expanded?", "cd", "expand"],
+      ["collapse", "cd"]
+    ]
   },
   "explorer.presets": {
     "floating": {

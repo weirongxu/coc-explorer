@@ -55,6 +55,7 @@ export class ActionSource<
     const mode = options.mode ?? 'n';
     const isSubAction = options.isSubAction ?? false;
     let waitRelease: undefined | (() => void);
+    let curNodes = nodes;
 
     const subOptions = {
       mode: mode,
@@ -63,10 +64,14 @@ export class ActionSource<
     try {
       if (Array.isArray(actionExp)) {
         for (let i = 0; i < actionExp.length; i++) {
+          if (i !== 0) {
+            curNodes = [this.source.view.currentNode()];
+          }
+
           const action = actionExp[i];
 
           if (Array.isArray(action)) {
-            await this.doActionExp(action, nodes, subOptions);
+            await this.doActionExp(action, curNodes, subOptions);
             continue;
           }
 
@@ -80,7 +85,7 @@ export class ActionSource<
 
           const rule = conditionActionRules[action.name];
           if (rule) {
-            const [trueNodes, falseNodes] = partition(nodes, (node) =>
+            const [trueNodes, falseNodes] = partition(curNodes, (node) =>
               rule.filter(this.source, node, action.args),
             );
             const [trueAction, falseAction] = [
@@ -95,11 +100,11 @@ export class ActionSource<
               await this.doActionExp(falseAction, falseNodes, subOptions);
             }
           } else {
-            await this.doActionExp(action, nodes, subOptions);
+            await this.doActionExp(action, curNodes, subOptions);
           }
         }
       } else {
-        await this.doAction(actionExp.name, nodes, actionExp.args, mode);
+        await this.doAction(actionExp.name, curNodes, actionExp.args, mode);
       }
     } catch (error) {
       throw error;
