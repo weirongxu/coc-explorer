@@ -1,7 +1,7 @@
 import { BasicList, Neovim } from 'coc.nvim';
 import { getPresets } from '../presets';
 import { configLocal } from '../config';
-import {logger} from '../util';
+import { logger } from '../util';
 
 export class PresetList extends BasicList {
   readonly name = 'explPresets';
@@ -20,7 +20,7 @@ export class PresetList extends BasicList {
 
   async loadItems(_context: any) {
     const presets = await getPresets(configLocal());
-    return Object.keys(presets).map((name) => ({
+    return [...presets.keys()].map((name) => ({
       label: name,
       data: {
         name,

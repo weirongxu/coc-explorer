@@ -20,7 +20,7 @@ fileColumnRegistrar.registerColumn('child', 'icon', ({ source }) => ({
           const hl = source.view.isExpanded(node)
             ? fileHighlights.directoryExpanded
             : fileHighlights.directoryCollapsed;
-          const icon = icons?.directories[node.name];
+          const icon = icons?.directories.get(node.name);
           if (icon) {
             row.add(icon.code, { hl });
           } else {
@@ -32,7 +32,7 @@ fileColumnRegistrar.registerColumn('child', 'icon', ({ source }) => ({
             );
           }
         } else {
-          const icon = icons?.files[node.name];
+          const icon = icons?.files.get(node.name);
           if (icon) {
             row.add(icon.code, {
               hl: icon.highlight ?? nerdfontHighlights.file,

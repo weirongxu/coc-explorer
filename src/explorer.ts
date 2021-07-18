@@ -616,24 +616,26 @@ export class Explorer implements Disposable {
   }
 
   lineIndexesGroupBySource(lineIndexes: number[] | Set<number>) {
-    const groups: Record<
+    const groups = new Map<
       number,
       {
         source: ExplorerSource<any>;
         lineIndexes: number[];
       }
-    > = {};
+    >();
     for (const line of lineIndexes) {
       const { source, sourceIndex } = this.findSourceByLineIndex(line);
-      if (!(sourceIndex in groups)) {
-        groups[sourceIndex] = {
+      let group = groups.get(sourceIndex);
+      if (!group) {
+        group = {
           source,
           lineIndexes: [line],
         };
+        groups.set(sourceIndex, group);
       }
-      groups[sourceIndex].lineIndexes.push(line);
+      group.lineIndexes.push(line);
     }
-    return Object.values(groups);
+    return [...groups.values()];
   }
 
   setLinesNotifier(lines: string[], start: number, end: number) {

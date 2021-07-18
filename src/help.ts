@@ -39,12 +39,12 @@ interface MappingActionContext {
 const helpHlSrcId = workspace.createNameSpace('coc-explorer-help');
 
 export class HelpPainter {
-  painter: ViewPainter;
-  drawnResults: {
+  private painter: ViewPainter;
+  private drawnResults: {
     highlightPositions: HighlightPosition[];
     content: string;
   }[] = [];
-  registeredActions: ActionRegistrar.Map<BaseTreeNode<any>>;
+  private registeredActions: ActionRegistrar.ActionMap<BaseTreeNode<any>>;
 
   constructor(
     private explorer: Explorer,
@@ -83,8 +83,9 @@ export class HelpPainter {
       row.add(`(${action.args.join(',')})`, { hl: helpHightlights.arg });
     }
     row.add(' ');
-    if (action.name in this.registeredActions) {
-      row.add(this.registeredActions[action.name].description, {
+    const registeredAction = this.registeredActions.get(action.name);
+    if (registeredAction) {
+      row.add(registeredAction.description, {
         hl: helpHightlights.description,
       });
     }
@@ -134,8 +135,9 @@ export class HelpPainter {
         row.add(`(${action.args.join(',')})`, { hl: helpHightlights.arg });
       }
       row.add(' ');
-      if (action.name in this.registeredActions) {
-        row.add(this.registeredActions[action.name].description, {
+      const registeredAction = this.registeredActions.get(action.name);
+      if (registeredAction) {
+        row.add(registeredAction.description, {
           hl: helpHightlights.description,
         });
       }
@@ -213,9 +215,8 @@ export class HelpPainter {
     const drawMappings = async (mappings: Mappings) => {
       for (const [key, actionExp] of Object.entries(mappings)) {
         if (
-          !this.anyAction(
-            actionExp,
-            (action) => action.name in this.registeredActions,
+          !this.anyAction(actionExp, (action) =>
+            this.registeredActions.has(action.name),
           )
         ) {
           continue;
@@ -245,7 +246,7 @@ export class HelpPainter {
       });
     });
 
-    for (const [name, action] of Object.entries(this.registeredActions)) {
+    for (const [name, action] of this.registeredActions) {
       await this.drawRow((row) => {
         row.add(' ');
         row.add(name, { hl: helpHightlights.action });

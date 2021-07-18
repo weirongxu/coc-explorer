@@ -21,15 +21,21 @@ export class ActionSource<
     this.global = globalActionRegistrar;
   }
 
-  registeredActions(): ActionRegistrar.Map<TreeNode> {
-    return {
-      ...((this.global.actions as unknown) as ActionRegistrar.Map<TreeNode>),
-      ...this.actions,
-    };
+  registeredActions(): ActionRegistrar.ActionMap<BaseTreeNode<any>> {
+    return new Map([
+      ...this.global.actions,
+      ...(this.actions as ActionRegistrar.ActionMap<any>),
+    ]);
   }
 
-  registeredAction(name: string): ActionRegistrar.Action<TreeNode> | undefined {
-    return this.actions[name] || this.global.actions[name];
+  registeredAction(
+    name: string,
+  ): ActionRegistrar.Action<BaseTreeNode<any>> | undefined {
+    return (
+      (this.actions.get(name) as
+        | ActionRegistrar.Action<BaseTreeNode<any>>
+        | undefined) || this.global.actions.get(name)
+    );
   }
 
   async doActionExp(
@@ -174,7 +180,7 @@ export class ActionSource<
       this.source.explorer,
       explorerActionList,
       flatten(
-        Object.entries(actions)
+        [...actions.entries()]
           .filter(([actionName]) => actionName !== 'actionMenu')
           .sort(([aName], [bName]) => aName.localeCompare(bName))
           .map(([actionName, { callback, options, description }]) => {

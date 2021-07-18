@@ -24,7 +24,7 @@ export class ExplorerManager {
   previousBufnr = new GlobalContextVars<number>('previousBufnr');
   previousWindowID = new GlobalContextVars<number>('previousWindowID');
   maxExplorerID = 0;
-  tabContainer: Record<number, TabContainer> = {};
+  tabContainer = new Map<number, TabContainer>();
   nvim = workspace.nvim;
   bufManager: BufManager;
 
@@ -86,7 +86,7 @@ export class ExplorerManager {
   }
 
   async currentTabContainer(): Promise<undefined | TabContainer> {
-    return this.tabContainer[await this.currentTabId()];
+    return this.tabContainer.get(await this.currentTabId());
   }
 
   private async updatePrevCtxVars(bufnr: number) {
@@ -164,7 +164,7 @@ export class ExplorerManager {
    */
   explorers() {
     const explorers: Explorer[] = [];
-    for (const container of Object.values(this.tabContainer)) {
+    for (const container of this.tabContainer.values()) {
       explorers.push(...container.all());
     }
     return explorers;
@@ -260,10 +260,11 @@ export class ExplorerManager {
       position.name === 'tab'
         ? (await this.currentTabMaxId()) + 1
         : await this.currentTabId();
-    if (!(tabid in this.tabContainer)) {
-      this.tabContainer[tabid] = new TabContainer();
+    let tabContainer = this.tabContainer.get(tabid);
+    if (!tabContainer) {
+      tabContainer = new TabContainer();
+      this.tabContainer.set(tabid, tabContainer);
     }
-    const tabContainer = this.tabContainer[tabid];
 
     let explorer = tabContainer.getExplorer(position);
     if (explorer && quit) {

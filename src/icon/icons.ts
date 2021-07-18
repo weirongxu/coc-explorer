@@ -1,12 +1,11 @@
 import { keyBy } from 'lodash-es';
 import { ExplorerConfig } from '../config';
+import { HighlightCommand } from '../highlight/types';
 import { IconSourceType } from '../types';
 import { getExtensions, logger, partition } from '../util';
+import './load';
 import { getLoader } from './loader';
 import { nerdfont } from './nerdfont';
-import './load';
-import { HighlightCommand } from '../highlight/types';
-import { prettyPrint } from 'coc-helper';
 
 export type IconTarget = {
   fullname: string;
@@ -28,8 +27,8 @@ export type IconInfo = {
 };
 
 export type IconLoadedResult = {
-  files: Record<string, IconInfo>;
-  directories: Record<string, IconInfo>;
+  files: Map<string, IconInfo>;
+  directories: Map<string, IconInfo>;
 };
 
 export type IconInternalLoadedItem = {
@@ -69,31 +68,34 @@ export async function loadIcons(
   );
   const fullname2fileIcon = keyBy(fileIcons, (it) => it.target.fullname);
   const result: IconLoadedResult = {
-    files: {},
-    directories: {},
+    files: new Map(),
+    directories: new Map(),
   };
   for (const target of targets) {
-    if (target.fullname in fullname2directoryIcon) {
-      result.directories[target.fullname] =
-        fullname2directoryIcon[target.fullname].icon;
-    } else if (target.fullname in fullname2fileIcon) {
-      result.files[target.fullname] = fullname2fileIcon[target.fullname].icon;
+    if (fullname2directoryIcon.hasOwnProperty(target.fullname)) {
+      result.directories.set(
+        target.fullname,
+        fullname2directoryIcon[target.fullname].icon,
+      );
+    } else if (fullname2fileIcon.hasOwnProperty(target.fullname)) {
+      result.files.set(
+        target.fullname,
+        fullname2fileIcon[target.fullname].icon,
+      );
     } else if (target.isDirectory) {
       // get the defeault icon for directory
       const code = target.expanded
         ? nerdfont.icons.folderOpened.code
         : nerdfont.icons.folderClosed.code;
-      result.directories[target.fullname] = {
+      result.directories.set(target.fullname, {
         code,
-      };
+      });
     } else {
       // get defeault icon for file
       const code = target.hidden
         ? nerdfont.icons.fileHidden.code
         : nerdfont.icons.file.code;
-      result.files[target.fullname] = {
-        code,
-      };
+      result.files.set(target.fullname, { code });
     }
   }
   return result;

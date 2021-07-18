@@ -15,11 +15,11 @@ class DiagnosticManager {
   /**
    * errorMixedCountCache[filepath] = count
    **/
-  protected errorMixedCountCache: Record<string, number> = {};
+  protected errorMixedCountCache: Map<string, number> = new Map();
   /**
    * warningMixedCountCache[filepath] = count
    **/
-  protected warningMixedCountCache: Record<string, number> = {};
+  protected warningMixedCountCache: Map<string, number> = new Map();
   protected binder = new DiagnosticBinder();
 
   /**
@@ -63,22 +63,18 @@ class DiagnosticManager {
   reload(types: DiagnosticType[]) {
     const typeSet = new Set(types);
 
-    const errorPathCount: Record<string, number> = {};
-    const warningPathCount: Record<string, number> = {};
+    const errorPathCount = new Map<string, number>();
+    const warningPathCount = new Map<string, number>();
 
     for (const diagnostic of cocDiagnosticManager.getDiagnosticList()) {
       const uri = diagnostic.location.uri;
       const path = normalizePath(Uri.parse(uri).fsPath);
       if (diagnostic.severity === 'Error') {
-        if (!(path in errorPathCount)) {
-          errorPathCount[path] = 0;
-        }
-        errorPathCount[path] += 1;
+        const count = errorPathCount.get(path);
+        errorPathCount.set(path, (count ?? 0) + 1);
       } else {
-        if (!(path in warningPathCount)) {
-          warningPathCount[path] = 0;
-        }
-        warningPathCount[path] += 1;
+        const count = warningPathCount.get(path);
+        warningPathCount.set(path, (count ?? 0) + 1);
       }
     }
 
@@ -91,38 +87,32 @@ class DiagnosticManager {
     }
   }
 
-  protected reloadMixedErrors(errorPathCount: Record<string, number>) {
-    const errorMixedCount: Record<string, number> = {};
+  protected reloadMixedErrors(errorPathCount: Map<string, number>) {
+    const errorMixedCount = new Map<string, number>();
 
-    for (const [fullpath, count] of Object.entries(errorPathCount)) {
+    for (const [fullpath, count] of errorPathCount) {
       const parts = fullpath.split(pathLib.sep);
 
       for (let i = 1; i <= parts.length; i++) {
         const frontalPath = parts.slice(0, i).join(pathLib.sep);
-        if (errorMixedCount[frontalPath]) {
-          errorMixedCount[frontalPath] += count;
-        } else {
-          errorMixedCount[frontalPath] = count;
-        }
+        const existCount = errorMixedCount.get(frontalPath);
+        errorMixedCount.set(frontalPath, (existCount ?? 0) + count);
       }
     }
 
     this.errorMixedCountCache = errorMixedCount;
   }
 
-  protected reloadMixedWarnings(warningPathCount: Record<string, number>) {
-    const warningMixedCount: Record<string, number> = {};
+  protected reloadMixedWarnings(warningPathCount: Map<string, number>) {
+    const warningMixedCount = new Map<string, number>();
 
-    for (const [fullpath, count] of Object.entries(warningPathCount)) {
+    for (const [fullpath, count] of warningPathCount) {
       const parts = fullpath.split(pathLib.sep);
 
       for (let i = 1; i <= parts.length; i++) {
         const frontalPath = parts.slice(0, i).join(pathLib.sep);
-        if (warningMixedCount[frontalPath]) {
-          warningMixedCount[frontalPath] += count;
-        } else {
-          warningMixedCount[frontalPath] = count;
-        }
+        const existCount = warningMixedCount.get(frontalPath);
+        warningMixedCount.set(frontalPath, (existCount ?? 0) + count);
       }
     }
 
@@ -138,11 +128,11 @@ class DiagnosticManager {
   }
 
   getMixedError(fullpath: string): undefined | number {
-    return this.errorMixedCountCache[fullpath];
+    return this.errorMixedCountCache.get(fullpath);
   }
 
   getMixedWarning(fullpath: string): undefined | number {
-    return this.warningMixedCountCache[fullpath];
+    return this.warningMixedCountCache.get(fullpath);
   }
 }
 

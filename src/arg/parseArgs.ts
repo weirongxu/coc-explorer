@@ -198,19 +198,23 @@ export class Args {
     }
 
     // presets
-    const preset = self.optionValues.get('preset') as string | undefined;
-    if (!preset) {
+    const presetName = self.optionValues.get('preset') as string | undefined;
+    if (!presetName) {
       return self;
     }
 
     const presets = await getPresets(config);
-    if (!(preset in presets)) {
+    const preset = presets.get(presetName);
+    if (!preset) {
       // eslint-disable-next-line no-restricted-properties
-      window.showMessage(`coc-explorer preset(${preset}) not found`, 'warning');
+      window.showMessage(
+        `coc-explorer preset(${presetName}) not found`,
+        'warning',
+      );
       return self;
     }
 
-    for (const [argName, argValue] of Object.entries(presets[preset])) {
+    for (const [argName, argValue] of preset) {
       if (self.optionValues.has(argName) || argValue === undefined) {
         continue;
       }

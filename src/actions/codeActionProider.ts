@@ -42,7 +42,7 @@ export class ActionMenuCodeActionProvider implements CodeActionProvider {
     const mruList = await actionListMru.load();
 
     return flatten(
-      Object.entries(actions)
+      [...actions.entries()]
         .filter(([actionName]) => actionName !== 'actionMenu')
         .sort(([aName], [bName]) => aName.localeCompare(bName))
         .sort(([aName], [bName]) => aName.localeCompare(bName))

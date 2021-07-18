@@ -52,14 +52,14 @@ export namespace ActionRegistrar {
     callback: ActionNodesCallback<TreeNode>;
   };
 
-  export type Map<TreeNode extends BaseTreeNode<TreeNode>> = Record<
+  export type ActionMap<TreeNode extends BaseTreeNode<TreeNode>> = Map<
     string,
     Action<TreeNode>
   >;
 }
 
 export class ActionRegistrar<O, TreeNode extends BaseTreeNode<TreeNode>> {
-  public readonly actions: ActionRegistrar.Map<TreeNode> = {};
+  public readonly actions: ActionRegistrar.ActionMap<TreeNode> = new Map();
 
   constructor(public readonly owner: O) {}
 
@@ -72,14 +72,14 @@ export class ActionRegistrar<O, TreeNode extends BaseTreeNode<TreeNode>> {
     description: string,
     options: Partial<ActionRegistrar.Options> = {},
   ) {
-    this.actions[name] = {
+    this.actions.set(name, {
       callback,
       description,
       options: {
         select: true,
         ...options,
       },
-    };
+    });
   }
 
   /**
@@ -91,7 +91,7 @@ export class ActionRegistrar<O, TreeNode extends BaseTreeNode<TreeNode>> {
     description: string,
     options: Partial<ActionRegistrar.Options> = {},
   ) {
-    this.actions[name] = {
+    this.actions.set(name, {
       callback: async ({ source, nodes, args, mode }) => {
         for (const node of nodes) {
           await callback.call(source, { source, node, args, mode });
@@ -99,6 +99,6 @@ export class ActionRegistrar<O, TreeNode extends BaseTreeNode<TreeNode>> {
       },
       description,
       options,
-    };
+    });
   }
 }

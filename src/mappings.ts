@@ -244,7 +244,7 @@ class KeyMapping {
     return this.vmapMappings_;
   }
 
-  private allSourceMappings_?: Record<string, Mappings>;
+  private allSourceMappings_?: Map<string, Mappings>;
   allSourceMappings() {
     if (!this.allSourceMappings_) {
       const defaultSources = this.config.sources ?? {};
@@ -252,22 +252,23 @@ class KeyMapping {
         'keyMappings.sources',
         {},
       );
-      this.allSourceMappings_ = {};
+      this.allSourceMappings_ = new Map();
       for (const [type, sourceMappings] of Object.entries(defaultSources)) {
-        this.allSourceMappings_[type] = {
+        this.allSourceMappings_.set(type, {
           ...parseOriginalMappings(sourceMappings),
-        };
+        });
       }
       for (const [type, sourceMappings] of Object.entries(userSources)) {
-        if (type in this.allSourceMappings_) {
-          this.allSourceMappings_[type] = mixAndParseMappings(
-            this.allSourceMappings_[type],
-            sourceMappings,
+        const mappings = this.allSourceMappings_.get(type);
+        if (mappings) {
+          this.allSourceMappings_.set(
+            type,
+            mixAndParseMappings(mappings, sourceMappings),
           );
         } else {
-          this.allSourceMappings_[type] = mixAndParseMappings(
-            {},
-            sourceMappings,
+          this.allSourceMappings_.set(
+            type,
+            mixAndParseMappings({}, sourceMappings),
           );
         }
       }
@@ -276,7 +277,7 @@ class KeyMapping {
   }
 
   sourceMappings(sourceType: string): Mappings | undefined {
-    return this.allSourceMappings()[sourceType];
+    return this.allSourceMappings().get(sourceType);
   }
 
   private async filterEscForVim(keys: Set<string>) {
@@ -293,7 +294,7 @@ class KeyMapping {
     for (const key of Object.keys(this.globalMappings())) {
       keys.add(key);
     }
-    for (const sourceMappings of Object.values(this.allSourceMappings())) {
+    for (const sourceMappings of this.allSourceMappings().values()) {
       for (const key of Object.keys(sourceMappings)) {
         keys.add(key);
       }

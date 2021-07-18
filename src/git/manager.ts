@@ -19,19 +19,22 @@ class GitManager {
   /**
    * rootCache[fullpath] = rootPath
    **/
-  private rootCache: Record<string, string> = {};
+  private rootCache = new Map<string, string>();
   /**
-   * mixedStatusCache[rootPath][filepath] = GitStatus
+   * mixedStatusMapCacheInRoot[rootPath][filepath] = GitStatus
    **/
-  private mixedStatusCache: Record<string, Record<string, GitMixedStatus>> = {};
+  private mixedStatusMapCacheInRoot = new Map<
+    string,
+    Map<string, GitMixedStatus>
+  >();
   /**
-   * ignoreCache[rootPath][filepath] = GitIgnore
+   * ignoreMapCacheInRoot[rootPath][filepath] = GitIgnore
    **/
-  private ignoreCache: Record<string, Record<string, GitIgnore>> = {};
+  private ignoreMapCacheInRoot = new Map<string, Map<string, GitIgnore>>();
   /**
    * rootStatusCache[rootPath] = GitRootStatus
    */
-  private rootStatusCache: Record<string, GitRootStatus> = {};
+  private rootStatusCache = new Map<string, GitRootStatus>();
   private binder = new GitBinder();
 
   private showIgnored: boolean;
@@ -54,20 +57,19 @@ class GitManager {
   }
 
   async getGitRoot(directory: string): Promise<string | undefined> {
-    if (directory in this.rootCache) {
-      return this.rootCache[directory];
-    }
+    const root = this.rootCache.get(directory);
+    if (root) return root;
 
     const parts = directory.split(pathLib.sep);
     const idx = parts.indexOf('.git');
     if (idx !== -1) {
       const root = parts.slice(0, idx).join(pathLib.sep);
-      this.rootCache[directory] = root;
+      this.rootCache.set(directory, root);
     } else {
       try {
         const gitRoot = await this.cmd.getRoot(directory);
         if (pathLib.isAbsolute(gitRoot)) {
-          this.rootCache[directory] = gitRoot;
+          this.rootCache.set(directory, gitRoot);
         } else {
           pathLib.join(directory, gitRoot);
         }
@@ -76,7 +78,7 @@ class GitManager {
         return;
       }
     }
-    return this.rootCache[directory];
+    return this.rootCache.get(directory);
   }
 
   async reload(
@@ -92,13 +94,14 @@ class GitManager {
       };
 
       const statusRecord = await this.cmd.status(root, statusOptions);
-      const statusArray = Object.values(statusRecord);
+      const statusArray = [...statusRecord.values()];
 
       // generate rootStatusCache
-      const rootStatus: GitRootStatus = (this.rootStatusCache[root] = {
+      const rootStatus: GitRootStatus = {
         allStaged: true,
         formats: [],
-      });
+      };
+      this.rootStatusCache.set(root, rootStatus);
 
       if (await this.cmd.hasStashed(root)) {
         rootStatus.formats.push(GitRootFormat.stashed);
@@ -141,15 +144,17 @@ class GitManager {
       }
 
       // generate mixedstatusCache & ignoreCache
-      this.mixedStatusCache[root] = {};
-      this.ignoreCache[root] = {};
+      const mixedStatusMap = new Map<string, GitMixedStatus>();
+      const ignoreMap = new Map<string, GitIgnore>();
+      this.mixedStatusMapCacheInRoot.set(root, mixedStatusMap);
+      this.ignoreMapCacheInRoot.set(root, ignoreMap);
 
-      Object.entries(statusRecord).forEach(([fullpath, status]) => {
+      statusRecord.forEach((status, fullpath) => {
         if (status.x === GitFormat.ignored) {
           if (['/', '\\'].includes(fullpath[fullpath.length - 1])) {
-            this.ignoreCache[root][fullpath] = GitIgnore.directory;
+            ignoreMap.set(fullpath, GitIgnore.directory);
           } else {
-            this.ignoreCache[root][fullpath] = GitIgnore.file;
+            ignoreMap.set(fullpath, GitIgnore.file);
           }
           return;
         }
@@ -161,7 +166,7 @@ class GitManager {
             root,
             pathLib.join(...parts.slice(0, i)),
           );
-          const cache = this.mixedStatusCache[root][frontalPath];
+          const cache = mixedStatusMap.get(frontalPath);
           if (cache) {
             if (cache.x !== GitFormat.mixed) {
               if (cache.x !== status.x) {
@@ -182,10 +187,10 @@ class GitManager {
               }
             }
           } else {
-            this.mixedStatusCache[root][frontalPath] = {
+            mixedStatusMap.set(frontalPath, {
               x: status.x,
               y: status.y,
-            };
+            });
           }
         }
       });
@@ -222,12 +227,12 @@ class GitManager {
     return this.binder.bind(source);
   }
 
-  getMixedStatusesByRoot(rootPath: string) {
-    return this.mixedStatusCache[rootPath] || {};
+  getMixedStatusesByRoot(rootPath: string): Map<string, GitMixedStatus> {
+    return this.mixedStatusMapCacheInRoot.get(rootPath) || new Map();
   }
 
-  getIgnoreByRoot(rootPath: string) {
-    return this.ignoreCache[rootPath] || {};
+  getIgnoreByRoot(rootPath: string): Map<string, GitIgnore> {
+    return this.ignoreMapCacheInRoot.get(rootPath) || new Map();
   }
 
   getMixedStatus(
@@ -235,22 +240,22 @@ class GitManager {
     isDirectory: boolean,
   ): GitMixedStatus | undefined {
     // TODO getMixedStatus by root
-    const statusPair = Object.entries(this.mixedStatusCache)
+    const statusPair = [...this.mixedStatusMapCacheInRoot.entries()]
       .sort((a, b) => b[0].localeCompare(a[0]))
       .find(([rootPath]) => fullpath.startsWith(rootPath));
     if (statusPair) {
-      const pathsStatus = statusPair[1];
-      if (fullpath in pathsStatus) {
-        return pathsStatus[fullpath];
+      const pathStatus = statusPair[1].get(fullpath);
+      if (pathStatus) {
+        return pathStatus;
       }
     }
 
-    const ignorePair = Object.entries(this.ignoreCache)
+    const ignorePair = [...this.ignoreMapCacheInRoot.entries()]
       .sort((a, b) => b[0].localeCompare(a[0]))
       .find(([rootPath]) => fullpath.startsWith(rootPath));
     if (ignorePair) {
       const gitIgnores = ignorePair[1];
-      const isIgnore = Object.entries(gitIgnores).some(
+      const isIgnore = [...gitIgnores.entries()].some(
         ([ignorePath, gitIgnore]) => {
           if (gitIgnore === GitIgnore.file) {
             return ignorePath === fullpath;
@@ -269,7 +274,7 @@ class GitManager {
   }
 
   getRootStatus(root: string): GitRootStatus | undefined {
-    return this.rootStatusCache[root];
+    return this.rootStatusCache.get(root);
   }
 }
 

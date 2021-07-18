@@ -3,7 +3,7 @@ import pathLib from 'path';
 import { MappingMode, OriginalActionExp } from './actions/types';
 import { Explorer } from './explorer';
 import { ExplorerManager } from './explorerManager';
-import { IconLoadedResult, IconTarget, loadIcons } from './icon/icons';
+import { IconInfo, IconTarget, loadIcons } from './icon/icons';
 import { actionListMru } from './lists/actions';
 import { parseOriginalActionExp } from './mappings';
 import { BaseTreeNode, ExplorerSource } from './source/source';
@@ -201,7 +201,7 @@ export function registerVimApi(
           },
         ];
         const icons = await loadIcons('builtin', nodes);
-        return icons?.[type][basename];
+        return icons?.[type].get(basename);
       },
     ),
     registerApi(
@@ -229,14 +229,17 @@ export function registerVimApi(
           return;
         }
         // convert the key from fullname to filepath
-        const result: IconLoadedResult = {
+        const result: {
+          files: Record<string, IconInfo>;
+          directories: Record<string, IconInfo>;
+        } = {
           files: {},
           directories: {},
         };
-        for (const [fullname, file] of Object.entries(icons.files)) {
+        for (const [fullname, file] of icons.files) {
           result.files[fullname2filepath[fullname]] = file;
         }
-        for (const [fullname, directory] of Object.entries(icons.directories)) {
+        for (const [fullname, directory] of icons.directories) {
           result.directories[fullname2filepath[fullname]] = directory;
         }
         return result;

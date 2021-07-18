@@ -22,7 +22,7 @@ export function mapGetWithDefault<K, V, M extends Map<K, V>>(
   fetchDefault: () => V,
 ): V {
   let v = map.get(key);
-  if (!v) {
+  if (v === undefined) {
     v = fetchDefault();
     map.set(key, v);
   }

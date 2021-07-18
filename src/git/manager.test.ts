@@ -130,9 +130,11 @@ describe('gitManager status', () => {
 
   test('status', async () => {
     expect(
-      await gitManager.cmd.status('/root', {
-        showIgnored: true,
-      }),
+      Object.fromEntries(
+        await gitManager.cmd.status('/root', {
+          showIgnored: true,
+        }),
+      ),
     ).toEqual(
       mapValues(
         mapKeys(
@@ -213,7 +215,11 @@ describe('gitManager status', () => {
 
   test('getMixedStatuses', async () => {
     await gitManager.reload(normalizePath('/root'), { showIgnored: true });
-    expect(gitManager.getMixedStatusesByRoot(normalizePath('/root'))).toEqual(
+    expect(
+      Object.fromEntries(
+        gitManager.getMixedStatusesByRoot(normalizePath('/root')),
+      ),
+    ).toEqual(
       mapKeys(
         {
           src: {

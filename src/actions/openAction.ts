@@ -221,7 +221,7 @@ export async function openAction(
   if (!openStrategy) {
     openStrategy = await explorer.args.value(argOptions.openActionStrategy);
   }
-  if (!(openStrategy in actions)) {
+  if (!actions.hasOwnProperty(openStrategy)) {
     new Error(`openStrategy(${openStrategy}) is not supported`);
   }
   await actions[openStrategy]();

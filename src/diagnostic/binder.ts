@@ -21,26 +21,22 @@ export class DiagnosticBinder {
       };
     }
   > = new Map();
-  private prevErrorMixedCount: Record<string, number> = {};
-  private prevWarningMixedCount: Record<string, number> = {};
+  private prevErrorMixedCount: Map<string, number> = new Map();
+  private prevWarningMixedCount: Map<string, number> = new Map();
   private registeredDisposable?: Disposable;
   private registeredForSourceDisposable?: Disposable;
 
   get sources() {
-    return Array.from(this.sourcesBinding.keys());
+    return [...this.sourcesBinding.keys()];
   }
 
   get refTotalCount() {
-    return sum(
-      Array.from(this.sourcesBinding.values()).map((b) => b.refCount.total),
-    );
+    return sum([...this.sourcesBinding.values()].map((b) => b.refCount.total));
   }
 
   get diagnosticTypes() {
     const types: DiagnosticType[] = [];
-    const refs = Array.from(this.sourcesBinding.values()).map(
-      (ref) => ref.refCount,
-    );
+    const refs = [...this.sourcesBinding.values()].map((ref) => ref.refCount);
     if (refs.some((ref) => ref.error > 0)) {
       types.push('error');
     }
@@ -161,47 +157,33 @@ export class DiagnosticBinder {
     const updatePaths: Set<string> = new Set();
 
     if (types.includes('error')) {
-      const errorMixedCount = { ...diagnosticManager.getMixedErrors() };
-      const prevErrorMap = this.prevErrorMixedCount;
-
-      for (const [fullpath, count] of Object.entries(errorMixedCount)) {
-        if (fullpath in prevErrorMap) {
-          if (prevErrorMap[fullpath] === count) {
-            continue;
-          }
-          delete prevErrorMap[fullpath];
-          updatePaths.add(fullpath);
-        } else {
-          updatePaths.add(fullpath);
-        }
-      }
-      for (const fullpath of Object.keys(prevErrorMap)) {
+      for (const [fullpath] of this.prevErrorMixedCount) {
         updatePaths.add(fullpath);
       }
 
-      this.prevErrorMixedCount = errorMixedCount;
+      const newErrorMixedCount = new Map(diagnosticManager.getMixedErrors());
+
+      for (const [fullpath] of newErrorMixedCount) {
+        updatePaths.add(fullpath);
+      }
+
+      this.prevErrorMixedCount = newErrorMixedCount;
     }
 
     if (types.includes('warning')) {
-      const warningMixedCount = { ...diagnosticManager.getMixedWarnings() };
-      const prevWarningMap = this.prevWarningMixedCount;
-
-      for (const [fullpath, count] of Object.entries(warningMixedCount)) {
-        if (fullpath in prevWarningMap) {
-          if (prevWarningMap[fullpath] === count) {
-            continue;
-          }
-          delete prevWarningMap[fullpath];
-          updatePaths.add(fullpath);
-        } else {
-          updatePaths.add(fullpath);
-        }
-      }
-      for (const fullpath of Object.keys(prevWarningMap)) {
+      for (const [fullpath] of this.prevWarningMixedCount) {
         updatePaths.add(fullpath);
       }
 
-      this.prevWarningMixedCount = warningMixedCount;
+      const newWarningMixedCount = new Map(
+        diagnosticManager.getMixedWarnings(),
+      );
+
+      for (const [fullpath] of newWarningMixedCount) {
+        updatePaths.add(fullpath);
+      }
+
+      this.prevWarningMixedCount = newWarningMixedCount;
     }
 
     for (const source of sources) {

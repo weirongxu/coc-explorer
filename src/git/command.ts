@@ -162,8 +162,8 @@ export class GitCommand {
       showUntrackedFiles = 'system',
       showIgnored = true,
     }: GitCommand.StatusOptions = {},
-  ): Promise<Record<string, GitStatus>> {
-    const gitStatus: Record<string, GitStatus> = {};
+  ): Promise<Map<string, GitStatus>> {
+    const gitStatus = new Map<string, GitStatus>();
 
     const args = ['status', '--porcelain'];
     if (showUntrackedFiles === true) {
@@ -206,7 +206,7 @@ export class GitCommand {
       const untracked = y === GitFormat.untracked;
 
       const fullpath = rightpath ? rightpath : leftpath;
-      gitStatus[fullpath] = {
+      gitStatus.set(fullpath, {
         fullpath,
         x,
         y,
@@ -221,7 +221,7 @@ export class GitCommand {
         unmerged,
         untracked,
         ignored,
-      };
+      });
     });
 
     return gitStatus;

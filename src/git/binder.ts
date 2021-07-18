@@ -31,17 +31,20 @@ export class GitBinder {
     { refCount: number }
   > = new Map();
   /**
-   * prevStatuses[root][path] = GitMixedStatus
+   * prevStatusesMapInRoot[root][path] = GitMixedStatus
    */
-  private prevStatuses: Record<string, Record<string, GitMixedStatus>> = {};
+  private prevStatusesMapInRoot = new Map<
+    string,
+    Map<string, GitMixedStatus>
+  >();
   /**
-   * prevIgnoreStatus[root][path] = GitRootStatus
+   * prevIgnoresMapInRoot[root][path] = GitRootStatus
    */
-  private prevIgnores: Record<string, Record<string, GitIgnore>> = {};
+  private prevIgnoresMapInRoot = new Map<string, Map<string, GitIgnore>>();
   /**
-   * prevRootStatus[root] = GitRootStatus
+   * prevRootStatuses[root] = GitRootStatus
    */
-  private prevRootStatus: Record<string, GitRootStatus> = {};
+  private prevRootStatuses = new Map<string, GitRootStatus>();
   private registerForSourceDisposables: Disposable[] = [];
   private registerDisposables: Disposable[] = [];
   private inited = false;
@@ -182,17 +185,23 @@ export class GitBinder {
         allStaged: false,
         formats: [],
       };
-      if (!(root in this.prevStatuses)) {
-        this.prevStatuses[root] = {};
+      let prevStatusMap = this.prevStatusesMapInRoot.get(root);
+      if (!prevStatusMap) {
+        prevStatusMap = new Map();
+        this.prevStatusesMapInRoot.set(root, prevStatusMap);
       }
-      if (!(root in this.prevIgnores)) {
-        this.prevIgnores[root] = {};
+      let prevIgnoreMap = this.prevIgnoresMapInRoot.get(root);
+      if (!prevIgnoreMap) {
+        prevIgnoreMap = new Map();
+        this.prevIgnoresMapInRoot.set(root, prevIgnoreMap);
       }
-      if (!(root in this.prevRootStatus)) {
-        this.prevRootStatus[root] = {
+      let prevRootStatus = this.prevRootStatuses.get(root);
+      if (!prevRootStatus) {
+        prevRootStatus = {
           allStaged: false,
           formats: [],
         };
+        this.prevRootStatuses.set(root, prevRootStatus);
       }
       const addGitIgnore = (fullpath: string, gitIgnore: GitIgnore) => {
         if (gitIgnore === GitIgnore.directory) {
@@ -202,47 +211,41 @@ export class GitBinder {
         }
       };
 
-      for (const [fullpath, status] of Object.entries(statuses)) {
-        if (fullpath in this.prevStatuses[root]) {
-          if (statusEqual(this.prevStatuses[root][fullpath], status)) {
-            delete this.prevStatuses[root][fullpath];
+      for (const [fullpath, status] of statuses) {
+        const prevStatus = prevStatusMap.get(fullpath);
+        if (prevStatus) {
+          if (statusEqual(prevStatus, status)) {
+            prevStatusMap.delete(fullpath);
             continue;
           }
         }
         updatePaths.add(fullpath);
       }
-      for (const fullpath of Object.keys(this.prevStatuses[root])) {
+      for (const fullpath of prevStatusMap.keys()) {
         updatePaths.add(fullpath);
       }
 
       // ignore
-      for (const [fullpath, gitIgnore] of Object.entries(ignores)) {
-        if (fullpath in this.prevIgnores[root]) {
-          if (this.prevIgnores[root][fullpath] === gitIgnore) {
-            delete this.prevIgnores[root][fullpath];
-            continue;
-          }
+      for (const [fullpath, gitIgnore] of ignores) {
+        const prevIgnore = prevIgnoreMap.get(fullpath);
+        if (prevIgnore === gitIgnore) {
+          prevIgnoreMap.delete(fullpath);
+          continue;
         }
         addGitIgnore(fullpath, gitIgnore);
       }
-      for (const [fullpath, gitIgnore] of Object.entries(
-        this.prevIgnores[root],
-      )) {
+      for (const [fullpath, gitIgnore] of prevIgnoreMap) {
         addGitIgnore(fullpath, gitIgnore);
       }
 
       // root
-      if (
-        rootStatus &&
-        (!this.prevRootStatus ||
-          !rootStatusEqual(this.prevRootStatus[root], rootStatus))
-      ) {
+      if (rootStatus && !rootStatusEqual(prevRootStatus, rootStatus)) {
         updatePaths.add(root);
       }
 
-      this.prevStatuses[root] = statuses;
-      this.prevIgnores[root] = ignores;
-      this.prevRootStatus[root] = rootStatus;
+      this.prevStatusesMapInRoot.set(root, statuses);
+      this.prevIgnoresMapInRoot.set(root, ignores);
+      this.prevRootStatuses.set(root, rootStatus);
     }
 
     for (const source of sources) {

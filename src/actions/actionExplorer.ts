@@ -87,7 +87,7 @@ export class ActionExplorer extends ActionRegistrar<
             .push(source.view.flattenedNodes[relativeLineIndex]);
         }
 
-        for (const [source, nodes] of nodesGroup.entries()) {
+        for (const [source, nodes] of nodesGroup) {
           await source.action.doActionExp(actionExp, nodes, { mode });
         }
       }
