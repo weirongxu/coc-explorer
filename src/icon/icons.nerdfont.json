@@ -1,4 +1,5 @@
 {
+  "$schema": "./icons.nerdfont.schema.json",
   "icons": {
     "folderClosed": {
       "code": "",
@@ -190,7 +191,7 @@
     },
     "rss": {
       "code": "",
-      "color": "FB9D3B"
+      "color": "#fb9d3b"
     },
     "csharp": {
       "code": "",

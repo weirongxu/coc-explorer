@@ -1,0 +1,68 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema",
+  "title": "Nerdfont icons",
+  "description": "Nerdfont icons",
+  "type": "object",
+  "required": [
+    "icons",
+    "extensions",
+    "filenames",
+    "patternMatches",
+    "dirnames",
+    "dirPatternMatches"
+  ],
+  "properties": {
+    "icons": {
+      "type": "object",
+      "description": "icons",
+      "additionalProperties": {
+        "type": "object",
+        "required": ["code", "color"],
+        "properties": {
+          "code": {
+            "type": "string"
+          },
+          "color": {
+            "type": "string",
+            "pattern": "#[0-9a-fA-F]{6}"
+          }
+        }
+      }
+    },
+    "extensions": {
+      "type": "object",
+      "description": "extensions",
+      "additionalProperties": {
+        "type": "string"
+      }
+    },
+    "filenames": {
+      "type": "object",
+      "description": "filenames",
+      "additionalProperties": {
+        "type": "string"
+      }
+    },
+    "patternMatches": {
+      "type": "object",
+      "description": "patternMatches",
+      "additionalProperties": {
+        "type": "string"
+      }
+    },
+    "dirnames": {
+      "type": "object",
+      "description": "dirnames",
+      "additionalProperties": {
+        "type": "string"
+      }
+    },
+    "dirPatternMatches": {
+      "type": "object",
+      "description": "dirPatternMatches",
+      "additionalProperties": {
+        "type": "string"
+      }
+    }
+  }
+}
