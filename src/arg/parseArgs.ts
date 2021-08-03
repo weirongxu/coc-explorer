@@ -17,25 +17,27 @@ export type ParsedPosition = {
 
 export type OptionType = 'boolean' | 'string' | 'positional';
 
-export type ArgOption<T, P> = {
+export type ArgOption<ParsedValue, PresetValue> = {
   type: OptionType;
   name: string;
   position?: number;
-  parseArg?: (value: string) => Promise<T> | T;
-  parsePreset?: (value: P) => Promise<T> | T;
-  handler?: (value: T | undefined) => Promise<T | undefined> | T | undefined;
-  getDefault?: () => Promise<T> | T;
+  parseArg?: (value: string) => Promise<ParsedValue> | ParsedValue;
+  parsePreset?: (value: PresetValue) => Promise<ParsedValue> | ParsedValue;
+  handler?: (
+    value: ParsedValue | undefined,
+  ) => Promise<ParsedValue | undefined> | ParsedValue | undefined;
+  getDefault?: () => Promise<ParsedValue> | ParsedValue;
   description?: string;
 };
 
-export type ArgOptionRequired<T, P> = {
+export type ArgOptionRequired<ParsedValue, PresetValue> = {
   type: OptionType;
   name: string;
   position?: number;
-  parseArg?: (value: string) => Promise<T> | T;
-  parsePreset?: (value: P) => Promise<T> | T;
-  handler?: (value: T) => Promise<T> | T;
-  getDefault: () => Promise<T> | T;
+  parseArg?: (value: string) => Promise<ParsedValue> | ParsedValue;
+  parsePreset?: (value: PresetValue) => Promise<ParsedValue> | ParsedValue;
+  handler?: (value: ParsedValue) => Promise<ParsedValue> | ParsedValue;
+  getDefault: () => Promise<ParsedValue> | ParsedValue;
   description?: string;
 };
 
@@ -128,10 +130,15 @@ export class Args {
     return option;
   }
 
+  static registerBoolOption(name: string): ArgOption<boolean, boolean>;
   static registerBoolOption(
     name: string,
     defaultValue: boolean | (() => boolean | Promise<boolean>),
-  ): ArgOptionRequired<boolean, boolean> {
+  ): ArgOptionRequired<boolean, boolean>;
+  static registerBoolOption(
+    name: string,
+    defaultValue?: boolean | (() => boolean | Promise<boolean>),
+  ): ArgOption<boolean, boolean> | ArgOptionRequired<boolean, boolean> {
     const option = {
       type: 'boolean' as const,
       name,

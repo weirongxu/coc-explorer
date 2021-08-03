@@ -1,3 +1,4 @@
+import { prettyPrint } from 'coc-helper';
 import { workspace, WorkspaceConfiguration } from 'coc.nvim';
 import { OriginalActionExp } from './actions/types';
 import { CollapseOption, ExpandOption, RootStrategyStr } from './types';
@@ -62,10 +63,16 @@ export const getRevealAuto = (config: ExplorerConfig) => {
   return revealAuto;
 };
 
-/**
- * @deprecated
- */
-export const getRevealWhenOpen = (config: ExplorerConfig) => {
+export const getRevealWhenOpen = (
+  config: ExplorerConfig,
+  revealWhenOpenArg: boolean | undefined,
+) => {
+  if (revealWhenOpenArg !== undefined) {
+    return revealWhenOpenArg;
+  }
+  /**
+   * @deprecated
+   */
   let revealWhenOpen: boolean | undefined = config.get('file.revealWhenOpen');
   if (revealWhenOpen !== undefined) {
     logger.error(

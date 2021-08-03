@@ -1,16 +1,16 @@
+import { config } from '../config';
+import { OpenStrategy, RootStrategyStr } from '../types';
+import { Position } from '../types/pkg-config';
 import { normalizePath } from '../util';
 import {
-  Args,
-  ArgsSource,
-  ArgPosition,
   ArgContentWidthTypes,
   ArgFloatingPositions,
-  ResolveArgValues,
+  ArgPosition,
+  Args,
+  ArgsSource,
   ParsedPosition,
+  ResolveArgValues,
 } from './parseArgs';
-import { OpenStrategy, RootStrategyStr } from '../types';
-import { config } from '../config';
-import { Position } from '../types/pkg-config';
 
 export const argOptions = {
   rootUri: Args.registerOption<string>('root-uri', {
@@ -40,6 +40,7 @@ export const argOptions = {
   reveal: Args.registerOption<string>('reveal', {
     handler: (path) => (path ? normalizePath(path) : path),
   }),
+  revealWhenOpen: Args.registerBoolOption('reveal-when-open'),
   preset: Args.registerOption<string>('preset'),
   sources: Args.registerOption('sources', {
     parseArg: (sources) =>

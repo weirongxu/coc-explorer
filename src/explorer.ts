@@ -510,7 +510,7 @@ export class Explorer implements Disposable {
     }
 
     let reveal: string | undefined;
-    if (getRevealWhenOpen(this.config)) {
+    if (getRevealWhenOpen(this.config, this.argValues.revealWhenOpen)) {
       reveal = await this.revealPath();
     }
     const resolvedRoot = await rooter.resolveRoot(

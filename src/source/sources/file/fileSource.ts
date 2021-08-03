@@ -262,7 +262,7 @@ export class FileSource extends ExplorerSource<FileNode> {
 
     if (
       getRevealAuto(this.config) ||
-      getRevealWhenOpen(this.config) ||
+      getRevealWhenOpen(this.config, this.explorer.argValues.revealWhenOpen) ||
       hasRevealPath
     ) {
       const [revealNode, notifiers] = await this.revealNodeByPathNotifier(

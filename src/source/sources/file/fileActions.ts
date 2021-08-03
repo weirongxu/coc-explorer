@@ -485,7 +485,7 @@ export function loadFileActions(action: ActionSource<FileSource, FileNode>) {
       const list = nodes.map((node) => node.fullpath).join('\n');
       if (
         (await prompt(
-          'Forever delete these files or directories?\n' + list,
+          'Delete these files or directories permanently?\n' + list,
         )) !== 'yes'
       ) {
         return;
@@ -499,7 +499,7 @@ export function loadFileActions(action: ActionSource<FileSource, FileNode>) {
         });
       }
     },
-    'delete file or directory forever',
+    'delete file or directory permanently',
     { reload: true },
   );
 

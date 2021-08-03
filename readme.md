@@ -402,6 +402,10 @@ default: `[filename][fullpath][position][line][annotation]`
 
 Explorer will expand to this filepath, default: `current buffer`
 
+#### `--reveal-when-open | --no-reveal-when-open`
+
+Explorer will automatically reveal to the current buffer when open explorer, default: `"explorer.file.reveal.whenOpen"`
+
 ## Template grammar
 
 **Example:**
