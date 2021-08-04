@@ -54,13 +54,6 @@ export const activate = (context: ExtensionContext) => {
     await InternalVimEvents.register(context);
     await registerRuntimepath(context.extensionPath);
     await nvim.command('runtime plugin/coc_explorer.vim');
-    subscriptions.push(
-      Disposable.create(
-        asyncCatchError(() => {
-          return nvim.call('CocExplorerDeactivate');
-        }),
-      ),
-    );
     registerGitHighlights(subscriptions);
     registerInternalColors(subscriptions);
     await explorerManager.events.fire('didAutoload');
