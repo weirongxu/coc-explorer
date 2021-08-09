@@ -1,22 +1,21 @@
-import {
-  ExtensionContext,
-  commands,
-  workspace,
-  listManager,
-  Disposable,
-  languages,
-} from 'coc.nvim';
-import { hlGroupManager } from './highlight/manager';
-import { ExplorerManager } from './explorerManager';
-import { PresetList } from './lists/presets';
-import { registerVimApi } from './vimApi';
-import { InternalVimEvents } from './events';
-import { asyncCatchError, logger, registerRuntimepath } from './util';
-import { ActionMenuCodeActionProvider } from './actions/codeActionProider';
 import { activateHelper } from 'coc-helper';
+import {
+  commands,
+  ExtensionContext,
+  languages,
+  listManager,
+  workspace,
+} from 'coc.nvim';
+import { ActionMenuCodeActionProvider } from './actions/codeActionProider';
+import { InternalVimEvents } from './events';
+import { ExplorerManager } from './explorerManager';
 import { GitCommand } from './git/command';
-import { registerInternalColors } from './highlight/internalColors';
 import { registerGitHighlights } from './git/highlights';
+import { registerInternalColors } from './highlight/internalColors';
+import { hlGroupManager } from './highlight/manager';
+import { PresetList } from './lists/presets';
+import { asyncCatchError, logger, registerRuntimepath } from './util';
+import { registerVimApi } from './vimApi';
 
 export const activate = (context: ExtensionContext) => {
   const { subscriptions } = context;

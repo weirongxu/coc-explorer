@@ -94,6 +94,9 @@ export const InternalVimEvents = new HelperVimEvents<{
     },
   },
   logger,
+  {
+    name: 'explorer',
+  },
 );
 
 // Internal events
