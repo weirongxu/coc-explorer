@@ -6,7 +6,7 @@ import { flatten, logger, partition, uniq } from '../util';
 import { ActionExplorer } from './actionExplorer';
 import { ActionMenu } from './menu';
 import { ActionRegistrar } from './registrar';
-import { conditionActionRules, waitAction } from './special';
+import { conditionActionRules, noopAction, waitAction } from './special';
 import { ActionExp, MappingMode } from './types';
 
 export class ActionSource<
@@ -104,7 +104,9 @@ export class ActionSource<
           }
         }
       } else {
-        await this.doAction(actionExp.name, curNodes, actionExp.args, mode);
+        if (actionExp.name !== noopAction.name) {
+          await this.doAction(actionExp.name, curNodes, actionExp.args, mode);
+        }
       }
     } catch (error) {
       throw error;

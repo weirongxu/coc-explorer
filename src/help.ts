@@ -1,5 +1,9 @@
 import { Disposable, workspace, disposeAll } from 'coc.nvim';
-import { conditionActionRules, waitAction } from './actions/special';
+import {
+  conditionActionRules,
+  noopAction,
+  waitAction,
+} from './actions/special';
 import { Explorer } from './explorer';
 import { keyMapping } from './mappings';
 import { hlGroupManager } from './highlight/manager';
@@ -130,6 +134,11 @@ export class HelpPainter {
     await this.drawRow((row) => {
       this.drawMappingsPrefix(indent, row, ctx);
 
+      if (action.name === noopAction.name) {
+        row.add(noopAction.helpDescription, { hl: helpHightlights.type });
+        return;
+      }
+
       row.add(action.name, { hl: helpHightlights.action });
       if (action.args) {
         row.add(`(${action.args.join(',')})`, { hl: helpHightlights.arg });
@@ -215,8 +224,11 @@ export class HelpPainter {
     const drawMappings = async (mappings: Mappings) => {
       for (const [key, actionExp] of Object.entries(mappings)) {
         if (
-          !this.anyAction(actionExp, (action) =>
-            this.registeredActions.has(action.name),
+          !this.anyAction(
+            actionExp,
+            (action) =>
+              this.registeredActions.has(action.name) ||
+              action.name === noopAction.name,
           )
         ) {
           continue;

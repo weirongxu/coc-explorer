@@ -455,6 +455,7 @@ You can use `?` to view all actions of current source
 {
   "explorer.keyMappings.global": {
     "i": false, // cancel default mapkey
+    "<c-o>": "noop",
 
     "*": "toggleSelection",
     "<tab>": "actionMenu",

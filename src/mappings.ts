@@ -1,5 +1,9 @@
 import { workspace } from 'coc.nvim';
-import { conditionActionRules, waitAction } from './actions/special';
+import {
+  conditionActionRules,
+  noopAction,
+  waitAction,
+} from './actions/special';
 import {
   Action,
   ActionExp,
@@ -88,7 +92,8 @@ export function getSingleAction(actionExp: ActionExp): Action | undefined {
         (action) =>
           action &&
           !(action.name in conditionActionRules) &&
-          action.name !== waitAction.name,
+          action.name !== waitAction.name &&
+          action.name !== noopAction.name,
       );
     return actions[0];
   }

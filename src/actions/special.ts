@@ -29,3 +29,8 @@ export const waitAction = {
   name: 'wait',
   helpDescription: '<wait>',
 };
+
+export const noopAction = {
+  name: 'noop',
+  helpDescription: '<noop>',
+};
