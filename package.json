@@ -758,7 +758,7 @@
           }
         },
         "explorer.icon.enableVimDevicons": {
-          "deprecationMessage": "The configuration `explorer.icon.enableVimDevicons` has been deprecated, please use `{\"explorer.icon.enabledNerdFont\": true, \"explorer.icon.source\": \"vim-devicons\"}` instead of it",
+          "deprecationMessage": "The configuration `explorer.icon.enableVimDevicons` has been deprecated, please use `{\"explorer.icon.enableNerdfont\": true, \"explorer.icon.source\": \"vim-devicons\"}` instead of it",
           "description": "Enable use vim-devicons instead of built-in icon configuration",
           "type": "boolean"
         },
