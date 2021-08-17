@@ -21,16 +21,17 @@ fileColumnRegistrar.registerColumn(
       draw() {
         return {
           labelOnly: true,
-          labelVisible: ({ node }) => source.bufManager.modified(node.fullpath),
+          labelVisible: ({ node }) =>
+            source.bufManager.modified(node.fullpath, {
+              directory: node.directory,
+            }),
           drawNode(row, { node, nodeIndex }) {
-            let modified: boolean = false;
-            if (node.directory) {
-              if (!source.view.isExpanded(node)) {
-                modified = source.bufManager.modifiedPrefix(node.fullpath);
-              }
-            } else {
-              modified = source.bufManager.modified(node.fullpath);
-            }
+            const modified: boolean = source.bufManager.modified(
+              node.fullpath,
+              {
+                directory: node.directory && !source.view.isExpanded(node),
+              },
+            );
             row.add(modified ? '+' : '', {
               hl: fileHighlights.readonly,
             });

@@ -37,7 +37,9 @@ export function loadBufferActions(
     'delete',
     async ({ node }) => {
       if (
-        buffer.bufManager.modified(node.fullpath) &&
+        buffer.bufManager.modified(node.fullpath, {
+          directory: false,
+        }) &&
         (await prompt('Buffer is being modified, delete it?')) !== 'yes'
       ) {
         return;
@@ -45,6 +47,7 @@ export function loadBufferActions(
       await buffer.bufManager.removeBufNode(node, {
         skipModified: true,
         bwipeout: false,
+        directory: false,
       });
       await buffer.load(node, { force: true });
     },
@@ -55,7 +58,9 @@ export function loadBufferActions(
     'deleteForever',
     async ({ node }) => {
       if (
-        buffer.bufManager.modified(node.fullpath) &&
+        buffer.bufManager.modified(node.fullpath, {
+          directory: false,
+        }) &&
         (await prompt('Buffer is being modified, wipeout it?')) !== 'yes'
       ) {
         return;
@@ -63,6 +68,7 @@ export function loadBufferActions(
       await buffer.bufManager.removeBufNode(node, {
         skipModified: true,
         bwipeout: true,
+        directory: false,
       });
       await buffer.load(node, { force: true });
     },

@@ -7,7 +7,14 @@ import { compactI, throttle, winidsByBufnr } from './util';
 
 const regex = /^\s*(\d+)(.+?)"(.+?)".*/;
 
-export interface BufRemoveOptions {
+export interface BufModifiedOptions {
+  /**
+   * Declare whether fullpath is a directory
+   */
+  directory: boolean;
+}
+
+export interface BufRemoveOrReplaceOptions {
   /**
    * Throw exception when skipModified is false and buffer is modified
    */
@@ -16,6 +23,10 @@ export interface BufRemoveOptions {
    * Use bwipeout to remove the buffer otherwise is bdelete
    */
   bwipeout: boolean;
+  /**
+   * Declare whether fullpath is a directory
+   */
+  directory: boolean;
 }
 
 export class BufManager {
@@ -69,7 +80,7 @@ export class BufManager {
     );
   }
 
-  async removeBufNode(bufNode: BufferNode, options: BufRemoveOptions) {
+  async removeBufNode(bufNode: BufferNode, options: BufRemoveOrReplaceOptions) {
     if (!options.skipModified && bufNode.modified) {
       throw new Error('The content of buffer has not been saved!');
     }
@@ -97,7 +108,10 @@ export class BufManager {
     }
   }
 
-  async removePrefix(prefixFullpath: string, options: BufRemoveOptions) {
+  async removePrefix(
+    prefixFullpath: string,
+    options: BufRemoveOrReplaceOptions,
+  ) {
     for (const [fullpath, bufNode] of this.bufferNodeMapByFullpath) {
       if (fullpath.startsWith(prefixFullpath)) {
         await this.removeBufNode(bufNode, options);
@@ -105,9 +119,9 @@ export class BufManager {
     }
   }
 
-  async remove(fullpath: string, options: BufRemoveOptions) {
-    if (fullpath.endsWith(pathLib.sep)) {
-      return this.removePrefix(fullpath, options);
+  async remove(fullpath: string, options: BufRemoveOrReplaceOptions) {
+    if (options.directory) {
+      return this.removePrefix(fullpath + pathLib.sep, options);
     } else {
       const bufNode = this.bufferNodeMapByFullpath.get(fullpath);
       if (!bufNode) {
@@ -120,7 +134,7 @@ export class BufManager {
   async replaceBufNode(
     bufNode: BufferNode,
     targetFullpath: string,
-    options: BufRemoveOptions,
+    options: BufRemoveOrReplaceOptions,
   ) {
     if (!options.skipModified && bufNode.modified) {
       throw new Error('The content of buffer has not been saved!');
@@ -156,7 +170,7 @@ export class BufManager {
   async replacePrefix(
     sourceFullpath: string,
     targetFullpath: string,
-    options: BufRemoveOptions,
+    options: BufRemoveOrReplaceOptions,
   ) {
     for (const [fullpath, bufNode] of this.bufferNodeMapByFullpath) {
       if (fullpath.startsWith(sourceFullpath)) {
@@ -172,14 +186,17 @@ export class BufManager {
   async replace(
     sourceFullpath: string,
     targetFullpath: string,
-    options: BufRemoveOptions,
+    options: BufRemoveOrReplaceOptions,
   ) {
     return this.replacePrefix(sourceFullpath, targetFullpath, options);
   }
 
-  modified(fullpath: string): boolean {
-    if (fullpath.endsWith(pathLib.sep)) {
-      return this.modifiedPrefix(fullpath);
+  /**
+   * Return the whether fullpath is modified
+   */
+  modified(fullpath: string, options: BufModifiedOptions): boolean {
+    if (options.directory) {
+      return this.modifiedPrefix(fullpath + pathLib.sep);
     } else {
       return this.bufferNodeMapByFullpath.get(fullpath)?.modified ?? false;
     }

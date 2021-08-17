@@ -446,7 +446,11 @@ export function loadFileActions(action: ActionSource<FileSource, FileNode>) {
     'delete',
     async ({ nodes }) => {
       if (
-        nodes.some((node) => file.bufManager.modified(node.fullpath)) &&
+        nodes.some((node) =>
+          file.bufManager.modified(node.fullpath, {
+            directory: node.directory,
+          }),
+        ) &&
         (await prompt('Buffer is being modified, discard it?')) !== 'yes'
       ) {
         return;
@@ -466,6 +470,7 @@ export function loadFileActions(action: ActionSource<FileSource, FileNode>) {
         await file.bufManager.remove(node.fullpath, {
           skipModified: true,
           bwipeout: true,
+          directory: node.directory,
         });
       }
     },
@@ -476,7 +481,11 @@ export function loadFileActions(action: ActionSource<FileSource, FileNode>) {
     'deleteForever',
     async ({ nodes }) => {
       if (
-        nodes.some((node) => file.bufManager.modified(node.fullpath)) &&
+        nodes.some((node) =>
+          file.bufManager.modified(node.fullpath, {
+            directory: node.directory,
+          }),
+        ) &&
         (await prompt('Buffer is being modified, discard it?')) !== 'yes'
       ) {
         return;
@@ -496,6 +505,7 @@ export function loadFileActions(action: ActionSource<FileSource, FileNode>) {
         await file.bufManager.remove(node.fullpath, {
           skipModified: true,
           bwipeout: true,
+          directory: node.directory,
         });
       }
     },
@@ -597,7 +607,9 @@ export function loadFileActions(action: ActionSource<FileSource, FileNode>) {
     'rename',
     async ({ node }) => {
       if (
-        file.bufManager.modified(node.fullpath) &&
+        file.bufManager.modified(node.fullpath, {
+          directory: node.directory,
+        }) &&
         (await prompt('Buffer is being modified, discard it?')) !== 'yes'
       ) {
         return;
@@ -630,6 +642,7 @@ export function loadFileActions(action: ActionSource<FileSource, FileNode>) {
       await file.bufManager.replace(node.fullpath, targetPath, {
         skipModified: true,
         bwipeout: true,
+        directory: node.directory,
       });
     },
     'rename a file or directory',
