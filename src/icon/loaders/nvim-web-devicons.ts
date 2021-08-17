@@ -20,7 +20,7 @@ export class NvimWebDeviconsLoader extends IconLoader {
           target.extensions[target.extensions.length - 1];
         const result = (await workspace.nvim.call('luaeval', [
           "{require'nvim-web-devicons'.get_icon(_A[1], _A[2])}",
-          [target.basename, ext],
+          [target.fullname, ext],
         ])) as [] | [string, string];
         const [code, highlight] = result;
         if (!code) {
