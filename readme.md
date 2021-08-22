@@ -156,10 +156,7 @@ nnoremap <space>el :CocList explPresets
 
 #### `[root-uri]`
 
-Explorer root, default:
-
-- `getcwd()` when `buftype` is `nofile`
-- `workspace.rootPath`
+Explorer root, default is use `root-strategies`
 
 #### `--root-strategies <root-strategies>`
 
@@ -170,6 +167,8 @@ Strategies for root uri, types `list of (keep | workspace | cwd | sourceBuffer |
 - `cwd`: `getcwd()`
 - `sourceBuffer`: directory of buffer
 - `reveal`: directory of reveal path
+
+default is: `workspace,cwd,sourceBuffer,reveal` or `"explorer.root.strategies" of coc-settings`
 
 **Custom root patterns settings**
 
