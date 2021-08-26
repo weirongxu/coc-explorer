@@ -286,7 +286,19 @@ export class ExplorerManager {
     } else {
       const win = await explorer.win;
       if (!win) {
-        await explorer.resume(argValues);
+        if (
+          argValues.position.name === 'floating' &&
+          !(await (await explorer.sourceBuffer())?.loaded)
+        ) {
+          // Open a new explorer when sourceBuffer unload,
+          // because nvim will clear the wininfo of float win
+          // issue: https://github.com/weirongxu/coc-explorer/issues/472
+          await this.nvim.command(`bwipeout! ${explorer.bufnr}`);
+          explorer = await Explorer.create(this, argValues, explorerConfig);
+          tabContainer.setExplorer(position, explorer);
+        } else {
+          await explorer.resume(argValues);
+        }
       } else {
         if (await args.value(argOptions.toggle)) {
           await explorer.quit();

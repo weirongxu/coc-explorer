@@ -72,7 +72,7 @@ if has('nvim')
     if a:options.border_enable && border_bufnr isnot v:null
       let border_winid = nvim_open_win(border_bufnr, v:false, win_config)
       call s:nvim_border_render(border_bufnr, a:options)
-      call coc_explorer#init#win(border_bufnr)
+      call coc_explorer#init#win(border_bufnr, border_winid)
       call setbufvar(border_bufnr, '&cursorcolumn', 0)
       call setbufvar(border_bufnr, '&cursorline', 0)
       call setwinvar(border_winid, '&winhl', 'Normal:CocExplorerNormalFloatBorder')
@@ -87,7 +87,6 @@ if has('nvim')
       let winid = nvim_open_win(a:bufnr, focus, win_config)
     endif
 
-    call coc_explorer#init#win(a:bufnr)
     call setwinvar(winid, '&winhl', 'Normal:CocExplorerNormalFloat')
     return [winid, border_winid]
   endfunction
@@ -97,7 +96,8 @@ if has('nvim')
     let border_bufnr = get(a:options, 'border_bufnr', v:null)
     if a:options.border_enable && border_bufnr isnot v:null
       call s:nvim_border_render(border_bufnr, a:options)
-      call nvim_open_win(border_bufnr, v:false, win_config)
+      let border_winid = nvim_open_win(border_bufnr, v:false, win_config)
+      call coc_explorer#init#win(border_bufnr, border_winid)
       call nvim_open_win(a:bufnr, v:true, s:nvim_win_config(a:options, -1))
     else
       call nvim_open_win(a:bufnr, v:true, win_config)
@@ -126,7 +126,7 @@ else
   function! coc_explorer#float#open(bufnr, options) abort
     let win_config = s:vim_win_config(a:options)
     let winid = popup_create(a:bufnr, win_config)
-    call coc_explorer#init#win(a:bufnr)
+    call coc_explorer#init#win(a:bufnr, winid)
     return [winid, v:null]
   endfunction
 

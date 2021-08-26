@@ -70,7 +70,7 @@ export class Explorer implements Disposable {
   private prevArgSourcesEnabledJson?: string;
   private isHide = false;
 
-  private static async genExplorerPosition(
+  private static genExplorerPosition(
     args: ResolvedArgs,
     specialSize?: [width?: number, height?: number],
   ) {
@@ -121,9 +121,7 @@ export class Explorer implements Disposable {
   ) {
     explorerManager.maxExplorerID += 1;
 
-    const { width, height, top, left } = await this.genExplorerPosition(
-      argValues,
-    );
+    const { width, height, top, left } = this.genExplorerPosition(argValues);
     const [bufnr, borderBufnr]: [
       number,
       number | undefined,
@@ -350,7 +348,7 @@ export class Explorer implements Disposable {
   }
 
   async resize(size?: [width?: number, height?: number]) {
-    const dimension = await Explorer.genExplorerPosition(this.argValues, size);
+    const dimension = Explorer.genExplorerPosition(this.argValues, size);
     const { top, left, width, height } = dimension;
     await this.nvim.call('coc_explorer#resize', [
       this.bufnr,
@@ -383,19 +381,19 @@ export class Explorer implements Disposable {
     return false;
   }
 
-  async resume(args: ResolvedArgs) {
-    const { width, height, top, left } = await Explorer.genExplorerPosition(
-      args,
+  async resume(argValues: ResolvedArgs) {
+    const { width, height, top, left } = Explorer.genExplorerPosition(
+      argValues,
     );
     await this.nvim.call('coc_explorer#resume', [
       this.bufnr,
-      args.position,
+      argValues.position,
       {
         width,
         height,
         left,
         top,
-        focus: args.focus,
+        focus: argValues.focus,
         border_bufnr: this.borderBufnr,
         border_enable: this.config.get('floating.border.enable'),
         border_chars: this.config.get('floating.border.chars'),

@@ -4,9 +4,9 @@ function! s:check_focus(options, fallback_winid) abort
   endif
 endfunction
 
-function! s:init_buf(bufnr) abort
+function! s:init_buf(bufnr, winid) abort
   call coc_explorer#init#buf(a:bufnr)
-  call coc_explorer#init#win(a:bufnr)
+  call coc_explorer#init#win(a:bufnr, a:winid)
   call setbufvar(a:bufnr, '&wrap', 0)
   call setbufvar(a:bufnr, '&cursorline', 1)
   let filetype = 'coc-explorer'
@@ -34,7 +34,7 @@ function! coc_explorer#open_explorer(explorer_id, position, options) abort
     execute 'silent noswapfile keepalt '.s:tab_cmd(a:position).' '.name
     let bufnr = bufnr('%')
     let winid = win_getid()
-    call s:init_buf(bufnr)
+    call s:init_buf(bufnr, winid)
     call s:check_focus(a:options, fallback_winid)
   elseif a:position.name ==# 'left'
     wincmd t
@@ -42,7 +42,7 @@ function! coc_explorer#open_explorer(explorer_id, position, options) abort
     let bufnr = bufnr('%')
     let winid = win_getid()
     call coc_explorer#resize(bufnr, a:position, a:options)
-    call s:init_buf(bufnr)
+    call s:init_buf(bufnr, winid)
     call s:check_focus(a:options, fallback_winid)
   elseif a:position.name ==# 'right'
     wincmd b
@@ -50,14 +50,14 @@ function! coc_explorer#open_explorer(explorer_id, position, options) abort
     let bufnr = bufnr('%')
     let winid = win_getid()
     call coc_explorer#resize(bufnr, a:position, a:options)
-    call s:init_buf(bufnr)
+    call s:init_buf(bufnr, winid)
     call s:check_focus(a:options, fallback_winid)
   elseif a:position.name ==# 'floating'
     let float_options = extend(a:options, {'name': name, 'focus': v:true})
     let [bufnr, border_bufnr] = coc_explorer#float#create(float_options)
     let float_options = extend({'border_bufnr': border_bufnr}, float_options)
     let [winid, border_winid] = coc_explorer#float#open(bufnr, float_options)
-    call s:init_buf(bufnr)
+    call s:init_buf(bufnr, winid)
   else
     throw 'No support position "'.a:position.name.'"'
   endif

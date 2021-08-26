@@ -14,7 +14,7 @@ function! coc_explorer#init#buf(bufnr) abort
   call setbufvar(a:bufnr, '&modeline', 0)
 endfunction
 
-function! coc_explorer#init#win(bufnr) abort
+function! coc_explorer#init#win(bufnr, winid) abort
   call setbufvar(a:bufnr, '&list', 0)
 
   call setbufvar(a:bufnr, '&signcolumn', 'no')
