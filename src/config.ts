@@ -1,4 +1,3 @@
-import { prettyPrint } from 'coc-helper';
 import { workspace, WorkspaceConfiguration } from 'coc.nvim';
 import { OriginalActionExp } from './actions/types';
 import { CollapseOption, ExpandOption, RootStrategyStr } from './types';
