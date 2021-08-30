@@ -1,5 +1,12 @@
 import { hlGroupManager } from '../highlight/manager';
-import { compactI, displaySlice, displayWidth, flatten, sum } from '../util';
+import {
+  compactI,
+  displaySlice,
+  displayWidth,
+  flatten,
+  isASCII,
+  sum,
+} from '../util';
 import {
   Drawable,
   DrawableWithWidth,
@@ -67,9 +74,10 @@ export async function fetchDisplayWidth(
   ): Promise<DrawContentWithWidth> {
     return {
       ...drawable,
-      width: drawable.unicode
-        ? await displayWidth(drawable.content)
-        : drawable.content.length,
+      width:
+        drawable.unicode && !isASCII(drawable.content)
+          ? await displayWidth(drawable.content)
+          : drawable.content.length,
     };
   }
   return compactI(

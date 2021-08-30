@@ -29,3 +29,7 @@ export function splitCount(
   ret.push(remain);
   return ret;
 }
+
+export function isASCII(str: string) {
+  return /^[\x00-\xFF]*$/.test(str);
+}
