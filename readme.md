@@ -58,7 +58,7 @@ More at [Quickstart](https://github.com/weirongxu/coc-explorer/wiki/Quickstart)
   - [x] Preview file attributes by floating window
   - [ ] LSP
     - [x] diagnostic
-    - [ ] file rename (won't support, use [watchman](https://github.com/neoclide/coc.nvim/wiki/Install-coc.nvim#optional-install-watchman-for-file-watching))
+    - [ ] file rename (won't support, use [watchman](https://github.com/neoclide/coc.nvim/wiki/Install-coc.nvim#install-watchman-for-file-watching))
   - [ ] Exrename, like [defx](https://github.com/Shougo/defx.nvim)
   - [ ] Archive file (use `lsar / unar`)
   - [ ] SSH
