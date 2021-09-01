@@ -2,7 +2,7 @@
 
 Explorer extension for [coc.nvim](https://github.com/neoclide/coc.nvim)
 
-**Note: Still under development, maybe has some breaking changes.**
+**Note: This project is still under development and may be broken.**
 
 [![Build Status](https://img.shields.io/github/workflow/status/weirongxu/coc-explorer/coc-explorer%20CI)](https://github.com/weirongxu/coc-explorer/actions)
 
