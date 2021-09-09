@@ -62,7 +62,7 @@ More at [Quickstart](https://github.com/weirongxu/coc-explorer/wiki/Quickstart)
   - [ ] Exrename, like [defx](https://github.com/Shougo/defx.nvim)
   - [ ] Archive file (use `lsar / unar`)
   - [ ] SSH
-- [x] Bookmark source (require [coc-bookmark](https://github.com/voldikss/coc-bookmark))
+- [x] ~~Bookmark source (DEPRECATED) (require [coc-bookmark](https://github.com/voldikss/coc-bookmark))~~
 - [ ] Git source
   - [ ] Git actions
 - [x] Show help
