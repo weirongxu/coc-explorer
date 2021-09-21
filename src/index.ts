@@ -16,10 +16,10 @@ import { hlGroupManager } from './highlight/manager';
 import { PresetList } from './lists/presets';
 import { asyncCatchError, logger, registerRuntimepath } from './util';
 import { registerVimApi } from './vimApi';
+import { config } from './config';
 
 export const activate = (context: ExtensionContext) => {
-  const extCfg = workspace.getConfiguration('explorer');
-  const isEnable = extCfg.get<boolean>('enable', true);
+  const isEnable = config.get('enable', true);
   if (!isEnable) return;
 
   const { subscriptions } = context;
