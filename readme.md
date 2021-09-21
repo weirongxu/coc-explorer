@@ -630,6 +630,10 @@ Type: <pre><code>'keep' | 'workspace' | 'cwd' | 'sourceBuffer' | 'reveal'</code>
 </details>
 <strong>Properties</strong>
 <details>
+<summary><code>explorer.enable</code>: Enable coc-explorer extension.</summary>
+Type: <pre><code>boolean</code></pre>Default: <pre><code>true</code></pre>
+</details>
+<details>
 <summary><code>explorer.presets</code>: Explorer presets.</summary>
 Type: <pre><code>{
     [k: string]: {

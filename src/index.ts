@@ -18,6 +18,10 @@ import { asyncCatchError, logger, registerRuntimepath } from './util';
 import { registerVimApi } from './vimApi';
 
 export const activate = (context: ExtensionContext) => {
+  const extCfg = workspace.getConfiguration('explorer');
+  const isEnable = extCfg.get<boolean>('enable', true);
+  if (!isEnable) return;
+
   const { subscriptions } = context;
   const { nvim } = workspace;
 

@@ -156,6 +156,11 @@
       "type": "object",
       "title": "Explorer",
       "properties": {
+        "explorer.enable": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable coc-explorer extension"
+        },
         "explorer.presets": {
           "description": "Explorer presets",
           "type": "object",

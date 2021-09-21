@@ -22,6 +22,10 @@ export type RootStrategy = 'keep' | 'workspace' | 'cwd' | 'sourceBuffer' | 'reve
 
 export interface Explorer {
   /**
+   * Enable coc-explorer extension
+   */
+  'explorer.enable'?: boolean;
+  /**
    * Explorer presets
    */
   'explorer.presets'?: {
