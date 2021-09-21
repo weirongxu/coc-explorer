@@ -7,7 +7,7 @@ import { IconInfo, IconTarget, loadIcons } from './icon/icons';
 import { actionListMru } from './lists/actions';
 import { parseOriginalActionExp } from './mappings';
 import { BaseTreeNode, ExplorerSource } from './source/source';
-import { asyncCatchError, compactI, logger } from './util';
+import { compactI, logger } from './util';
 import { WinLayoutFinder } from './winLayoutFinder';
 
 export function registerApi(
@@ -16,7 +16,7 @@ export function registerApi(
 ) {
   return commands.registerCommand(
     id,
-    asyncCatchError(execute),
+    logger.asyncCatch(execute),
     undefined,
     true,
   );

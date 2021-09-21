@@ -1,18 +1,3 @@
-import { setImmediate } from 'timers';
-import { logger } from '.';
-
-export function asyncCatchError<R extends any, ARGS extends any[]>(
-  fn: (...args: ARGS) => R | Promise<R>,
-) {
-  return async (...args: ARGS) => {
-    try {
-      return await fn(...args);
-    } catch (e) {
-      logger.error(e);
-    }
-  };
-}
-
 export function queueAsyncFunction<R extends any, ARGS extends any[]>(
   fn: (...args: ARGS) => Promise<R>,
 ): (...args: ARGS) => Promise<R> {

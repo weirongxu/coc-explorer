@@ -7,6 +7,7 @@ import {
   workspace,
 } from 'coc.nvim';
 import { ActionMenuCodeActionProvider } from './actions/codeActionProider';
+import { config } from './config';
 import { InternalVimEvents } from './events';
 import { ExplorerManager } from './explorerManager';
 import { GitCommand } from './git/command';
@@ -14,12 +15,14 @@ import { registerGitHighlights } from './git/highlights';
 import { registerInternalColors } from './highlight/internalColors';
 import { hlGroupManager } from './highlight/manager';
 import { PresetList } from './lists/presets';
-import { asyncCatchError, logger, registerRuntimepath } from './util';
+import { logger, registerRuntimepath } from './util';
 import { registerVimApi } from './vimApi';
 
 export const activate = (context: ExtensionContext) => {
   const { subscriptions } = context;
   const { nvim } = workspace;
+  const debug = config.get<boolean>('debug');
+  logger.level = debug ? 'debug' : 'info';
 
   hlGroupManager.createGroup(
     'SelectUI',
@@ -38,7 +41,7 @@ export const activate = (context: ExtensionContext) => {
   subscriptions.push(
     commands.registerCommand(
       'explorer',
-      asyncCatchError((...args) => {
+      logger.asyncCatch((...args) => {
         explorerManager.open(args).catch(logger.error);
       }),
     ),

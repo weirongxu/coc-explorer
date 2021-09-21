@@ -1,19 +1,19 @@
 import { HelperVimEvents, Notifier } from 'coc-helper';
 import { Disposable, Emitter, events, workspace } from 'coc.nvim';
 import { LiteralUnion } from 'type-fest';
-import { asyncCatchError, debounce, logger, throttle } from './util';
+import { debounce, logger, throttle } from './util';
 
 type EventResult = any | Promise<any>;
 type BufEventListener = (bufnr: number) => EventResult;
 
-// event with asyncCatchError
+// event with asyncCatch
 export const onEvent: typeof events.on = (
   event: any,
   listener: any,
   thisArgs: any,
   disposables?: Disposable[],
 ) => {
-  const disposable = events.on(event, asyncCatchError(listener), thisArgs);
+  const disposable = events.on(event, logger.asyncCatch(listener), thisArgs);
   const finalDisposable = Disposable.create(() => {
     if (typeof listener.cancel === 'function') {
       listener.cancel();
