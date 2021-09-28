@@ -205,6 +205,7 @@ export class ViewSource<
             const compactedNode = clone(tail);
             compactedNode.name = compactedNodes.map((n) => n.name).join('/');
             compactedNode.compactedNodes = compactedNodes;
+            compactedNode.compactedLastNode = tail;
             // use compactedNode instead of node
             this.replaceNodeInSibling(node, compactedNode);
             node = compactedNode;

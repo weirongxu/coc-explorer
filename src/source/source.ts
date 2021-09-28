@@ -122,6 +122,7 @@ export interface BaseTreeNode<
   prevSiblingNode?: TreeNode;
   nextSiblingNode?: TreeNode;
   compactedNodes?: TreeNode[];
+  compactedLastNode?: TreeNode;
 }
 
 export type ExplorerSourceClass = Class<ExplorerSource<any>> & {
