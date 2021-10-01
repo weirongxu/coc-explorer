@@ -694,10 +694,17 @@
         },
         "explorer.icon.source": {
           "description": "The source or file type icon and color",
+          "enumDescriptions": [
+            "builtin",
+            "https://github.com/ryanoasis/vim-devicons",
+            "https://github.com/kyazdani42/nvim-web-devicons",
+            "https://github.com/lambdalisue/nerdfont.vim"
+          ],
           "enum": [
             "builtin",
             "vim-devicons",
-            "nvim-web-devicons"
+            "nvim-web-devicons",
+            "nerdfont.vim"
           ],
           "default": "builtin"
         },

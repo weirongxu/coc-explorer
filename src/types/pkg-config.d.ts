@@ -322,7 +322,7 @@ export interface Explorer {
   /**
    * The source or file type icon and color
    */
-  'explorer.icon.source'?: 'builtin' | 'vim-devicons' | 'nvim-web-devicons';
+  'explorer.icon.source'?: 'builtin' | 'vim-devicons' | 'nvim-web-devicons' | 'nerdfont.vim';
   /**
    * Custom icons and color highlights
    */

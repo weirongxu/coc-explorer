@@ -976,7 +976,7 @@ Type: <pre><code>boolean</code></pre>Default: <pre><code>false</code></pre>
 </details>
 <details>
 <summary><code>explorer.icon.source</code>: The source or file type icon and color.</summary>
-Type: <pre><code>'builtin' | 'vim-devicons' | 'nvim-web-devicons'</code></pre>Default: <pre><code>"builtin"</code></pre>
+Type: <pre><code>'builtin' | 'vim-devicons' | 'nvim-web-devicons' | 'nerdfont.vim'</code></pre>Default: <pre><code>"builtin"</code></pre>
 </details>
 <details>
 <summary><code>explorer.icon.customIcons</code>: Custom icons and color highlights.</summary>
