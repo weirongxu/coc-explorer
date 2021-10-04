@@ -690,13 +690,14 @@ export function loadFileActions(action: ActionSource<FileSource, FileNode>) {
       const searchOptions = (args[0] ?? '').split('|') as SearchOption[];
       const recursive = searchOptions.includes('recursive');
       const strict = searchOptions.includes('strict');
+      const noIgnore = searchOptions.includes('noIgnore');
 
       await file.searchByCocList(
         node.isRoot ? node.fullpath : pathLib.dirname(node.fullpath),
-        { recursive, strict },
+        { recursive, noIgnore, strict },
       );
     },
-    'search by coc-list',
+    'search by coc-list, the ignore function requires the fd command',
     {
       args: [
         {
@@ -705,7 +706,9 @@ export function loadFileActions(action: ActionSource<FileSource, FileNode>) {
         },
       ],
       menus: {
+        noIgnore: 'no ignore',
         recursive: 'recursively',
+        'recursive|noIgnore': 'recursively and no ignore',
         strict: 'exact match',
         'recursive|strict': 'recursively and strict',
       },
@@ -720,6 +723,7 @@ export function loadFileActions(action: ActionSource<FileSource, FileNode>) {
       );
       await file.searchByCocList(pathLib.dirname(node.fullpath), {
         recursive: true,
+        noIgnore: false,
         strict: false,
       });
     },

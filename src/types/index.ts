@@ -79,7 +79,7 @@ export const rootStrategyList: RootStrategy[] = [
 
 export type RootStrategyStr = LiteralUnion<RootStrategy, string>;
 
-export const searchOptionList = ['recursive', 'strict'] as const;
+export const searchOptionList = ['recursive', 'noIgnore', 'strict'] as const;
 
 export type SearchOption = typeof searchOptionList[number];
 

@@ -68,7 +68,7 @@ type Arg = {
   revealCallback?: (location: Location) => void | Promise<void>;
   rootPath?: string;
   recursive: boolean;
-  showIgnore: boolean;
+  showIgnores: boolean;
   showHidden: boolean;
 };
 
@@ -76,7 +76,7 @@ async function getCommand(arg: Arg): Promise<{ name: string; args: string[] }> {
   const args: string[] = [];
   if (await executable('fd')) {
     args.push('--color', 'never');
-    if (arg.showIgnore) {
+    if (arg.showIgnores) {
       args.push('--no-ignore');
     }
     if (arg.showHidden) {

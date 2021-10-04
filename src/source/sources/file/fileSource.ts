@@ -302,7 +302,15 @@ export class FileSource extends ExplorerSource<FileNode> {
 
   async searchByCocList(
     path: string,
-    { recursive, strict }: { recursive: boolean; strict: boolean },
+    {
+      recursive,
+      noIgnore,
+      strict,
+    }: {
+      recursive: boolean;
+      noIgnore: boolean;
+      strict: boolean;
+    },
   ) {
     const listArgs = strict ? ['--strict'] : [];
     const task = await startCocList(
@@ -310,7 +318,7 @@ export class FileSource extends ExplorerSource<FileNode> {
       fileList,
       {
         showHidden: this.showHidden,
-        showIgnore: true,
+        showIgnores: noIgnore,
         rootPath: path,
         recursive,
         revealCallback: async (loc) => {
