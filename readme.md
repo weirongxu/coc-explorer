@@ -22,7 +22,7 @@ Explorer extension for [coc.nvim](https://github.com/neoclide/coc.nvim)
    ```
 2. Configuration custom vim mapping
    ```
-   :nnoremap <space>e :CocCommand explorer<CR>
+   :nmap <space>e <Cmd>CocCommand explorer<CR>
    ```
 3. Open explorer
    ```
@@ -92,7 +92,7 @@ More at [Quickstart](https://github.com/weirongxu/coc-explorer/wiki/Quickstart)
 Reveal to current buffer for closest coc-explorer
 
 ```vim
-nnoremap <Leader>er :call CocAction('runCommand', 'explorer.doAction', 'closest', ['reveal:0'], [['relative', 0, 'file']])<CR>
+nmap <Leader>er <Cmd>call CocAction('runCommand', 'explorer.doAction', 'closest', ['reveal:0'], [['relative', 0, 'file']])<CR>
 ```
 
 ### Presets
@@ -143,13 +143,13 @@ let g:coc_explorer_global_presets = {
 \ }
 
 " Use preset argument to open it
-nnoremap <space>ed :CocCommand explorer --preset .vim<CR>
-nnoremap <space>ef :CocCommand explorer --preset floating<CR>
-nnoremap <space>ec :CocCommand explorer --preset cocConfig<CR>
-nnoremap <space>eb :CocCommand explorer --preset buffer<CR>
+nmap <space>ed <Cmd>CocCommand explorer --preset .vim<CR>
+nmap <space>ef <Cmd>CocCommand explorer --preset floating<CR>
+nmap <space>ec <Cmd>CocCommand explorer --preset cocConfig<CR>
+nmap <space>eb <Cmd>CocCommand explorer --preset buffer<CR>
 
 " List all presets
-nnoremap <space>el :CocList explPresets
+nmap <space>el <Cmd>CocList explPresets<CR>
 ```
 
 ### Options
@@ -565,12 +565,12 @@ function! s:init_explorer()
   " Integration with other plugins
 
   " CocList
-  nnoremap <buffer> <Leader>fg :call <SID>exec_cur_dir('CocList -I grep')<CR>
-  nnoremap <buffer> <Leader>fG :call <SID>exec_cur_dir('CocList -I grep -regex')<CR>
-  nnoremap <buffer> <C-p> :call <SID>exec_cur_dir('CocList files')<CR>
+  nmap <buffer> <Leader>fg <Cmd>call <SID>exec_cur_dir('CocList -I grep')<CR>
+  nmap <buffer> <Leader>fG <Cmd>call <SID>exec_cur_dir('CocList -I grep -regex')<CR>
+  nmap <buffer> <C-p> <Cmd>call <SID>exec_cur_dir('CocList files')<CR>
 
   " vim-floaterm
-  nnoremap <buffer> <Leader>ft :call <SID>exec_cur_dir('FloatermNew --wintype=floating')<CR>
+  nmap <buffer> <Leader>ft <Cmd>call <SID>exec_cur_dir('FloatermNew --wintype=floating')<CR>
 endfunction
 
 function! s:enter_explorer()
