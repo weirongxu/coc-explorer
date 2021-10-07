@@ -108,7 +108,7 @@ export async function loadIconsByConfig(
   const enabledVimDevicons = config.get('icon.enableVimDevicons');
   if (enabledVimDevicons) {
     logger.error(
-      'The configuration `explorer.icon.enableVimDevicons` has been deprecated, please use `{"explorer.icon.enabledNerdFont": true, "explorer.icon.source": "vim-devicons"}` instead of it',
+      'The configuration `explorer.icon.enableVimDevicons` has been deprecated, please use `{"explorer.icon.enableNerdFont": true, "explorer.icon.source": "vim-devicons"}` instead of it',
     );
     return loadIcons('vim-devicons', targets);
   }
