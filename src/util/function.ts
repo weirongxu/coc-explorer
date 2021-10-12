@@ -19,7 +19,7 @@ export function queueAsyncFunction<R extends any, ARGS extends any[]>(
             const result = await task.fn(...task.args);
             task.resolve(result);
           } catch (error) {
-            task.reject(error);
+            task.reject(error as Error);
           }
         }
         queueStarted = false;
