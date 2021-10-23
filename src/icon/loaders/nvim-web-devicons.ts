@@ -11,30 +11,32 @@ export class NvimWebDeviconsLoader extends IconLoader {
 
   async loadIcons(targets: IconParsedTarget[]) {
     const loaded: IconInternalLoadedItem[] = [];
-    await Promise.all(
-      targets.map(async (target) => {
-        if (target.isDirectory) {
-          return;
-        }
-        const ext: string | undefined =
-          target.extensions[target.extensions.length - 1];
-        const result = (await workspace.nvim.call('luaeval', [
-          "{require'nvim-web-devicons'.get_icon(_A[1], _A[2])}",
-          [target.fullname, ext],
-        ])) as [] | [string, string];
-        const [code, highlight] = result;
-        if (!code) {
-          return;
-        }
-        loaded.push({
-          target,
-          icon: {
-            code,
-            highlight,
-          },
-        });
-      }),
-    );
+
+    for (const target of targets) {
+      if (target.isDirectory) {
+        continue;
+      }
+      const ext: string | undefined =
+        target.extensions[target.extensions.length - 1];
+      // Note: nvim-web-devicons.get_icon not support the concurrent invoke.
+      // https://github.com/weirongxu/coc-explorer/issues/485
+      const result = (await workspace.nvim.call('luaeval', [
+        "{require'nvim-web-devicons'.get_icon(_A[1], _A[2])}",
+        [target.fullname, ext],
+      ])) as [] | [string, string];
+      const [code, highlight] = result;
+      if (!code) {
+        continue;
+      }
+      loaded.push({
+        target,
+        icon: {
+          code,
+          highlight,
+        },
+      });
+    }
+
     return loaded;
   }
 }
