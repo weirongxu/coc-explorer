@@ -177,6 +177,15 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>>
     get hidden() {
       return source.config.get<string>('icon.hidden')!;
     },
+    get link() {
+      return source.config.get<string>('icon.link')!;
+    },
+    get readonly() {
+      return (
+        source.config.get<string>('icon.readonly') ||
+        (source.config.get('icon.enableNerdfont') ? '' : 'RO')
+      );
+    },
   }))(this);
 
   helper = ((source) => ({

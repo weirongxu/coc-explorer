@@ -789,6 +789,16 @@
           "type": "string",
           "default": "‥"
         },
+        "explorer.icon.link": {
+          "description": "Icon for soft link",
+          "type": "string",
+          "default": "→"
+        },
+        "explorer.icon.readonly": {
+          "description": "Icon for readonly",
+          "type": "string",
+          "default_doc": "RO"
+        },
         "explorer.bookmark.root.template": {
           "description": "Template for root node of bookmark source",
           "type": "string",
@@ -933,6 +943,10 @@
           "description": "Labeling template for child node of file source, use for preview when previewAction is labeling",
           "type": "string",
           "default": "[fullpath][link][diagnosticError][diagnosticWarning][git][size][timeAccessed][timeModified][timeCreated][readonly][modified]"
+        },
+        "explorer.file.column.link.copy": {
+          "description": "Whether the file has been copied",
+          "type": "string"
         },
         "explorer.file.column.clip.copy": {
           "description": "Whether the file has been copied",

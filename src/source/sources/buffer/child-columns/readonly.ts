@@ -8,16 +8,9 @@ bufferColumnRegistrar.registerColumn('child', 'readonly', ({ source }) => ({
       labelVisible: ({ node }) => node.readonly,
       drawNode(row, { node }) {
         if (node.readonly) {
-          row.add(
-            node.readonly
-              ? source.config.get('icon.enableNerdfont')
-                ? ''
-                : 'RO'
-              : '',
-            {
-              hl: bufferHighlights.readonly,
-            },
-          );
+          row.add(node.readonly ? source.icons.readonly : '', {
+            hl: bufferHighlights.readonly,
+          });
         }
       },
     };

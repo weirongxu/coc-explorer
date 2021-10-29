@@ -9,9 +9,7 @@ fileColumnRegistrar.registerColumn('child', 'link', () => ({
       async drawNode(row, { node }) {
         const linkTarget = node.symbolicLink
           ? await fsReadlink(node.fullpath)
-              .then((link) => {
-                return '→' + link;
-              })
+              .then((link) => link)
               .catch(() => '')
           : '';
         if (linkTarget) {

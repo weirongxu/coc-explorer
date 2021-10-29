@@ -399,6 +399,14 @@ export interface Explorer {
    */
   'explorer.icon.hidden'?: string;
   /**
+   * Icon for soft link
+   */
+  'explorer.icon.link'?: string;
+  /**
+   * Icon for readonly
+   */
+  'explorer.icon.readonly'?: string;
+  /**
    * Template for root node of bookmark source
    */
   'explorer.bookmark.root.template'?: string;
@@ -496,6 +504,10 @@ export interface Explorer {
    * Labeling template for child node of file source, use for preview when previewAction is labeling
    */
   'explorer.file.child.labelingTemplate'?: string;
+  /**
+   * Whether the file has been copied
+   */
+  'explorer.file.column.link.copy'?: string;
   /**
    * Whether the file has been copied
    */

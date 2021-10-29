@@ -1057,6 +1057,14 @@ Type: <pre><code>string</code></pre>Default: <pre><code>"✓"</code></pre>
 Type: <pre><code>string</code></pre>Default: <pre><code>"‥"</code></pre>
 </details>
 <details>
+<summary><code>explorer.icon.link</code>: Icon for soft link.</summary>
+Type: <pre><code>string</code></pre>Default: <pre><code>"→"</code></pre>
+</details>
+<details>
+<summary><code>explorer.icon.readonly</code>: Icon for readonly.</summary>
+Type: <pre><code>string</code></pre>Default: <pre><code>"RO"</code></pre>
+</details>
+<details>
 <summary><code>explorer.bookmark.root.template</code>: Template for root node of bookmark source.</summary>
 Type: <pre><code>string</code></pre>Default: <pre><code>"[icon] [title] [hidden & 1]"</code></pre>
 </details>
@@ -1156,6 +1164,10 @@ Type: <pre><code>string</code></pre>Default: <pre><code>"[git | 2] [selection | 
 <details>
 <summary><code>explorer.file.child.labelingTemplate</code>: Labeling template for child node of file source, use for preview when previewAction is labeling.</summary>
 Type: <pre><code>string</code></pre>Default: <pre><code>"[fullpath][link][diagnosticError][diagnosticWarning][git][size][timeAccessed][timeModified][timeCreated][readonly][modified]"</code></pre>
+</details>
+<details>
+<summary><code>explorer.file.column.link.copy</code>: Whether the file has been copied.</summary>
+Type: <pre><code>string</code></pre>
 </details>
 <details>
 <summary><code>explorer.file.column.clip.copy</code>: Whether the file has been copied.</summary>
