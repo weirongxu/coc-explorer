@@ -4,6 +4,7 @@ import { FloatingWindow as HelperFloatingWindow } from 'coc-helper';
 
 export class FloatingWindow implements Disposable {
   bufnr: number;
+  closeTimer?: NodeJS.Timeout;
 
   static async create(options: FloatingCreateOptions = {}) {
     const win = await HelperFloatingWindow.create({
@@ -27,6 +28,9 @@ export class FloatingWindow implements Disposable {
     highlights: BufferHighlight[],
     options: FloatingOpenOptions,
   ) {
+    if (this.closeTimer) {
+      clearTimeout(this.closeTimer);
+    }
     await this.win.open({
       top: options.top,
       left: options.left,
@@ -81,13 +85,22 @@ export class FloatingWindow implements Disposable {
           }
           if (options.filetype) {
             scripts.push(
-              `call win_execute(${winid}, 'set filetype=${options.filetype}'`,
+              `call win_execute(${winid}, 'set filetype=${options.filetype}')`,
             );
           }
         }
         return scripts.join('\n');
       },
     });
+  }
+
+  async closeDelay(ms: number) {
+    if (this.closeTimer) {
+      clearTimeout(this.closeTimer);
+    }
+    this.closeTimer = setTimeout(async () => {
+      await this.win.close();
+    }, ms);
   }
 
   async close() {

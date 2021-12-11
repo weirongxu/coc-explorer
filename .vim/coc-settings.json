@@ -1,4 +1,5 @@
 {
+  "coc.preferences.formatOnSaveFiletypes": ["*"],
   "explorer.file.hiddenRules": {
     "extensions": ["o", "a", "obj", "pyc"],
     "filenames": ["node_modules", "lib"],

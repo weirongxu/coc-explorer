@@ -70,15 +70,15 @@ export class FloatingPreview implements Disposable {
               bufnr !== this.explorer.bufnr &&
               bufnr !== this.previewWindow?.bufnr
             ) {
-              await this.close();
+              await this.closeDelay(200);
             }
-          }, 200),
+          }, 0),
           onCursorMoved(async (bufnr) => {
             if (this.onHoverStrategy || bufnr !== this.explorer.bufnr) {
               return;
             }
-            await this.close();
-          }, 200),
+            await this.closeDelay(200);
+          }, 0),
           Disposable.create(() => {
             disposeAll(this.onHoverDisposables);
           }),
@@ -107,6 +107,10 @@ export class FloatingPreview implements Disposable {
       this.previewWindow = await FloatingWindow.create();
     }
     return this.previewWindow;
+  }
+
+  async closeDelay(ms: number) {
+    await this.previewWindow?.closeDelay(ms);
   }
 
   async close() {
@@ -191,12 +195,8 @@ export class FloatingPreview implements Disposable {
 
   registerActions() {
     this.registerAction('labeling', async ({ source, node, nodeIndex }) => {
-      const drawnList:
-        | Drawn[]
-        | undefined = await source.view.sourcePainters?.drawNodeLabeling(
-        node,
-        nodeIndex,
-      );
+      const drawnList: Drawn[] | undefined =
+        await source.view.sourcePainters?.drawNodeLabeling(node, nodeIndex);
       if (!drawnList || !(await this.explorer.explorerManager.inExplorer())) {
         return;
       }
@@ -316,10 +316,10 @@ export class FloatingPreview implements Disposable {
     if (!containerWin) {
       return;
     }
-    let [winTop, winLeft]: [
-      number,
-      number,
-    ] = await this.nvim.call('win_screenpos', [containerWin.id]);
+    let [winTop, winLeft]: [number, number] = await this.nvim.call(
+      'win_screenpos',
+      [containerWin.id],
+    );
     winTop -= 1;
     winLeft -= 1;
     const containerWidth = await containerWin.width;
