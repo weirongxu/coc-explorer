@@ -147,7 +147,8 @@ export function loadFileActions(action: ActionSource<FileSource, FileNode>) {
             );
           },
           previousBuffer: async () => {
-            targetBufnr = await file.explorer.explorerManager.previousBufnr.get();
+            targetBufnr =
+              await file.explorer.explorerManager.previousBufnr.get();
           },
           previousWindow: async () => {
             targetBufnr = await bufnrByWinnrOrWinid(
@@ -553,7 +554,7 @@ export function loadFileActions(action: ActionSource<FileSource, FileNode>) {
         const reloadNotifier = await file.loadNotifier(r, loadNode);
         const [, notifiers] = await file.revealNodeByPathNotifier(
           r,
-          targetPath,
+          targetPath.replace(/(\/|\\)$/, ''),
           {
             startNode: loadNode,
           },
