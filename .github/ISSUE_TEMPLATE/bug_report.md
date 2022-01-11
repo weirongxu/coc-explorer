@@ -16,7 +16,7 @@ assignees: ''
 **Steps to reproduce**
 Steps to reproduce the behavior:
 1. execute `nvim`
-2. execute vim command `CocExplorer ...`
+2. `:CocExplorer ...`
 3. See error
 
 **Expected behavior**
