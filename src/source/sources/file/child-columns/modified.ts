@@ -1,4 +1,4 @@
-import { debounce } from '../../../../util';
+import { buffer, debounceTime, Subject } from 'rxjs';
 import { fileColumnRegistrar } from '../fileColumnRegistrar';
 import { fileHighlights } from '../fileSource';
 
@@ -9,18 +9,14 @@ fileColumnRegistrar.registerColumn(
     return {
       async init() {
         if (!source.explorer.isFloating) {
-          // modified event
-          const modifiedQueue = new Set<string>();
-          const modifiedRender = debounce(500, async () => {
-            const fullpaths = [...modifiedQueue];
-            modifiedQueue.clear();
-            await source.view.renderPaths(fullpaths);
-          });
+          const sub = new Subject<string>();
+          sub
+            .pipe(buffer(sub.pipe(debounceTime(500))))
+            .subscribe(async (fullpaths) => {
+              await source.view.renderPaths(fullpaths);
+            });
           subscriptions.push(
-            source.bufManager.onModified(async (fullpath) => {
-              modifiedQueue.add(fullpath);
-              modifiedRender();
-            }),
+            source.bufManager.onModified((fullpath) => sub.next(fullpath)),
           );
         }
       },
