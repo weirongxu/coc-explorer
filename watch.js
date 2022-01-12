@@ -1,13 +1,16 @@
-const chokidar = require('chokidar');
 const { build } = require('./build.js');
 
-chokidar
-  .watch('./src/**/*.{ts,json}', {
-    ignoreInitial: true,
-  })
-  .on('all', (event, path) => {
-    // eslint-disable-next-line no-console
-    console.log(path, event);
-    // eslint-disable-next-line no-console
-    build(false).catch(console.error);
-  });
+build(false, {
+  watch: {
+    onRebuild(error, result) {
+      if (error) {
+        // eslint-disable-next-line no-console
+        console.error('watch build failed', error);
+      } else {
+        // eslint-disable-next-line no-console
+        console.log('watch build succeeded', result);
+      }
+    },
+  },
+  // eslint-disable-next-line no-console
+}).catch(console.error);

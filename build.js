@@ -8,11 +8,11 @@ exports.build = async (production, options = {}) => {
     sourcemap: !production,
     entryPoints: ['./src/index.ts'],
     bundle: true,
-    external: ['coc.nvim', 'trash', 'open'],
+    external: ['coc.nvim', 'trash'],
     outfile: 'lib/index.js',
     ...options,
   });
-  if (metafile) {
+  if (result.metafile) {
     const text = await esbuild.analyzeMetafile(result.metafile);
     // eslint-disable-next-line no-console
     console.log(text);
