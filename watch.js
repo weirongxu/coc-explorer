@@ -8,5 +8,6 @@ chokidar
   .on('all', (event, path) => {
     // eslint-disable-next-line no-console
     console.log(path, event);
-    build(false);
+    // eslint-disable-next-line no-console
+    build(false).catch(console.error);
   });

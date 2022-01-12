@@ -1,6 +1,6 @@
+import { debounce } from '../../../../util';
 import { fileColumnRegistrar } from '../fileColumnRegistrar';
 import { fileHighlights } from '../fileSource';
-import { debounce } from '../../../../util';
 
 fileColumnRegistrar.registerColumn(
   'child',
@@ -9,12 +9,18 @@ fileColumnRegistrar.registerColumn(
     return {
       async init() {
         if (!source.explorer.isFloating) {
+          // modified event
+          const modifiedQueue = new Set<string>();
+          const modifiedRender = debounce(500, async () => {
+            const fullpaths = [...modifiedQueue];
+            modifiedQueue.clear();
+            await source.view.renderPaths(fullpaths);
+          });
           subscriptions.push(
-            source.bufManager.onModified(
-              debounce(500, async (fullpath) => {
-                await source.view.renderPaths([fullpath]);
-              }),
-            ),
+            source.bufManager.onModified(async (fullpath) => {
+              modifiedQueue.add(fullpath);
+              modifiedRender();
+            }),
           );
         }
       },
