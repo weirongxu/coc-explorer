@@ -1,7 +1,7 @@
 import { HelperVimEvents, Notifier } from 'coc-helper';
 import { Disposable, Emitter, events, workspace } from 'coc.nvim';
 import { LiteralUnion } from 'type-fest';
-import { debounce, logger, throttle } from './util';
+import { debounceFn, logger, throttleFn } from './util';
 
 type EventResult = any | Promise<any>;
 type BufEventListener = (bufnr: number) => EventResult;
@@ -17,6 +17,9 @@ export const onEvent: typeof events.on = (
   const finalDisposable = Disposable.create(() => {
     if (typeof listener.cancel === 'function') {
       listener.cancel();
+    }
+    if (typeof listener.dispose === 'function') {
+      listener.dispose();
     }
     disposable.dispose();
   });
@@ -36,7 +39,7 @@ export function onBufEnter(
 
   const handler =
     delay !== 0
-      ? debounce(delay, (bufnr: number) => {
+      ? debounceFn(delay, (bufnr: number) => {
           if (bufnr !== prevBufnr) {
             prevBufnr = bufnr;
             return listener(bufnr);
@@ -53,7 +56,10 @@ export function onCursorMoved(
   delay: number,
   disposables?: Disposable[],
 ) {
-  const handler = throttle(delay, listener, { leading: false, trailing: true });
+  const handler = throttleFn(delay, listener, {
+    leading: false,
+    trailing: true,
+  });
 
   return onEvent('CursorMoved', handler, undefined, disposables);
 }
@@ -72,13 +78,13 @@ export const InternalVimEvents = new HelperVimEvents<{
       eventExpr: 'BufDelete *',
       argExprs: ['+expand("<abuf>")'],
     },
-    ColorScheme: {
-      eventExpr: 'ColorScheme *',
-      argExprs: ['g:colors_name'],
-    },
     BufWipeout: {
       eventExpr: 'BufWipeout *',
       argExprs: ['+expand("<abuf>")'],
+    },
+    ColorScheme: {
+      eventExpr: 'ColorScheme *',
+      argExprs: ['g:colors_name'],
     },
     CocDiagnosticChange: {
       eventExpr: 'User CocDiagnosticChange',

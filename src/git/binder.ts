@@ -1,16 +1,10 @@
 import { Disposable, disposeAll, workspace } from 'coc.nvim';
 import pathLib from 'path';
+import { buffer, debounceTime, Subject } from 'rxjs';
 import { internalEvents, onEvent } from '../events';
 import { ExplorerManager } from '../explorerManager';
 import { BaseTreeNode, ExplorerSource } from '../source/source';
-import {
-  Cancelled,
-  debounce,
-  debouncePromise,
-  logger,
-  mapGetWithDefault,
-  sum,
-} from '../util';
+import { createSub, mapGetWithDefault, sum } from '../util';
 import { gitManager } from './manager';
 import { GitIgnore, GitMixedStatus, GitRootStatus } from './types';
 
@@ -101,20 +95,23 @@ export class GitBinder {
     return [
       ...(['CocGitStatusChange', 'FugitiveChanged'] as const).map((event) =>
         internalEvents.on(event, async () => {
-          await this.reloadDebounce(this.sources, workspace.cwd);
+          this.reloadDebounceSubject.next({
+            sources: this.sources,
+            directory: workspace.cwd,
+          });
         }),
       ),
-      onEvent(
-        'BufWritePost',
-        debounce(500, async (bufnr) => {
-          const fullpath = this.explorerManager.bufManager.getBufferNode(bufnr)
-            ?.fullpath;
-          if (fullpath) {
-            const dirname = pathLib.dirname(fullpath);
-            await this.reloadDebounce(this.sources, dirname);
-          }
-        }),
-      ),
+      onEvent('BufWritePost', async (bufnr) => {
+        const fullpath =
+          this.explorerManager.bufManager.getBufferNode(bufnr)?.fullpath;
+        if (fullpath) {
+          const dirname = pathLib.dirname(fullpath);
+          this.reloadDebounceSubject.next({
+            sources: this.sources,
+            directory: dirname,
+          });
+        }
+      }),
     ];
   }
 
@@ -130,37 +127,22 @@ export class GitBinder {
             ? node.fullpath
             : node.fullpath && pathLib.dirname(node.fullpath);
         if (directory) {
-          this.reloadDebounce([source], directory).catch(logger.error);
+          this.reloadDebounceSubject.next({ sources: [source], directory });
         }
       }),
     ];
   }
 
-  protected reloadDebounceChecker = debouncePromise(200, () => {});
-  protected reloadDebounceArgs = {
-    sources: new Set<ExplorerSource<any>>(),
-    directories: new Set<string>(),
-  };
-
-  protected async reloadDebounce(
-    sources: ExplorerSource<any>[],
-    directory: string,
-  ) {
-    sources.forEach((s) => {
-      this.reloadDebounceArgs.sources.add(s);
+  protected reloadDebounceSubject = createSub<{
+    sources: ExplorerSource<any>[];
+    directory: string;
+  }>((sub) => {
+    sub.pipe(buffer(sub.pipe(debounceTime(200)))).subscribe(async (list) => {
+      const sources = new Set(list.map((it) => it.sources).flat());
+      const directories = new Set(list.map((it) => it.directory));
+      await this.reload([...sources], [...directories]);
     });
-    this.reloadDebounceArgs.directories.add(directory);
-    const r = await this.reloadDebounceChecker();
-    if (r instanceof Cancelled) {
-      return;
-    }
-    await this.reload(
-      [...this.reloadDebounceArgs.sources],
-      [...this.reloadDebounceArgs.directories],
-    );
-    this.reloadDebounceArgs.sources.clear();
-    this.reloadDebounceArgs.directories.clear();
-  }
+  });
 
   protected async reload(
     sources: ExplorerSource<any>[],

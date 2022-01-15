@@ -288,7 +288,9 @@ export class ExplorerManager {
       if (!win) {
         if (
           argValues.position.name === 'floating' &&
-          !(await (await explorer.sourceBuffer())?.loaded)
+          !(await (
+            await explorer.sourceBuffer()
+          )?.loaded)
         ) {
           // Open a new explorer when sourceBuffer unload,
           // because nvim will clear the wininfo of float win

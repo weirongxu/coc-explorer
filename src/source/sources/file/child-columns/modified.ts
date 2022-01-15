@@ -9,14 +9,10 @@ fileColumnRegistrar.registerColumn(
     return {
       async init() {
         if (!source.explorer.isFloating) {
-          const sub = new Subject<string>();
-          sub
-            .pipe(buffer(sub.pipe(debounceTime(500))))
-            .subscribe(async (fullpaths) => {
-              await source.view.renderPaths(fullpaths);
-            });
           subscriptions.push(
-            source.bufManager.onModified((fullpath) => sub.next(fullpath)),
+            source.bufManager.onModifiedDebounce((fullpaths) =>
+              source.view.renderPaths(fullpaths),
+            ),
           );
         }
       },

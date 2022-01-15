@@ -1,8 +1,9 @@
 import { extensions, Location, Range, workspace } from 'coc.nvim';
 import pathLib from 'path';
 import { internalEvents } from '../../../events';
-import { debounce, fsExists, normalizePath } from '../../../util';
 import { hlGroupManager } from '../../../highlight/manager';
+import { debounceFn, fsExists, normalizePath } from '../../../util';
+import { ViewSource } from '../../../view/viewSource';
 import { BaseTreeNode, ExplorerSource } from '../../source';
 import { sourceManager } from '../../sourceManager';
 import { bookmarkArgOptions } from './argOptions';
@@ -10,7 +11,6 @@ import { bookmarkColumnRegistrar } from './bookmarkColumnRegistrar';
 import './load';
 import BookmarkDB from './util/db';
 import { decode } from './util/encodeDecode';
-import { ViewSource } from '../../../view/viewSource';
 
 export interface BookmarkNode
   extends BaseTreeNode<BookmarkNode, 'root' | 'child'> {
@@ -76,7 +76,7 @@ export class BookmarkSource extends ExplorerSource<BookmarkNode> {
     this.disposables.push(
       internalEvents.on(
         'CocBookmarkChange',
-        debounce(500, async () => {
+        debounceFn(500, async () => {
           await this.load(this.view.rootNode);
         }),
       ),

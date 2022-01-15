@@ -1,15 +1,9 @@
 import { Disposable } from 'coc.nvim';
 import pathLib from 'path';
+import { buffer, debounceTime } from 'rxjs';
 import { internalEvents } from '../events';
 import { BaseTreeNode, ExplorerSource } from '../source/source';
-import {
-  Cancelled,
-  debouncePromise,
-  logger,
-  mapGetWithDefault,
-  sum,
-  throttle,
-} from '../util';
+import { createSub, logger, mapGetWithDefault, sum } from '../util';
 import { diagnosticManager, DiagnosticType } from './manager';
 
 export class DiagnosticBinder {
@@ -77,12 +71,9 @@ export class DiagnosticBinder {
   }
 
   protected register() {
-    return internalEvents.on(
-      'CocDiagnosticChange',
-      throttle(100, async () => {
-        await this.reload(this.sources);
-      }),
-    );
+    return internalEvents.on('CocDiagnosticChange', () => {
+      this.reloadDebounceSubject.next(this.sources);
+    });
   }
 
   protected registerForSource(source: ExplorerSource<any>) {
@@ -135,20 +126,12 @@ export class DiagnosticBinder {
     });
   }
 
-  protected reloadDebounceChecker = debouncePromise(1000, () => {});
-  protected reloadDebounceArgs = {
-    sources: new Set<ExplorerSource<any>>(),
-  };
-  protected async reloadDebounce(sources: ExplorerSource<any>[]) {
-    sources.forEach((s) => {
-      this.reloadDebounceArgs.sources.add(s);
+  protected reloadDebounceSubject = createSub<ExplorerSource<any>[]>((sub) => {
+    sub.pipe(buffer(sub.pipe(debounceTime(1000)))).subscribe(async (list) => {
+      const sources = new Set(list.flat());
+      await this.reload([...sources]);
     });
-    const r = await this.reloadDebounceChecker();
-    if (r instanceof Cancelled) {
-      return;
-    }
-    this.reloadDebounceArgs.sources.clear();
-  }
+  });
 
   protected async reload(sources: ExplorerSource<any>[]) {
     const types = this.diagnosticTypes;

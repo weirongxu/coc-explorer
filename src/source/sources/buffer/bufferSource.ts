@@ -1,12 +1,12 @@
-import { debounce, uniq } from '../../../util';
 import { hlGroupManager } from '../../../highlight/manager';
-import { ExplorerSource, BaseTreeNode } from '../../source';
+import { uniq } from '../../../util';
+import { ViewSource } from '../../../view/viewSource';
+import { BaseTreeNode, ExplorerSource } from '../../source';
 import { sourceManager } from '../../sourceManager';
+import { bufferArgOptions } from './argOptions';
+import { loadBufferActions } from './bufferActions';
 import { bufferColumnRegistrar } from './bufferColumnRegistrar';
 import './load';
-import { loadBufferActions } from './bufferActions';
-import { bufferArgOptions } from './argOptions';
-import { ViewSource } from '../../../view/viewSource';
 
 export interface BufferNode extends BaseTreeNode<BufferNode, 'root' | 'child'> {
   bufnr: number;
@@ -70,22 +70,18 @@ export class BufferSource extends ExplorerSource<BufferNode> {
 
   async init() {
     this.disposables.push(
-      this.bufManager.onReload(
-        debounce(500, async () => {
-          if (!this.explorer.visible()) {
-            return;
-          }
-          await this.load(this.view.rootNode);
-        }),
-      ),
-      this.bufManager.onModified(
-        debounce(500, async () => {
-          if (!this.explorer.visible()) {
-            return;
-          }
-          await this.load(this.view.rootNode);
-        }),
-      ),
+      this.bufManager.onReloadDebounce(async () => {
+        if (!this.explorer.visible()) {
+          return;
+        }
+        await this.load(this.view.rootNode);
+      }),
+      this.bufManager.onModifiedDebounce(async () => {
+        if (!this.explorer.visible()) {
+          return;
+        }
+        await this.load(this.view.rootNode);
+      }),
     );
 
     loadBufferActions(this.action);

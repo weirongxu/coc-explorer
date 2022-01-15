@@ -5,10 +5,10 @@ build(false, {
     onRebuild(error, result) {
       if (error) {
         // eslint-disable-next-line no-console
-        console.error('watch build failed', error);
+        console.error('watch build failed');
       } else {
         // eslint-disable-next-line no-console
-        console.log('watch build succeeded', result);
+        console.log('watch build succeeded');
       }
     },
   },

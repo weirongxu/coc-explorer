@@ -14,5 +14,6 @@ export * from './cli';
 export * from './function';
 export * from './uri';
 export * from './color';
+export * from './rx';
 
 export const logger = new HelperLogger('explorer');

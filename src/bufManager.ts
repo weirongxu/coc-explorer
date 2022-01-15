@@ -1,9 +1,10 @@
-import { Emitter, ExtensionContext, workspace } from 'coc.nvim';
+import { ExtensionContext, workspace } from 'coc.nvim';
 import pathLib from 'path';
+import { buffer, debounceTime, Subject } from 'rxjs';
 import { internalEvents, onEvent } from './events';
 import { ExplorerManager } from './explorerManager';
 import { BufferNode } from './source/sources/buffer/bufferSource';
-import { compactI, throttle, winidsByBufnr } from './util';
+import { compactI, logger, subToHook, throttleFn, winidsByBufnr } from './util';
 
 const regex = /^\s*(\d+)(.+?)"(.+?)".*/;
 
@@ -30,51 +31,65 @@ export interface BufRemoveOrReplaceOptions {
 }
 
 export class BufManager {
-  bufferNodes: BufferNode[] = [];
-  onReload = (fn: () => void) => this.reloadEvent.event(fn);
-  onModified = (fn: (fullpath: string) => void) => this.modifiedEvent.event(fn);
-
   private bufferNodeMapByFullpath: Map<string, BufferNode> = new Map();
   private bufferNodeMapById: Map<number, BufferNode> = new Map();
   private nvim = workspace.nvim;
-  private reloadEvent = new Emitter<void>();
-  private modifiedEvent = new Emitter<string>();
+  private reloadSubject = new Subject<void>();
+  private modifiedSubject = new Subject<string>();
+
+  bufferNodes: BufferNode[] = [];
+  onReload = subToHook(this.reloadSubject);
+  onReloadDebounce = subToHook(this.reloadSubject.pipe(debounceTime(500)));
+  onModifiedDebounce = subToHook(
+    this.modifiedSubject.pipe(
+      buffer(this.modifiedSubject.pipe(debounceTime(500))),
+    ),
+  );
 
   constructor(
     context: ExtensionContext,
     public readonly explorerManager: ExplorerManager,
   ) {
+    this.registerEvents(context).catch(logger.error);
+  }
+
+  async registerEvents(context: ExtensionContext) {
     context.subscriptions.push(
       onEvent(
         ['BufCreate', 'BufHidden', 'BufUnload', 'BufWinEnter', 'BufWinLeave'],
-        throttle(100, () => this.reload(), { leading: false, trailing: true }),
+        throttleFn(100, () => this.reload(), {
+          leading: false,
+          trailing: true,
+        }),
       ),
-      onEvent('BufWritePost', async (bufnr) => {
-        await this.reload();
-        const node = this.bufferNodeMapById.get(bufnr);
-        if (node) {
-          this.modifiedEvent.fire(node.fullpath);
-        }
-      }),
       internalEvents.on('BufDelete', () => this.reload()),
       internalEvents.on('BufWipeout', () => this.reload()),
+    );
+
+    const refreshBufModified = async (bufnr: number) => {
+      const bufNode = this.bufferNodeMapById.get(bufnr);
+      if (!bufNode) {
+        return;
+      }
+      const modified = (await workspace.nvim.eval(
+        // avoid error when buffer is not loaded
+        `bufloaded(${bufnr}) ? getbufvar(${bufnr}, '&modified') : v:null`,
+      )) as boolean | null;
+      if (modified === null || bufNode.modified === modified) {
+        return;
+      }
+      bufNode.modified = modified;
+      this.modifiedSubject.next(bufNode.fullpath);
+    };
+
+    context.subscriptions.push(
+      onEvent('BufWritePost', async (bufnr) => {
+        await refreshBufModified(bufnr);
+      }),
       ...(['TextChanged', 'TextChangedI', 'TextChangedP'] as const).map(
         (event) =>
           onEvent(event as any, async (bufnr: number) => {
-            const bufNode = this.bufferNodeMapById.get(bufnr);
-            if (!bufNode) {
-              return;
-            }
-            const buffer = this.nvim.createBuffer(bufnr);
-            const modified = (await workspace.nvim.eval(
-              `bufloaded(${buffer.id}) ? getbufvar(${buffer.id}, '&modified') : v:null`,
-            )) as boolean | null;
-            // const modified = !!(await buffer.getOption('modified'));
-            if (modified === null || bufNode.modified === modified) {
-              return;
-            }
-            bufNode.modified = modified;
-            this.modifiedEvent.fire(bufNode.fullpath);
+            await refreshBufModified(bufnr);
           }),
       ),
     );
@@ -284,6 +299,6 @@ export class BufManager {
       return map;
     }, new Map<number, BufferNode>());
 
-    this.reloadEvent.fire();
+    this.reloadSubject.next();
   }
 }
