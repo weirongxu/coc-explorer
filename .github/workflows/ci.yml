@@ -31,9 +31,12 @@ jobs:
       - name: Install yarn
         run: |
           curl --compressed -o- -L https://yarnpkg.com/install.sh | bash
-      - uses: actions/checkout@v1
+      - name: Set git
+        run: |
+          git config --global core.autocrlf false
+      - uses: actions/checkout@v2
       - name: Install Packages
-        run: yarn
+        run: yarn install
       - name: Lint
         run: yarn lint
       - name: Install vim
