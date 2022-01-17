@@ -48,7 +48,7 @@ class HighlightManager {
 
   clearHighlightsNotify(
     explorer: Explorer,
-    hlSrcId: number,
+    hlSrcId: string,
     lineStart?: number,
     lineEnd?: number,
   ) {
@@ -57,7 +57,7 @@ class HighlightManager {
 
   addHighlightsNotify(
     explorer: Explorer,
-    hlSrcId: number,
+    hlSrcId: string,
     highlights: HighlightPositionWithLine[],
   ) {
     for (const hl of highlights) {

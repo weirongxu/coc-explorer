@@ -6,7 +6,7 @@ import { HighlightPositionWithLine } from './types';
 export class HighlightExplorer {
   constructor(public readonly explorer: Explorer) {}
 
-  clearHighlightsNotify(hlSrcId: number, lineStart?: number, lineEnd?: number) {
+  clearHighlightsNotify(hlSrcId: string, lineStart?: number, lineEnd?: number) {
     hlGroupManager.clearHighlightsNotify(
       this.explorer,
       hlSrcId,
@@ -16,7 +16,7 @@ export class HighlightExplorer {
   }
 
   addHighlightsNotify(
-    hlSrcId: number,
+    hlSrcId: string,
     highlights: HighlightPositionWithLine[],
   ) {
     hlGroupManager.addHighlightsNotify(this.explorer, hlSrcId, highlights);

@@ -4,7 +4,7 @@ import { Explorer } from '../explorer';
 import { HighlightPositionWithLine } from '../highlight/types';
 import { drawnWithIndexRange } from '../painter/util';
 import { BaseTreeNode, ExplorerSource, SourceOptions } from '../source/source';
-import { compactI, flatten } from '../util';
+import { compactI, flatten, logger } from '../util';
 import { ViewSource } from './viewSource';
 
 export const rendererSourceSymbol = Symbol('rendererSource');

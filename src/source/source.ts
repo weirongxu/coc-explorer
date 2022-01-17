@@ -203,7 +203,8 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>>
     this.context = this.explorer.context;
     this.highlight = new HighlightSource(
       this,
-      workspace.createNameSpace(`coc-explorer-${sourceType}`),
+      // workspace.createNameSpace(`coc-explorer-${sourceType}`),
+      `coc-explorer-${sourceType}`,
     );
   }
 

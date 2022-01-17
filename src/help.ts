@@ -40,7 +40,8 @@ interface MappingActionContext {
   isWait: boolean;
 }
 
-const helpHlSrcId = workspace.createNameSpace('coc-explorer-help');
+// const helpHlSrcId = workspace.createNameSpace('coc-explorer-help');
+const helpHlSrcId = 'coc-explorer-help';
 
 export class HelpPainter {
   private painter: ViewPainter;
