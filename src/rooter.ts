@@ -21,6 +21,7 @@ export class RooterOpened {
   customRoots: Record<string, string> = {};
 
   constructor(public workspaceRoot: string, public explorer: Explorer) {
+    // eslint-disable-next-line @typescript-eslint/no-this-alias
     const self = this;
     let sourceBufFullpath_: string | undefined | null = null;
     const getSourceBufFullpath = async (): Promise<string | undefined> => {

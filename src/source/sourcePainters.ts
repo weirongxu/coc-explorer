@@ -24,8 +24,9 @@ export type TemplatePart<TreeNode extends BaseTreeNode<TreeNode>> =
 
 export class SourcePainter<
   TreeNode extends BaseTreeNode<TreeNode, Type>,
-  Type extends string = TreeNode['type']
-> implements Disposable {
+  Type extends string = TreeNode['type'],
+> implements Disposable
+{
   templateStr?: string;
   labelingTemplateStr?: string;
   columns = new Set<Column<TreeNode>>();
@@ -162,8 +163,9 @@ export class SourcePainter<
 
 export class SourcePainters<
   TreeNode extends BaseTreeNode<TreeNode, Type>,
-  Type extends string = TreeNode['type']
-> implements Disposable {
+  Type extends string = TreeNode['type'],
+> implements Disposable
+{
   painters = new Map<Type, SourcePainter<TreeNode, Type>>();
   readonly viewPainter = new ViewPainter(this.source.explorer);
 

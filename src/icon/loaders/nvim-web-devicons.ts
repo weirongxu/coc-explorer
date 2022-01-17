@@ -3,7 +3,7 @@ import { IconInternalLoadedItem, IconParsedTarget } from '../icons';
 import { IconLoader, registerLoader } from '../loader';
 
 export class NvimWebDeviconsLoader extends IconLoader {
-  escapeLuaString(name: string, qoute: string = "'") {
+  escapeLuaString(name: string, qoute = "'") {
     return name
       ? name.replace(/\\/g, '\\').replace(new RegExp(qoute, 'g'), "\\'")
       : name;

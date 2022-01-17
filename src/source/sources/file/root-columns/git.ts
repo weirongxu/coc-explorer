@@ -40,7 +40,7 @@ fileColumnRegistrar.registerColumn(
                   hl,
                 });
               } else {
-                row.add('{' + statusChars.join('') + '}', {
+                row.add(`{${statusChars.join('')}}`, {
                   hl,
                 });
               }

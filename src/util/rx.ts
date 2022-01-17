@@ -4,41 +4,53 @@ import {
   Observable,
   Subject,
   Subscription,
+  switchMap,
   ThrottleConfig,
   throttleTime,
 } from 'rxjs';
+import { logger } from '.';
 
 export function subToDisposable(sub: Subscription): Disposable {
   return Disposable.create(() => sub.unsubscribe());
 }
 
 type SubDisposableHook<T> = T extends void
-  ? (fn: () => void) => Disposable
-  : (fn: (arg: T) => void) => Disposable;
+  ? (fn: () => void | Promise<void>) => Disposable
+  : (fn: (arg: T) => void | Promise<void>) => Disposable;
 
 export function subToHook<T>(observable: Observable<T>): SubDisposableHook<T> {
-  return ((fn: (arg: T) => void) => {
-    const sub = observable.subscribe(fn);
+  return ((fn: (arg: T) => void | Promise<void>) => {
+    const sub = observable.subscribe(logger.asyncCatch(fn));
     return Disposable.create(() => sub.unsubscribe());
   }) as SubDisposableHook<T>;
 }
 
-export type DisposableFn<F extends Function> = F & {
+export type DisposableFn<F extends () => any> = F & {
   dispose(): void;
 };
 
-export function createSub<T>(builder: (sub: Subject<T>) => void): Subject<T> {
+export function createSub<T>(
+  builder: (sub: Subject<T>) => Observable<any>,
+): Subject<T> {
   const sub = new Subject<T>();
-  builder(sub);
+  const obs = builder(sub);
+  obs.subscribe({
+    error: logger.error,
+  });
   return sub;
 }
 
 export function debounceFn<A extends Array<any>>(
   dueTime: number,
-  fn: (...args: A) => void,
+  fn: (...args: A) => void | Promise<void>,
 ): DisposableFn<(...args: A) => void> {
   const sub = new Subject<A>();
-  sub.pipe(debounceTime(dueTime)).subscribe((args: A) => fn(...args));
+  sub
+    .pipe(
+      debounceTime(dueTime),
+      switchMap(async (args: A) => fn(...args)),
+    )
+    .subscribe({ error: logger.error });
   const wrappedFn = (...args: A) => sub.next(args);
   wrappedFn.dispose = () => sub.unsubscribe();
   return wrappedFn;
@@ -46,13 +58,18 @@ export function debounceFn<A extends Array<any>>(
 
 export function throttleFn<A extends Array<any>>(
   dueTime: number,
-  fn: (...args: A) => void,
+  fn: (...args: A) => void | Promise<void>,
   config?: ThrottleConfig,
 ): DisposableFn<(...args: A) => void> {
   const sub = new Subject<A>();
   sub
-    .pipe(throttleTime(dueTime, undefined, config))
-    .subscribe((args: A) => fn(...args));
+    .pipe(
+      throttleTime(dueTime, undefined, config),
+      switchMap(async (args: A) => fn(...args)),
+    )
+    .subscribe({
+      error: logger.error,
+    });
   const wrappedFn = (...args: A) => sub.next(args);
   wrappedFn.dispose = () => sub.unsubscribe();
   return wrappedFn;

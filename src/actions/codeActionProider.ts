@@ -65,7 +65,7 @@ export class ActionMenuCodeActionProvider implements CodeActionProvider {
           if (options.menus) {
             list.push(
               ...ActionMenu.getNormalizeMenus(options.menus).map((menu) => {
-                const fullActionName = actionName + ':' + menu.args;
+                const fullActionName = `${actionName}:${menu.args}`;
                 const keys = reverseMappings[fullActionName];
                 const key = keys ? keys.vmap ?? keys.all : '';
                 return {

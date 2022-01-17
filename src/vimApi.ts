@@ -82,7 +82,6 @@ async function getLineIndexByPosition(
       }
     }
   }
-  return;
 }
 
 async function getSourceAndNodeByPosition(
@@ -116,7 +115,7 @@ export function registerVimApi(
     actionExp: OriginalActionExp,
     positions: Position[] = ['current'],
     mode: MappingMode = 'n',
-    count: number = 1,
+    count = 1,
   ) {
     const explorer = await getExplorer(explorerFinder, explorerManager);
     if (!explorer) {
@@ -183,11 +182,7 @@ export function registerVimApi(
     ),
     registerApi(
       'explorer.getIcon',
-      async (
-        filepath: string,
-        isDirectory: boolean = false,
-        isExpanded?: boolean,
-      ) => {
+      async (filepath: string, isDirectory = false, isExpanded?: boolean) => {
         const basename = pathLib.basename(filepath);
         const type = isDirectory
           ? ('directories' as const)

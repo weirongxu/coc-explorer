@@ -1,4 +1,3 @@
-import { buffer, debounceTime, Subject } from 'rxjs';
 import { fileColumnRegistrar } from '../fileColumnRegistrar';
 import { fileHighlights } from '../fileSource';
 

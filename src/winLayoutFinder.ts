@@ -74,8 +74,6 @@ export class WinLayoutFinder {
     if (beginNode.type === 'leaf') {
       if (beginNode.winid === winid) {
         return beginNode;
-      } else {
-        return;
       }
     } else {
       for (const child of beginNode.children) {
@@ -84,7 +82,6 @@ export class WinLayoutFinder {
           return target;
         }
       }
-      return;
     }
   }
 

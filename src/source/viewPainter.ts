@@ -67,15 +67,15 @@ export class ViewRowPainter {
     );
     if (!flexible || usedWidth === fullwidth) {
       drawContents = flatten(
-        drawableList.map((item):
-          | DrawContentWithWidth
-          | DrawContentWithWidth[] => {
-          if (item.type === 'group') {
-            return item.contents;
-          } else {
-            return item;
-          }
-        }),
+        drawableList.map(
+          (item): DrawContentWithWidth | DrawContentWithWidth[] => {
+            if (item.type === 'group') {
+              return item.contents;
+            } else {
+              return item;
+            }
+          },
+        ),
       );
     } else if (usedWidth < fullwidth) {
       drawContents = await handleGrow(fullwidth, usedWidth, drawableList);

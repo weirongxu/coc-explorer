@@ -42,7 +42,7 @@ export function findNearestColor<T>(
 export function findNearestColor<T>(
   color: Color,
   list: T[],
-  getColor: (it: T) => Color = (it) => (it as unknown) as Color,
+  getColor: (it: T) => Color = (it) => it as unknown as Color,
 ) {
   return minBy(list, (it) => colorDistance(getColor(it), color));
 }

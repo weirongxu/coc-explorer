@@ -47,7 +47,7 @@ export function loadFileActions(action: ActionSource<FileSource, FileNode>) {
         return;
       }
       const nodeUid = file.view.currentNode()?.uid;
-      if (/^[A-Za-z]:[\\\/]$/.test(file.root)) {
+      if (/^[A-Za-z]:[\\/]$/.test(file.root)) {
         file.root = '';
       } else {
         file.root = pathLib.dirname(file.root);
@@ -459,7 +459,7 @@ export function loadFileActions(action: ActionSource<FileSource, FileNode>) {
 
       const list = nodes.map((node) => node.fullpath).join('\n');
       if (
-        (await prompt('Move these files or directories to trash?\n' + list)) !==
+        (await prompt(`Move these files or directories to trash?\n${list}`)) !==
         'yes'
       ) {
         return;
@@ -495,7 +495,7 @@ export function loadFileActions(action: ActionSource<FileSource, FileNode>) {
       const list = nodes.map((node) => node.fullpath).join('\n');
       if (
         (await prompt(
-          'Delete these files or directories permanently?\n' + list,
+          `Delete these files or directories permanently?\n${list}`,
         )) !== 'yes'
       ) {
         return;

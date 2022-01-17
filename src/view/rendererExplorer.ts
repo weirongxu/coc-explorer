@@ -19,8 +19,6 @@ export class RendererExplorer {
     const release = await this.renderMutex.acquire();
     try {
       return await fn();
-    } catch (error) {
-      throw error;
     } finally {
       release();
     }

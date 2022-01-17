@@ -44,7 +44,7 @@ type PreviewAction = (options: {
 }) => void | PreviewArguments | Promise<PreviewArguments | void>;
 
 export class FloatingPreview implements Disposable {
-  shown: boolean = false;
+  shown = false;
   disposables: Disposable[] = [];
   maxHeight: number;
   preferTop = false;
@@ -127,7 +127,7 @@ export class FloatingPreview implements Disposable {
     }
   }
 
-  registerOnHover(onHoverStrategy: PreviewActionStrategy, delay: number = 300) {
+  registerOnHover(onHoverStrategy: PreviewActionStrategy, delay = 300) {
     if (this.onHoverStrategy === onHoverStrategy) {
       return;
     }
@@ -304,10 +304,12 @@ export class FloatingPreview implements Disposable {
     if (!win) {
       return;
     }
-    let alignTop: boolean = false;
+    let alignTop = false;
     const bufnr = await currentBufnr();
     let winline =
-      bufnr === this.explorer.bufnr ? await this.nvim.call('winline') : 1;
+      bufnr === this.explorer.bufnr
+        ? ((await this.nvim.call('winline')) as number)
+        : 1;
     winline -= 1;
     const containerWin =
       isFloating && this.explorer.config.get('floating.border.enable')

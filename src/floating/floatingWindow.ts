@@ -1,6 +1,7 @@
 import { BufferHighlight, Disposable, workspace } from 'coc.nvim';
 import { FloatingCreateOptions, FloatingOpenOptions } from '../types';
 import { FloatingWindow as HelperFloatingWindow } from 'coc-helper';
+import { logger } from '../util';
 
 export class FloatingWindow implements Disposable {
   bufnr: number;
@@ -98,8 +99,8 @@ export class FloatingWindow implements Disposable {
     if (this.closeTimer) {
       clearTimeout(this.closeTimer);
     }
-    this.closeTimer = setTimeout(async () => {
-      await this.win.close();
+    this.closeTimer = setTimeout(() => {
+      this.win.close().catch(logger.error);
     }, ms);
   }
 

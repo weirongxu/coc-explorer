@@ -44,7 +44,7 @@ export interface Column<TreeNode extends BaseTreeNode<TreeNode>>
 
 type CreateColumn<
   S extends ExplorerSource<TreeNode>,
-  TreeNode extends BaseTreeNode<TreeNode>
+  TreeNode extends BaseTreeNode<TreeNode>,
 > = (context: {
   source: S;
   column: Column<TreeNode>;
@@ -54,7 +54,7 @@ type CreateColumn<
 export class ColumnRegistrar<
   TreeNode extends BaseTreeNode<TreeNode, Type>,
   S extends ExplorerSource<TreeNode>,
-  Type extends string = TreeNode['type']
+  Type extends string = TreeNode['type'],
 > {
   registeredColumns: Map<
     Type,

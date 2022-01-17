@@ -102,7 +102,7 @@ export async function overwritePrompt<S extends string | undefined>(
       typeof sourcePath === 'string' ? await fsLstat(sourcePath) : undefined;
     const targetLstat = await fsLstat(targetPath);
 
-    async function rename() {
+    const rename = async function () {
       const newTargetPath = await input(
         `Rename: ${targetPath} ->`,
         targetPath,
@@ -113,16 +113,15 @@ export async function overwritePrompt<S extends string | undefined>(
         return;
       }
       return finalAction(sourcePath, newTargetPath);
-    }
-    async function replace() {
+    };
+    const replace = async function () {
       await fsTrash(targetPath);
       return finalAction(sourcePath, targetPath);
-    }
-    function quit() {
+    };
+    const quit = function () {
       i = len;
-      return;
-    }
-    async function prompt_(
+    };
+    const prompt_ = async function (
       choices: Record<string, undefined | (() => void | Promise<void>)> = {},
     ) {
       choices = {
@@ -141,14 +140,14 @@ export async function overwritePrompt<S extends string | undefined>(
       if (answer && answer in choices) {
         return choices[answer]?.();
       }
-    }
+    };
 
     if (sourcePath && sourceLstat?.isDirectory()) {
       if (targetLstat.isDirectory()) {
         await prompt_({
-          merge: () => fsMergeDirectory(sourcePath!, targetPath, finalAction),
+          merge: () => fsMergeDirectory(sourcePath, targetPath, finalAction),
           'one by one': async () => {
-            const files = await fsReaddir(sourcePath!);
+            const files = await fsReaddir(sourcePath);
             const paths = files.map((source) => ({
               source: source as S,
               target: pathLib.join(targetPath, pathLib.basename(source)),
@@ -236,7 +235,7 @@ export async function inDirectory(
 export function displayedFullpath(s: string) {
   const homePath = os.homedir();
   if (s.startsWith(homePath)) {
-    return '~' + s.slice(homePath.length);
+    return `~${s.slice(homePath.length)}`;
   }
   return s;
 }
@@ -248,9 +247,9 @@ export async function listDrive(): Promise<string[]> {
       .split('\n')
       .map((d) => d.trim())
       .filter((d) => d.endsWith(':'))
-      .map((d) => d + '\\');
+      .map((d) => `${d}\\`);
     return list;
   } else {
-    throw new Error('not support listDrive in ' + process.platform);
+    throw new Error(`not support listDrive in ${process.platform}`);
   }
 }

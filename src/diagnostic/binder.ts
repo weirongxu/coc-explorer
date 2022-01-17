@@ -1,6 +1,6 @@
 import { Disposable } from 'coc.nvim';
 import pathLib from 'path';
-import { buffer, debounceTime } from 'rxjs';
+import { buffer, debounceTime, switchMap } from 'rxjs';
 import { internalEvents } from '../events';
 import { BaseTreeNode, ExplorerSource } from '../source/source';
 import { createSub, logger, mapGetWithDefault, sum } from '../util';
@@ -126,12 +126,15 @@ export class DiagnosticBinder {
     });
   }
 
-  protected reloadDebounceSubject = createSub<ExplorerSource<any>[]>((sub) => {
-    sub.pipe(buffer(sub.pipe(debounceTime(1000)))).subscribe(async (list) => {
-      const sources = new Set(list.flat());
-      await this.reload([...sources]);
-    });
-  });
+  protected reloadDebounceSubject = createSub<ExplorerSource<any>[]>((sub) =>
+    sub.pipe(
+      buffer(sub.pipe(debounceTime(1000))),
+      switchMap(async (list) => {
+        const sources = new Set(list.flat());
+        await this.reload([...sources]);
+      }),
+    ),
+  );
 
   protected async reload(sources: ExplorerSource<any>[]) {
     const types = this.diagnosticTypes;

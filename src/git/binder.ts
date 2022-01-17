@@ -1,6 +1,6 @@
 import { Disposable, disposeAll, workspace } from 'coc.nvim';
 import pathLib from 'path';
-import { buffer, debounceTime, Subject } from 'rxjs';
+import { buffer, debounceTime, switchMap } from 'rxjs';
 import { internalEvents, onEvent } from '../events';
 import { ExplorerManager } from '../explorerManager';
 import { BaseTreeNode, ExplorerSource } from '../source/source';
@@ -136,13 +136,16 @@ export class GitBinder {
   protected reloadDebounceSubject = createSub<{
     sources: ExplorerSource<any>[];
     directory: string;
-  }>((sub) => {
-    sub.pipe(buffer(sub.pipe(debounceTime(200)))).subscribe(async (list) => {
-      const sources = new Set(list.map((it) => it.sources).flat());
-      const directories = new Set(list.map((it) => it.directory));
-      await this.reload([...sources], [...directories]);
-    });
-  });
+  }>((sub) =>
+    sub.pipe(
+      buffer(sub.pipe(debounceTime(200))),
+      switchMap(async (list) => {
+        const sources = new Set(list.map((it) => it.sources).flat());
+        const directories = new Set(list.map((it) => it.directory));
+        await this.reload([...sources], [...directories]);
+      }),
+    ),
+  );
 
   protected async reload(
     sources: ExplorerSource<any>[],

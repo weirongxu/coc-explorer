@@ -91,7 +91,7 @@ export const fileHighlights = {
 export class FileSource extends ExplorerSource<FileNode> {
   scheme = 'file';
   showHidden: boolean = this.config.get<boolean>('file.showHiddenFiles')!;
-  showOnlyGitChange: boolean = false;
+  showOnlyGitChange = false;
   copiedNodes: Set<FileNode> = new Set();
   cutNodes: Set<FileNode> = new Set();
   view: ViewSource<FileNode> = new ViewSource<FileNode>(
@@ -151,13 +151,13 @@ export class FileSource extends ExplorerSource<FileNode> {
 
   isGitChange(parentNode: FileNode, filename: string): boolean {
     return !!gitManager.getMixedStatus(
-      parentNode.fullpath + '/' + filename,
+      `${parentNode.fullpath}/${filename}`,
       false,
     );
   }
 
   getColumnConfig<T>(name: string, defaultValue?: T): T {
-    return this.config.get('file.column.' + name, defaultValue)!;
+    return this.config.get(`file.column.${name}`, defaultValue)!;
   }
 
   async init() {
@@ -237,12 +237,12 @@ export class FileSource extends ExplorerSource<FileNode> {
     }
     if (cdCmd === 'tcd') {
       if (workspace.isNvim || (await nvim.call('exists', [':tcd']))) {
-        await nvim.command('tcd ' + escapePath);
+        await nvim.command(`tcd ${escapePath}`);
         // eslint-disable-next-line no-restricted-properties
         window.showMessage(`Tab's CWD is: ${fullpath}`);
       }
     } else if (cdCmd === 'cd') {
-      await nvim.command('cd ' + escapePath);
+      await nvim.command(`cd ${escapePath}`);
       // eslint-disable-next-line no-restricted-properties
       window.showMessage(`CWD is: ${fullpath}`);
     }
@@ -435,7 +435,6 @@ export class FileSource extends ExplorerSource<FileNode> {
         }
         return foundNode;
       }
-      return;
     };
 
     const foundNode = await revealRecursive(path, {
@@ -488,7 +487,7 @@ export class FileSource extends ExplorerSource<FileNode> {
           const writable = await fsAccess(fullpath, fs.constants.W_OK);
           const readable = await fsAccess(fullpath, fs.constants.R_OK);
           const directory =
-            isWindows && /^[A-Za-z]:[\\\/]$/.test(fullpath)
+            isWindows && /^[A-Za-z]:[\\/]$/.test(fullpath)
               ? true
               : stat
               ? stat.isDirectory()
@@ -499,7 +498,7 @@ export class FileSource extends ExplorerSource<FileNode> {
             expandable: directory,
             name: filename,
             fullpath,
-            directory: directory,
+            directory,
             readonly: !writable && readable,
             executable,
             readable,
@@ -511,7 +510,6 @@ export class FileSource extends ExplorerSource<FileNode> {
           return child;
         } catch (error) {
           logger.error(error);
-          return;
         }
       }),
     );

@@ -4,7 +4,7 @@ import { BaseTreeNode, ExplorerSource } from '../source/source';
 import { RendererExplorer, rendererExplorerSymbol } from './rendererExplorer';
 
 export class ViewExplorer {
-  isHelpUI: boolean = false;
+  isHelpUI = false;
   currentLineIndex = 0;
 
   [rendererExplorerSymbol]: RendererExplorer;

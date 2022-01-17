@@ -4,89 +4,93 @@ import { normalizePath } from '../util';
 import { gitManager } from './manager';
 import { GitFormat, GitMixedStatus } from './types';
 
-([
-  {
-    args: ['path/to/file', false],
-    returns: ['path/to/file'],
-  },
-  {
-    args: ['"path/to/file"', false],
-    returns: ['path/to/file'],
-  },
-  {
-    args: ['"path test/to/file"', false],
-    returns: ['path test/to/file'],
-  },
-  {
-    args: ['"path\\"/to/file"', false],
-    returns: ['path"/to/file'],
-  },
-  {
-    args: ['path/to/file with space', false],
-    returns: ['path/to/file with space'],
-  },
-  {
-    args: ['path/to/file with space', false],
-    returns: ['path/to/file with space'],
-  },
-  {
-    args: ['file.ts -> "file name.ts"', true],
-    returns: ['file.ts', 'file name.ts'],
-  },
-  {
-    args: ['"file name.ts" -> file.ts', true],
-    returns: ['file name.ts', 'file.ts'],
-  },
-  {
-    args: ['"file name.ts" -> "file name2.ts"', true],
-    returns: ['file name.ts', 'file name2.ts'],
-  },
-] as {
-  args: [string, boolean];
-  returns: string[];
-}[]).forEach((it, index) => {
-  test('gitManager parsePath ' + index, () => {
+(
+  [
+    {
+      args: ['path/to/file', false],
+      returns: ['path/to/file'],
+    },
+    {
+      args: ['"path/to/file"', false],
+      returns: ['path/to/file'],
+    },
+    {
+      args: ['"path test/to/file"', false],
+      returns: ['path test/to/file'],
+    },
+    {
+      args: ['"path\\"/to/file"', false],
+      returns: ['path"/to/file'],
+    },
+    {
+      args: ['path/to/file with space', false],
+      returns: ['path/to/file with space'],
+    },
+    {
+      args: ['path/to/file with space', false],
+      returns: ['path/to/file with space'],
+    },
+    {
+      args: ['file.ts -> "file name.ts"', true],
+      returns: ['file.ts', 'file name.ts'],
+    },
+    {
+      args: ['"file name.ts" -> file.ts', true],
+      returns: ['file name.ts', 'file.ts'],
+    },
+    {
+      args: ['"file name.ts" -> "file name2.ts"', true],
+      returns: ['file name.ts', 'file name2.ts'],
+    },
+  ] as {
+    args: [string, boolean];
+    returns: string[];
+  }[]
+).forEach((it, index) => {
+  test(`gitManager parsePath ${index}`, () => {
     // @ts-ignore
     const returns = gitManager.cmd.parsePath(...it.args);
     expect(returns).toEqual(it.returns);
   });
 });
 
-([
-  {
-    args: ['MM path/to/file'],
-    returns: [GitFormat.modified, GitFormat.modified, '/root/path/to/file'],
-  },
-  {
-    args: ['MM path/to/file with space'],
-    returns: [
-      GitFormat.modified,
-      GitFormat.modified,
-      '/root/path/to/file with space',
-    ],
-  },
-  {
-    args: ['R  "path/to/file" -> "path/to/file"'],
-    returns: [
-      GitFormat.renamed,
-      GitFormat.unmodified,
-      '/root/path/to/file',
-      '/root/path/to/file',
-    ],
-  },
-  {
-    args: ['C  "path to/file" -> "path to/file"'],
-    returns: [
-      GitFormat.copied,
-      GitFormat.unmodified,
-      '/root/path to/file',
-      '/root/path to/file',
-    ],
-  },
-] as {
-  args: [string];
-  returns: [GitFormat, GitFormat, string, string | undefined];
-}[]).forEach((it) => {
+(
+  [
+    {
+      args: ['MM path/to/file'],
+      returns: [GitFormat.modified, GitFormat.modified, '/root/path/to/file'],
+    },
+    {
+      args: ['MM path/to/file with space'],
+      returns: [
+        GitFormat.modified,
+        GitFormat.modified,
+        '/root/path/to/file with space',
+      ],
+    },
+    {
+      args: ['R  "path/to/file" -> "path/to/file"'],
+      returns: [
+        GitFormat.renamed,
+        GitFormat.unmodified,
+        '/root/path/to/file',
+        '/root/path/to/file',
+      ],
+    },
+    {
+      args: ['C  "path to/file" -> "path to/file"'],
+      returns: [
+        GitFormat.copied,
+        GitFormat.unmodified,
+        '/root/path to/file',
+        '/root/path to/file',
+      ],
+    },
+  ] as {
+    args: [string];
+    returns: [GitFormat, GitFormat, string, string | undefined];
+  }[]
+).forEach((it) => {
   test(`gitManager.cmd.parseStatusLine (${it.args[0]})`, () => {
     // @ts-ignore
     const returns = gitManager.cmd.parseStatusLine('/root', ...it.args);
@@ -264,50 +268,52 @@ describe('gitManager status', () => {
     );
   });
 
-  ([
+  (
     [
-      ['src', true],
-      {
-        x: GitFormat.mixed,
-        y: GitFormat.mixed,
-      },
-    ],
-    [
-      ['src/util', true],
-      {
-        x: GitFormat.mixed,
-        y: GitFormat.untracked,
-      },
-    ],
-    [
-      ['yarn.lock', false],
-      {
-        x: GitFormat.ignored,
-        y: GitFormat.unmodified,
-      },
-    ],
-    [
-      ['node_modules', true],
-      {
-        x: GitFormat.ignored,
-        y: GitFormat.unmodified,
-      },
-    ],
-    [
-      ['node_modules/anyfold', true],
-      {
-        x: GitFormat.ignored,
-        y: GitFormat.unmodified,
-      },
-    ],
-    [
-      ['lib/any', true],
-      {
-        x: GitFormat.ignored,
-        y: GitFormat.unmodified,
-      },
-    ],
-  ] as [[string, boolean], GitMixedStatus][]).forEach(([args, result]) => {
+      [
+        ['src', true],
+        {
+          x: GitFormat.mixed,
+          y: GitFormat.mixed,
+        },
+      ],
+      [
+        ['src/util', true],
+        {
+          x: GitFormat.mixed,
+          y: GitFormat.untracked,
+        },
+      ],
+      [
+        ['yarn.lock', false],
+        {
+          x: GitFormat.ignored,
+          y: GitFormat.unmodified,
+        },
+      ],
+      [
+        ['node_modules', true],
+        {
+          x: GitFormat.ignored,
+          y: GitFormat.unmodified,
+        },
+      ],
+      [
+        ['node_modules/anyfold', true],
+        {
+          x: GitFormat.ignored,
+          y: GitFormat.unmodified,
+        },
+      ],
+      [
+        ['lib/any', true],
+        {
+          x: GitFormat.ignored,
+          y: GitFormat.unmodified,
+        },
+      ],
+    ] as [[string, boolean], GitMixedStatus][]
+  ).forEach(([args, result]) => {
     test(`getMixedStatus ${args.join(',')}`, async () => {
       await gitManager.reload('/root', { showIgnored: true });
       expect(

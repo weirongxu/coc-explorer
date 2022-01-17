@@ -22,14 +22,12 @@ export class ActionExplorer extends ActionRegistrar<
     super(owner);
   }
 
-  async doActionByKey(key: string, mode: MappingMode, count: number = 1) {
+  async doActionByKey(key: string, mode: MappingMode, count = 1) {
     for (let c = 0; c < count; c++) {
-      const selectedLineIndexes = await this.explorer.getSelectedOrCursorLineIndexes(
-        mode,
-      );
-      const lineIndexesGroups = this.explorer.lineIndexesGroupBySource(
-        selectedLineIndexes,
-      );
+      const selectedLineIndexes =
+        await this.explorer.getSelectedOrCursorLineIndexes(mode);
+      const lineIndexesGroups =
+        this.explorer.lineIndexesGroupBySource(selectedLineIndexes);
       for (const { source, lineIndexes } of lineIndexesGroups) {
         const actionExp = keyMapping.getActionExp(source.sourceType, key, mode);
         if (actionExp) {

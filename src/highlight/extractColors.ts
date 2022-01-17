@@ -18,12 +18,10 @@ export type HighlightColor = {
 export async function extractHighlightsColor(
   highlightGroups: string[],
 ): Promise<Record<string, HighlightColor>> {
-  const hlColorStrs: Record<
-    string,
-    HighlightColorString
-  > = await workspace.nvim.call('coc_explorer#highlight#extract_colors', [
-    highlightGroups,
-  ]);
+  const hlColorStrs: Record<string, HighlightColorString> =
+    await workspace.nvim.call('coc_explorer#highlight#extract_colors', [
+      highlightGroups,
+    ]);
   return Object.entries(hlColorStrs)
     .map(([group, hl]) => {
       const newHl: HighlightColor = {};

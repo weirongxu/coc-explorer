@@ -1,4 +1,6 @@
-export function queueAsyncFunction<R extends any, ARGS extends any[]>(
+import { logger } from '.';
+
+export function queueAsyncFunction<R, ARGS extends any[]>(
   fn: (...args: ARGS) => Promise<R>,
 ): (...args: ARGS) => Promise<R> {
   type Task = {
@@ -12,18 +14,20 @@ export function queueAsyncFunction<R extends any, ARGS extends any[]>(
   return async (...args: ARGS): Promise<R> => {
     if (!queueStarted) {
       queueStarted = true;
-      setImmediate(async () => {
-        while (queueTasks.length) {
-          const task = queueTasks.shift()!;
-          try {
-            const result = await task.fn(...task.args);
-            task.resolve(result);
-          } catch (error) {
-            task.reject(error as Error);
+      setImmediate(
+        logger.asyncCatch(async () => {
+          while (queueTasks.length) {
+            const task = queueTasks.shift()!;
+            try {
+              const result = await task.fn(...task.args);
+              task.resolve(result);
+            } catch (error) {
+              task.reject(error as Error);
+            }
           }
-        }
-        queueStarted = false;
-      });
+          queueStarted = false;
+        }),
+      );
     }
     return await new Promise<R>((resolve, reject) => {
       queueTasks.push({

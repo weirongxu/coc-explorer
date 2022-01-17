@@ -38,10 +38,10 @@ export function bootSource<S extends ExplorerSource<any>>(
     source: S;
   };
 
-  const context: Context = ({
+  const context: Context = {
     explorer: null,
     source: null,
-  } as unknown) as Context;
+  } as unknown as Context;
 
   beforeAll(() => {
     context.explorer = getExplorer();

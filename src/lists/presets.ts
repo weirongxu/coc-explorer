@@ -13,7 +13,7 @@ export class PresetList extends BasicList {
 
     this.addAction('do', async (item) => {
       this.nvim
-        .command(`CocCommand explorer --preset ${item.data.name}`)
+        .command(`CocCommand explorer --preset ${item.data.name as string}`)
         .catch(logger.error);
     });
   }

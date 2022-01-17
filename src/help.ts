@@ -52,7 +52,7 @@ export class HelpPainter {
 
   constructor(
     private explorer: Explorer,
-    private source: ExplorerSource<any>,
+    private source: ExplorerSource<BaseTreeNode<any>>,
     private width: number,
   ) {
     this.painter = new ViewPainter(explorer);
@@ -122,7 +122,7 @@ export class HelpPainter {
       row.add(' - ');
     }
     if (ctx.isWait) {
-      row.add(waitAction.helpDescription + ' ', { hl: helpHightlights.type });
+      row.add(`${waitAction.helpDescription} `, { hl: helpHightlights.type });
     }
   }
 
@@ -178,7 +178,7 @@ export class HelpPainter {
         if (rule) {
           await this.drawRow((row) => {
             this.drawMappingsPrefix(indent, row, ctx);
-            row.add('if ' + rule.getHelpDescription(action.args), {
+            row.add(`if ${rule.getHelpDescription(action.args)}`, {
               hl: helpHightlights.conditional,
             });
           });
@@ -186,14 +186,14 @@ export class HelpPainter {
             actionExp[i + 1],
             actionExp[i + 2],
           ];
-          await this.drawMappingsActionExp(indent + '  ', trueAction, ctx);
+          await this.drawMappingsActionExp(`${indent}  `, trueAction, ctx);
           await this.drawRow((row) => {
             row.add(indent);
             row.add('else', {
               hl: helpHightlights.conditional,
             });
           });
-          await this.drawMappingsActionExp(indent + '  ', falseAction, ctx);
+          await this.drawMappingsActionExp(`${indent}  `, falseAction, ctx);
           i += 2;
           continue;
         }
@@ -308,8 +308,8 @@ export class HelpPainter {
         hl: helpHightlights.title,
       });
     });
-    const allColumns = this.source.view.sourcePainters.columnRegistrar
-      .registeredColumns;
+    const allColumns =
+      this.source.view.sourcePainters.columnRegistrar.registeredColumns;
     for (const [type, columns] of allColumns) {
       await this.drawRow((row) => {
         row.add(`  Type: ${type}`, { hl: helpHightlights.subtitle });

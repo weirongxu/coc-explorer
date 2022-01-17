@@ -4,7 +4,7 @@ import { argOptions } from '../arg/argOptions';
 import type { Explorer } from '../explorer';
 import { BaseTreeNode, ExplorerSource } from '../source/source';
 import { OpenPosition, OpenStrategy } from '../types';
-import { selectWindowsUI } from '../util';
+import { hasOwnProperty, selectWindowsUI } from '../util';
 
 export async function openAction(
   explorer: Explorer,
@@ -27,7 +27,7 @@ export async function openAction(
 
   const { nvim } = workspace;
 
-  const getEscapePath = async () => {
+  const getEscapePath = async (): Promise<string> => {
     let path = await getFullpath();
     if (explorer.config.get('openAction.relativePath')) {
       path = await nvim.call('fnamemodify', [path, ':.']);
@@ -200,7 +200,8 @@ export async function openAction(
     },
 
     previousWindow: async () => {
-      const prevWinnr = await explorer.explorerManager.prevWinnrByPrevWindowID();
+      const prevWinnr =
+        await explorer.explorerManager.prevWinnrByPrevWindowID();
       if (prevWinnr) {
         await openByWinnr(prevWinnr);
       } else {
@@ -221,7 +222,7 @@ export async function openAction(
   if (!openStrategy) {
     openStrategy = await explorer.args.value(argOptions.openActionStrategy);
   }
-  if (!actions.hasOwnProperty(openStrategy)) {
+  if (!hasOwnProperty(actions, openStrategy)) {
     new Error(`openStrategy(${openStrategy}) is not supported`);
   }
   await actions[openStrategy]();

@@ -24,7 +24,7 @@ export class HighlightExplorer {
 
   async bootSyntax() {
     const winnr = await this.explorer.winnr;
-    const curWinnr = await workspace.nvim.call('winnr');
+    const curWinnr: number = await workspace.nvim.call('winnr');
     if (winnr) {
       workspace.nvim.pauseNotification();
       if (winnr !== curWinnr) {

@@ -11,7 +11,7 @@ import { ActionExp, MappingMode } from './types';
 
 export class ActionSource<
   S extends ExplorerSource<any>,
-  TreeNode extends BaseTreeNode<TreeNode>
+  TreeNode extends BaseTreeNode<TreeNode>,
 > extends ActionRegistrar<S, TreeNode> {
   public readonly global: ActionExplorer;
   public readonly source = this.owner;
@@ -58,7 +58,7 @@ export class ActionSource<
     let curNodes = nodes;
 
     const subOptions = {
-      mode: mode,
+      mode,
       isSubAction: true,
     };
     try {
@@ -108,8 +108,6 @@ export class ActionSource<
           await this.doAction(actionExp.name, curNodes, actionExp.args, mode);
         }
       }
-    } catch (error) {
-      throw error;
     } finally {
       waitRelease?.();
     }
@@ -164,8 +162,6 @@ export class ActionSource<
           mode,
         });
       }
-    } catch (error) {
-      throw error;
     } finally {
       if (reload) {
         await source.load(source.view.rootNode);
@@ -212,13 +208,13 @@ export class ActionSource<
             if (options.menus) {
               list.push(
                 ...ActionMenu.getNormalizeMenus(options.menus).map((menu) => {
-                  const fullActionName = actionName + ':' + menu.args;
+                  const fullActionName = `${actionName}:${menu.args}`;
                   const keys = reverseMappings[fullActionName];
                   const key = keys ? keys.vmap ?? keys.all : '';
                   return {
                     name: fullActionName,
                     key,
-                    description: description + ' ' + menu.description,
+                    description: `${description} ${menu.description}`,
                     callback: async () => {
                       await task.waitExplorerShow();
                       await callback.call(source, {

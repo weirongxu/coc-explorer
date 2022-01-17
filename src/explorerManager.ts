@@ -206,10 +206,7 @@ export class ExplorerManager {
         if (mode === 'v' && ['o', 'j', 'k'].includes(key)) {
           continue;
         }
-        const plugKey = `explorer-key-${mode}-${key.replace(
-          /\<(.*)\>/,
-          '[$1]',
-        )}`;
+        const plugKey = `explorer-key-${mode}-${key.replace(/<(.*)>/, '[$1]')}`;
         this.context.subscriptions.push(
           workspace.registerKeymap([mode], plugKey, async () => {
             const count = (await this.nvim.eval('v:count')) as number;

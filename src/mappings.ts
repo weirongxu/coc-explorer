@@ -46,7 +46,7 @@ export function toOriginalAction(action: Action): string {
 }
 
 export function parseMappingKey(key: string) {
-  return key.includes('<dot>') ? key.replace(/\<dot\>/g, '.') : key;
+  return key.includes('<dot>') ? key.replace(/<dot>/g, '.') : key;
 }
 
 export function parseOriginalActionExp(
@@ -104,25 +104,25 @@ type MouseMode = NonNullable<Explorer['explorer.mouseMode']>;
 class KeyMapping {
   mode = config.get<MappingConfigMode>('keyMappingMode', 'default');
 
-  private readonly mouseMappings = ({
-    none: {},
-    singleclick: {
-      '<LeftRelease>': [
-        'expandable?',
-        ['expanded?', 'collapse', 'expand'],
-        'open',
-      ],
-    },
-    doubleclick: {
-      '<2-LeftMouse>': [
-        'expandable?',
-        ['expanded?', 'collapse', 'expand'],
-        'open',
-      ],
-    },
-  } as Record<MouseMode, OriginalMappings>)[
-    config.get<MouseMode>('mouseMode')!
-  ];
+  private readonly mouseMappings = (
+    {
+      none: {},
+      singleclick: {
+        '<LeftRelease>': [
+          'expandable?',
+          ['expanded?', 'collapse', 'expand'],
+          'open',
+        ],
+      },
+      doubleclick: {
+        '<2-LeftMouse>': [
+          'expandable?',
+          ['expanded?', 'collapse', 'expand'],
+          'open',
+        ],
+      },
+    } as Record<MouseMode, OriginalMappings>
+  )[config.get<MouseMode>('mouseMode')!];
 
   readonly configByModes: Record<
     MappingConfigMode,
@@ -333,9 +333,7 @@ class KeyMapping {
     return sourceMappings?.[key] ?? globalMappings[key];
   }
 
-  async getMappings(
-    sourceType: string,
-  ): Promise<{
+  async getMappings(sourceType: string): Promise<{
     all: Mappings;
     vmap: Mappings;
   }> {

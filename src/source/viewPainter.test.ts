@@ -109,7 +109,7 @@ testColumnRegistrar.registerColumn('child', 'link', () => ({
             grow: 'right',
           },
           () => {
-            row.add('→ ' + node.fullpath);
+            row.add(`→ ${node.fullpath}`);
             row.add(' ');
           },
         );

@@ -59,12 +59,11 @@ export const explorerActionList = registerList<ActionData[], ActionData>({
   },
   init() {
     this.addAction('do', ({ item }) => {
-      new Promise(async (resolve) => {
-        const data = item.data as ActionData;
+      logger.asyncCatch(async () => {
+        const data = item.data;
         await data.callback();
         await actionListMru.add(data.name);
-        resolve(undefined);
-      }).catch(logger.error);
+      })();
     });
   },
 });

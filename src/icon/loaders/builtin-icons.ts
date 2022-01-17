@@ -1,3 +1,4 @@
+import { hasOwnProperty } from '../../util';
 import { IconInfo, IconInternalLoadedItem, IconParsedTarget } from '../icons';
 import { IconLoader, registerLoader } from '../loader';
 import { nerdfont, nerdfontHighlights } from '../nerdfont';
@@ -27,7 +28,7 @@ export class BuiltinIconLoader extends IconLoader {
   ): undefined | (IconInfo & { name: string }) {
     const { fullname, basename, extensions } = target;
     const extname = extensions[extensions.length - 1];
-    if (nerdfont.filenames.hasOwnProperty(basename)) {
+    if (hasOwnProperty(nerdfont.filenames, basename)) {
       const name = nerdfont.filenames[basename];
       return {
         name,
@@ -35,7 +36,7 @@ export class BuiltinIconLoader extends IconLoader {
       };
     }
 
-    if (nerdfont.filenames.hasOwnProperty(fullname)) {
+    if (hasOwnProperty(nerdfont.filenames, fullname)) {
       const name = nerdfont.filenames[fullname];
       return {
         name,
@@ -43,9 +44,9 @@ export class BuiltinIconLoader extends IconLoader {
       };
     }
 
-    const matched = Object.entries(
-      nerdfont.patternMatches,
-    ).find(([pattern]: [string, string]) => new RegExp(pattern).test(fullname));
+    const matched = Object.entries(nerdfont.patternMatches).find(
+      ([pattern]: [string, string]) => new RegExp(pattern).test(fullname),
+    );
     if (matched) {
       const name = matched[1];
       return {
@@ -54,7 +55,7 @@ export class BuiltinIconLoader extends IconLoader {
       };
     }
 
-    if (nerdfont.extensions.hasOwnProperty(extname)) {
+    if (hasOwnProperty(nerdfont.extensions, extname)) {
       const name = nerdfont.extensions[extname];
       return {
         name,
@@ -68,7 +69,7 @@ export class BuiltinIconLoader extends IconLoader {
   ): undefined | (IconInfo & { name: string }) {
     const { basename, fullname: dirname } = target;
 
-    if (nerdfont.dirnames.hasOwnProperty(basename)) {
+    if (hasOwnProperty(nerdfont.dirnames, basename)) {
       const name = nerdfont.dirnames[basename];
       return {
         name,
@@ -76,7 +77,7 @@ export class BuiltinIconLoader extends IconLoader {
       };
     }
 
-    if (nerdfont.dirnames.hasOwnProperty(dirname)) {
+    if (hasOwnProperty(nerdfont.dirnames, dirname)) {
       const name = nerdfont.dirnames[dirname];
       return {
         name,
@@ -84,9 +85,9 @@ export class BuiltinIconLoader extends IconLoader {
       };
     }
 
-    const matched = Object.entries(
-      nerdfont.dirPatternMatches,
-    ).find(([pattern]: [string, string]) => new RegExp(pattern).test(dirname));
+    const matched = Object.entries(nerdfont.dirPatternMatches).find(
+      ([pattern]: [string, string]) => new RegExp(pattern).test(dirname),
+    );
     if (matched) {
       const name = matched[1];
       return {

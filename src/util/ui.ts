@@ -44,19 +44,14 @@ export async function vimPrompt(
         if (index === -1) {
           index = 0;
         }
-        return (
-          choice.slice(0, index) +
-          '&' +
-          choice[index].toUpperCase() +
-          choice.slice(index + 1)
-        );
+        return `${choice.slice(0, index)}&${choice[
+          index
+        ].toUpperCase()}${choice.slice(index + 1)}`;
       })
       .join('\n'),
     defaultNumber + 1,
   ])) as number;
-  if (result === 0) {
-    return;
-  } else {
+  if (result !== 0) {
     return choices[result - 1];
   }
 }
@@ -129,7 +124,7 @@ export async function vimInput(
 ): Promise<string> {
   return workspace.nvim.callAsync('coc#util#with_callback', [
     'input',
-    [prompt + ' ', defaultInput, completion],
+    [`${prompt} `, defaultInput, completion],
   ]) as Promise<string>;
 }
 

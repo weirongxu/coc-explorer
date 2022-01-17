@@ -124,7 +124,7 @@ export class BookmarkSource extends ExplorerSource<BookmarkNode> {
         const bookmark: BookmarkDB.Item = bookmarks[lnum];
         bookmarkNodes.push({
           type: 'child',
-          uid: this.helper.getUid(fullpath + ':' + lnum),
+          uid: this.helper.getUid(`${fullpath}:${lnum}`),
           fullpath,
           name: pathLib.basename(fullpath),
           lnum,

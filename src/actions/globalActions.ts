@@ -193,7 +193,7 @@ export function loadGlobalActions(action: ActionExplorer) {
         await gitManager.reload(root);
       }
       source.view.requestRenderNodes([
-        { nodes: nodes, withParents: true, withChildren: true },
+        { nodes, withParents: true, withChildren: true },
       ]);
     },
     'add file to git index',
@@ -212,7 +212,7 @@ export function loadGlobalActions(action: ActionExplorer) {
         await gitManager.reload(root);
       }
       source.view.requestRenderNodes([
-        { nodes: nodes, withParents: true, withChildren: true },
+        { nodes, withParents: true, withChildren: true },
       ]);
     },
     'reset file from git index',
@@ -723,7 +723,7 @@ export function loadGlobalActions(action: ActionExplorer) {
     'normal',
     async ({ args }) => {
       if (args[0]) {
-        await nvim.command('execute "normal ' + args[0] + '"');
+        await nvim.command(`execute "normal ${args[0]}"`);
       }
     },
     'execute vim normal mode commands',

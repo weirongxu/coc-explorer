@@ -2,7 +2,7 @@ import { keyBy } from 'lodash-es';
 import { ExplorerConfig } from '../config';
 import { HighlightCommand } from '../highlight/types';
 import { IconSourceType } from '../types';
-import { getExtensions, logger, partition } from '../util';
+import { getExtensions, hasOwnProperty, logger, partition } from '../util';
 import './load';
 import { getLoader } from './loader';
 import { nerdfont } from './nerdfont';
@@ -72,12 +72,12 @@ export async function loadIcons(
     directories: new Map(),
   };
   for (const target of targets) {
-    if (fullname2directoryIcon.hasOwnProperty(target.fullname)) {
+    if (hasOwnProperty(fullname2directoryIcon, target.fullname)) {
       result.directories.set(
         target.fullname,
         fullname2directoryIcon[target.fullname].icon,
       );
-    } else if (fullname2fileIcon.hasOwnProperty(target.fullname)) {
+    } else if (hasOwnProperty(fullname2fileIcon, target.fullname)) {
       result.files.set(
         target.fullname,
         fullname2fileIcon[target.fullname].icon,

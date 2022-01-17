@@ -28,7 +28,7 @@ export class MarkExplorer {
 
   removeLines(lines: number[]): void;
   removeLines(startLine: number, endLine?: number): void;
-  removeLines(startLineOrLines: number | number[], endLine: number = Infinity) {
+  removeLines(startLineOrLines: number | number[], endLine = Infinity) {
     if (Array.isArray(startLineOrLines)) {
       this.marksGroupByType.forEach((lines) => {
         startLineOrLines.forEach((line) => {
@@ -47,7 +47,7 @@ export class MarkExplorer {
     }
   }
 
-  offsetLines(offset: number, startLine: number, endLine: number = Infinity) {
+  offsetLines(offset: number, startLine: number, endLine = Infinity) {
     if (offset === 0) {
       return;
     }

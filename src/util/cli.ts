@@ -42,8 +42,8 @@ export function shellescape(s: string): string {
   if (process.platform === 'win32') {
     return `"${s.replace(/"/g, '\\"')}"`;
   }
-  if (/[^A-Za-z0-9_\/:=-]/.test(s)) {
-    s = "'" + s.replace(/'/g, "'\\''") + "'";
+  if (/[^A-Za-z0-9_/:=-]/.test(s)) {
+    s = `'${s.replace(/'/g, "'\\''")}'`;
     s = s
       .replace(/^(?:'')+/g, '') // unduplicate single-quote at the beginning
       .replace(/\\'''/g, "\\'"); // remove non-escaped single-quote if there are enclosed between 2 escaped

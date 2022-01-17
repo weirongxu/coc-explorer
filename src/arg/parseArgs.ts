@@ -60,10 +60,8 @@ export type ResolveArgValues<T> = {
 };
 
 export class Args {
-  private static registeredOptions: Map<
-    string,
-    ArgOption<any, any>
-  > = new Map();
+  private static registeredOptions: Map<string, ArgOption<any, any>> =
+    new Map();
   private optionValues: Map<string, any> = new Map();
 
   static registerOption<T>(
@@ -146,7 +144,7 @@ export class Args {
         typeof defaultValue === 'boolean' ? () => defaultValue : defaultValue,
     };
     this.registeredOptions.set(name, option);
-    this.registeredOptions.set('no-' + name, option);
+    this.registeredOptions.set(`no-${name}`, option);
     return option;
   }
 
@@ -260,7 +258,7 @@ export class Args {
   }
 
   async values<
-    T extends Record<string, ArgOptionRequired<any, any> | ArgOption<any, any>>
+    T extends Record<string, ArgOptionRequired<any, any> | ArgOption<any, any>>,
   >(options: T): Promise<ResolveArgValues<T>> {
     const entries = await Promise.all(
       Object.entries(options).map(

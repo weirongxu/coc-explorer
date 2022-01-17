@@ -51,7 +51,7 @@ export interface ExplorerConfig {
  * @deprecated
  */
 export const getRevealAuto = (config: ExplorerConfig) => {
-  let revealAuto = config.get('file.autoReveal') as boolean | undefined;
+  let revealAuto = config.get<boolean>('file.autoReveal');
   if (revealAuto !== undefined) {
     logger.error(
       '`explorer.file.autoReveal` has been deprecated, please use explorer.file.reveal.auto instead of it',

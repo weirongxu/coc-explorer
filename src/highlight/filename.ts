@@ -25,13 +25,13 @@ export class FilenameHighlight {
       ) === true;
 
     this.enabledGitStatus =
-      enabledCompletely || config.get<boolean>(configKey + '.git', false);
+      enabledCompletely || config.get<boolean>(`${configKey}.git`, false);
     this.enabledErrorStatus =
       enabledCompletely ||
-      config.get<boolean>(configKey + '.diagnosticError', false);
+      config.get<boolean>(`${configKey}.diagnosticError`, false);
     this.enabledWarningStatus =
       enabledCompletely ||
-      config.get<boolean>(configKey + '.diagnosticWarning', false);
+      config.get<boolean>(`${configKey}.diagnosticWarning`, false);
   }
 
   getGitHighlight(status: GitMixedStatus) {

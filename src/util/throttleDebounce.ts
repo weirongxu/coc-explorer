@@ -3,8 +3,8 @@ import { logger } from '.';
 export class Cancelled {}
 const cancelled = new Cancelled();
 
-export type Cancellable<F extends Function> = F & {
-  cancel(): void;
+export type Cancellable<F extends () => any> = F & {
+  cancel: () => void;
 };
 
 export type ThrottleOptions = {
@@ -110,7 +110,7 @@ export function debouncePromise<A extends Array<any>, R>(
     | undefined;
   const wrap = async (...args: A) => {
     store?.cancel();
-    timer = setTimeout(async () => {
+    timer = setTimeout(() => {
       store?.invoke();
     }, delay);
     return await new Promise<R | Cancelled>((resolve, reject) => {

@@ -29,7 +29,6 @@ class Task extends EventEmitter implements ListTask {
       const range = Range.create(0, 0, 0, 0);
       const hasPattern = excludePatterns.length > 0;
       process.stderr.on('data', (chunk) => {
-        // eslint-disable-next-line no-console
         console.error(chunk.toString('utf8'));
       });
 

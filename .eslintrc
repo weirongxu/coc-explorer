@@ -1,0 +1,7 @@
+{
+  "root": true,
+  "extends": ["@raidou/eslint-config-base"],
+  "rules": {
+    "@typescript-eslint/no-loop-func": "off"
+  }
+}

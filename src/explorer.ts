@@ -74,10 +74,10 @@ export class Explorer implements Disposable {
     args: ResolvedArgs,
     specialSize?: [width?: number, height?: number],
   ) {
-    let width: number = 0;
-    let height: number = 0;
-    let left: number = 0;
-    let top: number = 0;
+    let width = 0;
+    let height = 0;
+    let left = 0;
+    let top = 0;
 
     if (args.position.name !== 'floating') {
       width = specialSize?.[0] ?? args.width;
@@ -122,23 +122,21 @@ export class Explorer implements Disposable {
     explorerManager.maxExplorerID += 1;
 
     const { width, height, top, left } = this.genExplorerPosition(argValues);
-    const [bufnr, borderBufnr]: [
-      number,
-      number | undefined,
-    ] = await workspace.nvim.call('coc_explorer#open_explorer', [
-      explorerManager.maxExplorerID,
-      argValues.position,
-      {
-        width,
-        height,
-        left,
-        top,
-        focus: argValues.focus,
-        border_enable: config.get('floating.border.enable'),
-        border_chars: config.get('floating.border.chars'),
-        title: config.get('floating.border.title'),
-      } as ExplorerOpenOptions,
-    ]);
+    const [bufnr, borderBufnr]: [number, number | undefined] =
+      await workspace.nvim.call('coc_explorer#open_explorer', [
+        explorerManager.maxExplorerID,
+        argValues.position,
+        {
+          width,
+          height,
+          left,
+          top,
+          focus: argValues.focus,
+          border_enable: config.get('floating.border.enable'),
+          border_chars: config.get('floating.border.chars'),
+          title: config.get('floating.border.title'),
+        } as ExplorerOpenOptions,
+      ]);
 
     const explorer = new Explorer(
       explorerManager.maxExplorerID,
@@ -305,7 +303,7 @@ export class Explorer implements Disposable {
     const setWidth = async (
       contentWidthType: ArgContentWidthTypes,
       contentWidth: number,
-    ) => {
+    ): Promise<boolean> => {
       if (contentWidth <= 0) {
         let contentBaseWidth: number | undefined;
         if (contentWidthType === 'win-width') {
@@ -329,6 +327,7 @@ export class Explorer implements Disposable {
         this.contentWidth = contentWidth;
         return true;
       }
+      return false;
     };
 
     if (this.isFloating) {
@@ -337,14 +336,10 @@ export class Explorer implements Disposable {
       }
     }
 
-    if (
-      await setWidth(
-        this.argValues.contentWidthType,
-        this.argValues.contentWidth,
-      )
-    ) {
-      return;
-    }
+    await setWidth(
+      this.argValues.contentWidthType,
+      this.argValues.contentWidth,
+    );
   }
 
   async resize(size?: [width?: number, height?: number]) {
@@ -382,9 +377,8 @@ export class Explorer implements Disposable {
   }
 
   async resume(argValues: ResolvedArgs) {
-    const { width, height, top, left } = Explorer.genExplorerPosition(
-      argValues,
-    );
+    const { width, height, top, left } =
+      Explorer.genExplorerPosition(argValues);
     await this.nvim.call('coc_explorer#resume', [
       this.bufnr,
       argValues.position,
@@ -574,7 +568,6 @@ export class Explorer implements Disposable {
           undefined
         );
       }
-      return;
     }
   }
 
@@ -599,9 +592,10 @@ export class Explorer implements Disposable {
     return lineIndexes;
   }
 
-  findSourceByLineIndex(
-    lineIndex: number,
-  ): { source: ExplorerSource<any>; sourceIndex: number } {
+  findSourceByLineIndex(lineIndex: number): {
+    source: ExplorerSource<any>;
+    sourceIndex: number;
+  } {
     const sourceIndex = this.sources.findIndex(
       (source) => lineIndex < source.view.endLineIndex,
     );

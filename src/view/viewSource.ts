@@ -10,15 +10,16 @@ import { ViewNodeStores } from './viewNodeStores';
 
 export class ViewSource<
   TreeNode extends BaseTreeNode<TreeNode, Type>,
-  Type extends string = TreeNode['type']
-> implements Disposable {
+  Type extends string = TreeNode['type'],
+> implements Disposable
+{
   readonly explorer: Explorer;
   /**
    * rendered nodes
    */
   flattenedNodes: TreeNode[] = [];
-  startLineIndex: number = 0;
-  endLineIndex: number = 0;
+  startLineIndex = 0;
+  endLineIndex = 0;
   sourcePainters: SourcePainters<TreeNode>;
 
   [rendererSourceSymbol]: RendererSource<TreeNode>;
@@ -103,9 +104,7 @@ export class ViewSource<
   }
 
   currentSourceIndex(): number | undefined {
-    const indexOf = this.explorer.sources.indexOf(
-      this.source as ExplorerSource<any>,
-    );
+    const indexOf = this.explorer.sources.indexOf(this.source);
     return indexOf === -1 ? undefined : indexOf;
   }
 
@@ -156,6 +155,7 @@ export class ViewSource<
     let currentNode = node;
     const result: TreeNode[] = [];
 
+    // eslint-disable-next-line no-constant-condition
     while (true) {
       if (currentNode.parent) {
         result.push(currentNode.parent);

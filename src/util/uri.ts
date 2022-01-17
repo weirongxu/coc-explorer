@@ -1,8 +1,8 @@
 import { isWindows } from './platform';
 
-export function generateUri(path: string, scheme: string = 'file') {
+export function generateUri(path: string, scheme = 'file') {
   if (scheme === 'file' && isWindows && /^[A-Za-z]:/.test(path)) {
-    path = '/' + path;
+    path = `/${path}`;
   }
-  return scheme + '://' + path;
+  return `${scheme}://${path}`;
 }

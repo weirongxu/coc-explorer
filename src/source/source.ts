@@ -107,7 +107,7 @@ export type NodeUid = string;
 
 export interface BaseTreeNode<
   TreeNode extends BaseTreeNode<TreeNode>,
-  Type extends string = string
+  Type extends string = string,
 > {
   type: Type;
   isRoot?: boolean;
@@ -130,10 +130,11 @@ export type ExplorerSourceClass = Class<ExplorerSource<any>> & {
 };
 
 export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>>
-  implements Disposable {
+  implements Disposable
+{
   abstract view: ViewSource<TreeNode>;
-  width: number = 0;
-  showHidden: boolean = false;
+  width = 0;
+  showHidden = false;
   selectedNodes: Set<TreeNode> = new Set();
   nvim = workspace.nvim;
   context: ExtensionContext;
@@ -148,7 +149,7 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>>
 
   protected disposables: Disposable[] = [];
 
-  private isDisposed: boolean = false;
+  private isDisposed = false;
 
   get root() {
     return workspace.cwd;
@@ -306,7 +307,7 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>>
     await this.events.fire('loaded', node);
     await this.view.load(node);
     if (render) {
-      return renderer.renderNotifier({ node: node, force });
+      return renderer.renderNotifier({ node, force });
     }
     return Notifier.noop();
   }

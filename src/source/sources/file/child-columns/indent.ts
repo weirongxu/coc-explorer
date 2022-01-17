@@ -23,9 +23,9 @@ function printIndentLine(node: FileNode) {
       break;
     }
     if (curNode.nextSiblingNode === undefined) {
-      row = '  ' + row;
+      row = `  ${row}`;
     } else {
-      row = '│ ' + row;
+      row = `│ ${row}`;
     }
     curNode = curNode.parent;
   }

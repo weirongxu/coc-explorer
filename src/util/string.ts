@@ -12,11 +12,7 @@ export function charIndex(content: string, byteIndex: number): number {
   return buf.slice(0, byteIndex).toString('utf8').length;
 }
 
-export function splitCount(
-  str: string,
-  sep: string,
-  count: number = 2,
-): string[] {
+export function splitCount(str: string, sep: string, count = 2): string[] {
   const ret: string[] = [];
   let remain = str;
   let idx = str.indexOf(sep);
@@ -31,5 +27,6 @@ export function splitCount(
 }
 
 export function isASCII(str: string) {
+  // eslint-disable-next-line no-control-regex
   return /^[\x00-\xFF]*$/.test(str);
 }

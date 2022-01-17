@@ -3,7 +3,7 @@ import { GitFormat, GitRootFormat } from './types';
 
 export const getRootStatusIcons = (config: ExplorerConfig) => {
   const getRootIconConf = (name: string) => {
-    const icon = config.get<string>('git.icon.rootStatus.' + name)!;
+    const icon = config.get<string>(`git.icon.rootStatus.${name}`)!;
     return {
       icon,
       name,
@@ -29,7 +29,7 @@ export const getRootStatusIcons = (config: ExplorerConfig) => {
 
 export const getStatusIcons = (config: ExplorerConfig) => {
   const getIconConf = (name: string) => {
-    const icon = config.get<string>('git.icon.status.' + name)!;
+    const icon = config.get<string>(`git.icon.status.${name}`)!;
     return {
       icon,
       name,
