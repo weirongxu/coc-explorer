@@ -47,6 +47,10 @@ export interface ExplorerConfig {
   get<T = void>(section: string, defaultValue?: T): T;
 }
 
+export const bufferTabOnly = () => {
+  return config.get<boolean>('buffer.tabOnly')!;
+};
+
 /**
  * @deprecated
  */

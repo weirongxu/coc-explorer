@@ -1,6 +1,7 @@
 import { commands, ExtensionContext, workspace } from 'coc.nvim';
 import pathLib from 'path';
 import { MappingMode, OriginalActionExp } from './actions/types';
+import { tabContainerManager } from './container';
 import { Explorer } from './explorer';
 import { ExplorerManager } from './explorerManager';
 import { IconInfo, IconTarget, loadIcons } from './icon/icons';
@@ -48,7 +49,7 @@ async function getExplorer(
     if (node) {
       return explorerManager.explorerByWinid(node.winid);
     } else {
-      const current = await explorerManager.currentTabContainer();
+      const current = await tabContainerManager.currentTabContainer();
       const explorer = current?.floating;
       if ((await explorer?.winnr) !== undefined) {
         return explorer;

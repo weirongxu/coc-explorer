@@ -1,4 +1,3 @@
-import { SourceType } from 'coc.nvim';
 import { IconSourceType } from '../types';
 import { IconInternalLoadedItem, IconParsedTarget } from './icons';
 

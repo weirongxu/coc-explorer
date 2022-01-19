@@ -1,6 +1,12 @@
 import { workspace } from 'coc.nvim';
 import { ActionSource } from '../../../actions/actionSource';
-import { prompt } from '../../../util';
+import { bufferTabOnly } from '../../../config';
+import { tabContainerManager } from '../../../container';
+import {
+  leaveEmptyInWinids,
+  prompt,
+  winidsByBufnrInCurTab,
+} from '../../../util';
 import { BufferNode, BufferSource } from './bufferSource';
 
 export function loadBufferActions(
@@ -36,6 +42,16 @@ export function loadBufferActions(
   action.addNodeAction(
     'delete',
     async ({ node }) => {
+      if (bufferTabOnly()) {
+        // remove buffer in tab container
+        await tabContainerManager.curTabDelBufnr(node.bufnr);
+        if (tabContainerManager.existBufnr(node.bufnr)) {
+          const winids = await winidsByBufnrInCurTab(node.bufnr);
+          await leaveEmptyInWinids(winids);
+          return;
+        }
+      }
+
       if (
         buffer.bufManager.modified(node.fullpath, {
           directory: false,

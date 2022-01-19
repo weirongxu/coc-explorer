@@ -4,7 +4,7 @@ import { buffer, debounceTime, switchMap } from 'rxjs';
 import { internalEvents, onEvent } from '../events';
 import { ExplorerManager } from '../explorerManager';
 import { BaseTreeNode, ExplorerSource } from '../source/source';
-import { createSub, mapGetWithDefault, sum } from '../util';
+import { createSubject, mapGetWithDefault, sum } from '../util';
 import { gitManager } from './manager';
 import { GitIgnore, GitMixedStatus, GitRootStatus } from './types';
 
@@ -133,7 +133,7 @@ export class GitBinder {
     ];
   }
 
-  protected reloadDebounceSubject = createSub<{
+  protected reloadDebounceSubject = createSubject<{
     sources: ExplorerSource<any>[];
     directory: string;
   }>((sub) =>

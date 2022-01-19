@@ -6,7 +6,6 @@ export * from './collection';
 export * from './async';
 export * from './fs';
 export * from './path';
-export * from './throttleDebounce';
 export * from './vim';
 export * from './ui';
 export * from './platform';

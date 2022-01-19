@@ -67,6 +67,7 @@ export function onCursorMoved(
 export const InternalVimEvents = new HelperVimEvents<{
   BufDelete: BufEventListener;
   BufWipeout: BufEventListener;
+  TabEnter: BufEventListener;
   ColorScheme: (scheme: string) => EventResult;
   CocDiagnosticChange: () => EventResult;
   CocGitStatusChange: () => EventResult;
@@ -80,6 +81,10 @@ export const InternalVimEvents = new HelperVimEvents<{
     },
     BufWipeout: {
       eventExpr: 'BufWipeout *',
+      argExprs: ['+expand("<abuf>")'],
+    },
+    TabEnter: {
+      eventExpr: 'TabEnter *',
       argExprs: ['+expand("<abuf>")'],
     },
     ColorScheme: {

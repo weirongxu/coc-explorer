@@ -1,10 +1,18 @@
 import { ExtensionContext, workspace } from 'coc.nvim';
 import pathLib from 'path';
 import { buffer, debounceTime, Subject } from 'rxjs';
+import { tabContainerManager } from './container';
 import { internalEvents, onEvent } from './events';
 import { ExplorerManager } from './explorerManager';
 import { BufferNode } from './source/sources/buffer/bufferSource';
-import { compactI, logger, subToHook, throttleFn, winidsByBufnr } from './util';
+import {
+  compactI,
+  leaveEmptyInWinids,
+  logger,
+  subjectToHook,
+  throttleFn,
+  winidsByBufnr,
+} from './util';
 
 const regex = /^\s*(\d+)(.+?)"(.+?)".*/;
 
@@ -38,9 +46,9 @@ export class BufManager {
   private modifiedSubject = new Subject<string>();
 
   bufferNodes: BufferNode[] = [];
-  onReload = subToHook(this.reloadSubject);
-  onReloadDebounce = subToHook(this.reloadSubject.pipe(debounceTime(500)));
-  onModifiedDebounce = subToHook(
+  onReload = subjectToHook(this.reloadSubject);
+  onReloadDebounce = subjectToHook(this.reloadSubject.pipe(debounceTime(500)));
+  onModifiedDebounce = subjectToHook(
     this.modifiedSubject.pipe(
       buffer(this.modifiedSubject.pipe(debounceTime(500))),
     ),
@@ -64,6 +72,15 @@ export class BufManager {
       ),
       internalEvents.on('BufDelete', () => this.reload()),
       internalEvents.on('BufWipeout', () => this.reload()),
+    );
+
+    context.subscriptions.push(
+      onEvent('BufWinEnter', (bufnr) =>
+        tabContainerManager.curTabAddBufnr(bufnr),
+      ),
+      internalEvents.on('TabEnter', (bufnr) =>
+        tabContainerManager.curTabAddBufnr(bufnr),
+      ),
     );
 
     const refreshBufModified = async (bufnr: number) => {
@@ -100,26 +117,13 @@ export class BufManager {
       throw new Error('The content of buffer has not been saved!');
     }
 
-    const { nvim } = this;
-    const curWinid = (await nvim.call('win_getid', [])) as number;
     const winids = await winidsByBufnr(bufNode.bufnr);
+    await leaveEmptyInWinids(winids);
 
-    if (winids.length) {
-      nvim.pauseNotification();
-      for (const winid of winids) {
-        nvim.call('win_gotoid', [winid], true);
-        nvim.command('enew', true);
-        if (workspace.isVim) {
-          nvim.command('redraw', true);
-        }
-      }
-      nvim.call('win_gotoid', [curWinid], true);
-      await nvim.resumeNotification();
-    }
     if (options.bwipeout) {
-      await nvim.command(`bwipeout! ${bufNode.bufnr}`);
+      await this.nvim.command(`bwipeout! ${bufNode.bufnr}`);
     } else {
-      await nvim.command(`bdelete! ${bufNode.bufnr}`);
+      await this.nvim.command(`bdelete! ${bufNode.bufnr}`);
     }
   }
 

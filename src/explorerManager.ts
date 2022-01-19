@@ -11,7 +11,7 @@ import { argOptions } from './arg/argOptions';
 import { Args } from './arg/parseArgs';
 import { BufManager } from './bufManager';
 import { buildExplorerConfig, configLocal } from './config';
-import { TabContainer } from './container';
+import { tabContainerManager } from './container';
 import { GlobalContextVars } from './contextVariables';
 import { onBufEnter } from './events';
 import { Explorer } from './explorer';
@@ -24,7 +24,6 @@ export class ExplorerManager {
   previousBufnr = new GlobalContextVars<number>('previousBufnr');
   previousWindowID = new GlobalContextVars<number>('previousWindowID');
   maxExplorerID = 0;
-  tabContainer = new Map<number, TabContainer>();
   nvim = workspace.nvim;
   bufManager: BufManager;
 
@@ -75,18 +74,6 @@ export class ExplorerManager {
     );
 
     this.bufManager = new BufManager(this.context, this);
-  }
-
-  async currentTabId() {
-    return (await this.nvim.call('coc_explorer#tab#current_id')) as number;
-  }
-
-  async currentTabMaxId() {
-    return (await this.nvim.call('coc_explorer#tab#max_id')) as number;
-  }
-
-  async currentTabContainer(): Promise<undefined | TabContainer> {
-    return this.tabContainer.get(await this.currentTabId());
   }
 
   private async updatePrevCtxVars(bufnr: number) {
@@ -147,7 +134,7 @@ export class ExplorerManager {
    * Get all winnrs from explorers
    */
   async winnrs() {
-    const container = await this.currentTabContainer();
+    const container = await tabContainerManager.currentTabContainer();
     const explorers = container?.all();
     if (explorers) {
       const winnrs = await Promise.all(
@@ -164,7 +151,7 @@ export class ExplorerManager {
    */
   explorers() {
     const explorers: Explorer[] = [];
-    for (const container of this.tabContainer.values()) {
+    for (const container of tabContainerManager.values()) {
       explorers.push(...container.all());
     }
     return explorers;
@@ -255,13 +242,9 @@ export class ExplorerManager {
 
     const tabid =
       position.name === 'tab'
-        ? (await this.currentTabMaxId()) + 1
-        : await this.currentTabId();
-    let tabContainer = this.tabContainer.get(tabid);
-    if (!tabContainer) {
-      tabContainer = new TabContainer();
-      this.tabContainer.set(tabid, tabContainer);
-    }
+        ? (await tabContainerManager.currentTabMaxId()) + 1
+        : await tabContainerManager.currentTabId();
+    const tabContainer = tabContainerManager.get(tabid);
 
     let explorer = tabContainer.getExplorer(position);
     if (explorer && quit) {

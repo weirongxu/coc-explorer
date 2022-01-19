@@ -1,5 +1,5 @@
 import { Notifier } from 'coc-helper';
-import { workspace, Window } from 'coc.nvim';
+import { Window, workspace } from 'coc.nvim';
 
 let _supportedSetbufline: boolean | undefined = undefined;
 export async function supportedSetbufline() {
@@ -126,6 +126,33 @@ export async function bufnrByWinnrOrWinid(winnrOrWinid: number | undefined) {
 
 export async function winidsByBufnr(bufnr: number) {
   return (await workspace.nvim.call('win_findbuf', [bufnr])) as number[];
+}
+
+export async function winidsByBufnrInCurTab(bufnr: number) {
+  const tabpage = await workspace.nvim.tabpage;
+  const wins = await tabpage.windows;
+  const winidsOfTab = wins.map((win) => win.id);
+  const allWinids = (await workspace.nvim.call('win_findbuf', [
+    bufnr,
+  ])) as number[];
+  return allWinids.filter((winid) => winidsOfTab.includes(winid));
+}
+
+export async function leaveEmptyInWinids(winids: number[]) {
+  const curWinid = (await workspace.nvim.call('win_getid', [])) as number;
+  if (!winids.length) {
+    return;
+  }
+  workspace.nvim.pauseNotification();
+  for (const winid of winids) {
+    workspace.nvim.call('win_gotoid', [winid], true);
+    workspace.nvim.command('enew', true);
+    if (workspace.isVim) {
+      workspace.nvim.command('redraw', true);
+    }
+  }
+  workspace.nvim.call('win_gotoid', [curWinid], true);
+  await workspace.nvim.resumeNotification();
 }
 
 export async function currentBufnr() {

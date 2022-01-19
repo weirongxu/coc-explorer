@@ -1,5 +1,6 @@
+import { bufferTabOnly } from '../../../config';
+import { tabContainerManager } from '../../../container';
 import { hlGroupManager } from '../../../highlight/manager';
-import { uniq } from '../../../util';
 import { ViewSource } from '../../../view/viewSource';
 import { BaseTreeNode, ExplorerSource } from '../../source';
 import { sourceManager } from '../../sourceManager';
@@ -67,6 +68,7 @@ export class BufferSource extends ExplorerSource<BufferNode> {
       readErrors: false,
     },
   );
+  tabId?: number;
 
   async init() {
     this.disposables.push(
@@ -83,6 +85,7 @@ export class BufferSource extends ExplorerSource<BufferNode> {
         await this.load(this.view.rootNode);
       }),
     );
+    this.tabId = await tabContainerManager.currentTabId();
 
     loadBufferActions(this.action);
   }
@@ -105,17 +108,19 @@ export class BufferSource extends ExplorerSource<BufferNode> {
     if (force) {
       await this.bufManager.reload();
     }
+    const tabOnly = bufferTabOnly();
+
     const bufferNodes = this.bufManager.bufferNodes;
-    const tabOnly = this.config.get<boolean>('buffer.tabOnly')!;
     if (this.showHidden) {
       return [...bufferNodes];
     } else {
       if (tabOnly) {
-        const tabBuflist: number[] = uniq(
-          await this.nvim.call('tabpagebuflist', []),
-        );
+        const tabContainer = this.tabId
+          ? tabContainerManager.get(this.tabId)
+          : await tabContainerManager.currentTabContainer();
+        const bufnrs = [...(tabContainer?.bufnrs ?? [])];
         return bufferNodes.filter(
-          (it) => tabBuflist.includes(it.bufnr) && !it.unlisted,
+          (it) => bufnrs.includes(it.bufnr) && !it.unlisted,
         );
       } else {
         return bufferNodes.filter((it) => !it.unlisted);

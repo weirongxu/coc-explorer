@@ -10,7 +10,7 @@ import {
 } from 'rxjs';
 import { logger } from '.';
 
-export function subToDisposable(sub: Subscription): Disposable {
+export function subscriptionToDisposable(sub: Subscription): Disposable {
   return Disposable.create(() => sub.unsubscribe());
 }
 
@@ -18,7 +18,9 @@ type SubDisposableHook<T> = T extends void
   ? (fn: () => void | Promise<void>) => Disposable
   : (fn: (arg: T) => void | Promise<void>) => Disposable;
 
-export function subToHook<T>(observable: Observable<T>): SubDisposableHook<T> {
+export function subjectToHook<T>(
+  observable: Observable<T>,
+): SubDisposableHook<T> {
   return ((fn: (arg: T) => void | Promise<void>) => {
     const sub = observable.subscribe(logger.asyncCatch(fn));
     return Disposable.create(() => sub.unsubscribe());
@@ -29,7 +31,7 @@ export type DisposableFn<F extends () => any> = F & {
   dispose(): void;
 };
 
-export function createSub<T>(
+export function createSubject<T>(
   builder: (sub: Subject<T>) => Observable<any>,
 ): Subject<T> {
   const sub = new Subject<T>();
