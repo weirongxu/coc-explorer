@@ -85,7 +85,7 @@ export class DiagnosticBinder {
           ? node.fullpath
           : node.fullpath && pathLib.dirname(node.fullpath);
       if (directory) {
-        this.reload([source]).catch(logger.error);
+        this.reloadDebounceSubject.next([source]);
       }
     });
 
