@@ -303,6 +303,21 @@ export function loadFileActions(action: ActionSource<FileSource, FileNode>) {
     'copy full filepath to clipboard',
   );
   action.addNodesAction(
+    'copyRelativeFilepath',
+    async ({ nodes }) => {
+      await file.copyToClipboard(
+        nodes
+          ? nodes
+              .map((it) => pathLib.relative(file.root, it.fullpath))
+              .join('\n')
+          : file.root,
+      );
+      // eslint-disable-next-line no-restricted-properties
+      window.showMessage('Copy relative filepath to clipboard');
+    },
+    'copy relative filepath to clipboard',
+  );
+  action.addNodesAction(
     'copyFilename',
     async ({ nodes }) => {
       await file.copyToClipboard(
