@@ -2,7 +2,7 @@
   "explorer.sources": [
     {
       "name": "buffer",
-      "expand": false
+      "expand": true
     },
     {
       "name": "file",

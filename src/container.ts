@@ -1,4 +1,4 @@
-import { workspace } from 'coc.nvim';
+import { ExtensionContext, workspace } from 'coc.nvim';
 import { ParsedPosition } from './arg/parseArgs';
 import { Explorer } from './explorer';
 
@@ -49,6 +49,12 @@ export class TabContainerManager {
     }
   }
 
+  async register() {
+    // add buffers to tab when vim enter
+    const bufnrs: number[] = await workspace.nvim.call('tabpagebuflist');
+    await tabContainerManager.curTabAddBufnr(...bufnrs);
+  }
+
   values() {
     return Array.from(this.tabContainerMap.values());
   }
@@ -69,16 +75,16 @@ export class TabContainerManager {
     return this.values().some((c) => c.bufnrs.has(bufnr));
   }
 
-  async curTabAddBufnr(bufnr: number) {
+  async curTabAddBufnr(...bufnrs: number[]) {
     const id = await this.currentTabId();
     const c = this.get(id);
-    c.bufnrs.add(bufnr);
+    bufnrs.forEach((bufnr) => c.bufnrs.add(bufnr));
   }
 
-  async curTabDelBufnr(bufnr: number) {
+  async curTabDelBufnr(...bufnrs: number[]) {
     const id = await this.currentTabId();
     const c = this.get(id);
-    c.bufnrs.delete(bufnr);
+    bufnrs.forEach((bufnr) => c.bufnrs.delete(bufnr));
   }
 }
 

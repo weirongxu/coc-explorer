@@ -8,6 +8,7 @@ import {
 } from 'coc.nvim';
 import { ActionMenuCodeActionProvider } from './actions/codeActionProider';
 import { config } from './config';
+import { tabContainerManager } from './container';
 import { InternalVimEvents } from './events';
 import { ExplorerManager } from './explorerManager';
 import { GitCommand } from './git/command';
@@ -59,5 +60,6 @@ export const activate = (context: ExtensionContext) => {
     registerGitHighlights(subscriptions);
     registerInternalColors(subscriptions);
     await explorerManager.events.fire('didAutoload');
+    await tabContainerManager.register();
   })().catch(logger.error);
 };

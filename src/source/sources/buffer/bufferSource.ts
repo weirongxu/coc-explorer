@@ -118,7 +118,10 @@ export class BufferSource extends ExplorerSource<BufferNode> {
         const tabContainer = this.tabId
           ? tabContainerManager.get(this.tabId)
           : await tabContainerManager.currentTabContainer();
-        const bufnrs = [...(tabContainer?.bufnrs ?? [])];
+        let bufnrs: number[] = [];
+        if (tabContainer?.bufnrs) {
+          bufnrs = [...tabContainer.bufnrs];
+        }
         return bufferNodes.filter(
           (it) => bufnrs.includes(it.bufnr) && !it.unlisted,
         );

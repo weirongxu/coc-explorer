@@ -59,6 +59,7 @@ export class ExplorerManager {
     this.waitAllEvents.constructor();
 
     this.events.on('didAutoload', () => {
+      this.bufManager.reload().catch(logger.error);
       this.registerMappings().catch(logger.error);
     });
 
