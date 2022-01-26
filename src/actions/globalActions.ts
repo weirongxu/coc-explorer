@@ -712,12 +712,15 @@ export function loadGlobalActions(action: ActionExplorer) {
     },
     'show help',
   );
-  action.addNodeAction(
+  action.addNodesAction(
     'actionMenu',
-    async ({ source, node }) => {
-      await source.action.listActionMenu([node]);
+    async ({ source, nodes }) => {
+      await source.action.listActionMenu(nodes);
     },
     'show actions in coc-list',
+    {
+      select: 'visual',
+    },
   );
   action.addNodeAction(
     'normal',
