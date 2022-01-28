@@ -64,7 +64,10 @@ class HighlightManager {
       if (hl.size === 0) {
         continue;
       }
-      explorer.buffer.highlightRanges(hlSrcId, hl.group, [
+      // hlSrcId will cause some gravity issue
+      // https://github.com/neovim/neovim/issues/17170
+      // https://github.com/weirongxu/coc-explorer/issues/506
+      explorer.buffer.highlightRanges(-1, hl.group, [
         Range.create(
           Position.create(hl.lineIndex, hl.start),
           Position.create(hl.lineIndex, hl.start + hl.size),
