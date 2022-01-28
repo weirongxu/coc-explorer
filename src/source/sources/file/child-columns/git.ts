@@ -1,9 +1,9 @@
 import { getStatusIcons } from '../../../../git/config';
+import { gitHighlights } from '../../../../git/highlights';
 import { gitManager } from '../../../../git/manager';
 import { GitFormat } from '../../../../git/types';
 import { FilenameHighlight } from '../../../../highlight/filename';
 import { fileColumnRegistrar } from '../fileColumnRegistrar';
-import { fileHighlights } from '../fileSource';
 
 fileColumnRegistrar.registerColumn(
   'child',
@@ -18,11 +18,11 @@ fileColumnRegistrar.registerColumn(
       isDirectory: boolean,
     ) => {
       if (staged) {
-        return fileHighlights.gitStaged;
+        return gitHighlights.staged;
       } else {
         return (
           filenameHighlight.getHighlight(fullpath, isDirectory, ['git']) ??
-          fileHighlights.gitUnstaged
+          gitHighlights.unstaged
         );
       }
     };

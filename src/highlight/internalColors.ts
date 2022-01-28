@@ -5,6 +5,7 @@ import { extractHighlightsColor } from './extractColors';
 import { hlGroupManager } from './manager';
 
 const groupConfigs = {
+  Error: 'ErrorColor',
   Comment: 'CommentColor',
   Normal: 'NormalColor',
   CocErrorSign: 'CocErrorSignColor',

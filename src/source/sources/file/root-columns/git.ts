@@ -1,4 +1,5 @@
 import { getRootStatusIcons } from '../../../../git/config';
+import { gitHighlights } from '../../../../git/highlights';
 import { gitManager } from '../../../../git/manager';
 import { fileColumnRegistrar } from '../fileColumnRegistrar';
 import { fileHighlights } from '../fileSource';
@@ -33,8 +34,8 @@ fileColumnRegistrar.registerColumn(
                 }
               }
               const hl = status.allStaged
-                ? fileHighlights.gitRootStaged
-                : fileHighlights.gitRootUnstaged;
+                ? gitHighlights.staged
+                : gitHighlights.unstaged;
               if (isLabeling) {
                 row.add(statusChars.join(' & '), {
                   hl,

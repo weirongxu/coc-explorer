@@ -1,6 +1,7 @@
 import { Disposable, workspace } from 'coc.nvim';
 import colorConvert from 'color-convert';
 import { extractHighlightsColor } from '../highlight/extractColors';
+import { internalHighlightGroups } from '../highlight/internalColors';
 import { hlGroupManager } from '../highlight/manager';
 import {
   compactI,
@@ -109,40 +110,40 @@ const gitContentChange = hlg(
 );
 
 export const gitHighlights = {
-  gitRenamed: hlg('GitRenamed', gitChangedPath.group),
-  gitCopied: hlg('GitCopied', gitChangedPath.group),
-  gitAdded: hlg('GitAdded', gitChangedPath.group),
-  gitUntracked: hlg('GitUntracked', gitChangedPath.group),
-  gitUnmerged: hlg('GitUnmerged', gitChangedPath.group),
+  renamed: hlg('GitRenamed', gitChangedPath.group),
+  copied: hlg('GitCopied', gitChangedPath.group),
+  added: hlg('GitAdded', gitChangedPath.group),
+  untracked: hlg('GitUntracked', gitChangedPath.group),
+  unmerged: hlg('GitUnmerged', gitChangedPath.group),
 
-  gitMixed: hlg('GitMixed', gitContentChange.group),
-  gitModified: hlg('GitModified', gitContentChange.group),
+  mixed: hlg('GitMixed', gitContentChange.group),
+  modified: hlg('GitModified', gitContentChange.group),
 
-  gitDeleted: hlg('GitDeleted', 'Error'),
+  deleted: hlg('GitDeleted', internalHighlightGroups.ErrorColor),
 
-  gitIgnored: hlg('GitIgnored', 'Comment'),
+  ignored: hlg('GitIgnored', internalHighlightGroups.CommentColor),
 
-  gitStaged: hlg('GitStaged', 'Comment'),
-  gitUnstaged: hlg('GitUnstaged', 'Operator'),
+  staged: hlg('GitStaged', internalHighlightGroups.CommentColor),
+  unstaged: hlg('GitUnstaged', 'Operator'),
 };
 
 export const getGitFormatHighlight = (format: GitFormat) => {
   switch (format) {
     case GitFormat.mixed:
-      return gitHighlights.gitMixed;
+      return gitHighlights.mixed;
     case GitFormat.modified:
-      return gitHighlights.gitModified;
+      return gitHighlights.modified;
     case GitFormat.added:
-      return gitHighlights.gitAdded;
+      return gitHighlights.added;
     case GitFormat.deleted:
-      return gitHighlights.gitDeleted;
+      return gitHighlights.deleted;
     case GitFormat.renamed:
-      return gitHighlights.gitRenamed;
+      return gitHighlights.renamed;
     case GitFormat.copied:
-      return gitHighlights.gitCopied;
+      return gitHighlights.copied;
     case GitFormat.unmerged:
-      return gitHighlights.gitUnmerged;
+      return gitHighlights.unmerged;
     case GitFormat.untracked:
-      return gitHighlights.gitUntracked;
+      return gitHighlights.untracked;
   }
 };

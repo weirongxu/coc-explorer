@@ -37,7 +37,7 @@ export class FilenameHighlight {
 
   getGitHighlight(status: GitMixedStatus) {
     if (status.x === GitFormat.ignored) {
-      return gitHighlights.gitIgnored;
+      return gitHighlights.ignored;
     }
 
     return getGitFormatHighlight(status.y);

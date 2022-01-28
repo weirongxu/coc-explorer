@@ -7,7 +7,6 @@ import { argOptions } from '../../../arg/argOptions';
 import { getRevealAuto, getRevealWhenOpen } from '../../../config';
 import { diagnosticHighlights } from '../../../diagnostic/highlights';
 import { onBufEnter } from '../../../events';
-import { gitHighlights } from '../../../git/highlights';
 import { gitManager } from '../../../git/manager';
 import { internalHighlightGroups } from '../../../highlight/internalColors';
 import { hlGroupManager } from '../../../highlight/manager';
@@ -56,15 +55,11 @@ export const fileHighlights = {
   rootName: hlg('FileRootName', 'Identifier'),
   expandIcon: hlg('FileExpandIcon', 'Directory'),
   fullpath: hlg('FileFullpath', internalHighlightGroups.CommentColor),
-  filename: hlg('FileFilename', internalHighlightGroups.NormalColor),
+  filename: hlg('FileFilename', 'None'),
   directory: directoryHighlight,
   directoryExpanded: hlg('FileDirectoryExpanded', directoryHighlight.group),
   directoryCollapsed: hlg('FileDirectoryCollapsed', directoryHighlight.group),
   linkTarget: hlg('FileLinkTarget', internalHighlightGroups.CommentColor),
-  gitStaged: hlg('FileGitStaged', gitHighlights.gitStaged.group),
-  gitUnstaged: hlg('FileGitUnstaged', gitHighlights.gitUnstaged.group),
-  gitRootStaged: hlg('FileGitRootStaged', internalHighlightGroups.CommentColor),
-  gitRootUnstaged: hlg('FileGitRootUnstaged', 'Operator'),
   indentLine: hlg('IndentLine', internalHighlightGroups.CommentColor),
   clip: hlg('FileClip', 'Statement'),
   size: hlg('FileSize', 'Constant'),

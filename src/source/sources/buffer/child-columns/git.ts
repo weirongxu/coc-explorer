@@ -14,11 +14,11 @@ bufferColumnRegistrar.registerColumn(
 
     const getHighlight = (fullpath: string, staged: boolean) => {
       if (staged) {
-        return gitHighlights.gitStaged;
+        return gitHighlights.staged;
       } else {
         return (
           filenameHighlight.getHighlight(fullpath, false, ['git']) ??
-          gitHighlights.gitUnstaged
+          gitHighlights.unstaged
         );
       }
     };
