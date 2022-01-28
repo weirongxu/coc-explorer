@@ -4,6 +4,7 @@ import { getGitFormatHighlight, gitHighlights } from '../git/highlights';
 import { gitManager } from '../git/manager';
 import { GitFormat, GitMixedStatus } from '../git/types';
 import { fileHighlights } from '../source/sources/file/fileSource';
+import { HighlightCommand } from './types';
 
 export namespace FilenameHighlight {
   export type HighlightTypes = 'diagnosticError' | 'diagnosticWarning' | 'git';
@@ -46,7 +47,7 @@ export class FilenameHighlight {
     fullpath: string,
     isDirectory: boolean,
     highlightOrder: FilenameHighlight.HighlightTypes[],
-  ) {
+  ): HighlightCommand | undefined {
     for (const type of highlightOrder) {
       if (type === 'diagnosticWarning') {
         if (this.enabledWarningStatus) {

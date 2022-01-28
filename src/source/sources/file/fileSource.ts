@@ -56,7 +56,7 @@ export const fileHighlights = {
   rootName: hlg('FileRootName', 'Identifier'),
   expandIcon: hlg('FileExpandIcon', 'Directory'),
   fullpath: hlg('FileFullpath', 'Comment'),
-  filename: hlg('FileFilename', 'None'),
+  filename: hlg('FileFilename', 'Normal'),
   directory: directoryHighlight,
   directoryExpanded: hlg('FileDirectoryExpanded', directoryHighlight.group),
   directoryCollapsed: hlg('FileDirectoryCollapsed', directoryHighlight.group),
