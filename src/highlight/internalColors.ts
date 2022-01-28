@@ -6,6 +6,7 @@ import { hlGroupManager } from './manager';
 
 const groupConfigs = {
   Comment: 'CommentColor',
+  Normal: 'NormalColor',
 } as const;
 type GroupConfig = typeof groupConfigs;
 type GroupConfigKey = keyof GroupConfig;
