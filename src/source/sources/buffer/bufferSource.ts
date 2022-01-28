@@ -1,5 +1,6 @@
 import { bufferTabOnly } from '../../../config';
 import { tabContainerManager } from '../../../container';
+import { internalHighlightGroups } from '../../../highlight/internalColors';
 import { hlGroupManager } from '../../../highlight/manager';
 import { ViewSource } from '../../../view/viewSource';
 import { BaseTreeNode, ExplorerSource } from '../../source';
@@ -31,14 +32,14 @@ const hlg = hlGroupManager.linkGroup.bind(hlGroupManager);
 
 export const bufferHighlights = {
   title: hlg('BufferRoot', 'Constant'),
-  hidden: hlg('BufferHidden', 'Comment'),
+  hidden: hlg('BufferHidden', internalHighlightGroups.CommentColor),
   expandIcon: hlg('BufferExpandIcon', 'Directory'),
   nameVisible: hlg('BufferNameVisible', 'String'),
-  bufname: hlg('BufferBufname', 'Comment'),
+  bufname: hlg('BufferBufname', internalHighlightGroups.CommentColor),
   modified: hlg('BufferModified', 'Operator'),
   bufnr: hlg('BufferBufnr', 'Special'),
   readonly: hlg('BufferReadonly', 'Operator'),
-  fullpath: hlg('BufferFullpath', 'Comment'),
+  fullpath: hlg('BufferFullpath', internalHighlightGroups.CommentColor),
 };
 
 export class BufferSource extends ExplorerSource<BufferNode> {
