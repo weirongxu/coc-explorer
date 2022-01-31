@@ -603,15 +603,13 @@ export function loadFileActions(action: ActionSource<FileSource, FileNode>) {
         },
       );
       await file.view.sync(async (r) => {
-        const reloadNotifier = await file.loadNotifier(
-          r,
-          putTargetNode.parent ?? putTargetNode,
-        );
+        const revealRoot = putTargetNode.parent ?? putTargetNode;
+        const reloadNotifier = await file.loadNotifier(r, revealRoot);
         const [, revealNotifiers] = await file.revealNodeByPathNotifier(
           r,
           targetPath,
           {
-            startNode: putTargetNode,
+            startNode: revealRoot,
           },
         );
         await Notifier.runAll([reloadNotifier, ...revealNotifiers]);
