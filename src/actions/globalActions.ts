@@ -634,20 +634,30 @@ export function loadGlobalActions(action: ActionExplorer) {
     async ({ source }) => {
       source.selectedNodes.clear();
 
-      await source.view.sync(async (r) => {
-        const loadNotifier = await source.loadNotifier(
-          r,
-          source.view.rootNode,
-          {
-            force: true,
-          },
-        );
+      // FIXME hlSrcId will cause some gravity issue
+      await explorer.view.sync(async (r) => {
+        const loadNotifier = await explorer.loadAllNotifier(r);
 
         nvim.pauseNotification();
         source.highlight.clearHighlightsNotify();
         loadNotifier?.notify();
         await nvim.resumeNotification();
       });
+
+      // await source.view.sync(async (r) => {
+      //   const loadNotifier = await source.loadNotifier(
+      //     r,
+      //     source.view.rootNode,
+      //     {
+      //       force: true,
+      //     },
+      //   );
+      //
+      //   nvim.pauseNotification();
+      //   source.highlight.clearHighlightsNotify();
+      //   loadNotifier?.notify();
+      //   await nvim.resumeNotification();
+      // });
     },
     'refresh',
   );

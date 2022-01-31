@@ -52,7 +52,8 @@ class HighlightManager {
     lineStart?: number,
     lineEnd?: number,
   ) {
-    explorer.buffer.clearNamespace(hlSrcId, lineStart, lineEnd);
+    // FIXME hlSrcId will cause some gravity issue
+    explorer.buffer.clearNamespace(-1, lineStart, lineEnd);
   }
 
   addHighlightsNotify(
@@ -64,7 +65,7 @@ class HighlightManager {
       if (hl.size === 0) {
         continue;
       }
-      // hlSrcId will cause some gravity issue
+      // FIXME hlSrcId will cause some gravity issue
       // https://github.com/neovim/neovim/issues/17170
       // https://github.com/weirongxu/coc-explorer/issues/506
       explorer.buffer.highlightRanges(-1, hl.group, [
