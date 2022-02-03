@@ -4,8 +4,8 @@
     "extensions": ["o", "a", "obj", "pyc"],
     "filenames": ["node_modules", "lib"],
     "patternMatches": ["^\\."]
-  },
-  "explorer.file.reveal.filter": {
-    "literals": ["node_modules"]
   }
+  // "explorer.file.reveal.filter": {
+  //   "literals": ["node_modules"]
+  // }
 }

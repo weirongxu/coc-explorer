@@ -675,7 +675,7 @@ export function loadGlobalActions(action: ActionExplorer) {
   );
   action.addNodeAction(
     'resize',
-    async ({ source, node, args }) => {
+    async ({ args }) => {
       await (async () => {
         if (explorer.isFloating) {
           const [sizeStr] = args as [string | undefined];
