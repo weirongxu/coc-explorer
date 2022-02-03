@@ -1,4 +1,4 @@
-import { ExtensionContext, workspace } from 'coc.nvim';
+import { workspace } from 'coc.nvim';
 import { ParsedPosition } from './arg/parseArgs';
 import { Explorer } from './explorer';
 

@@ -1,6 +1,5 @@
 import { Disposable, workspace } from 'coc.nvim';
-import colorConvert from 'color-convert';
-import { logger, toHex } from '../util';
+import { generateHighlightFg, logger } from '../util';
 import { extractHighlightsColor } from './extractColors';
 import { hlGroupManager } from './manager';
 
@@ -25,23 +24,14 @@ export const registerInternalColors = (disposables: Disposable[]) => {
       nvim.pauseNotification();
       for (const group of groups) {
         const hl = highlights[group];
-        if (!hl) {
-          continue;
-        }
-        const guifg = hl.guifg;
-        if (!guifg) {
-          continue;
-        }
-        const ctermfg =
-          hl.ctermfg ??
-          colorConvert.rgb.ansi256([guifg.red, guifg.green, guifg.blue]);
-
-        nvim.command(
-          `highlight default CocExplorer${
-            groupConfigs[group]
-          }_Internal ctermfg=${ctermfg} guifg=#${toHex(guifg)}`,
-          true,
+        const cmd = generateHighlightFg(
+          `CocExplorer${groupConfigs[group]}_Internal`,
+          hl,
         );
+        if (!cmd) {
+          continue;
+        }
+        nvim.command(cmd, true);
       }
       await nvim.resumeNotification();
     })

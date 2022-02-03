@@ -1,5 +1,8 @@
 import { Notifier } from 'coc-helper';
 import { Window, workspace } from 'coc.nvim';
+import colorConvert from 'color-convert';
+import { toHex } from '.';
+import { HighlightColor } from '../highlight/extractColors';
 
 let _supportedSetbufline: boolean | undefined = undefined;
 export async function supportedSetbufline() {
@@ -38,6 +41,24 @@ export async function registerRuntimepath(extensionPath: string) {
         "''",
       )}')`,
     );
+  }
+}
+
+export function generateHighlightFg(groupName: string, hl?: HighlightColor) {
+  if (!hl) {
+    return;
+  }
+  const guifg = hl.guifg;
+  if (guifg) {
+    const ctermfg =
+      hl.ctermfg ??
+      colorConvert.rgb.ansi256([guifg.red, guifg.green, guifg.blue]);
+
+    return `highlight default ${groupName} ctermfg=${ctermfg} guifg=#${toHex(
+      guifg,
+    )}`;
+  } else if (hl.ctermfg) {
+    return `highlight default ${groupName} ctermfg=${hl.ctermfg}`;
   }
 }
 
