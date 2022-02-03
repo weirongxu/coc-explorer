@@ -70,11 +70,13 @@ export class ActionSource<
 
           const action = actionExp[i];
 
+          // nested array
           if (Array.isArray(action)) {
             await this.doActionExp(action, curNodes, subOptions);
             continue;
           }
 
+          // wait action and timeout
           if (action.name === waitAction.name) {
             const timeout = this.source.config.get<number>(
               'mapping.action.wait.timeout',
@@ -93,6 +95,7 @@ export class ActionSource<
             continue;
           }
 
+          // condition action
           const rule = conditionActionRules[action.name];
           if (rule) {
             const [trueNodes, falseNodes] = partition(curNodes, (node) =>
