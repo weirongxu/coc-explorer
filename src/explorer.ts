@@ -4,6 +4,7 @@ import {
   Disposable,
   disposeAll,
   ExtensionContext,
+  window,
   Window,
   workspace,
 } from 'coc.nvim';
@@ -573,9 +574,8 @@ export class Explorer implements Disposable {
 
   async getSelectedOrCursorLineIndexes(mode: MappingMode) {
     const lineIndexes = new Set<number>();
-    const document = await workspace.document;
     if (mode === 'v') {
-      const range = await workspace.getSelectedRange('v', document);
+      const range = await window.getSelectedRange('v');
       if (range) {
         for (
           let lineIndex = range.start.line;
