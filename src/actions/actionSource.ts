@@ -84,8 +84,11 @@ export class ActionSource<
             }
             waitRelease = await this.global.waitActionMutex.acquire();
             setTimeout(() => {
-              waitRelease?.();
-              waitRelease = undefined;
+              if (waitRelease) {
+                logger.warn(`action(${JSON.stringify(actionExp)}) timeout`);
+                waitRelease();
+                waitRelease = undefined;
+              }
             }, timeout);
             continue;
           }

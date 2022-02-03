@@ -297,7 +297,6 @@ export function loadFileActions(action: ActionSource<FileSource, FileNode>) {
       await file.copyToClipboard(
         nodes ? nodes.map((it) => it.fullpath).join('\n') : file.root,
       );
-      // eslint-disable-next-line no-restricted-properties
       window.showMessage('Copy filepath to clipboard');
     },
     'copy full filepath to clipboard',
@@ -312,7 +311,6 @@ export function loadFileActions(action: ActionSource<FileSource, FileNode>) {
               .join('\n')
           : file.root,
       );
-      // eslint-disable-next-line no-restricted-properties
       window.showMessage('Copy relative filepath to clipboard');
     },
     'copy relative filepath to clipboard',
@@ -325,7 +323,6 @@ export function loadFileActions(action: ActionSource<FileSource, FileNode>) {
           ? nodes.map((it) => it.name).join('\n')
           : pathLib.basename(file.root),
       );
-      // eslint-disable-next-line no-restricted-properties
       window.showMessage('Copy filename to clipboard');
     },
     'copy filename to clipboard',
@@ -421,7 +418,6 @@ export function loadFileActions(action: ActionSource<FileSource, FileNode>) {
     async ({ node, args }) => {
       const type = (args[0] ?? 'keepCopy') as PasteFileType;
       if (file.copiedNodes.size <= 0 && file.cutNodes.size <= 0) {
-        // eslint-disable-next-line no-restricted-properties
         window.showMessage('Copied files or cut files is empty', 'error');
         return;
       }

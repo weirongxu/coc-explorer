@@ -170,7 +170,6 @@ export class FloatingPreview implements Disposable {
 
     currentBufnr().then(onHover).catch(logger.error);
 
-    // eslint-disable-next-line no-restricted-properties
     window.showMessage(`Preivew ${onHoverStrategy} enabled`);
   }
 
@@ -184,7 +183,6 @@ export class FloatingPreview implements Disposable {
 
     this.close().catch(logger.error);
 
-    // eslint-disable-next-line no-restricted-properties
     window.showMessage('Preview disabled ');
   }
 
@@ -236,7 +234,6 @@ export class FloatingPreview implements Disposable {
 
       if (await isBinaryFile(uri)) {
         // Skip binary file, because not supported
-        // eslint-disable-next-line no-restricted-properties
         window.showMessage('Preview content skip binary');
         return;
       }
@@ -376,7 +373,6 @@ export class FloatingPreview implements Disposable {
     }
 
     if (!this.registeredPreviewActions[previewStrategy]) {
-      // eslint-disable-next-line no-restricted-properties
       window.showMessage(
         `coc-explorer no support preview strategy(${previewStrategy})`,
       );

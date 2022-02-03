@@ -211,7 +211,6 @@ export class Args {
     const presets = await getPresets(config);
     const preset = presets.get(presetName);
     if (!preset) {
-      // eslint-disable-next-line no-restricted-properties
       window.showMessage(
         `coc-explorer preset(${presetName}) not found`,
         'warning',
