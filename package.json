@@ -66,6 +66,10 @@
             }
           }
         },
+        "mapping.action.wait.timeout": {
+          "type": "number",
+          "default": 1000
+        },
         "mapping.keyMappings": {
           "type": "object",
           "additionalProperties": {
@@ -1185,7 +1189,6 @@
     "@types/rimraf": "^3.0.2",
     "@types/uuid": "^8.3.4",
     "@types/which": "^2.0.1",
-    "await-semaphore": "^0.1.3",
     "coc-floatinput": "^1.5.6",
     "coc-helper": "^0.13.0",
     "coc.nvim": "^0.0.81-next.3",

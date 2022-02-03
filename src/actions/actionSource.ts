@@ -76,10 +76,17 @@ export class ActionSource<
           }
 
           if (action.name === waitAction.name) {
-            if (waitRelease || isSubAction) {
+            const timeout = this.source.config.get<number>(
+              'mapping.action.wait.timeout',
+            );
+            if (timeout === 0 || waitRelease || isSubAction) {
               continue;
             }
             waitRelease = await this.global.waitActionMutex.acquire();
+            setTimeout(() => {
+              waitRelease?.();
+              waitRelease = undefined;
+            }, timeout);
             continue;
           }
 
@@ -110,6 +117,7 @@ export class ActionSource<
       }
     } finally {
       waitRelease?.();
+      waitRelease = undefined;
     }
   }
 

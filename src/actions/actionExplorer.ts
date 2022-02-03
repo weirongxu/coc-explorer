@@ -1,5 +1,4 @@
-import { Mutex } from 'await-semaphore';
-import { window } from 'coc.nvim';
+import { Mutex, window } from 'coc.nvim';
 import { Explorer } from '../explorer';
 import { keyMapping } from '../mappings';
 import { BaseTreeNode, ExplorerSource } from '../source/source';
