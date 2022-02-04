@@ -44,6 +44,7 @@ export interface ExplorerConfig {
   get(
     section: 'root.customRules',
   ): NonNullable<Explorer['explorer.root.customRules']>;
+  get(section: 'mapping.action.wait.timeout'): number;
   get<T = void>(section: string, defaultValue?: T): T;
 }
 

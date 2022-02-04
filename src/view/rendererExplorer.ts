@@ -2,6 +2,7 @@ import { Notifier } from 'coc-helper';
 import { Mutex } from 'coc.nvim';
 import { Explorer } from '../explorer';
 import { BaseTreeNode } from '../source/source';
+import { logger } from '../util';
 import { RendererSource, rendererSourceSymbol } from './rendererSource';
 import { ViewExplorer } from './viewExplorer';
 
@@ -16,11 +17,21 @@ export class RendererExplorer {
   ) {}
 
   async runQueue<T>(fn: () => Promise<T>): Promise<T> {
-    const release = await this.renderMutex.acquire();
+    let release: undefined | (() => void) = await this.renderMutex.acquire();
+    setTimeout(() => {
+      if (release) {
+        release();
+        release = undefined;
+        logger.error(
+          'view.sync timeout, force render, view.sync may cause deadlock due to recursive calls',
+        );
+      }
+    }, 5000);
     try {
       return await fn();
     } finally {
       release();
+      release = undefined;
     }
   }
 

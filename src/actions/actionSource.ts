@@ -78,7 +78,7 @@ export class ActionSource<
 
           // wait action and timeout
           if (action.name === waitAction.name) {
-            const timeout = this.source.config.get<number>(
+            const timeout = this.source.config.get(
               'mapping.action.wait.timeout',
             );
             if (timeout === 0 || waitRelease || isSubAction) {
