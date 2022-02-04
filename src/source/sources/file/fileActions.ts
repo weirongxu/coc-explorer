@@ -121,7 +121,7 @@ export function loadFileActions(action: ActionSource<FileSource, FileNode>) {
     async ({ node, args }) => {
       const target: string | undefined = args[0];
       let targetBufnr: number | undefined;
-      let targetPath: string | undefined;
+      let targetPath = '';
       if (/\d+/.test(target)) {
         targetBufnr = parseInt(target, 10);
         if (targetBufnr === 0) {
@@ -178,15 +178,15 @@ export function loadFileActions(action: ActionSource<FileSource, FileNode>) {
         targetPath = bufinfo[0].name;
       }
 
+      if (!targetPath) {
+        return;
+      }
+
+      if (!isParentFolder(file.root, targetPath)) {
+        await action.doAction('resolveRoot', node, [targetPath]);
+      }
+
       await file.view.sync(async (r) => {
-        if (!targetPath) {
-          return;
-        }
-
-        if (!isParentFolder(file.root, targetPath)) {
-          await action.doAction('resolveRoot', node, [targetPath]);
-        }
-
         const expandOptions = args[1] ?? '';
         const compact = expandOptions.includes('compact') || undefined;
         const [revealNode, notifiers] = await file.revealNodeByPathNotifier(
