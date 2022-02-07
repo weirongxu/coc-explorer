@@ -658,11 +658,6 @@ export function loadGlobalActions(action: ActionExplorer) {
       //   loadNotifier?.notify();
       //   await nvim.resumeNotification();
       // });
-
-      await window.showNotification({
-        content: 'Refreshed',
-        timeout: 300,
-      });
     },
     'refresh',
   );
