@@ -2,7 +2,6 @@ import { HelperEventEmitter } from 'coc-helper';
 import { Disposable } from 'coc.nvim';
 import {
   debounceTime,
-  firstValueFrom,
   Observable,
   Subject,
   Subscription,
@@ -53,7 +52,7 @@ export function fromHelperEvent<E extends object, K extends keyof E>(
   events.once(key, ((v: Value) => {
     sub.next(v);
   }) as any as E[K]);
-  return firstValueFrom(sub);
+  return sub.asObservable();
 }
 
 export function debounceFn<A extends Array<any>>(

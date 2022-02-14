@@ -6,6 +6,7 @@ import {
   ExtensionContext,
   workspace,
 } from 'coc.nvim';
+import { firstValueFrom } from 'rxjs';
 import { argOptions } from './arg/argOptions';
 import { Args } from './arg/parseArgs';
 import { BufManager } from './bufManager';
@@ -34,7 +35,7 @@ export class ExplorerManager {
     inited: () => void;
   }>(logger);
 
-  awaitInited = fromHelperEvent(this.events, 'inited');
+  awaitInited = firstValueFrom(fromHelperEvent(this.events, 'inited'));
 
   constructor(public context: ExtensionContext, public bufManager: BufManager) {
     currentBufnr().then(this.updatePrevCtxVars.bind(this)).catch(logger.error);
