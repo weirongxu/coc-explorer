@@ -3,7 +3,6 @@ import pathLib from 'path';
 import { buffer, debounceTime, Subject } from 'rxjs';
 import { tabContainerManager } from './container';
 import { internalEvents, onEvent } from './events';
-import { ExplorerManager } from './explorerManager';
 import { BufferNode } from './source/sources/buffer/bufferSource';
 import {
   compactI,
@@ -54,10 +53,7 @@ export class BufManager {
     ),
   );
 
-  constructor(
-    context: ExtensionContext,
-    public readonly explorerManager: ExplorerManager,
-  ) {
+  constructor(context: ExtensionContext) {
     this.registerEvents(context).catch(logger.error);
   }
 

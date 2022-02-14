@@ -7,6 +7,7 @@ import {
   workspace,
 } from 'coc.nvim';
 import { ActionMenuCodeActionProvider } from './actions/codeActionProider';
+import { BufManager } from './bufManager';
 import { config } from './config';
 import { tabContainerManager } from './container';
 import { InternalVimEvents } from './events';
@@ -16,6 +17,7 @@ import { registerGitHighlights } from './git/highlights';
 import { registerInternalColors } from './highlight/internalColors';
 import { hlGroupManager } from './highlight/manager';
 import { PresetList } from './lists/presets';
+import { registerMappings } from './mappings/manager';
 import { logger, registerRuntimepath } from './util';
 import { registerVimApi } from './vimApi';
 
@@ -34,7 +36,8 @@ export const activate = (context: ExtensionContext) => {
 
   listManager.registerList(new PresetList(nvim));
 
-  const explorerManager = new ExplorerManager(context);
+  const bufManager = new BufManager(context);
+  const explorerManager = new ExplorerManager(context, bufManager);
   registerVimApi(context, explorerManager);
 
   GitCommand.preload().catch(logger.error);
@@ -59,7 +62,9 @@ export const activate = (context: ExtensionContext) => {
     await nvim.command('runtime plugin/coc_explorer.vim');
     registerGitHighlights(subscriptions);
     registerInternalColors(subscriptions);
-    await explorerManager.events.fire('didAutoload');
+    await registerMappings(context, explorerManager);
+    await explorerManager.events.fire('inited');
+    bufManager.reload().catch(logger.error);
     await tabContainerManager.register();
   })().catch(logger.error);
 };

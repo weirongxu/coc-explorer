@@ -6,7 +6,6 @@ import {
   ExtensionContext,
   workspace,
 } from 'coc.nvim';
-import { MappingMode } from './actions/types';
 import { argOptions } from './arg/argOptions';
 import { Args } from './arg/parseArgs';
 import { BufManager } from './bufManager';
@@ -15,9 +14,14 @@ import { tabContainerManager } from './container';
 import { GlobalContextVars } from './contextVariables';
 import { onBufEnter } from './events';
 import { Explorer } from './explorer';
-import { keyMapping } from './mappings';
 import { Rooter } from './rooter';
-import { compactI, currentBufnr, logger, supportedNvimFloating } from './util';
+import {
+  compactI,
+  currentBufnr,
+  fromHelperEvent,
+  logger,
+  supportedNvimFloating,
+} from './util';
 
 export class ExplorerManager {
   filetype = 'coc-explorer';
@@ -25,44 +29,14 @@ export class ExplorerManager {
   previousWindowID = new GlobalContextVars<number>('previousWindowID');
   maxExplorerID = 0;
   nvim = workspace.nvim;
-  bufManager: BufManager;
 
   events = new HelperEventEmitter<{
-    didAutoload: () => void;
-    registeredMapping: () => void;
+    inited: () => void;
   }>(logger);
 
-  waitAllEvents = ((self) => ({
-    didCount: 0,
-    did: false,
-    emitter: new Emitter<void>(),
-    keys: ['registeredMapping', 'didAutoload'] as const,
-    constructor() {
-      this.keys.forEach((key) => {
-        self.events.on(key, () => {
-          this.didCount += 1;
-          if (this.didCount >= this.keys.length) {
-            this.did = true;
-            this.emitter.fire();
-          }
-        });
-      });
-    },
-  }))(this);
+  awaitInited = fromHelperEvent(this.events, 'inited');
 
-  /**
-   * mappings[mode][key] = '<Plug>(coc-action-mode-key)'
-   */
-  private mappings: Record<string, Record<string, string>> = {};
-
-  constructor(public context: ExtensionContext) {
-    this.waitAllEvents.constructor();
-
-    this.events.on('didAutoload', () => {
-      this.bufManager.reload().catch(logger.error);
-      this.registerMappings().catch(logger.error);
-    });
-
+  constructor(public context: ExtensionContext, public bufManager: BufManager) {
     currentBufnr().then(this.updatePrevCtxVars.bind(this)).catch(logger.error);
     this.context.subscriptions.push(
       onBufEnter(async (bufnr) => {
@@ -73,8 +47,6 @@ export class ExplorerManager {
     this.context.subscriptions.push(
       Disposable.create(() => disposeAll(this.explorers())),
     );
-
-    this.bufManager = new BufManager(this.context, this);
   }
 
   private async updatePrevCtxVars(bufnr: number) {
@@ -178,53 +150,8 @@ export class ExplorerManager {
     return (await this.currentExplorer()) !== undefined;
   }
 
-  async registerMappings() {
-    this.mappings = {};
-    const commonKeys = [...(await keyMapping.getCommonKeys())];
-    const keysModes: [MappingMode, string[]][] = [
-      ['n', commonKeys],
-      ['v', [...commonKeys, ...(await keyMapping.getVisualKeys())]],
-    ];
-    for (const [mode, keys] of keysModes) {
-      this.mappings[mode] = {};
-      for (const key of keys) {
-        if (this.mappings[mode][key]) {
-          continue;
-        }
-        if (mode === 'v' && ['o', 'j', 'k'].includes(key)) {
-          continue;
-        }
-        const plugKey = `explorer-key-${mode}-${key.replace(/<(.*)>/, '[$1]')}`;
-        this.context.subscriptions.push(
-          workspace.registerKeymap([mode], plugKey, async () => {
-            const count = (await this.nvim.eval('v:count')) as number;
-            const explorer = await this.currentExplorer();
-            explorer?.action
-              .doActionByKey(key, mode, count || 1)
-              .catch(logger.error);
-          }),
-        );
-        this.mappings[mode][key] = `<Plug>(coc-${plugKey})`;
-      }
-    }
-    await this.nvim.call('coc_explorer#mappings#register', [this.mappings]);
-    await this.events.fire('registeredMapping');
-  }
-
-  async executeMappings() {
-    await this.nvim.call('coc_explorer#mappings#execute', [this.mappings]);
-  }
-
-  async clearMappings() {
-    await this.nvim.call('coc_explorer#mappings#clear', [this.mappings]);
-  }
-
   async open(argStrs: string[]) {
-    if (!this.waitAllEvents.did) {
-      await new Promise((resolve) => {
-        this.waitAllEvents.emitter.event(resolve);
-      });
-    }
+    await this.awaitInited;
 
     let isFirst = true;
 

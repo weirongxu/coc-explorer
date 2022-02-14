@@ -1,5 +1,6 @@
 import pathLib from 'path';
 import { Args } from '../../arg/parseArgs';
+import { BufManager } from '../../bufManager';
 import { buildExplorerConfig, configLocal } from '../../config';
 import { Explorer } from '../../explorer';
 import { ExplorerManager } from '../../explorerManager';
@@ -7,19 +8,21 @@ import { ExplorerSource } from '../../source/source';
 
 export function getExplorer() {
   const config = configLocal();
+  const context = {
+    subscriptions: [],
+    extensionPath: '',
+    asAbsolutePath() {
+      return '';
+    },
+    storagePath: '',
+    workspaceState: undefined as any,
+    globalState: undefined as any,
+    logger: undefined as any,
+  };
   return new Explorer(
     0,
-    new ExplorerManager({
-      subscriptions: [],
-      extensionPath: '',
-      asAbsolutePath() {
-        return '';
-      },
-      storagePath: '',
-      workspaceState: undefined as any,
-      globalState: undefined as any,
-      logger: undefined as any,
-    }),
+    new ExplorerManager(context, new BufManager(context)),
+
     0,
     undefined,
     buildExplorerConfig(config),

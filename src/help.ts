@@ -18,6 +18,7 @@ import {
 } from './highlight/types';
 import { DrawBlock } from './painter/types';
 import { Notifier } from 'coc-helper';
+import { clearMappings, executeMappings } from './mappings/manager';
 
 const hlg = hlGroupManager.linkGroup.bind(hlGroupManager);
 const helpHightlights = {
@@ -369,7 +370,7 @@ export async function showHelp(
   await helpPainter.drawColumns();
   await helpPainter.render();
 
-  await explorer.explorerManager.clearMappings();
+  await clearMappings();
 
   const disposables: Disposable[] = [];
   ['<esc>', 'q', '?'].forEach((key) => {
@@ -394,6 +395,6 @@ export async function showHelp(
 }
 
 export async function quitHelp(explorer: Explorer) {
-  await explorer.explorerManager.executeMappings();
+  await executeMappings();
   explorer.view.isHelpUI = false;
 }

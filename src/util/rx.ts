@@ -1,6 +1,8 @@
+import { HelperEventEmitter } from 'coc-helper';
 import { Disposable } from 'coc.nvim';
 import {
   debounceTime,
+  firstValueFrom,
   Observable,
   Subject,
   Subscription,
@@ -40,6 +42,18 @@ export function createSubject<T>(
     error: logger.error,
   });
   return sub;
+}
+
+export function fromHelperEvent<E extends object, K extends keyof E>(
+  events: HelperEventEmitter<E>,
+  key: K,
+) {
+  type Value = E[K] extends (value: infer V) => any ? V : void;
+  const sub = new Subject<Value>();
+  events.once(key, ((v: Value) => {
+    sub.next(v);
+  }) as any as E[K]);
+  return firstValueFrom(sub);
 }
 
 export function debounceFn<A extends Array<any>>(

@@ -3,7 +3,7 @@ import {
   conditionActionRules,
   noopAction,
   waitAction,
-} from './actions/special';
+} from '../actions/special';
 import {
   Action,
   ActionExp,
@@ -13,9 +13,9 @@ import {
   OriginalActionExp,
   OriginalMappings,
   OriginalUserMappings,
-} from './actions/types';
-import { config } from './config';
-import { Explorer } from './types/pkg-config';
+} from '../actions/types';
+import { config } from '../config';
+import { Explorer } from '../types/pkg-config';
 
 type MappingConfigMode = 'none' | 'default';
 
