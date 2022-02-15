@@ -1,11 +1,5 @@
 import { HelperEventEmitter } from 'coc-helper';
-import {
-  Disposable,
-  disposeAll,
-  Emitter,
-  ExtensionContext,
-  workspace,
-} from 'coc.nvim';
+import { Disposable, disposeAll, ExtensionContext, workspace } from 'coc.nvim';
 import { firstValueFrom } from 'rxjs';
 import { argOptions } from './arg/argOptions';
 import { Args } from './arg/parseArgs';

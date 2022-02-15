@@ -577,11 +577,10 @@ export class Explorer implements Disposable {
     if (mode === 'v') {
       const range = await window.getSelectedRange('v');
       if (range) {
-        for (
-          let lineIndex = range.start.line;
-          lineIndex <= range.end.line;
-          lineIndex++
-        ) {
+        const startLine = range.start.line;
+        const endLine =
+          range.end.character !== 0 ? range.end.line : range.end.line - 1;
+        for (let lineIndex = startLine; lineIndex <= endLine; lineIndex++) {
           lineIndexes.add(lineIndex);
         }
         return lineIndexes;

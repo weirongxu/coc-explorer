@@ -1,5 +1,5 @@
 import { compactI } from 'coc-helper';
-import { window, workspace } from 'coc.nvim';
+import { workspace } from 'coc.nvim';
 import { gitManager } from '../git/manager';
 import { parseOriginalActionExp } from '../mappings';
 import {
