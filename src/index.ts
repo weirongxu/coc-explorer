@@ -64,6 +64,7 @@ export const activate = (context: ExtensionContext) => {
     registerInternalColors(subscriptions);
     await registerMappings(context, explorerManager);
     await explorerManager.events.fire('inited');
+    await tabContainerManager.initedEmitter.fire();
     bufManager.reload().catch(logger.error);
     await tabContainerManager.register();
   })().catch(logger.error);

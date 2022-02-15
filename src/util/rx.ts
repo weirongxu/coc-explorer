@@ -1,5 +1,5 @@
 import { HelperEventEmitter } from 'coc-helper';
-import { Disposable } from 'coc.nvim';
+import { Disposable, Emitter } from 'coc.nvim';
 import {
   debounceTime,
   Observable,
@@ -52,6 +52,14 @@ export function fromHelperEvent<E extends object, K extends keyof E>(
   events.once(key, ((v: Value) => {
     sub.next(v);
   }) as any as E[K]);
+  return sub.asObservable();
+}
+
+export function fromEmitter<V>(emitter: Emitter<V>) {
+  const sub = new Subject<V>();
+  emitter.event((value) => {
+    sub.next(value);
+  });
   return sub.asObservable();
 }
 

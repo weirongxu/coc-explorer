@@ -1,7 +1,7 @@
 set nocompatible
 set runtimepath^=../../coc.nvim
 
-let g:node_client_debug = 1
+" let g:node_client_debug = 1
 let g:coc_node_args = ['--nolazy', '--async-stack-traces']
 " let g:coc_node_args = ['--nolazy', '--inspect-brk=6045']
 let g:coc_config_home = expand('<sfile>:h')

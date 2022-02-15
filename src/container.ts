@@ -1,6 +1,8 @@
-import { workspace } from 'coc.nvim';
+import { Emitter, workspace } from 'coc.nvim';
+import { firstValueFrom } from 'rxjs';
 import { ParsedPosition } from './arg/parseArgs';
 import { Explorer } from './explorer';
+import { fromEmitter } from './util';
 
 export class TabContainer {
   left?: Explorer;
@@ -36,7 +38,10 @@ export class TabContainer {
 }
 
 export class TabContainerManager {
+  initedEmitter = new Emitter<void>();
   tabContainerMap = new Map<number, TabContainer>();
+
+  private waitInited = firstValueFrom(fromEmitter(this.initedEmitter));
 
   get(id: number) {
     const c = this.tabContainerMap.get(id);
@@ -60,10 +65,12 @@ export class TabContainerManager {
   }
 
   async currentTabId() {
+    await this.waitInited;
     return (await workspace.nvim.call('coc_explorer#tab#current_id')) as number;
   }
 
   async currentTabMaxId() {
+    await this.waitInited;
     return (await workspace.nvim.call('coc_explorer#tab#max_id')) as number;
   }
 

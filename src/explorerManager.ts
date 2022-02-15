@@ -24,12 +24,10 @@ export class ExplorerManager {
   previousWindowID = new GlobalContextVars<number>('previousWindowID');
   maxExplorerID = 0;
   nvim = workspace.nvim;
-
   events = new HelperEventEmitter<{
     inited: () => void;
   }>(logger);
-
-  awaitInited = firstValueFrom(fromHelperEvent(this.events, 'inited'));
+  waitInited = firstValueFrom(fromHelperEvent(this.events, 'inited'));
 
   constructor(public context: ExtensionContext, public bufManager: BufManager) {
     currentBufnr().then(this.updatePrevCtxVars.bind(this)).catch(logger.error);
@@ -146,7 +144,7 @@ export class ExplorerManager {
   }
 
   async open(argStrs: string[]) {
-    await this.awaitInited;
+    await this.waitInited;
 
     let isFirst = true;
 
