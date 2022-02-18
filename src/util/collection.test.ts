@@ -9,6 +9,12 @@ describe('scanIndexPrev', () => {
       result: 1,
     },
     {
+      list: [true, true, false, false, false],
+      start: 3,
+      wrapscan: true,
+      result: 1,
+    },
+    {
       list: [true, false, true, true, true],
       start: 2,
       wrapscan: true,

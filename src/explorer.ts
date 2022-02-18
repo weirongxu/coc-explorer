@@ -573,6 +573,7 @@ export class Explorer implements Disposable {
   }
 
   async getSelectedOrCursorLineIndexes(mode: MappingMode) {
+    await this.view.refreshLineIndex();
     const lineIndexes = new Set<number>();
     if (mode === 'v') {
       const range = await window.getSelectedRange('v');
@@ -586,7 +587,6 @@ export class Explorer implements Disposable {
         return lineIndexes;
       }
     }
-    await this.view.refreshLineIndex();
     lineIndexes.add(this.view.currentLineIndex);
     return lineIndexes;
   }

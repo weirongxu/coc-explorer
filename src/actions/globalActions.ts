@@ -1,5 +1,5 @@
 import { compactI } from 'coc-helper';
-import { workspace } from 'coc.nvim';
+import { window, workspace } from 'coc.nvim';
 import { gitManager } from '../git/manager';
 import { parseOriginalActionExp } from '../mappings';
 import {
@@ -543,7 +543,7 @@ export function loadGlobalActions(action: ActionExplorer) {
         const begin = scanIndexPrev(
           flattenedNodes,
           currentIndex,
-          await enableWrapscan(),
+          false,
           (node) => {
             return (currentNode.level ?? 0) > (node.level ?? 0);
           },
@@ -554,7 +554,7 @@ export function loadGlobalActions(action: ActionExplorer) {
         const end = scanIndexNext(
           flattenedNodes,
           currentIndex,
-          await enableWrapscan(),
+          false,
           (node) => {
             return (currentNode.level ?? 0) > (node.level ?? 0);
           },
