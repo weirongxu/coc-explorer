@@ -891,7 +891,8 @@ Type: <pre><code>BufferFilter & {
   "filetypes": [
     "vista_kind",
     "qf",
-    "tagbar"
+    "tagbar",
+    "coctree"
   ],
   "floatingWindows": true,
   "sources": {
