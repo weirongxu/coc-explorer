@@ -23,6 +23,16 @@ export class BuiltinIconLoader extends IconLoader {
     return loaded;
   }
 
+  nerdfontToIcon(name: string): undefined | (IconInfo & { name: string }) {
+    const icon = nerdfont.icons[name];
+    if (icon) {
+      return {
+        name,
+        ...nerdfont.icons[name],
+      };
+    }
+  }
+
   getFileIcon(
     target: IconParsedTarget,
   ): undefined | (IconInfo & { name: string }) {
@@ -30,18 +40,12 @@ export class BuiltinIconLoader extends IconLoader {
     const extname = extensions[extensions.length - 1];
     if (hasOwnProperty(nerdfont.filenames, basename)) {
       const name = nerdfont.filenames[basename];
-      return {
-        name,
-        ...nerdfont.icons[name],
-      };
+      return this.nerdfontToIcon(name);
     }
 
     if (hasOwnProperty(nerdfont.filenames, fullname)) {
       const name = nerdfont.filenames[fullname];
-      return {
-        name,
-        ...nerdfont.icons[name],
-      };
+      return this.nerdfontToIcon(name);
     }
 
     const matched = Object.entries(nerdfont.patternMatches).find(
@@ -49,18 +53,12 @@ export class BuiltinIconLoader extends IconLoader {
     );
     if (matched) {
       const name = matched[1];
-      return {
-        name,
-        ...nerdfont.icons[name],
-      };
+      return this.nerdfontToIcon(name);
     }
 
     if (hasOwnProperty(nerdfont.extensions, extname)) {
       const name = nerdfont.extensions[extname];
-      return {
-        name,
-        ...nerdfont.icons[name],
-      };
+      return this.nerdfontToIcon(name);
     }
   }
 
@@ -71,18 +69,12 @@ export class BuiltinIconLoader extends IconLoader {
 
     if (hasOwnProperty(nerdfont.dirnames, basename)) {
       const name = nerdfont.dirnames[basename];
-      return {
-        name,
-        ...nerdfont.icons[name],
-      };
+      return this.nerdfontToIcon(name);
     }
 
     if (hasOwnProperty(nerdfont.dirnames, dirname)) {
       const name = nerdfont.dirnames[dirname];
-      return {
-        name,
-        ...nerdfont.icons[name],
-      };
+      return this.nerdfontToIcon(name);
     }
 
     const matched = Object.entries(nerdfont.dirPatternMatches).find(
@@ -90,10 +82,7 @@ export class BuiltinIconLoader extends IconLoader {
     );
     if (matched) {
       const name = matched[1];
-      return {
-        name,
-        ...nerdfont.icons[name],
-      };
+      return this.nerdfontToIcon(name);
     }
   }
 }

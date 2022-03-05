@@ -14,6 +14,9 @@ export class VimDeviconsLoader extends IconLoader {
           target.fullname,
           false,
         ]);
+        if (!code) {
+          return;
+        }
         loaded.push({
           target,
           icon: {

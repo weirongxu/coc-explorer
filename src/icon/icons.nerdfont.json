@@ -142,6 +142,10 @@
       "code": "",
       "color": "#cc3e44"
     },
+    "kotlin": {
+      "code": "ĸ",
+      "color": "#5674d4"
+    },
     "terminal": {
       "code": "",
       "color": "#4d5a5e"
@@ -413,6 +417,8 @@
     "lua": "lua",
     "java": "java",
     "jar": "java",
+    "kt": "kotlin",
+    "kts": "kotlin",
     "sh": "terminal",
     "fish": "terminal",
     "bash": "terminal",
@@ -503,6 +509,7 @@
     "guardfile": "ruby",
     "capfile": "ruby",
     "rakefile": "ruby",
+    "gradlew": "terminal",
     "mix": "mix",
     "dropbox": "dropbox",
     "vimrc": "vim",
