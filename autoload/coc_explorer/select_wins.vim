@@ -19,6 +19,7 @@ function! coc_explorer#select_wins#start(buftypes, filetypes, floating_windows) 
   let store = {}
   let char_idx_mapto_winnr = {}
   let char_idx = 0
+  let stored_laststatus = &laststatus
   for winnr in range(1, winnr('$'))
     let bufnr = winbufnr(winnr)
     if index(a:buftypes, getbufvar(bufnr, '&buftype')) >= 0
@@ -49,6 +50,9 @@ function! coc_explorer#select_wins#start(buftypes, filetypes, floating_windows) 
     call s:restore_statuslines(store)
     return char_idx_mapto_winnr[0]
   else
+    if stored_laststatus != 2
+      let &laststatus = 2
+    end
     redraw!
     let select_winnr = -1
     while 1
@@ -64,6 +68,9 @@ function! coc_explorer#select_wins#start(buftypes, filetypes, floating_windows) 
       endif
     endwhile
     call s:restore_statuslines(store)
+    if stored_laststatus != 2
+      let &laststatus = stored_laststatus
+    end
     return select_winnr
   endif
 endfunction
