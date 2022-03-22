@@ -83,6 +83,9 @@ if has('nvim')
       endif
 
       let winid = nvim_open_win(a:bufnr, focus, s:nvim_win_config(a:options, -1))
+      if has('nvim-0.5.1')
+        call nvim_win_set_config(winid, {'zindex': 60})
+      endif
     else
       let winid = nvim_open_win(a:bufnr, focus, win_config)
     endif
@@ -98,7 +101,10 @@ if has('nvim')
       call s:nvim_border_render(border_bufnr, a:options)
       let border_winid = nvim_open_win(border_bufnr, v:false, win_config)
       call coc_explorer#init#win(border_bufnr, border_winid)
-      call nvim_open_win(a:bufnr, v:true, s:nvim_win_config(a:options, -1))
+      let winid = nvim_open_win(a:bufnr, v:true, s:nvim_win_config(a:options, -1))
+      if has('nvim-0.5.1')
+        call nvim_win_set_config(winid, {'zindex': 60})
+      endif
     else
       call nvim_open_win(a:bufnr, v:true, win_config)
     endif
