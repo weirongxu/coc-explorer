@@ -139,7 +139,7 @@ export class DiagnosticBinder {
 
   protected async reload(sources: ExplorerSource<any>[]) {
     const types = this.diagnosticTypes;
-    diagnosticManager.reload(types);
+    await diagnosticManager.reload(types);
 
     const updatePaths: Set<string> = new Set();
 

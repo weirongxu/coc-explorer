@@ -60,13 +60,14 @@ class DiagnosticManager {
     });
   }
 
-  reload(types: DiagnosticType[]) {
+  async reload(types: DiagnosticType[]) {
     const typeSet = new Set(types);
 
     const errorPathCount = new Map<string, number>();
     const warningPathCount = new Map<string, number>();
 
-    for (const diagnostic of cocDiagnosticManager.getDiagnosticList()) {
+    // eslint-disable-next-line @typescript-eslint/await-thenable
+    for (const diagnostic of await cocDiagnosticManager.getDiagnosticList()) {
       const uri = diagnostic.location.uri;
       const path = normalizePath(Uri.parse(uri).fsPath);
       if (diagnostic.severity === 'Error') {
