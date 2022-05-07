@@ -6,6 +6,9 @@ import {
 } from 'child_process';
 import which from 'which';
 
+/**
+ * Spawn a child process.
+ */
 export const execCmd = (
   name: string,
   args: string[],
@@ -27,6 +30,9 @@ export const execCmd = (
   });
 };
 
+/**
+ * Execute a command line.
+ */
 export const execCmdLine = (command: string, options?: ExecOptions) => {
   return new Promise<string>((resolve, reject) => {
     exec(command, options, (error, stdout) => {
@@ -38,6 +44,9 @@ export const execCmdLine = (command: string, options?: ExecOptions) => {
   });
 };
 
+/**
+ * Escape a string for use in a command line.
+ */
 export function shellescape(s: string): string {
   if (process.platform === 'win32') {
     return `"${s.replace(/"/g, '\\"')}"`;
@@ -52,6 +61,9 @@ export function shellescape(s: string): string {
   return s;
 }
 
+/**
+ * Determine if a command exists.
+ */
 export const executable = async (cmd: string): Promise<boolean> => {
   try {
     await which(cmd);

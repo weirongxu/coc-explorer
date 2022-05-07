@@ -1,5 +1,8 @@
 import { logger } from '.';
 
+/**
+ * @deprecated
+ */
 export function queueAsyncFunction<R, ARGS extends any[]>(
   fn: (...args: ARGS) => Promise<R>,
 ): (...args: ARGS) => Promise<R> {

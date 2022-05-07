@@ -5,3 +5,5 @@ node_modules
 /lib
 /mini_vimrc/data_home
 /src/tests/coc.nvim
+esbuild-meta.json
+stats.html

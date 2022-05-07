@@ -2,6 +2,9 @@ import { Color } from 'coc.nvim';
 import colorConvert from 'color-convert';
 import { minBy } from 'lodash-es';
 
+/**
+ * Create a color
+ */
 export function createColor(
   /**
    * The red component of this color in the range [0-1].
@@ -23,6 +26,9 @@ export function createColor(
   return { red, green, blue, alpha };
 }
 
+/**
+ * Get distance between two colors
+ */
 export function colorDistance(c1: Color, c2: Color) {
   const rmean = (c1.red + c2.red) / 2;
   const r = c1.red - c2.red;
@@ -33,6 +39,9 @@ export function colorDistance(c1: Color, c2: Color) {
   );
 }
 
+/**
+ * Get the closest color from a list of colors
+ */
 export function findNearestColor(color: Color, list: Color[]): Color;
 export function findNearestColor<T>(
   color: Color,
@@ -47,6 +56,9 @@ export function findNearestColor<T>(
   return minBy(list, (it) => colorDistance(getColor(it), color));
 }
 
+/**
+ * Parse a hex color string
+ */
 export function parseColor(str: string) {
   str = str.trim();
   if (str[0] === '#') {
@@ -60,6 +72,9 @@ export function parseColor(str: string) {
   return createColor(parseInt(r, 16), parseInt(g, 16), parseInt(b, 16), 1);
 }
 
+/**
+ * Convert a color to a hex string
+ */
 export function toHex(color: Color) {
   return colorConvert.rgb.hex(color.red, color.green, color.blue);
 }
