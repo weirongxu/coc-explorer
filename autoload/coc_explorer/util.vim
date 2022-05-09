@@ -33,22 +33,25 @@ function! coc_explorer#util#buf_set_lines_skip_cursor(bufnr, start, end, strict_
   call setbufvar(a:bufnr, '&modifiable', 1)
   call setbufvar(a:bufnr, '&readonly', 0)
 
-  if s:is_nvim
-    let cursor = v:null
-    let winid = bufwinid(a:bufnr)
-    if winid >= 0
-      let cursor = nvim_win_get_cursor(winid)
+  try
+    if s:is_nvim
+      let cursor = v:null
+      let winid = bufwinid(a:bufnr)
+      if winid >= 0
+        let cursor = nvim_win_get_cursor(winid)
+      endif
+      call nvim_buf_set_lines(a:bufnr, a:start, a:end, a:strict_indexing, a:lines)
+      if winid >= 0
+        try
+          call nvim_win_set_cursor(winid, cursor)
+        catch
+        endtry
+      endif
+    else
+      call coc#api#call('buf_set_lines', [a:bufnr, a:start, a:end, a:strict_indexing, a:lines])
     endif
-    call nvim_buf_set_lines(a:bufnr, a:start, a:end, a:strict_indexing, a:lines)
-    if winid >= 0
-      try
-        call nvim_win_set_cursor(winid, cursor)
-      catch
-      endtry
-    endif
-  else
-    call coc#api#call('buf_set_lines', [a:bufnr, a:start, a:end, a:strict_indexing, a:lines])
-  endif
+  catch
+  endtry
 
   call setbufvar(a:bufnr, '&readonly', 1)
   call setbufvar(a:bufnr, '&modifiable', 0)
