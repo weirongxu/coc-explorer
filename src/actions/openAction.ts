@@ -66,8 +66,8 @@ class OpenActionContext {
     const notifiers: Notifier.Cell[] = [];
     if (earlyQuit) await this.explorer.tryQuitOnOpen();
     else notifiers.push(await this.quitOnOpenNotifier());
-    const wins = await this.nvim.windows;
-    const resizeIt = wins.length === 1;
+    const lastWinnr = await this.nvim.call('winnr', ['$']);
+    const resizeIt = lastWinnr === 1;
     this.nvim.pauseNotification();
     callback();
     Notifier.notifyAll(notifiers);
