@@ -48,6 +48,7 @@ export class Explorer implements Disposable {
   sourceBufnr: BuffuerContextVars<number>;
   buffer: Buffer;
   floatingPreview: FloatingPreview;
+  storedSize: { width?: number; height?: number } | undefined;
   contentWidth = 0;
   action = new ActionExplorer(this);
   highlight = new HighlightExplorer(this);
@@ -73,7 +74,7 @@ export class Explorer implements Disposable {
 
   private static genExplorerPosition(
     args: ResolvedArgs,
-    specialSize?: [width?: number, height?: number],
+    specialSize?: { width?: number; height?: number },
   ) {
     let width = 0;
     let height = 0;
@@ -81,10 +82,10 @@ export class Explorer implements Disposable {
     let top = 0;
 
     if (args.position.name !== 'floating') {
-      width = specialSize?.[0] ?? args.width;
+      width = specialSize?.width ?? args.width;
     } else {
-      width = specialSize?.[0] ?? args.floatingWidth;
-      height = specialSize?.[1] ?? args.floatingHeight;
+      width = specialSize?.width ?? args.floatingWidth;
+      height = specialSize?.height ?? args.floatingHeight;
       const [vimWidth, vimHeight] = [
         workspace.env.columns,
         workspace.env.lines - workspace.env.cmdheight,
@@ -343,23 +344,40 @@ export class Explorer implements Disposable {
     );
   }
 
-  async resize(size?: [width?: number, height?: number]) {
-    const dimension = Explorer.genExplorerPosition(this.argValues, size);
-    const { top, left, width, height } = dimension;
-    await this.nvim.call('coc_explorer#resize', [
-      this.bufnr,
-      this.argValues.position,
-      {
+  resizeNotifier(size?: [width?: number, height?: number]) {
+    return Notifier.create(() => {
+      const dimension = Explorer.genExplorerPosition(this.argValues, {
+        width: size?.[0] ?? this.storedSize?.width,
+        height: size?.[1] ?? this.storedSize?.height,
+      });
+      const { top, left, width, height } = dimension;
+      this.storedSize = {
         width,
         height,
-        left,
-        top,
-        border_bufnr: this.borderBufnr,
-        border_enable: this.config.get('floating.border.enable'),
-        border_chars: this.config.get('floating.border.chars'),
-        title: this.config.get('floating.border.title'),
-      } as ExplorerOpenOptions,
-    ]);
+      };
+      this.nvim.call(
+        'coc_explorer#resize',
+        [
+          this.bufnr,
+          this.argValues.position,
+          {
+            width,
+            height,
+            left,
+            top,
+            border_bufnr: this.borderBufnr,
+            border_enable: this.config.get('floating.border.enable'),
+            border_chars: this.config.get('floating.border.chars'),
+            title: this.config.get('floating.border.title'),
+          } as ExplorerOpenOptions,
+        ],
+        true,
+      );
+    });
+  }
+
+  async resize(size?: [width?: number, height?: number]) {
+    await this.resizeNotifier(size).run();
   }
 
   /**
@@ -378,8 +396,10 @@ export class Explorer implements Disposable {
   }
 
   async resume(argValues: ResolvedArgs) {
-    const { width, height, top, left } =
-      Explorer.genExplorerPosition(argValues);
+    const { width, height, top, left } = Explorer.genExplorerPosition(
+      argValues,
+      this.storedSize,
+    );
     await this.nvim.call('coc_explorer#resume', [
       this.bufnr,
       argValues.position,

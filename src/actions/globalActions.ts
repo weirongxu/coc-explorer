@@ -1,5 +1,5 @@
 import { compactI } from 'coc-helper';
-import { window, workspace } from 'coc.nvim';
+import { workspace } from 'coc.nvim';
 import { gitManager } from '../git/manager';
 import { parseOriginalActionExp } from '../mappings';
 import {
@@ -9,7 +9,7 @@ import {
   expandOptionList,
   MoveStrategy,
   moveStrategyList,
-  OpenPosition,
+  OpenCursorPosition,
   OpenStrategy,
   openStrategyList,
   PreviewOnHoverAction,
@@ -73,27 +73,27 @@ export function loadGlobalActions(action: ActionExplorer) {
         string | undefined,
       ];
 
-      let position: OpenPosition | undefined;
+      let cursorPosition: OpenCursorPosition | undefined;
       if (positionRaw === 'keep') {
-        position = positionRaw;
+        cursorPosition = positionRaw;
       } else if (positionRaw) {
         const [line, column] = positionRaw
           .split(',')
           .map((n) => parseInt(n, 10));
-        position = {
+        cursorPosition = {
           lineIndex: line,
         };
         if (column) {
-          position.columnIndex = column;
+          cursorPosition.columnIndex = column;
         }
       } else if (node.location) {
         const { range } = node.location;
-        position = { lineIndex: range.start.line - 1 };
+        cursorPosition = { lineIndex: range.start.line - 1 };
       }
 
       await openAction(explorer, source, node, () => node.fullpath!, {
         openStrategy,
-        position,
+        cursorPosition,
       });
     },
     'open file or directory',

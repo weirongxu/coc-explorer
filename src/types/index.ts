@@ -41,7 +41,11 @@ export const openStrategyList: OpenStrategy[] = [
   'sourceWindow',
 ];
 
-export type OpenPosition =
+/**
+ * `keep string` - Keep cursor in explorer when open
+ * `position object` - Open cursor in special position
+ */
+export type OpenCursorPosition =
   | {
       lineIndex: number;
       columnIndex?: number;
