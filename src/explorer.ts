@@ -380,6 +380,17 @@ export class Explorer implements Disposable {
     await this.resizeNotifier(size).run();
   }
 
+  async adjustSize(sizeOffset?: [width?: number, height?: number]) {
+    const [widthOff = 0, heightOff = 0] = sizeOffset ?? [0, 0];
+    const dimension = Explorer.genExplorerPosition(this.argValues, {
+      width: this.storedSize?.width,
+      height: this.storedSize?.height,
+    });
+    const { width, height } = dimension;
+
+    await this.resize([width + widthOff, height + heightOff]);
+  }
+
   /**
    * Focus on explorer window
    * @returns Whether the focus is successful

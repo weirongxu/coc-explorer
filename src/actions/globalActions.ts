@@ -628,6 +628,83 @@ export function loadGlobalActions(action: ActionExplorer) {
     },
   );
 
+  // resize / adjust size
+  const parseSize = (sizeStr: string) => {
+    const [widthStr, heightStr] = sizeStr
+      .split(/,|x/)
+      .map((it) => it.trim()) as [string | undefined, string | undefined];
+    return [
+      widthStr ? parseInt(widthStr) : undefined,
+      heightStr ? parseInt(heightStr) : undefined,
+    ] as const;
+  };
+  action.addNodeAction(
+    'resize',
+    async ({ args }) => {
+      const [sizeStr] = args as [string | undefined];
+      if (!sizeStr) return;
+      const [width, height] = parseSize(sizeStr);
+
+      if (explorer.isFloating) {
+        await explorer.resize([width, height]);
+      } else {
+        await explorer.resize([width]);
+      }
+      await explorer.render();
+    },
+    'resize',
+    {
+      args: [
+        {
+          name: 'size',
+          description: '{WIDTH}x{HEIGHT} | {WIDTH},{HEIGHT}',
+        },
+      ],
+      menus: {
+        path: {
+          description: 'resize the explorer window',
+          args: '[size]',
+          async actionArgs() {
+            return [await input('input a the size:', '20,10', 'file')];
+          },
+        },
+      },
+    },
+  );
+  action.addNodeAction(
+    'adjustSize',
+    async ({ args }) => {
+      const [sizeStr] = args as [string | undefined];
+      if (!sizeStr) return;
+      const [width, height] = parseSize(sizeStr);
+
+      if (explorer.isFloating) {
+        await explorer.adjustSize([width, height]);
+      } else {
+        await explorer.adjustSize([width]);
+      }
+      await explorer.render();
+    },
+    'adjust window size',
+    {
+      args: [
+        {
+          name: 'size',
+          description: '+-{WIDTH}x+-{HEIGHT} | +-{WIDTH},+-{HEIGHT}',
+        },
+      ],
+      menus: {
+        path: {
+          description: 'resize the explorer window',
+          args: '[size]',
+          async actionArgs() {
+            return [await input('input a the size:', '+20,-10', 'file')];
+          },
+        },
+      },
+    },
+  );
+
   // other
   action.addNodeAction(
     'refresh',
@@ -667,53 +744,6 @@ export function loadGlobalActions(action: ActionExplorer) {
       await source.view.render({ node });
     },
     'render',
-  );
-  action.addNodeAction(
-    'resize',
-    async ({ args }) => {
-      await (async () => {
-        if (explorer.isFloating) {
-          const [sizeStr] = args as [string | undefined];
-          if (!sizeStr) {
-            return;
-          }
-          const [widthStr, heightStr] = sizeStr
-            .split(/,|x/)
-            .map((it) => it.trim()) as [string | undefined, string | undefined];
-          const [width, height] = [
-            widthStr ? parseInt(widthStr) : undefined,
-            heightStr ? parseInt(heightStr) : undefined,
-          ];
-          await explorer.resize([width, height]);
-        } else {
-          const [widthStr] = args as [string | undefined];
-          if (!widthStr) {
-            return;
-          }
-          const width = parseInt(widthStr);
-          await explorer.resize([width]);
-        }
-      })();
-      await explorer.render();
-    },
-    'resize',
-    {
-      args: [
-        {
-          name: 'size',
-          description: 'widthxheight | width,height',
-        },
-      ],
-      menus: {
-        path: {
-          description: 'resize the explorer window',
-          args: '[size]',
-          async actionArgs() {
-            return [await input('input a the size:', '20,10', 'file')];
-          },
-        },
-      },
-    },
   );
   action.addNodeAction(
     'help',
