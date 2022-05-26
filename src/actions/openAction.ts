@@ -67,7 +67,8 @@ class OpenActionContext {
     if (earlyQuit) await this.explorer.tryQuitOnOpen();
     else notifiers.push(await this.quitOnOpenNotifier());
     const lastWinnr = await this.nvim.call('winnr', ['$']);
-    const resizeIt = lastWinnr === 1;
+    const resizeIt =
+      lastWinnr === 1 && this.explorerPosition.name !== 'floating';
     this.nvim.pauseNotification();
     callback();
     Notifier.notifyAll(notifiers);
