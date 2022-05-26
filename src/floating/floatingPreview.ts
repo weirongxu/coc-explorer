@@ -170,7 +170,7 @@ export class FloatingPreview implements Disposable {
 
     currentBufnr().then(onHover).catch(logger.error);
 
-    window.showMessage(`Preivew ${onHoverStrategy} enabled`);
+    window.showMessage(`Preview ${onHoverStrategy} enabled`);
   }
 
   unregisterOnHover() {
