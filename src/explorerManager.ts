@@ -1,7 +1,7 @@
 import { HelperEventEmitter } from 'coc-helper';
 import { Disposable, disposeAll, ExtensionContext, workspace } from 'coc.nvim';
 import { firstValueFrom } from 'rxjs';
-import { argOptions } from './arg/argOptions';
+import { argOptions, ResolvedArgs } from './arg/argOptions';
 import { Args } from './arg/parseArgs';
 import { BufManager } from './bufManager';
 import { buildExplorerConfig, configLocal } from './config';
@@ -143,6 +143,27 @@ export class ExplorerManager {
     return (await this.currentExplorer()) !== undefined;
   }
 
+  private async checkResume(explorer: Explorer, argValues: ResolvedArgs) {
+    if (argValues.position.name !== 'floating') {
+      return true;
+    }
+    if (!(await (await explorer.sourceBuffer())?.loaded)) {
+      // Open a new explorer when sourceBuffer unload,
+      // because nvim will clear the wininfo of float win
+      // issue: https://github.com/weirongxu/coc-explorer/issues/472
+      await this.nvim.command(`bwipeout! ${explorer.bufnr}`);
+      return false;
+    }
+    if (!(await explorer.buffer.valid)) {
+      return false;
+    }
+    if (!(await this.nvim.call('bufexists', [explorer.borderBufnr]))) {
+      await this.nvim.command(`bwipeout! ${explorer.bufnr}`);
+      return false;
+    }
+    return true;
+  }
+
   async open(argStrs: string[]) {
     await this.waitInited;
 
@@ -187,20 +208,11 @@ export class ExplorerManager {
     } else {
       const win = await explorer.win;
       if (!win) {
-        if (
-          argValues.position.name === 'floating' &&
-          !(await (
-            await explorer.sourceBuffer()
-          )?.loaded)
-        ) {
-          // Open a new explorer when sourceBuffer unload,
-          // because nvim will clear the wininfo of float win
-          // issue: https://github.com/weirongxu/coc-explorer/issues/472
-          await this.nvim.command(`bwipeout! ${explorer.bufnr}`);
+        if (await this.checkResume(explorer, argValues)) {
+          await explorer.resume(argValues);
+        } else {
           explorer = await Explorer.create(this, argValues, explorerConfig);
           tabContainer.setExplorer(position, explorer);
-        } else {
-          await explorer.resume(argValues);
         }
       } else {
         if (await args.value(argOptions.toggle)) {
