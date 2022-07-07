@@ -1,7 +1,6 @@
 {
   "compilerOptions": {
     "outDir": "lib",
-    "baseUrl": "../",
     "module": "ESNext",
     "lib": ["ES6", "ES2019.Object", "ES2017.Object"],
     "isolatedModules": true,

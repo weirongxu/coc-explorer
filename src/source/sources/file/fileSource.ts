@@ -87,8 +87,6 @@ export class FileSource extends ExplorerSource<FileNode> {
   scheme = 'file';
   showHidden: boolean = this.config.get<boolean>('file.showHiddenFiles')!;
   showOnlyGitChange = false;
-  copiedNodes: Set<FileNode> = new Set();
-  cutNodes: Set<FileNode> = new Set();
   view: ViewSource<FileNode> = new ViewSource<FileNode>(
     this,
     fileColumnRegistrar,
@@ -144,6 +142,13 @@ export class FileSource extends ExplorerSource<FileNode> {
     );
   }
 
+  getNodesByPaths(fullpaths: string[]) {
+    const fullpathSet = new Set(fullpaths);
+    return this.view.flattenedNodes.filter((node) =>
+      fullpathSet.has(node.fullpath),
+    );
+  }
+
   isGitChange(parentNode: FileNode, filename: string): boolean {
     return !!gitManager.getMixedStatus(
       `${parentNode.fullpath}/${filename}`,
@@ -184,13 +189,6 @@ export class FileSource extends ExplorerSource<FileNode> {
         }, 200),
       );
     }
-
-    this.disposables.push(
-      this.events.on('loaded', () => {
-        this.copiedNodes.clear();
-        this.cutNodes.clear();
-      }),
-    );
 
     loadFileActions(this.action);
   }
@@ -287,10 +285,6 @@ export class FileSource extends ExplorerSource<FileNode> {
     } else {
       return this.view.rootNode;
     }
-  }
-
-  getPutTargetDir(node: FileNode) {
-    return this.getPutTargetNode(node).fullpath;
   }
 
   async searchByCocList(

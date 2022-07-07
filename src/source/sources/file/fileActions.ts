@@ -350,34 +350,38 @@ export function loadFileActions(action: ActionSource<FileSource, FileNode>) {
       },
     ],
     menus: {
-      keepCopy: 'keep copy mark',
-      clear: 'clear copy and cut mark',
+      keep: 'keep copy or cut',
+      clear: 'clear copy and cut',
     },
   };
   action.addNodesAction(
     'copyFile',
     async ({ nodes, args }) => {
       const type = (args[0] ?? 'toggle') as CopyOrCutFileType;
+      const clipboardStorage = file.explorer.explorerManager.clipboardStorage;
       if (type === 'replace') {
-        file.view.requestRenderNodes([...file.copiedNodes, ...file.cutNodes]);
-        file.copiedNodes.clear();
-        file.cutNodes.clear();
-
-        for (const node of nodes) {
-          file.copiedNodes.add(node);
-        }
+        const content = await clipboardStorage.getFiles();
+        const oldNodes = file.getNodesByPaths(content.fullpaths);
+        file.view.requestRenderNodes(oldNodes);
+        await clipboardStorage.copyFiles(nodes.map((it) => it.fullpath));
       } else if (type === 'toggle') {
+        const content = await clipboardStorage.getFiles();
+        const fullpathSet = new Set(content.fullpaths);
         for (const node of nodes) {
-          if (file.copiedNodes.has(node)) {
-            file.copiedNodes.delete(node);
+          if (fullpathSet.has(node.fullpath)) {
+            fullpathSet.delete(node.fullpath);
           } else {
-            file.copiedNodes.add(node);
+            fullpathSet.add(node.fullpath);
           }
         }
+        await clipboardStorage.copyFiles([...fullpathSet]);
       } else if (type === 'append') {
+        const content = await clipboardStorage.getFiles();
+        const fullpathSet = new Set(content.fullpaths);
         for (const node of nodes) {
-          file.copiedNodes.add(node);
+          fullpathSet.add(node.fullpath);
         }
+        await clipboardStorage.copyFiles([...fullpathSet]);
       }
       file.view.requestRenderNodes(nodes);
     },
@@ -388,26 +392,31 @@ export function loadFileActions(action: ActionSource<FileSource, FileNode>) {
     'cutFile',
     async ({ nodes, args }) => {
       const type = (args[0] ?? 'toggle') as CopyOrCutFileType;
+      const clipboardStorage = file.explorer.explorerManager.clipboardStorage;
       if (type === 'replace') {
-        file.view.requestRenderNodes([...file.copiedNodes, ...file.cutNodes]);
-        file.copiedNodes.clear();
-        file.cutNodes.clear();
+        const content = await clipboardStorage.getFiles();
+        const oldNodes = file.getNodesByPaths(content.fullpaths);
+        file.view.requestRenderNodes(oldNodes);
 
-        for (const node of nodes) {
-          file.cutNodes.add(node);
-        }
+        await clipboardStorage.cutFiles(nodes.map((it) => it.fullpath));
       } else if (type === 'toggle') {
+        const content = await clipboardStorage.getFiles();
+        const fullpathSet = new Set(content.fullpaths);
         for (const node of nodes) {
-          if (file.cutNodes.has(node)) {
-            file.cutNodes.delete(node);
+          if (fullpathSet.has(node.fullpath)) {
+            fullpathSet.delete(node.fullpath);
           } else {
-            file.cutNodes.add(node);
+            fullpathSet.add(node.fullpath);
           }
         }
+        await clipboardStorage.cutFiles([...fullpathSet]);
       } else if (type === 'append') {
+        const content = await clipboardStorage.getFiles();
+        const fullpathSet = new Set(content.fullpaths);
         for (const node of nodes) {
-          file.cutNodes.add(node);
+          fullpathSet.add(node.fullpath);
         }
+        await clipboardStorage.cutFiles([...fullpathSet]);
       }
       file.view.requestRenderNodes(nodes);
     },
@@ -417,40 +426,51 @@ export function loadFileActions(action: ActionSource<FileSource, FileNode>) {
   action.addNodeAction(
     'pasteFile',
     async ({ node, args }) => {
-      const type = (args[0] ?? 'keepCopy') as PasteFileType;
-      if (file.copiedNodes.size <= 0 && file.cutNodes.size <= 0) {
-        window.showMessage('Copied files or cut files is empty', 'error');
+      const type = (args[0] ?? 'keep') as PasteFileType;
+      const clipboardStorage = file.explorer.explorerManager.clipboardStorage;
+      const content = await clipboardStorage.getFiles();
+      if (content.type === 'none' || content.fullpaths.length <= 0) {
+        window.showMessage('Copied or cut files is empty', 'error');
         return;
       }
-      const targetDir = file.getPutTargetDir(node);
-      if (file.copiedNodes.size > 0) {
-        const nodes = [...file.copiedNodes];
+      const fullpaths = content.fullpaths;
+      const targetNode = file.getPutTargetNode(node);
+      const targetDir = targetNode.fullpath;
+      if (content.type === 'copy') {
         await overwritePrompt(
           'paste',
-          nodes.map((node) => ({
-            source: node.fullpath,
-            target: pathLib.join(targetDir, pathLib.basename(node.fullpath)),
+          fullpaths.map((fullpath) => ({
+            source: fullpath,
+            target: pathLib.join(targetDir, pathLib.basename(fullpath)),
           })),
           fsCopyFileRecursive,
         );
-        file.view.requestRenderNodes(nodes);
         if (type === 'clear') {
-          file.copiedNodes.clear();
+          await clipboardStorage.clear();
         }
-      }
-      if (file.cutNodes.size > 0) {
-        const nodes = [...file.cutNodes];
+      } else if (content.type === 'cut') {
         await overwritePrompt(
           'paste',
-          nodes.map((node) => ({
-            source: node.fullpath,
+          fullpaths.map((fullpath) => ({
+            source: fullpath,
             target: pathLib.join(targetDir, pathLib.basename(node.fullpath)),
           })),
           fsRename,
         );
-        file.cutNodes.clear();
+        if (type === 'clear') {
+          await clipboardStorage.clear();
+        } else {
+          // TODO change the fullpaths to new fullpaths
+          await clipboardStorage.clear();
+        }
       }
-      await file.load(file.view.rootNode);
+      file.view.requestRenderNodes(file.getNodesByPaths(fullpaths));
+      await file.load(targetNode);
+      await file.view.sync(async (r) => {
+        await file.revealNodeByPathNotifier(r, fullpaths[0], {
+          startNode: targetNode,
+        });
+      });
     },
     'paste files to here',
     pasteFileOptions,

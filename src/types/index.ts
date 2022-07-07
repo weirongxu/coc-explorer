@@ -56,7 +56,7 @@ export const copyOrCutFileTypeList = ['toggle', 'append', 'replace'] as const;
 
 export type CopyOrCutFileType = typeof copyOrCutFileTypeList[number];
 
-export const pasteFileTypeList = ['keepCopy', 'clear'] as const;
+export const pasteFileTypeList = ['keep', 'clear'] as const;
 
 export type PasteFileType = typeof pasteFileTypeList[number];
 
