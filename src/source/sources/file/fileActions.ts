@@ -350,8 +350,8 @@ export function loadFileActions(action: ActionSource<FileSource, FileNode>) {
       },
     ],
     menus: {
-      keep: 'keep copy or cut',
-      clear: 'clear copy and cut',
+      keep: 'keep clipboard after copy or cut',
+      clear: 'clear clipboard after copy and cut',
     },
   };
   action.addNodesAction(
@@ -424,6 +424,16 @@ export function loadFileActions(action: ActionSource<FileSource, FileNode>) {
     copyOrCutFileOptions,
   );
   action.addNodeAction(
+    'pasteFileClear',
+    async () => {
+      const clipboardStorage = file.explorer.explorerManager.clipboardStorage;
+      const content = await clipboardStorage.getFiles();
+      await clipboardStorage.clear();
+      file.view.requestRenderNodes(file.getNodesByPaths(content.fullpaths));
+    },
+    'clear cut/copy clipboard of files',
+  );
+  action.addNodeAction(
     'pasteFile',
     async ({ node, args }) => {
       const type = (args[0] ?? 'clear') as PasteFileType;
@@ -453,7 +463,7 @@ export function loadFileActions(action: ActionSource<FileSource, FileNode>) {
           'paste',
           fullpaths.map((fullpath) => ({
             source: fullpath,
-            target: pathLib.join(targetDir, pathLib.basename(node.fullpath)),
+            target: pathLib.join(targetDir, pathLib.basename(fullpath)),
           })),
           fsRename,
         );
