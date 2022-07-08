@@ -333,13 +333,13 @@ export function loadFileActions(action: ActionSource<FileSource, FileNode>) {
     args: [
       {
         name: 'type',
-        description: `${copyOrCutFileTypeList.join(' | ')}, default: toggle`,
+        description: `${copyOrCutFileTypeList.join(' | ')}, default: replace`,
       },
     ],
     menus: {
-      toggle: 'toggle mark',
-      append: 'append mark',
-      replace: 'remove all mark then add one mark',
+      toggle: 'toggle copy/cut',
+      append: 'append to copy/cut',
+      replace: 'replace copy/cut ',
     },
   };
   const pasteFileOptions = {
@@ -357,7 +357,7 @@ export function loadFileActions(action: ActionSource<FileSource, FileNode>) {
   action.addNodesAction(
     'copyFile',
     async ({ nodes, args }) => {
-      const type = (args[0] ?? 'toggle') as CopyOrCutFileType;
+      const type = (args[0] ?? 'replace') as CopyOrCutFileType;
       const clipboardStorage = file.explorer.explorerManager.clipboardStorage;
       if (type === 'replace') {
         const content = await clipboardStorage.getFiles();
@@ -391,7 +391,7 @@ export function loadFileActions(action: ActionSource<FileSource, FileNode>) {
   action.addNodesAction(
     'cutFile',
     async ({ nodes, args }) => {
-      const type = (args[0] ?? 'toggle') as CopyOrCutFileType;
+      const type = (args[0] ?? 'replace') as CopyOrCutFileType;
       const clipboardStorage = file.explorer.explorerManager.clipboardStorage;
       if (type === 'replace') {
         const content = await clipboardStorage.getFiles();
@@ -426,7 +426,7 @@ export function loadFileActions(action: ActionSource<FileSource, FileNode>) {
   action.addNodeAction(
     'pasteFile',
     async ({ node, args }) => {
-      const type = (args[0] ?? 'keep') as PasteFileType;
+      const type = (args[0] ?? 'clear') as PasteFileType;
       const clipboardStorage = file.explorer.explorerManager.clipboardStorage;
       const content = await clipboardStorage.getFiles();
       if (content.type === 'none' || content.fullpaths.length <= 0) {
