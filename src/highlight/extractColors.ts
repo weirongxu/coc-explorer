@@ -27,9 +27,11 @@ export async function extractHighlightsColor(
       const newHl: HighlightColor = {};
       if (hl.ctermfg) {
         newHl.ctermfg = parseInt(hl.ctermfg, 10);
+        if (isNaN(newHl.ctermfg)) newHl.ctermfg = undefined;
       }
       if (hl.ctermbg) {
         newHl.ctermbg = parseInt(hl.ctermbg, 10);
+        if (isNaN(newHl.ctermbg)) newHl.ctermbg = undefined;
       }
       if (hl.guifg) {
         newHl.guifg = parseColor(hl.guifg);
