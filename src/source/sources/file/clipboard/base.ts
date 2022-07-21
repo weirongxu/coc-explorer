@@ -8,9 +8,7 @@ export type ClipboardContent = {
 export abstract class ClipboardStorage {
   constructor(protected explorerManager: ExplorerManager) {}
 
-  abstract copyFiles(fullpaths: string[]): Promise<void>;
-
-  abstract cutFiles(fullpaths: string[]): Promise<void>;
+  abstract setFiles(type: 'copy' | 'cut', fullpaths: string[]): Promise<void>;
 
   abstract getFiles(): Promise<ClipboardContent>;
 

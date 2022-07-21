@@ -6,20 +6,16 @@ export class GlobalStateStorage extends ClipboardStorage {
     return this.explorerManager.context;
   }
 
-  async copyFiles(fullpaths: string[]): Promise<void> {
-    const content: ClipboardContent = {
-      type: 'copy',
+  async setFiles(type: 'copy' | 'cut', fullpaths: string[]): Promise<void> {
+    const newClip: ClipboardContent = {
+      type,
       fullpaths,
     };
-    await this.context().globalState.update('clipboard', content);
-  }
-
-  async cutFiles(fullpaths: string[]): Promise<void> {
-    const content: ClipboardContent = {
-      type: 'cut',
-      fullpaths,
-    };
-    await this.context().globalState.update('clipboard', content);
+    if (newClip.fullpaths.length === 0) {
+      await this.clear();
+    } else {
+      await this.context().globalState.update('clipboard', newClip);
+    }
   }
 
   async getFiles(): Promise<ClipboardContent> {

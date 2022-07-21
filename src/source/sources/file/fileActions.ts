@@ -9,8 +9,6 @@ import { explorerWorkspaceFolderList } from '../../../lists/workspaceFolders';
 import {
   CopyOrCutFileType,
   copyOrCutFileTypeList,
-  PasteFileType,
-  pasteFileTypeList,
   RevealStrategy,
   revealStrategyList,
   rootStrategyList,
@@ -342,18 +340,6 @@ export function loadFileActions(action: ActionSource<FileSource, FileNode>) {
       replace: 'replace copy/cut ',
     },
   };
-  const pasteFileOptions = {
-    args: [
-      {
-        name: 'type',
-        description: `${pasteFileTypeList.join(' | ')}, default: clear`,
-      },
-    ],
-    menus: {
-      keep: 'keep clipboard after copy or cut',
-      clear: 'clear clipboard after copy and cut',
-    },
-  };
   action.addNodesAction(
     'copyFile',
     async ({ nodes, args }) => {
@@ -363,7 +349,10 @@ export function loadFileActions(action: ActionSource<FileSource, FileNode>) {
         const content = await clipboardStorage.getFiles();
         const oldNodes = file.getNodesByPaths(content.fullpaths);
         file.view.requestRenderNodes(oldNodes);
-        await clipboardStorage.copyFiles(nodes.map((it) => it.fullpath));
+        await clipboardStorage.setFiles(
+          'copy',
+          nodes.map((it) => it.fullpath),
+        );
       } else if (type === 'toggle') {
         const content = await clipboardStorage.getFiles();
         const fullpathSet = new Set(content.fullpaths);
@@ -374,14 +363,14 @@ export function loadFileActions(action: ActionSource<FileSource, FileNode>) {
             fullpathSet.add(node.fullpath);
           }
         }
-        await clipboardStorage.copyFiles([...fullpathSet]);
+        await clipboardStorage.setFiles('copy', [...fullpathSet]);
       } else if (type === 'append') {
         const content = await clipboardStorage.getFiles();
         const fullpathSet = new Set(content.fullpaths);
         for (const node of nodes) {
           fullpathSet.add(node.fullpath);
         }
-        await clipboardStorage.copyFiles([...fullpathSet]);
+        await clipboardStorage.setFiles('copy', [...fullpathSet]);
       }
       file.view.requestRenderNodes(nodes);
     },
@@ -398,7 +387,10 @@ export function loadFileActions(action: ActionSource<FileSource, FileNode>) {
         const oldNodes = file.getNodesByPaths(content.fullpaths);
         file.view.requestRenderNodes(oldNodes);
 
-        await clipboardStorage.cutFiles(nodes.map((it) => it.fullpath));
+        await clipboardStorage.setFiles(
+          'cut',
+          nodes.map((it) => it.fullpath),
+        );
       } else if (type === 'toggle') {
         const content = await clipboardStorage.getFiles();
         const fullpathSet = new Set(content.fullpaths);
@@ -409,14 +401,14 @@ export function loadFileActions(action: ActionSource<FileSource, FileNode>) {
             fullpathSet.add(node.fullpath);
           }
         }
-        await clipboardStorage.cutFiles([...fullpathSet]);
+        await clipboardStorage.setFiles('cut', [...fullpathSet]);
       } else if (type === 'append') {
         const content = await clipboardStorage.getFiles();
         const fullpathSet = new Set(content.fullpaths);
         for (const node of nodes) {
           fullpathSet.add(node.fullpath);
         }
-        await clipboardStorage.cutFiles([...fullpathSet]);
+        await clipboardStorage.setFiles('cut', [...fullpathSet]);
       }
       file.view.requestRenderNodes(nodes);
     },
@@ -424,7 +416,7 @@ export function loadFileActions(action: ActionSource<FileSource, FileNode>) {
     copyOrCutFileOptions,
   );
   action.addNodeAction(
-    'pasteFileClear',
+    'clearCopyOrCut',
     async () => {
       const clipboardStorage = file.explorer.explorerManager.clipboardStorage;
       const content = await clipboardStorage.getFiles();
@@ -435,8 +427,7 @@ export function loadFileActions(action: ActionSource<FileSource, FileNode>) {
   );
   action.addNodeAction(
     'pasteFile',
-    async ({ node, args }) => {
-      const type = (args[0] ?? 'clear') as PasteFileType;
+    async ({ node }) => {
       const clipboardStorage = file.explorer.explorerManager.clipboardStorage;
       const content = await clipboardStorage.getFiles();
       if (content.type === 'none' || content.fullpaths.length <= 0) {
@@ -446,8 +437,9 @@ export function loadFileActions(action: ActionSource<FileSource, FileNode>) {
       const fullpaths = content.fullpaths;
       const targetNode = file.getPutTargetNode(node);
       const targetDir = targetNode.fullpath;
+      let overwriteResult: { endFullpaths: string[] } | undefined;
       if (content.type === 'copy') {
-        await overwritePrompt(
+        overwriteResult = await overwritePrompt(
           'paste',
           fullpaths.map((fullpath) => ({
             source: fullpath,
@@ -455,11 +447,8 @@ export function loadFileActions(action: ActionSource<FileSource, FileNode>) {
           })),
           fsCopyFileRecursive,
         );
-        if (type === 'clear') {
-          await clipboardStorage.clear();
-        }
       } else if (content.type === 'cut') {
-        await overwritePrompt(
+        overwriteResult = await overwritePrompt(
           'paste',
           fullpaths.map((fullpath) => ({
             source: fullpath,
@@ -467,15 +456,9 @@ export function loadFileActions(action: ActionSource<FileSource, FileNode>) {
           })),
           fsRename,
         );
-        if (type === 'clear') {
-          await clipboardStorage.clear();
-        } else {
-          // TODO change the fullpaths to new fullpaths
-          await clipboardStorage.clear();
-        }
+        await clipboardStorage.setFiles('cut', overwriteResult.endFullpaths);
       }
-      file.view.requestRenderNodes(file.getNodesByPaths(fullpaths));
-      await file.load(targetNode);
+      await file.load(file.view.rootNode);
       await file.view.sync(async (r) => {
         await file.revealNodeByPathNotifier(r, fullpaths[0], {
           startNode: targetNode,
@@ -483,7 +466,6 @@ export function loadFileActions(action: ActionSource<FileSource, FileNode>) {
       });
     },
     'paste files to here',
-    pasteFileOptions,
   );
   action.addNodesAction(
     'delete',
