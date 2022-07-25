@@ -11,8 +11,8 @@ export type HighlightColorString = {
 export type HighlightColor = {
   guibg?: Color;
   guifg?: Color;
-  ctermbg?: number;
-  ctermfg?: number;
+  ctermbg?: string;
+  ctermfg?: string;
 };
 
 export async function extractHighlightsColor(
@@ -26,10 +26,10 @@ export async function extractHighlightsColor(
     .map(([group, hl]) => {
       const newHl: HighlightColor = {};
       if (hl.ctermfg) {
-        newHl.ctermfg = parseInt(hl.ctermfg, 10);
+        newHl.ctermfg = hl.ctermfg;
       }
       if (hl.ctermbg) {
-        newHl.ctermbg = parseInt(hl.ctermbg, 10);
+        newHl.ctermbg = hl.ctermbg;
       }
       if (hl.guifg) {
         newHl.guifg = parseColor(hl.guifg);

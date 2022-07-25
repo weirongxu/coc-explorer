@@ -65,11 +65,16 @@ export function parseColor(str: string) {
     str = str.slice(1);
   }
   const m = str.match(/.{1,2}/g);
-  if (!m) {
-    return;
-  }
+  if (!m) return;
+
   const [r, g, b] = m;
-  return createColor(parseInt(r, 16), parseInt(g, 16), parseInt(b, 16), 1);
+  const ri = parseInt(r, 16);
+  if (isNaN(ri)) return;
+  const gi = parseInt(g, 16);
+  if (isNaN(gi)) return;
+  const bi = parseInt(b, 16);
+  if (isNaN(bi)) return;
+  return createColor(ri, gi, bi, 1);
 }
 
 /**
