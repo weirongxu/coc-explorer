@@ -59,7 +59,9 @@ export const registerGitHighlights = (disposables: Disposable[]) => {
           }
           const ctermfg =
             h.ctermfg ??
-            colorConvert.rgb.ansi256([guifg.red, guifg.green, guifg.blue]);
+            colorConvert.rgb
+              .ansi256([guifg.red, guifg.green, guifg.blue])
+              .toString();
           return {
             guifg,
             ctermfg,
