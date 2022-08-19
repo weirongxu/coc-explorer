@@ -1,7 +1,7 @@
 import { Notifier, WinLayoutFinder } from 'coc-helper';
 import { Neovim, workspace } from 'coc.nvim';
-import { ParsedPosition } from 'src/arg/parseArgs';
 import { argOptions } from '../arg/argOptions';
+import { ParsedPosition } from '../arg/parseArgs';
 import type { Explorer } from '../explorer';
 import { BaseTreeNode, ExplorerSource } from '../source/source';
 import { OpenCursorPosition, OpenStrategy } from '../types';

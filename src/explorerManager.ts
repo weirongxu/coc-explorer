@@ -10,6 +10,7 @@ import { GlobalContextVars } from './contextVariables';
 import { onBufEnter } from './events';
 import { Explorer } from './explorer';
 import { Rooter } from './rooter';
+import { getClipboard } from './source/sources/file/clipboard/clipboard';
 import {
   compactI,
   currentBufnr,
@@ -28,6 +29,7 @@ export class ExplorerManager {
     inited: () => void;
   }>(logger);
   waitInited = firstValueFrom(fromHelperEvent(this.events, 'inited'));
+  clipboardStorage = getClipboard(this);
 
   constructor(public context: ExtensionContext, public bufManager: BufManager) {
     currentBufnr().then(this.updatePrevCtxVars.bind(this)).catch(logger.error);

@@ -80,14 +80,20 @@ export async function fsMergeDirectory(
   }
 }
 
+/**
+ * Overwrite prompt when file exists.
+ * @returns  {Promise<void>}
+ */
 export async function overwritePrompt<S extends string | undefined>(
   promptText: string,
   paths: { source: S; target: string }[],
   action: (source: S, target: string) => Promise<void>,
-) {
+): Promise<{ endFullpaths: string[] }> {
+  const endFullpaths: string[] = [];
   const finalAction = async (source: string | undefined, target: string) => {
     await fsMkdirp(pathLib.dirname(target));
     await action(source as S, target);
+    endFullpaths.push(target);
   };
   for (let i = 0, len = paths.length; i < len; i++) {
     const sourcePath = paths[i].source;
@@ -166,6 +172,7 @@ export async function overwritePrompt<S extends string | undefined>(
       }
     }
   }
+  return { endFullpaths };
 }
 
 export function readFileLines(
