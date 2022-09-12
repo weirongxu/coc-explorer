@@ -52,7 +52,7 @@ interface InitContext<Arg, Data> {
 
 export class ProxyList<Arg, Data> extends BasicList {
   #loadItems: BasicList['loadItems'];
-  [argSym]: Arg;
+  [argSym]!: Arg;
 
   constructor(init: ListInit<Arg, Data>) {
     super(workspace.nvim);
