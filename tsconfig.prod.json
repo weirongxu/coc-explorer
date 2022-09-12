@@ -1,5 +1,10 @@
 {
   "extends": "./src/tsconfig.json",
+  "compilerOptions": {
+    "paths": {
+      "rxjs": ["./node_modules/rxjs/dist/esm/index.js"]
+    }
+  },
   "include": ["src/**/*.ts"],
   "exclude": ["src/**/*.test.ts", "src/tests/**"]
 }

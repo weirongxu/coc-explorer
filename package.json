@@ -14,6 +14,7 @@
   },
   "files": [
     "lib",
+    "cli",
     "autoload",
     "plugin"
   ],
@@ -1165,19 +1166,18 @@
     "clean": "rimraf lib",
     "build:types": "ts-node scripts/gen_package_type.ts",
     "build:check-type": "tsc --noEmit",
-    "build:pack": "node build.js",
+    "build:pack": "tsup",
     "build:config-doc": "ts-node ./scripts/gen_doc.ts",
     "build": "run-s build:types build:check-type build:pack build:config-doc",
-    "esbuild-meta": "npx esbuild-visualizer --metadata ./esbuild-meta.json",
-    "watch": "node watch.js",
-    "watch:no-emit": "tsc --noEmit --watch",
+    "analyze-metafile": "npx esbuild-visualizer --metadata ./lib/metafile-cjs.json",
+    "watch": "tsup --watch",
     "prepare": "run-s clean build",
     "lint": "eslint src --ext .js,.ts",
     "unittest": "jest --runInBand --detectOpenHandles --forceExit",
     "test": "run-s lint unittest"
   },
   "dependencies": {
-    "trash": "^7.2.0"
+    "trash": "^8.1.0"
   },
   "devDependencies": {
     "@raidou/eslint-config-base": "^1.5.0",
@@ -1197,8 +1197,6 @@
     "color-convert": "^2.0.1",
     "command-exists": "^1.2.9",
     "date-fns": "^2.28.0",
-    "esbuild": "^0.14.11",
-    "esbuild-plugin-alias": "^0.2.1",
     "eslint": "^8.6.0",
     "isbinaryfile": "^4.0.8",
     "jest": "^27.4.7",
@@ -1215,6 +1213,7 @@
     "rxjs": "^7.5.2",
     "ts-jest": "^27.1.2",
     "ts-node": "^10.3.0",
+    "tsup": "^6.2.3",
     "type-fest": "^2.9.0",
     "typescript": "^4.5.4",
     "uuid": "^8.3.2",
