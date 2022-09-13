@@ -1,3 +1,4 @@
+import { WinLayoutFinder } from 'coc-helper';
 import { commands, ExtensionContext, workspace } from 'coc.nvim';
 import pathLib from 'path';
 import { MappingMode, OriginalActionExp } from './actions/types';
@@ -9,7 +10,6 @@ import { actionListMru } from './lists/actions';
 import { parseOriginalActionExp } from './mappings';
 import { BaseTreeNode, ExplorerSource } from './source/source';
 import { compactI, logger } from './util';
-import { WinLayoutFinder } from './winLayoutFinder';
 
 export function registerApi(
   id: string,
