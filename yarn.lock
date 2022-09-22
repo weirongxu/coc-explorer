@@ -1531,9 +1531,9 @@ coc-helper@^0.13.0:
     uuid "^8.3.2"
 
 coc-helper@^0.15.1:
-  version "0.15.1"
-  resolved "https://registry.yarnpkg.com/coc-helper/-/coc-helper-0.15.1.tgz#ec8508a10913459a73354e8443d558de5823e4c8"
-  integrity sha512-7qPAW5hJJ3E9M7U/4WSMFrMi+rUqiJnQ8CTnYQa6IH20BTsU/LN6uFo+Ompmh8iQVUGVzosap7eeBoJ3Sm8Kug==
+  version "0.15.2"
+  resolved "https://registry.yarnpkg.com/coc-helper/-/coc-helper-0.15.2.tgz#9e47863094afa613275957ebb68f41ba296625d9"
+  integrity sha512-PNhxIGIAu/+ty3ud6VgvA8tboNq2h3yb2DqwbXiahAMuVR+B16vbRAmOuJYejEWF9Sc/HCTsrzFg2fMtgCG2Cg==
   dependencies:
     rimraf "^3.0.2"
     uuid "^9.0.0"

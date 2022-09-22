@@ -1,5 +1,4 @@
 import { jestHelper } from 'coc-helper/JestHelper';
-import { registerRuntimepath } from '../util';
 import { ViewSource } from '../view/viewSource';
 import { bootSource } from '../__test__/helpers/helper';
 import { ColumnRegistrar } from './columnRegistrar';
@@ -7,10 +6,6 @@ import { BaseTreeNode, ExplorerSource } from './source';
 import { ViewRowPainter } from './viewPainter';
 
 jestHelper.boot();
-
-beforeAll(async () => {
-  await registerRuntimepath(process.cwd());
-});
 
 interface TestNode extends BaseTreeNode<TestNode, 'root' | 'child'> {
   name: string;
