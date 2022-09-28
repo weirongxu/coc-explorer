@@ -4,6 +4,7 @@ node_modules
 /coverage
 /lib
 /mini_vimrc/data_home
+/mini_vimrc/memos.json
 /src/tests/coc.nvim
 esbuild-meta.json
 stats.html

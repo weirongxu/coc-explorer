@@ -1,5 +1,5 @@
 set nocompatible
-set runtimepath^=../../coc.nvim
+let &runtimepath .= ',' . expand('<sfile>:h:h:h') . '/coc.nvim'
 
 " let g:node_client_debug = 1
 let g:coc_node_args = ['--nolazy', '--async-stack-traces']
@@ -15,6 +15,7 @@ let mapleader = "\<Space>"
 nnoremap <Leader>ee :CocCommand explorer<CR>
 nnoremap <Leader>eE :CocCommand explorer --position=right<CR>
 nnoremap <silent> <Leader>er :call CocAction('runCommand', 'explorer.doAction', 'closest', ['reveal:0'], [['relative', 0, 'file']])<CR>
+nmap <Leader>rn <Plug>(coc-rename)
 
 execute "nnoremap <Leader>r :CocCommand explorer --reveal=".expand('<sfile>:h')."/package.json<CR>"
 nnoremap <Leader>t :CocCommand explorer --position=tab<CR>
