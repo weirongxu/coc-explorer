@@ -234,7 +234,8 @@
                 "$ref": "#/properties/explorer.file.child.labelingTemplate"
               }
             }
-          }
+          },
+          "default": null
         },
         "explorer.mouseMode": {
           "description": "Mouse mode",
@@ -487,7 +488,6 @@
             "previousWindow",
             "sourceWindow"
           ],
-          "default": "select",
           "enumDescriptions": [
             "Open action use selection UI",
             "Open action use split, intelligent by default",
@@ -500,7 +500,8 @@
             "Open action use last used buffer",
             "Open action use last used window",
             "Open action use the window where explorer opened"
-          ]
+          ],
+          "default": "select"
         },
         "explorer.openAction.select.filter": {
           "description": "Filter windows for select strategy",
@@ -686,7 +687,8 @@
                 ]
               }
             }
-          ]
+          ],
+          "default": null
         },
         "explorer.enableFloatinput": {
           "description": "Enable integrated with coc-floatinput",
@@ -779,11 +781,13 @@
         "explorer.icon.expanded": {
           "description": "Icon for expanded node",
           "type": "string",
+          "default": null,
           "default_doc": "-"
         },
         "explorer.icon.collapsed": {
           "description": "Icon for collapsed node",
           "type": "string",
+          "default": null,
           "default_doc": "+"
         },
         "explorer.icon.selected": {
@@ -804,6 +808,7 @@
         "explorer.icon.readonly": {
           "description": "Icon for readonly",
           "type": "string",
+          "default": null,
           "default_doc": "RO"
         },
         "explorer.bookmark.root.template": {
@@ -897,18 +902,6 @@
         "explorer.file.hiddenRules": {
           "description": "Custom hidden rules for file",
           "type": "object",
-          "default": {
-            "extensions": [
-              "o",
-              "a",
-              "obj",
-              "pyc"
-            ],
-            "filenames": [],
-            "patternMatches": [
-              "^\\."
-            ]
-          },
           "properties": {
             "extensions": {
               "type": "array",
@@ -926,6 +919,18 @@
               "type": "array",
               "description": "Pattern to icon group"
             }
+          },
+          "default": {
+            "extensions": [
+              "o",
+              "a",
+              "obj",
+              "pyc"
+            ],
+            "filenames": [],
+            "patternMatches": [
+              "^\\."
+            ]
           }
         },
         "explorer.file.showHiddenFiles": {
@@ -955,15 +960,18 @@
         },
         "explorer.file.column.link.copy": {
           "description": "Whether the file has been copied",
-          "type": "string"
+          "type": "string",
+          "default": null
         },
         "explorer.file.column.clip.copy": {
           "description": "Whether the file has been copied",
-          "type": "string"
+          "type": "string",
+          "default": null
         },
         "explorer.file.column.clip.cut": {
           "description": "Whether the file has been cut",
-          "type": "string"
+          "type": "string",
+          "default": null
         },
         "explorer.file.column.indent.chars": {
           "description": "Indent chars for file source",
@@ -972,7 +980,8 @@
         },
         "explorer.file.column.indent.indentLine": {
           "description": "Whether to display the alignment line",
-          "type": "boolean"
+          "type": "boolean",
+          "default": null
         },
         "explorer.file.cdCommand": {
           "description": "Change directory when performing the cd action",
@@ -1025,7 +1034,8 @@
                 "Use system git configuration, status.showUntrackedFiles"
               ]
             }
-          ]
+          ],
+          "default": null
         },
         "explorer.trash.command": {
           "description": "Trash command template, arguments(%s source filepath, %l source filepath list), example: 'trash-put %l', 'mv --backup=t %l ~/.trash/'",
