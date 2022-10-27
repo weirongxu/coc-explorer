@@ -82,7 +82,7 @@ abstract class DocGenerator {
         descriptions.push(`default: \`${this.printJson(row.default)}\``);
       }
       if (descriptions.length) {
-        line += ': ' + descriptions.join(', ');
+        line += `: ${descriptions.join(', ')}`;
       }
       lines.push(line);
     });
@@ -93,9 +93,7 @@ abstract class DocGenerator {
     const markdown = await fsp.readFile(markdownPath, 'utf8');
     const markdownLines = markdown.split('\n');
     let startIndex = markdownLines.findIndex((line) =>
-      new RegExp('#'.repeat(headLevel) + '\\s*' + attachTitle + '\\s*').test(
-        line,
-      ),
+      new RegExp(`${'#'.repeat(headLevel)}\\s*${attachTitle}\\s*`).test(line),
     );
     if (startIndex < 0) {
       return;

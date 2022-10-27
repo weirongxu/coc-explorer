@@ -216,7 +216,7 @@ export class FileSource extends ExplorerSource<FileNode> {
     type CdCmd = Explorer['explorer.file.cdCommand'];
     let cdCmd: CdCmd;
     const tabCd = this.config.get<boolean>('file.tabCD');
-    if (tabCd !== undefined) {
+    if (tabCd !== undefined || tabCd !== null) {
       logger.error(
         'explorer.file.tabCD has been deprecated, please use explorer.file.cdCommand instead of it',
       );

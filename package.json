@@ -773,7 +773,8 @@
         "explorer.icon.enableVimDevicons": {
           "deprecationMessage": "The configuration `explorer.icon.enableVimDevicons` has been deprecated, please use `{\"explorer.icon.enableNerdfont\": true, \"explorer.icon.source\": \"vim-devicons\"}` instead of it",
           "description": "Enable use vim-devicons instead of built-in icon configuration",
-          "type": "boolean"
+          "type": "boolean",
+          "default": null
         },
         "explorer.icon.expanded": {
           "description": "Icon for expanded node",
@@ -853,12 +854,14 @@
         "explorer.file.revealWhenOpen": {
           "deprecationMessage": "Use explorer.file.reveal.whenOpen instead of it",
           "description": "Explorer will automatically reveal to the current buffer when open explorer",
-          "type": "boolean"
+          "type": "boolean",
+          "default": null
         },
         "explorer.file.autoReveal": {
           "deprecationMessage": "Use explorer.file.reveal.auto instead of it",
           "description": "Explorer will automatically expand to the current buffer",
-          "type": "boolean"
+          "type": "boolean",
+          "default": null
         },
         "explorer.file.reveal.whenOpen": {
           "description": "Explorer will automatically reveal to the current buffer when open explorer",

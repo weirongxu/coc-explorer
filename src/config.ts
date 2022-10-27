@@ -57,7 +57,7 @@ export const bufferTabOnly = () => {
  */
 export const getRevealAuto = (config: ExplorerConfig) => {
   let revealAuto = config.get<boolean>('file.autoReveal');
-  if (revealAuto !== undefined) {
+  if (revealAuto !== undefined || revealAuto !== null) {
     logger.error(
       '`explorer.file.autoReveal` has been deprecated, please use explorer.file.reveal.auto instead of it',
     );
@@ -78,7 +78,7 @@ export const getRevealWhenOpen = (
    * @deprecated
    */
   let revealWhenOpen: boolean | undefined = config.get('file.revealWhenOpen');
-  if (revealWhenOpen !== undefined) {
+  if (revealWhenOpen !== undefined || revealWhenOpen !== null) {
     logger.error(
       '`explorer.file.autoReveal` has been deprecated, please use explorer.file.reveal.whenOpen instead of it',
     );
