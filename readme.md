@@ -4,7 +4,7 @@ Explorer extension for [coc.nvim](https://github.com/neoclide/coc.nvim)
 
 **Note: This project is still under development and may be broken.**
 
-[![Build Status](https://img.shields.io/github/workflow/status/weirongxu/coc-explorer/coc-explorer%20CI)](https://github.com/weirongxu/coc-explorer/actions)
+[![Build Status](https://img.shields.io/github/workflow/status/weirongxu/coc-explorer/coc-explorer/ci.yml?branch=master)](https://github.com/weirongxu/coc-explorer/actions)
 
 ## Screenshot
 
