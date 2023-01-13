@@ -21,7 +21,7 @@ import {
   fsCopyFileRecursive,
   fsMkdirp,
   fsRename,
-  fsRimraf,
+  fsRemove,
   fsTouch,
   fsTrash,
   input,
@@ -531,7 +531,7 @@ export function loadFileActions(action: ActionSource<FileSource, FileNode>) {
       }
 
       for (const node of nodes) {
-        await fsRimraf(node.fullpath, undefined);
+        await fsRemove(node.fullpath, undefined);
         await file.bufManager.remove(node.fullpath, {
           skipModified: true,
           bwipeout: true,

@@ -3,7 +3,7 @@ import os from 'os';
 import makeDir from 'make-dir';
 import pathLib from 'path';
 import readline from 'readline';
-import rimraf from 'rimraf';
+import { rimraf } from 'rimraf';
 import { promisify } from 'util';
 import { input, prompt } from '.';
 import { execCmd } from './cli';
@@ -31,7 +31,7 @@ export const fsStat = promisify(fs.stat);
 export const fsLstat = promisify(fs.lstat);
 export const fsCopyFile = promisify(fs.copyFile);
 export const fsRename = promisify(fs.rename);
-export const fsRimraf = promisify(rimraf);
+export const fsRemove = rimraf;
 
 export const fsTrash = async (paths: string | string[]) => {
   await trashCmd.exec(typeof paths === 'string' ? [paths] : paths);
