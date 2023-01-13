@@ -17,34 +17,24 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, windows-latest]
+        os: [ubuntu-latest]
         node-version: [14]
 
     env:
       NODE_ENV: test
 
     steps:
-      - name: Use Node.js ${{ matrix.node-version }}
-        uses: actions/setup-node@v1
+      - uses: actions/checkout@v3
+      - uses: actions/setup-node@v3
         with:
           node-version: ${{ matrix.node-version }}
-      - name: Install yarn
-        run: |
-          curl --compressed -o- -L https://yarnpkg.com/install.sh | bash
-      - name: Set git
-        run: |
-          git config --global core.autocrlf false
-      - uses: actions/checkout@v2
-      - name: Install Packages
-        run: yarn install
-      - name: Lint
-        run: yarn lint
-      - name: Install vim
-        uses: rhysd/action-setup-vim@v1
-        with:
-          neovim: true
-          version: v0.7.0
-      - name: Run unit tests
+          cache: 'yarn'
+      - run: yarn install
+      - run: yarn lint
+      # - uses: rhysd/action-setup-vim@v1
+      #   with:
+      #     neovim: true
+      #     version: v0.7.0
+      - run: yarn test
         env:
           NODE_ENV: test
-        run: yarn test

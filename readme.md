@@ -735,7 +735,7 @@ Type: <pre><code>{
         'file-child-labeling-template'?: string;
         [k: string]: unknown;
     };
-}</code></pre>
+}</code></pre>Default: <pre><code>null</code></pre>
 </details>
 <details>
 <summary><code>explorer.mouseMode</code>: Mouse mode.</summary>
@@ -965,7 +965,7 @@ Type: <pre><code>{
         bottomUp?: boolean;
         [k: string]: unknown;
     };
-}</code></pre>
+}</code></pre>Default: <pre><code>null</code></pre>
 </details>
 <details>
 <summary><code>explorer.enableFloatinput</code>: Enable integrated with coc-floatinput.</summary>
@@ -1168,15 +1168,15 @@ Type: <pre><code>string</code></pre>Default: <pre><code>"[fullpath][link][diagno
 </details>
 <details>
 <summary><code>explorer.file.column.link.copy</code>: Whether the file has been copied.</summary>
-Type: <pre><code>string</code></pre>
+Type: <pre><code>string</code></pre>Default: <pre><code>null</code></pre>
 </details>
 <details>
 <summary><code>explorer.file.column.clip.copy</code>: Whether the file has been copied.</summary>
-Type: <pre><code>string</code></pre>
+Type: <pre><code>string</code></pre>Default: <pre><code>null</code></pre>
 </details>
 <details>
 <summary><code>explorer.file.column.clip.cut</code>: Whether the file has been cut.</summary>
-Type: <pre><code>string</code></pre>
+Type: <pre><code>string</code></pre>Default: <pre><code>null</code></pre>
 </details>
 <details>
 <summary><code>explorer.file.column.indent.chars</code>: Indent chars for file source.</summary>
@@ -1184,7 +1184,7 @@ Type: <pre><code>string</code></pre>Default: <pre><code>"  "</code></pre>
 </details>
 <details>
 <summary><code>explorer.file.column.indent.indentLine</code>: Whether to display the alignment line.</summary>
-Type: <pre><code>boolean</code></pre>
+Type: <pre><code>boolean</code></pre>Default: <pre><code>null</code></pre>
 </details>
 <details>
 <summary><code>explorer.file.cdCommand</code>: Change directory when performing the cd action.</summary>
@@ -1201,7 +1201,7 @@ Type: <pre><code>boolean | {
 </details>
 <details>
 <summary><code>explorer.file.git.showUntrackedFiles</code>: Show untracked file in git.</summary>
-Type: <pre><code>boolean | 'system'</code></pre>
+Type: <pre><code>boolean | 'system'</code></pre>Default: <pre><code>null</code></pre>
 </details>
 <details>
 <summary><code>explorer.trash.command</code>: Trash command template, arguments(%s source filepath, %l source filepath list), example: 'trash-put %l', 'mv --backup=t %l ~/.trash/'.</summary>

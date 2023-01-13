@@ -1,4 +1,4 @@
-import { activateHelper } from 'coc-helper';
+import { activateHelper, registerRuntimepath } from 'coc-helper';
 import {
   commands,
   ExtensionContext,
@@ -10,7 +10,7 @@ import { ActionMenuCodeActionProvider } from './actions/codeActionProider';
 import { BufManager } from './bufManager';
 import { config } from './config';
 import { tabContainerManager } from './container';
-import { InternalVimEvents } from './events';
+import { registerInternalEvents } from './events';
 import { ExplorerManager } from './explorerManager';
 import { GitCommand } from './git/command';
 import { registerGitHighlights } from './git/highlights';
@@ -18,7 +18,7 @@ import { registerInternalColors } from './highlight/internalColors';
 import { hlGroupManager } from './highlight/manager';
 import { PresetList } from './lists/presets';
 import { registerMappings } from './mappings/manager';
-import { logger, registerRuntimepath } from './util';
+import { logger } from './util';
 import { registerVimApi } from './vimApi';
 
 export const activate = (context: ExtensionContext) => {
@@ -57,8 +57,8 @@ export const activate = (context: ExtensionContext) => {
   );
   (async () => {
     await activateHelper(context);
-    await InternalVimEvents.register(context);
-    await registerRuntimepath(context.extensionPath);
+    registerInternalEvents(context);
+    await registerRuntimepath(context);
     await nvim.command('runtime plugin/coc_explorer.vim');
     registerGitHighlights(subscriptions);
     registerInternalColors(subscriptions);

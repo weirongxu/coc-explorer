@@ -231,11 +231,11 @@ export class FileSource extends ExplorerSource<FileNode> {
     if (cdCmd === 'tcd') {
       if (workspace.isNvim || (await nvim.call('exists', [':tcd']))) {
         await nvim.command(`tcd ${escapePath}`);
-        window.showMessage(`Tab's CWD is: ${fullpath}`);
+        await window.showInformationMessage(`Tab's CWD is: ${fullpath}`);
       }
     } else if (cdCmd === 'cd') {
       await nvim.command(`cd ${escapePath}`);
-      window.showMessage(`CWD is: ${fullpath}`);
+      await window.showInformationMessage(`CWD is: ${fullpath}`);
     }
   }
 

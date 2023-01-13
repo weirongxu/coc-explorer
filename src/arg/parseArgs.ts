@@ -211,9 +211,8 @@ export class Args {
     const presets = await getPresets(config);
     const preset = presets.get(presetName);
     if (!preset) {
-      window.showMessage(
+      await window.showWarningMessage(
         `coc-explorer preset(${presetName}) not found`,
-        'warning',
       );
       return self;
     }

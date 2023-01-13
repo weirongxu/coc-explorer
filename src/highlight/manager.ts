@@ -1,5 +1,5 @@
 import { Disposable, Position, Range, workspace } from 'coc.nvim';
-import { InternalVimEvents } from '../events';
+import { internalEvents } from '../events';
 import type { Explorer } from '../explorer';
 import { HighlightCommand, HighlightPositionWithLine } from './types';
 
@@ -40,7 +40,7 @@ class HighlightManager {
     update: () => void | Promise<void>,
     immediate = true,
   ) {
-    disposables.push(InternalVimEvents.events.on('ColorScheme', update));
+    disposables.push(internalEvents.on('ColorScheme', update));
     if (immediate) {
       await update();
     }

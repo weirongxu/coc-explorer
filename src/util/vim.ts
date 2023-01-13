@@ -1,5 +1,5 @@
 import { Notifier } from 'coc-helper';
-import { Window, workspace } from 'coc.nvim';
+import { ExtensionContext, Window, workspace } from 'coc.nvim';
 import colorConvert from 'color-convert';
 import { toHex } from '.';
 import { HighlightColor } from '../highlight/extractColors';
@@ -28,20 +28,6 @@ export function supportedBufferHighlight() {
 export async function enableWrapscan() {
   const wrapscan = await workspace.nvim.getOption('wrapscan');
   return !!wrapscan;
-}
-
-export async function registerRuntimepath(extensionPath: string) {
-  const { nvim } = workspace;
-  const rtp = (await nvim.getOption('runtimepath')) as string;
-  const paths = rtp.split(',');
-  if (!paths.includes(extensionPath)) {
-    await nvim.command(
-      `execute 'noa set rtp+='.fnameescape('${extensionPath.replace(
-        /'/g,
-        "''",
-      )}')`,
-    );
-  }
 }
 
 export function generateHighlightFg(groupName: string, hl?: HighlightColor) {

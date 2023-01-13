@@ -89,9 +89,8 @@ export class ActionExplorer extends ActionRegistrar<
         }
       }
     } catch (error) {
-      window.showMessage(
+      await window.showErrorMessage(
         `Error when do action(${JSON.stringify(actionExp)})`,
-        'error',
       );
       logger.error(error);
     }

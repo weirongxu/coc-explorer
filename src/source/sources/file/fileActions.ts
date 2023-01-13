@@ -296,7 +296,7 @@ export function loadFileActions(action: ActionSource<FileSource, FileNode>) {
       await file.copyToClipboard(
         nodes ? nodes.map((it) => it.fullpath).join('\n') : file.root,
       );
-      window.showMessage('Copy filepath to clipboard');
+      await window.showInformationMessage('Copy filepath to clipboard');
     },
     'copy full filepath to clipboard',
   );
@@ -310,7 +310,9 @@ export function loadFileActions(action: ActionSource<FileSource, FileNode>) {
               .join('\n')
           : file.root,
       );
-      window.showMessage('Copy relative filepath to clipboard');
+      await window.showInformationMessage(
+        'Copy relative filepath to clipboard',
+      );
     },
     'copy relative filepath to clipboard',
   );
@@ -322,7 +324,7 @@ export function loadFileActions(action: ActionSource<FileSource, FileNode>) {
           ? nodes.map((it) => it.name).join('\n')
           : pathLib.basename(file.root),
       );
-      window.showMessage('Copy filename to clipboard');
+      await window.showInformationMessage('Copy filename to clipboard');
     },
     'copy filename to clipboard',
   );
@@ -431,7 +433,10 @@ export function loadFileActions(action: ActionSource<FileSource, FileNode>) {
       const clipboardStorage = file.explorer.explorerManager.clipboardStorage;
       const content = await clipboardStorage.getFiles();
       if (content.type === 'none' || content.fullpaths.length <= 0) {
-        window.showMessage('Copied or cut files is empty', 'error');
+        await window.showInformationMessage(
+          'Copied or cut files is empty',
+          'error',
+        );
         return;
       }
       const fullpaths = content.fullpaths;

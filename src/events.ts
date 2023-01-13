@@ -1,5 +1,11 @@
-import { HelperVimEvents, Notifier } from 'coc-helper';
-import { Disposable, Emitter, events, workspace } from 'coc.nvim';
+import { HelperEventEmitter, Notifier } from 'coc-helper';
+import {
+  Disposable,
+  Emitter,
+  events,
+  ExtensionContext,
+  workspace,
+} from 'coc.nvim';
 import { LiteralUnion } from 'type-fest';
 import { debounceFn, logger, throttleFn } from './util';
 
@@ -64,7 +70,8 @@ export function onCursorMoved(
   return onEvent('CursorMoved', handler, undefined, disposables);
 }
 
-export const InternalVimEvents = new HelperVimEvents<{
+// Internal events
+type Event = {
   BufDelete: BufEventListener;
   BufWipeout: BufEventListener;
   TabEnter: BufEventListener;
@@ -73,45 +80,34 @@ export const InternalVimEvents = new HelperVimEvents<{
   CocGitStatusChange: () => EventResult;
   FugitiveChanged: () => EventResult;
   CocBookmarkChange: () => EventResult;
-}>(
-  {
-    BufDelete: {
-      eventExpr: 'BufDelete *',
-      argExprs: ['+expand("<abuf>")'],
-    },
-    BufWipeout: {
-      eventExpr: 'BufWipeout *',
-      argExprs: ['+expand("<abuf>")'],
-    },
-    TabEnter: {
-      eventExpr: 'TabEnter *',
-      argExprs: ['+expand("<abuf>")'],
-    },
-    ColorScheme: {
-      eventExpr: 'ColorScheme *',
-      argExprs: ['g:colors_name'],
-    },
-    CocDiagnosticChange: {
-      eventExpr: 'User CocDiagnosticChange',
-    },
-    CocGitStatusChange: {
-      eventExpr: 'User CocGitStatusChange',
-    },
-    FugitiveChanged: {
-      eventExpr: 'User FugitiveChanged',
-    },
-    CocBookmarkChange: {
-      eventExpr: 'User CocBookmarkChange',
-    },
-  },
-  logger,
-  {
-    name: 'explorer',
-  },
-);
+};
 
-// Internal events
-export const internalEvents = InternalVimEvents.events;
+export function registerInternalEvents(context: ExtensionContext) {
+  const eventList: [user: boolean, event: keyof Event, arglist: string[]][] = [
+    [false, 'BufDelete', ['+expand("<abuf>")']],
+    [false, 'BufWipeout', ['+expand("<abuf>")']],
+    [false, 'TabEnter', ['+expand("<abuf>")']],
+    [false, 'ColorScheme', ['g:colors_name']],
+    [true, 'CocDiagnosticChange', []],
+    [true, 'CocGitStatusChange', []],
+    [true, 'FugitiveChanged', []],
+    [true, 'CocBookmarkChange', []],
+  ];
+
+  context.subscriptions.push(
+    ...eventList.map(([user, event, arglist]) =>
+      workspace.registerAutocmd({
+        event: user ? `User ${event}` : event,
+        arglist,
+        callback: async (...args: any) => {
+          await internalEvents.fire(event, ...args);
+        },
+      }),
+    ),
+  );
+}
+
+export const internalEvents = new HelperEventEmitter<Event>(logger);
 
 export const cocListCloseEmitter = new Emitter<void>();
 

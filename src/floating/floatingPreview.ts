@@ -170,7 +170,7 @@ export class FloatingPreview implements Disposable {
 
     currentBufnr().then(onHover).catch(logger.error);
 
-    window.showMessage(`Preview ${onHoverStrategy} enabled`);
+    void window.showInformationMessage(`Preview ${onHoverStrategy} enabled`);
   }
 
   unregisterOnHover() {
@@ -183,7 +183,7 @@ export class FloatingPreview implements Disposable {
 
     this.close().catch(logger.error);
 
-    window.showMessage('Preview disabled ');
+    void window.showInformationMessage('Preview disabled ');
   }
 
   private registeredPreviewActions: Record<string, PreviewAction> = {};
@@ -234,7 +234,7 @@ export class FloatingPreview implements Disposable {
 
       if (await isBinaryFile(uri)) {
         // Skip binary file, because not supported
-        window.showMessage('Preview content skip binary');
+        await window.showInformationMessage('Preview content skip binary');
         return;
       }
 
@@ -373,7 +373,7 @@ export class FloatingPreview implements Disposable {
     }
 
     if (!this.registeredPreviewActions[previewStrategy]) {
-      window.showMessage(
+      await window.showInformationMessage(
         `coc-explorer no support preview strategy(${previewStrategy})`,
       );
       return;
