@@ -1205,7 +1205,7 @@
     "@types/uuid": "^9.0.0",
     "@types/which": "^2.0.1",
     "coc-floatinput": "^1.7.0",
-    "coc-helper": "^0.16.0",
+    "coc-helper": "^0.16.2",
     "coc.nvim": "^0.0.83-next.9",
     "color-convert": "^2.0.1",
     "command-exists": "^1.2.9",

@@ -1673,6 +1673,14 @@ coc-helper@^0.16.0:
     rimraf "^3.0.2"
     uuid "^9.0.0"
 
+coc-helper@^0.16.2:
+  version "0.16.2"
+  resolved "https://registry.yarnpkg.com/coc-helper/-/coc-helper-0.16.2.tgz#fb62a74c86c4c5627a6e9f192a370e56e0cd76ac"
+  integrity sha512-2wm1ea3jSR/SLochkbzsiLqZuy9VrDqAHOvtE+7aBK7CQaD1QDva+44JImFGppgEU7wk0Rj+r4FUuvK6gKtobQ==
+  dependencies:
+    rimraf "^3.0.2"
+    uuid "^9.0.0"
+
 coc.nvim@^0.0.83-next.9:
   version "0.0.83-next.9"
   resolved "https://registry.yarnpkg.com/coc.nvim/-/coc.nvim-0.0.83-next.9.tgz#8f7de8c98fa37019286852d3b7229fb91517ab83"
@@ -3391,12 +3399,7 @@ json-stringify-safe@^5.0.1:
   resolved "https://registry.yarnpkg.com/json-stringify-safe/-/json-stringify-safe-5.0.1.tgz#1296a2d58fd45f19a0f6ce01d65701e2c735b6eb"
   integrity sha1-Epai1Y/UXxmg9s4B1lcB4sc1tus=
 
-json5@^2.2.1:
-  version "2.2.3"
-  resolved "https://registry.yarnpkg.com/json5/-/json5-2.2.3.tgz#78cd6f1a19bdc12b73db5ad0c61efd66c1e29283"
-  integrity sha512-XmOWe7eyHYH14cLdVPoyg+GOH3rYX++KpzrylJwSW98t3Nk+U8XOl8FWKOgwtzdb8lXGf6zYwDUzeHMWfxasyg==
-
-json5@^2.2.3:
+json5@^2.2.1, json5@^2.2.3:
   version "2.2.3"
   resolved "https://registry.yarnpkg.com/json5/-/json5-2.2.3.tgz#78cd6f1a19bdc12b73db5ad0c61efd66c1e29283"
   integrity sha512-XmOWe7eyHYH14cLdVPoyg+GOH3rYX++KpzrylJwSW98t3Nk+U8XOl8FWKOgwtzdb8lXGf6zYwDUzeHMWfxasyg==
