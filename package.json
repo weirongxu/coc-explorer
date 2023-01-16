@@ -527,6 +527,7 @@
               "terminal"
             ],
             "filetypes": [
+              "vista",
               "vista_kind",
               "qf",
               "tagbar",
