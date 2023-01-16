@@ -889,6 +889,7 @@ Type: <pre><code>BufferFilter & {
     "terminal"
   ],
   "filetypes": [
+    "vista",
     "vista_kind",
     "qf",
     "tagbar",
