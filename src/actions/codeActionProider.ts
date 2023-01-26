@@ -1,4 +1,4 @@
-import {
+import type {
   CancellationToken,
   CodeActionContext,
   CodeActionProvider,
@@ -7,7 +7,7 @@ import {
   TextDocument,
 } from 'coc.nvim';
 import { ActionMenu } from './menu';
-import { ExplorerManager } from '../explorerManager';
+import type { ExplorerManager } from '../explorerManager';
 import { actionListMru } from '../lists/actions';
 import { keyMapping } from '../mappings';
 import { flatten } from '../util';

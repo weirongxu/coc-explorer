@@ -1,5 +1,5 @@
 import pathLib from 'path';
-import { FileNode } from '../../source/sources/file/fileSource';
+import type { FileNode } from '../../source/sources/file/fileSource';
 import { generateUri } from '../../util';
 import { NodesHelper } from './nodes';
 

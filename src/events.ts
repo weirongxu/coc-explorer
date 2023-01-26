@@ -6,7 +6,7 @@ import {
   ExtensionContext,
   workspace,
 } from 'coc.nvim';
-import { LiteralUnion } from 'type-fest';
+import type { LiteralUnion } from 'type-fest';
 import { debounceFn, logger, throttleFn } from './util';
 
 type EventResult = any | Promise<any>;

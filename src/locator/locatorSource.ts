@@ -1,6 +1,6 @@
 import { Notifier } from 'coc-helper';
-import { Explorer } from '../explorer';
-import { BaseTreeNode, ExplorerSource, NodeUid } from '../source/source';
+import type { Explorer } from '../explorer';
+import type { BaseTreeNode, ExplorerSource, NodeUid } from '../source/source';
 import { MarkSource } from './markSource';
 
 export class LocatorSource<TreeNode extends BaseTreeNode<TreeNode>> {

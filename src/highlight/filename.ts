@@ -1,10 +1,10 @@
-import { ExplorerConfig } from '../config';
+import type { ExplorerConfig } from '../config';
 import { diagnosticManager } from '../diagnostic/manager';
 import { getGitFormatHighlight, gitHighlights } from '../git/highlights';
 import { gitManager } from '../git/manager';
 import { GitFormat, GitMixedStatus } from '../git/types';
 import { fileHighlights } from '../source/sources/file/fileSource';
-import { HighlightCommand } from './types';
+import type { HighlightCommand } from './types';
 
 export namespace FilenameHighlight {
   export type HighlightTypes = 'diagnosticError' | 'diagnosticWarning' | 'git';

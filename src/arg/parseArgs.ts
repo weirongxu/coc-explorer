@@ -1,6 +1,6 @@
 import { window, WorkspaceConfiguration } from 'coc.nvim';
 import { getPresets } from '../presets';
-import { Explorer, Position } from '../types/pkg-config';
+import type { Explorer, Position } from '../types/pkg-config';
 import { splitCount } from '../util';
 
 export interface ArgsSource {

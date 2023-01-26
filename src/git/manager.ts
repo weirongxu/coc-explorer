@@ -1,7 +1,7 @@
 import { Disposable } from 'coc.nvim';
 import pathLib from 'path';
 import { config } from '../config';
-import { ExplorerSource } from '../source/source';
+import type { ExplorerSource } from '../source/source';
 import { compactI, logger } from '../util';
 import { GitBinder } from './binder';
 import { GitCommand } from './command';

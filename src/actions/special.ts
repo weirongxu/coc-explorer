@@ -1,4 +1,4 @@
-import { BaseTreeNode, ExplorerSource } from '../source/source';
+import type { BaseTreeNode, ExplorerSource } from '../source/source';
 
 export const conditionActionRules: Record<
   string,

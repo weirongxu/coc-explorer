@@ -1,4 +1,4 @@
-import { FileNode, FileSource } from './fileSource';
+import type { FileNode, FileSource } from './fileSource';
 import { ColumnRegistrar } from '../../columnRegistrar';
 
 export class FileColumnRegistrar extends ColumnRegistrar<

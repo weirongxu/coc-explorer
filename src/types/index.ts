@@ -1,5 +1,9 @@
-import { Explorer, PreviewActionStrategy, RootStrategy } from './pkg-config';
-import { LiteralUnion } from 'type-fest';
+import type {
+  Explorer,
+  PreviewActionStrategy,
+  RootStrategy,
+} from './pkg-config';
+import type { LiteralUnion } from 'type-fest';
 
 export const textobjTargetList = ['line', 'indent'] as const;
 

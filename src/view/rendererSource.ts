@@ -1,11 +1,15 @@
 import { Notifier } from 'coc-helper';
 import { workspace } from 'coc.nvim';
-import { Explorer } from '../explorer';
-import { HighlightPositionWithLine } from '../highlight/types';
+import type { Explorer } from '../explorer';
+import type { HighlightPositionWithLine } from '../highlight/types';
 import { drawnWithIndexRange } from '../painter/util';
-import { BaseTreeNode, ExplorerSource, SourceOptions } from '../source/source';
+import type {
+  BaseTreeNode,
+  ExplorerSource,
+  SourceOptions,
+} from '../source/source';
 import { compactI, flatten } from '../util';
-import { ViewSource } from './viewSource';
+import type { ViewSource } from './viewSource';
 
 export const rendererSourceSymbol = Symbol('rendererSource');
 

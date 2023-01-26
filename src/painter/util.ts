@@ -7,7 +7,7 @@ import {
   isASCII,
   sum,
 } from '../util';
-import {
+import type {
   Drawable,
   DrawableWithWidth,
   DrawContent,

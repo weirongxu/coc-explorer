@@ -1,4 +1,4 @@
-import { BufferNode, BufferSource } from './bufferSource';
+import type { BufferNode, BufferSource } from './bufferSource';
 import { ColumnRegistrar } from '../../columnRegistrar';
 
 class BufferColumnRegistrar extends ColumnRegistrar<BufferNode, BufferSource> {}

@@ -1,8 +1,8 @@
 import { Notifier } from 'coc-helper';
-import { ExtensionContext, Window, workspace } from 'coc.nvim';
+import { Window, workspace } from 'coc.nvim';
 import colorConvert from 'color-convert';
 import { toHex } from '.';
-import { HighlightColor } from '../highlight/extractColors';
+import type { HighlightColor } from '../highlight/extractColors';
 
 let _supportedSetbufline: boolean | undefined = undefined;
 export async function supportedSetbufline() {
@@ -49,7 +49,7 @@ export function generateHighlightFg(groupName: string, hl?: HighlightColor) {
 }
 
 export async function displayWidth(str: string) {
-  return (await workspace.nvim.call('strdisplaywidth', [str])) as number;
+  return workspace.nvim.strWidth(str);
 }
 
 export async function displaySlice(str: string, start: number, end?: number) {

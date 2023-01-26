@@ -10,11 +10,11 @@ import {
 import { isBinaryFile } from 'isbinaryfile';
 import { argOptions } from '../arg/argOptions';
 import { onBufEnter, onCursorMoved, onEvent } from '../events';
-import { Explorer } from '../explorer';
-import { Drawn } from '../painter/types';
-import { BaseTreeNode, ExplorerSource } from '../source/source';
-import { FloatingOpenOptions } from '../types';
-import { PreviewActionStrategy } from '../types/pkg-config';
+import type { Explorer } from '../explorer';
+import type { Drawn } from '../painter/types';
+import type { BaseTreeNode, ExplorerSource } from '../source/source';
+import type { FloatingOpenOptions } from '../types';
+import type { PreviewActionStrategy } from '../types/pkg-config';
 import {
   byteLength,
   currentBufnr,

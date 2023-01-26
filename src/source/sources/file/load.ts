@@ -1,4 +1,3 @@
-// [icon] [title] [root] [fullpath]
 import './root-columns/icon';
 import './root-columns/git';
 import './root-columns/title';

@@ -1,5 +1,5 @@
-import { BaseTreeNode, NodeUid } from '../source/source';
-import { ViewSource } from './viewSource';
+import type { BaseTreeNode, NodeUid } from '../source/source';
+import type { ViewSource } from './viewSource';
 
 type CompactStatus = 'compact' | 'uncompact';
 
@@ -42,7 +42,7 @@ export class ViewNodeStores<TreeNode extends BaseTreeNode<TreeNode>> {
 
   constructor(public viewSource: ViewSource<TreeNode>) {
     const context = viewSource.source.context;
-    const stores = viewSource.config.get('expandStores');
+    const stores = viewSource.config.get('expandStores') ?? true;
     if (typeof stores === 'boolean') {
       this.enabled = stores;
     } else if ('includes' in stores) {

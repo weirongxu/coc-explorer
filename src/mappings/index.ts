@@ -4,7 +4,7 @@ import {
   noopAction,
   waitAction,
 } from '../actions/special';
-import {
+import type {
   Action,
   ActionExp,
   MappingMode,
@@ -15,7 +15,7 @@ import {
   OriginalUserMappings,
 } from '../actions/types';
 import { config } from '../config';
-import { Explorer } from '../types/pkg-config';
+import type { Explorer } from '../types/pkg-config';
 
 type MappingConfigMode = 'none' | 'default';
 

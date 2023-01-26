@@ -1,7 +1,7 @@
 import { Emitter, workspace } from 'coc.nvim';
 import { firstValueFrom } from 'rxjs';
-import { ParsedPosition } from './arg/parseArgs';
-import { Explorer } from './explorer';
+import type { ParsedPosition } from './arg/parseArgs';
+import type { Explorer } from './explorer';
 import { fromEmitter } from './util';
 
 export class TabContainer {

@@ -1,5 +1,5 @@
-import { ViewRowPainter } from './viewPainter';
-import { ExplorerSource, BaseTreeNode } from './source';
+import type { ViewRowPainter } from './viewPainter';
+import type { ExplorerSource, BaseTreeNode } from './source';
 import { Disposable } from 'coc.nvim';
 
 export type ColumnDrawHandle<TreeNode extends BaseTreeNode<TreeNode>> = {

@@ -1,5 +1,9 @@
 import { hasOwnProperty } from '../../util';
-import { IconInfo, IconInternalLoadedItem, IconParsedTarget } from '../icons';
+import type {
+  IconInfo,
+  IconInternalLoadedItem,
+  IconParsedTarget,
+} from '../icons';
 import { IconLoader, registerLoader } from '../loader';
 import { nerdfont, nerdfontHighlights } from '../nerdfont';
 

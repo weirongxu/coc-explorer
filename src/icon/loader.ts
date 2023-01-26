@@ -1,5 +1,5 @@
-import { IconSourceType } from '../types';
-import { IconInternalLoadedItem, IconParsedTarget } from './icons';
+import type { IconSourceType } from '../types';
+import type { IconInternalLoadedItem, IconParsedTarget } from './icons';
 
 export abstract class IconLoader {
   abstract loadIcons(

@@ -1,5 +1,5 @@
-import { Explorer } from '../explorer';
-import { BaseTreeNode, ExplorerSource } from '../source/source';
+import type { Explorer } from '../explorer';
+import type { BaseTreeNode, ExplorerSource } from '../source/source';
 
 export class MarkSource<TreeNode extends BaseTreeNode<TreeNode>> {
   explorer: Explorer;

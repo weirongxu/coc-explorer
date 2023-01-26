@@ -1,4 +1,4 @@
-import { ExplorerConfig } from '../config';
+import type { ExplorerConfig } from '../config';
 import { GitFormat, GitRootFormat } from './types';
 
 export const getRootStatusIcons = (config: ExplorerConfig) => {

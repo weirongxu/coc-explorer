@@ -1,7 +1,7 @@
 import { workspace, WorkspaceConfiguration } from 'coc.nvim';
-import { OriginalActionExp } from './actions/types';
-import { CollapseOption, ExpandOption, RootStrategyStr } from './types';
-import { Explorer } from './types/pkg-config';
+import type { OriginalActionExp } from './actions/types';
+import type { CollapseOption, ExpandOption, RootStrategyStr } from './types';
+import type { Explorer } from './types/pkg-config';
 import { generateUri, logger } from './util';
 
 export const config = workspace.getConfiguration('explorer');

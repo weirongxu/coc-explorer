@@ -2,7 +2,6 @@ import { getRootStatusIcons } from '../../../../git/config';
 import { gitHighlights } from '../../../../git/highlights';
 import { gitManager } from '../../../../git/manager';
 import { fileColumnRegistrar } from '../fileColumnRegistrar';
-import { fileHighlights } from '../fileSource';
 
 fileColumnRegistrar.registerColumn(
   'root',

@@ -1,10 +1,44 @@
+import { workspace } from 'coc.nvim';
 import pathLib from 'path';
 import { Args } from '../../arg/parseArgs';
 import { BufManager } from '../../bufManager';
 import { buildExplorerConfig, configLocal } from '../../config';
 import { Explorer } from '../../explorer';
 import { ExplorerManager } from '../../explorerManager';
-import { ExplorerSource } from '../../source/source';
+import type { ExplorerSource } from '../../source/source';
+
+export function mockWorkspace() {
+  const nvimCall = jest.fn(async (fname: string, argOrArgs: any) => {
+    const args = Array.isArray(argOrArgs) ? argOrArgs : [argOrArgs];
+    if (fname === 'bufnr') return 1;
+    if (fname === 'coc_explorer#util#strdisplayslice')
+      return args[0].slice(args[1], args[2] ?? undefined);
+  });
+  Object.defineProperty(workspace, 'nvim', {
+    get() {
+      return {
+        pauseNotification: jest.fn(() => {}),
+        resumeNotification: jest.fn(() => Promise.resolve()) as jest.Mock<
+          Promise<any>
+        >,
+        call: nvimCall,
+        createBuffer: jest.fn(() => {}) as any,
+      };
+    },
+  });
+
+  Object.defineProperty(workspace, 'isVim', {
+    get() {
+      return false;
+    },
+  });
+
+  Object.defineProperty(workspace, 'isNvim', {
+    get() {
+      return true;
+    },
+  });
+}
 
 export function getExplorer() {
   const config = configLocal();

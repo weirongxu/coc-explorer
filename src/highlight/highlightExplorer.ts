@@ -1,7 +1,7 @@
 import { workspace } from 'coc.nvim';
-import { Explorer } from '../explorer';
+import type { Explorer } from '../explorer';
 import { hlGroupManager } from './manager';
-import { HighlightPositionWithLine } from './types';
+import type { HighlightPositionWithLine } from './types';
 
 export class HighlightExplorer {
   constructor(public readonly explorer: Explorer) {}

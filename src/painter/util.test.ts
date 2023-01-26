@@ -1,4 +1,4 @@
-import { DrawnWithNodeIndex } from './types';
+import type { DrawnWithNodeIndex } from './types';
 import { drawnWithIndexRange } from './util';
 
 test('drawnToRange', () => {

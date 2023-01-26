@@ -1,4 +1,4 @@
-import { Color } from 'coc.nvim';
+import type { Color } from 'coc.nvim';
 import colorConvert from 'color-convert';
 import { minBy } from 'lodash-es';
 

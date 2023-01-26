@@ -1,4 +1,4 @@
-import { BookmarkNode, BookmarkSource } from './bookmarkSource';
+import type { BookmarkNode, BookmarkSource } from './bookmarkSource';
 import { ColumnRegistrar } from '../../columnRegistrar';
 
 class BookmarkColumnRegistrar extends ColumnRegistrar<

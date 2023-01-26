@@ -1,5 +1,5 @@
 import { workspace } from 'coc.nvim';
-import { IconInternalLoadedItem, IconParsedTarget } from '../icons';
+import type { IconInternalLoadedItem, IconParsedTarget } from '../icons';
 import { IconLoader, registerLoader } from '../loader';
 
 export class VimDeviconsLoader extends IconLoader {

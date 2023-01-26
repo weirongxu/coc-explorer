@@ -1,13 +1,13 @@
 import { HelperEventEmitter, Notifier } from 'coc-helper';
 import { Disposable, ExtensionContext, Location, workspace } from 'coc.nvim';
-import { Class } from 'type-fest';
+import type { Class } from 'type-fest';
 import { ActionSource } from '../actions/actionSource';
-import { Explorer } from '../explorer';
+import type { Explorer } from '../explorer';
 import { HighlightSource } from '../highlight/highlightSource';
 import { LocatorSource } from '../locator/locatorSource';
 import { generateUri, logger } from '../util';
-import { RendererSource } from '../view/rendererSource';
-import { ViewSource } from '../view/viewSource';
+import type { RendererSource } from '../view/rendererSource';
+import type { ViewSource } from '../view/viewSource';
 
 export namespace SourceOptions {
   export interface Force {

@@ -1,6 +1,6 @@
 import { IconTarget, loadIconsByConfig } from '../../../../icon/icons';
 import { nerdfontHighlights } from '../../../../icon/nerdfont';
-import { ColumnDrawHandle } from '../../../columnRegistrar';
+import type { ColumnDrawHandle } from '../../../columnRegistrar';
 import { fileColumnRegistrar } from '../fileColumnRegistrar';
 import { fileHighlights, FileNode } from '../fileSource';
 

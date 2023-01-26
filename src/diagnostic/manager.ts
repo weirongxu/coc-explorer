@@ -5,7 +5,7 @@ import {
   Uri,
 } from 'coc.nvim';
 import pathLib from 'path';
-import { ExplorerSource } from '../source/source';
+import type { ExplorerSource } from '../source/source';
 import { normalizePath } from '../util';
 import { DiagnosticBinder } from './binder';
 

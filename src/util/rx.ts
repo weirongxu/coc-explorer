@@ -1,4 +1,4 @@
-import { HelperEventEmitter } from 'coc-helper';
+import type { HelperEventEmitter } from 'coc-helper';
 import { Disposable, Emitter } from 'coc.nvim';
 import {
   debounceTime,

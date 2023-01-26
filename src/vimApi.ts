@@ -1,14 +1,14 @@
 import { WinLayoutFinder } from 'coc-helper';
 import { commands, ExtensionContext, workspace } from 'coc.nvim';
 import pathLib from 'path';
-import { MappingMode, OriginalActionExp } from './actions/types';
+import type { MappingMode, OriginalActionExp } from './actions/types';
 import { tabContainerManager } from './container';
-import { Explorer } from './explorer';
-import { ExplorerManager } from './explorerManager';
+import type { Explorer } from './explorer';
+import type { ExplorerManager } from './explorerManager';
 import { IconInfo, IconTarget, loadIcons } from './icon/icons';
 import { actionListMru } from './lists/actions';
 import { parseOriginalActionExp } from './mappings';
-import { BaseTreeNode, ExplorerSource } from './source/source';
+import type { BaseTreeNode, ExplorerSource } from './source/source';
 import { compactI, logger } from './util';
 
 export function registerApi(

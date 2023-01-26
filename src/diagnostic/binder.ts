@@ -2,7 +2,7 @@ import { Disposable } from 'coc.nvim';
 import pathLib from 'path';
 import { buffer, debounceTime, switchMap } from 'rxjs';
 import { internalEvents } from '../events';
-import { BaseTreeNode, ExplorerSource } from '../source/source';
+import type { BaseTreeNode, ExplorerSource } from '../source/source';
 import { createSubject, mapGetWithDefault, sum } from '../util';
 import { diagnosticManager, DiagnosticType } from './manager';
 

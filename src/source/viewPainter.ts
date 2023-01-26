@@ -1,6 +1,6 @@
-import { Explorer } from '../explorer';
-import { HighlightCommand, HighlightPosition } from '../highlight/types';
-import {
+import type { Explorer } from '../explorer';
+import type { HighlightCommand, HighlightPosition } from '../highlight/types';
+import type {
   Drawable,
   DrawBlock,
   DrawContent,
@@ -17,9 +17,9 @@ import {
   isEmptyDrawableList,
 } from '../painter/util';
 import { flatten, sum } from '../util';
-import { Column } from './columnRegistrar';
-import { BaseTreeNode } from './source';
-import { TemplatePart } from './sourcePainters';
+import type { Column } from './columnRegistrar';
+import type { BaseTreeNode } from './source';
+import type { TemplatePart } from './sourcePainters';
 
 export class ViewPainter {
   constructor(public explorer: Explorer) {}

@@ -1,6 +1,6 @@
 import { Notifier } from 'coc-helper';
-import { Explorer } from '../explorer';
-import { BaseTreeNode, ExplorerSource } from '../source/source';
+import type { Explorer } from '../explorer';
+import type { BaseTreeNode, ExplorerSource } from '../source/source';
 import { RendererExplorer, rendererExplorerSymbol } from './rendererExplorer';
 
 export class ViewExplorer {

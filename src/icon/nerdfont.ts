@@ -1,7 +1,7 @@
 import convert from 'color-convert';
 import { config } from '../config';
 import { hlGroupManager } from '../highlight/manager';
-import { HighlightCommand } from '../highlight/types';
+import type { HighlightCommand } from '../highlight/types';
 import { parseColor } from '../util';
 import nerdfontJson from './icons.nerdfont.json';
 

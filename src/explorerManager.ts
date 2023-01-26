@@ -1,9 +1,9 @@
-import { HelperEventEmitter } from 'coc-helper';
+import { HelperEventEmitter, isTest } from 'coc-helper';
 import { Disposable, disposeAll, ExtensionContext, workspace } from 'coc.nvim';
 import { firstValueFrom } from 'rxjs';
 import { argOptions, ResolvedArgs } from './arg/argOptions';
 import { Args } from './arg/parseArgs';
-import { BufManager } from './bufManager';
+import type { BufManager } from './bufManager';
 import { buildExplorerConfig, configLocal } from './config';
 import { tabContainerManager } from './container';
 import { GlobalContextVars } from './contextVariables';
@@ -45,6 +45,7 @@ export class ExplorerManager {
   }
 
   private async updatePrevCtxVars(bufnr: number) {
+    if (isTest) return;
     if (!this.bufnrs().includes(bufnr)) {
       const bufname = (await this.nvim.call('bufname')) as string;
       if (

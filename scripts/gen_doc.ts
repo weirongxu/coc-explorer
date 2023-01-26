@@ -1,5 +1,5 @@
 import fs from 'fs';
-import { JSONSchema7, JSONSchema7Type } from 'json-schema';
+import type { JSONSchema7, JSONSchema7Type } from 'json-schema';
 import pathLib from 'path';
 import ts from 'typescript';
 import Pkg from '../package.json';
@@ -47,8 +47,10 @@ abstract class DocGenerator {
       }
       if (row.default !== undefined) {
         hideLine += 'Default: ';
-        hideLine +=
-          '<pre><code>' + this.printJson(row.default, true) + '</code></pre>';
+        hideLine += `<pre><code>${this.printJson(
+          row.default,
+          true,
+        )}</code></pre>`;
       }
       if (hideLine) {
         lines.push('<details>');

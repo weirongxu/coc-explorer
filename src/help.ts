@@ -4,19 +4,19 @@ import {
   noopAction,
   waitAction,
 } from './actions/special';
-import { Explorer } from './explorer';
+import type { Explorer } from './explorer';
 import { keyMapping } from './mappings';
 import { hlGroupManager } from './highlight/manager';
-import { BaseTreeNode, ExplorerSource } from './source/source';
+import type { BaseTreeNode, ExplorerSource } from './source/source';
 import { ViewPainter, ViewRowPainter } from './source/viewPainter';
-import { Action, ActionExp, Mappings } from './actions/types';
-import { ActionRegistrar } from './actions/registrar';
+import type { Action, ActionExp, Mappings } from './actions/types';
+import type { ActionRegistrar } from './actions/registrar';
 import { ActionMenu } from './actions/menu';
-import {
+import type {
   HighlightPosition,
   HighlightPositionWithLine,
 } from './highlight/types';
-import { DrawBlock } from './painter/types';
+import type { DrawBlock } from './painter/types';
 import { Notifier } from 'coc-helper';
 import { clearMappings, executeMappings } from './mappings/manager';
 

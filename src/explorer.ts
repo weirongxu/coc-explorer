@@ -11,22 +11,22 @@ import {
 import pFilter from 'p-filter';
 import { ActionExplorer } from './actions/actionExplorer';
 import { loadGlobalActions } from './actions/globalActions';
-import { MappingMode } from './actions/types';
+import type { MappingMode } from './actions/types';
 import { argOptions, ResolvedArgs } from './arg/argOptions';
-import { ArgContentWidthTypes, Args } from './arg/parseArgs';
+import type { ArgContentWidthTypes, Args } from './arg/parseArgs';
 import { ExplorerConfig, getRevealWhenOpen } from './config';
 import { BuffuerContextVars } from './contextVariables';
 import { doUserAutocmd, doUserAutocmdNotifier, onEvent } from './events';
-import { ExplorerManager } from './explorerManager';
+import type { ExplorerManager } from './explorerManager';
 import { FloatingPreview } from './floating/floatingPreview';
 import { quitHelp, showHelp } from './help';
 import { HighlightExplorer } from './highlight/highlightExplorer';
 import { LocatorExplorer } from './locator/locatorExplorer';
-import { Rooter, RooterOpened } from './rooter';
+import type { Rooter, RooterOpened } from './rooter';
 import './source/load';
-import { BaseTreeNode, ExplorerSource } from './source/source';
+import type { BaseTreeNode, ExplorerSource } from './source/source';
 import { sourceManager } from './source/sourceManager';
-import { ExplorerOpenOptions } from './types';
+import type { ExplorerOpenOptions } from './types';
 import {
   closeWinByBufnrNotifier,
   currentBufnr,
@@ -37,7 +37,7 @@ import {
   winidByWinnr,
   winnrByBufnr,
 } from './util';
-import { RendererExplorer } from './view/rendererExplorer';
+import type { RendererExplorer } from './view/rendererExplorer';
 import { ViewExplorer } from './view/viewExplorer';
 
 export class Explorer implements Disposable {

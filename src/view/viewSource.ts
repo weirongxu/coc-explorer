@@ -1,8 +1,12 @@
 import { Disposable, workspace } from 'coc.nvim';
 import { clone } from 'lodash-es';
-import { Explorer } from '../explorer';
-import { ColumnRegistrar } from '../source/columnRegistrar';
-import { BaseTreeNode, ExplorerSource, SourceOptions } from '../source/source';
+import type { Explorer } from '../explorer';
+import type { ColumnRegistrar } from '../source/columnRegistrar';
+import type {
+  BaseTreeNode,
+  ExplorerSource,
+  SourceOptions,
+} from '../source/source';
 import { SourcePainters } from '../source/sourcePainters';
 import { rendererExplorerSymbol } from './rendererExplorer';
 import { RendererSource, rendererSourceSymbol } from './rendererSource';
@@ -296,7 +300,10 @@ export class ViewSource<
     node: TreeNode,
     options: SourceOptions.ExpandNode,
   ) {
-    const autoExpandOptions = this.config.get('autoExpandOptions');
+    const autoExpandOptions = this.config.get('autoExpandOptions') ?? [
+      'compact',
+      'uncompact',
+    ];
     const compact = options.compact ?? autoExpandOptions.includes('compact');
     const uncompact =
       options.uncompact ?? autoExpandOptions.includes('uncompact');

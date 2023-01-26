@@ -1,6 +1,6 @@
 import { config } from '../config';
-import { OpenStrategy, RootStrategyStr } from '../types';
-import { Position } from '../types/pkg-config';
+import type { OpenStrategy, RootStrategyStr } from '../types';
+import type { Position } from '../types/pkg-config';
 import { normalizePath } from '../util';
 import {
   ArgContentWidthTypes,

@@ -12,8 +12,8 @@ import { internalHighlightGroups } from '../../../highlight/internalColors';
 import { hlGroupManager } from '../../../highlight/manager';
 import { fileList } from '../../../lists/files';
 import { startCocList } from '../../../lists/runner';
-import { RootStrategyStr } from '../../../types';
-import { Explorer } from '../../../types/pkg-config';
+import type { RootStrategyStr } from '../../../types';
+import type { Explorer } from '../../../types/pkg-config';
 import {
   fsAccess,
   fsLstat,
@@ -25,7 +25,7 @@ import {
   logger,
   normalizePath,
 } from '../../../util';
-import { RendererSource } from '../../../view/rendererSource';
+import type { RendererSource } from '../../../view/rendererSource';
 import { ViewSource } from '../../../view/viewSource';
 import { BaseTreeNode, ExplorerSource } from '../../source';
 import { sourceManager } from '../../sourceManager';

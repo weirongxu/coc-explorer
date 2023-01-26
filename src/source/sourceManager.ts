@@ -1,6 +1,6 @@
 import { Disposable } from 'coc.nvim';
-import { ExplorerSourceClass } from './source';
-import { Explorer } from '../explorer';
+import type { ExplorerSourceClass } from './source';
+import type { Explorer } from '../explorer';
 
 class SourceManager {
   registeredSources: Record<string, ExplorerSourceClass> = {};

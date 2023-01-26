@@ -1,5 +1,5 @@
 import { workspace } from 'coc.nvim';
-import { ActionSource } from '../../../actions/actionSource';
+import type { ActionSource } from '../../../actions/actionSource';
 import { bufferTabOnly } from '../../../config';
 import { tabContainerManager } from '../../../container';
 import {
@@ -7,7 +7,7 @@ import {
   prompt,
   winidsByBufnrInCurTab,
 } from '../../../util';
-import { BufferNode, BufferSource } from './bufferSource';
+import type { BufferNode, BufferSource } from './bufferSource';
 
 export function loadBufferActions(
   action: ActionSource<BufferSource, BufferNode>,

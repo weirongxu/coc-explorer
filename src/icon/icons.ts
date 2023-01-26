@@ -1,7 +1,7 @@
 import { keyBy } from 'lodash-es';
-import { ExplorerConfig } from '../config';
-import { HighlightCommand } from '../highlight/types';
-import { IconSourceType } from '../types';
+import type { ExplorerConfig } from '../config';
+import type { HighlightCommand } from '../highlight/types';
+import type { IconSourceType } from '../types';
 import { getExtensions, hasOwnProperty, logger, partition } from '../util';
 import './load';
 import { getLoader } from './loader';

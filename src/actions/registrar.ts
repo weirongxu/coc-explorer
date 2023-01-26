@@ -1,6 +1,6 @@
-import { BaseTreeNode, ExplorerSource } from '../source/source';
-import { ActionMenu } from './menu';
-import { MappingMode } from './types';
+import type { BaseTreeNode, ExplorerSource } from '../source/source';
+import type { ActionMenu } from './menu';
+import type { MappingMode } from './types';
 
 export namespace ActionRegistrar {
   export type Options = {

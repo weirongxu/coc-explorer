@@ -3,7 +3,7 @@ import pathLib from 'path';
 import { buffer, debounceTime, Subject } from 'rxjs';
 import { tabContainerManager } from './container';
 import { internalEvents, onEvent } from './events';
-import { BufferNode } from './source/sources/buffer/bufferSource';
+import type { BufferNode } from './source/sources/buffer/bufferSource';
 import {
   compactI,
   leaveEmptyInWinids,

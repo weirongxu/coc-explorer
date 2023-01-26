@@ -19,9 +19,9 @@ import {
   textobjTargetList,
   textobjTypeList,
 } from '../types';
-import { PreviewActionStrategy } from '../types/pkg-config';
+import type { PreviewActionStrategy } from '../types/pkg-config';
 import { enableWrapscan, input, scanIndexNext, scanIndexPrev } from '../util';
-import { ActionExplorer } from './actionExplorer';
+import type { ActionExplorer } from './actionExplorer';
 import { openAction } from './openAction';
 
 export function loadGlobalActions(action: ActionExplorer) {

@@ -1,5 +1,5 @@
-import { ExplorerSource } from '../source/source';
-import { HighlightPositionWithLine } from './types';
+import type { ExplorerSource } from '../source/source';
+import type { HighlightPositionWithLine } from './types';
 
 export class HighlightSource {
   constructor(

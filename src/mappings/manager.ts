@@ -1,6 +1,6 @@
 import { ExtensionContext, workspace } from 'coc.nvim';
-import { MappingMode } from '../actions/types';
-import { ExplorerManager } from '../explorerManager';
+import type { MappingMode } from '../actions/types';
+import type { ExplorerManager } from '../explorerManager';
 import { keyMapping } from '../mappings';
 import { logger } from '../util';
 

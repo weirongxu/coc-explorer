@@ -1,4 +1,4 @@
-import { Explorer } from '../explorer';
+import type { Explorer } from '../explorer';
 import { enableWrapscan } from '../util';
 
 export class MarkExplorer {

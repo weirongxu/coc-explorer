@@ -1,5 +1,5 @@
 import { workspace } from 'coc.nvim';
-import { FileSource } from '../source/sources/file/fileSource';
+import type { FileSource } from '../source/sources/file/fileSource';
 import { logger } from '../util';
 import { registerList } from './runner';
 

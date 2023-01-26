@@ -1,7 +1,7 @@
 import { Disposable, Position, Range, workspace } from 'coc.nvim';
 import { internalEvents } from '../events';
 import type { Explorer } from '../explorer';
-import { HighlightCommand, HighlightPositionWithLine } from './types';
+import type { HighlightCommand, HighlightPositionWithLine } from './types';
 
 class HighlightManager {
   nvim = workspace.nvim;

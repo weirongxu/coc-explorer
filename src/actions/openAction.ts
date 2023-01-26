@@ -1,10 +1,10 @@
 import { Notifier, WinLayoutFinder } from 'coc-helper';
 import { Neovim, workspace } from 'coc.nvim';
 import { argOptions } from '../arg/argOptions';
-import { ParsedPosition } from '../arg/parseArgs';
+import type { ParsedPosition } from '../arg/parseArgs';
 import type { Explorer } from '../explorer';
-import { BaseTreeNode, ExplorerSource } from '../source/source';
-import { OpenCursorPosition, OpenStrategy } from '../types';
+import type { BaseTreeNode, ExplorerSource } from '../source/source';
+import type { OpenCursorPosition, OpenStrategy } from '../types';
 import { hasOwnProperty, selectWindowsUI } from '../util';
 
 class OpenActionContext {

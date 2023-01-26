@@ -2,7 +2,7 @@ import open from 'open';
 import { Notifier } from 'coc-helper';
 import { window, workspace } from 'coc.nvim';
 import pathLib from 'path';
-import { ActionSource } from '../../../actions/actionSource';
+import type { ActionSource } from '../../../actions/actionSource';
 import { driveList } from '../../../lists/drives';
 import { startCocList } from '../../../lists/runner';
 import { explorerWorkspaceFolderList } from '../../../lists/workspaceFolders';
@@ -33,7 +33,7 @@ import {
   prompt,
   selectWindowsUI,
 } from '../../../util';
-import { FileNode, FileSource } from './fileSource';
+import type { FileNode, FileSource } from './fileSource';
 
 export function loadFileActions(action: ActionSource<FileSource, FileNode>) {
   const { nvim } = workspace;

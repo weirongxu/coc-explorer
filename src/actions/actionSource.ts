@@ -1,13 +1,13 @@
 import { explorerActionList } from '../lists/actions';
 import { startCocList } from '../lists/runner';
 import { keyMapping } from '../mappings';
-import { BaseTreeNode, ExplorerSource } from '../source/source';
+import type { BaseTreeNode, ExplorerSource } from '../source/source';
 import { flatten, logger, partition, uniq } from '../util';
-import { ActionExplorer } from './actionExplorer';
+import type { ActionExplorer } from './actionExplorer';
 import { ActionMenu } from './menu';
 import { ActionRegistrar } from './registrar';
 import { conditionActionRules, noopAction, waitAction } from './special';
-import { ActionExp, MappingMode } from './types';
+import type { ActionExp, MappingMode } from './types';
 
 export class ActionSource<
   S extends ExplorerSource<any>,

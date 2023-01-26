@@ -1,4 +1,4 @@
-import { ExplorerManager } from '../../../../explorerManager';
+import type { ExplorerManager } from '../../../../explorerManager';
 
 export type ClipboardContent = {
   type: 'none' | 'copy' | 'cut';

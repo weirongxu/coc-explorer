@@ -1187,7 +1187,7 @@
     "watch": "tsup --no-minify --watch",
     "prepare": "run-s clean build",
     "lint": "eslint src --ext .js,.ts",
-    "unittest": "jest --runInBand --detectOpenHandles --forceExit",
+    "unittest": "jest",
     "test": "run-s lint unittest"
   },
   "dependencies": {

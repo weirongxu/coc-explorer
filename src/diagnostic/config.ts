@@ -1,4 +1,4 @@
-import { ExplorerConfig } from '../config';
+import type { ExplorerConfig } from '../config';
 import { toSubscriptNumbers } from '../util';
 
 type DiagnosisConfig = {

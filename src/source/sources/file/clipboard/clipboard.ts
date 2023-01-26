@@ -1,5 +1,5 @@
-import { ExplorerManager } from '../../../../explorerManager';
-import { ClipboardStorage } from './base';
+import type { ExplorerManager } from '../../../../explorerManager';
+import type { ClipboardStorage } from './base';
 import { GlobalStateStorage } from './global-state';
 
 export function getClipboard(

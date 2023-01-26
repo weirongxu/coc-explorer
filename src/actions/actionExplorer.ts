@@ -1,11 +1,11 @@
 import { Mutex, window } from 'coc.nvim';
-import { Explorer } from '../explorer';
+import type { Explorer } from '../explorer';
 import { keyMapping } from '../mappings';
-import { BaseTreeNode, ExplorerSource } from '../source/source';
-import { MoveStrategy } from '../types';
+import type { BaseTreeNode, ExplorerSource } from '../source/source';
+import type { MoveStrategy } from '../types';
 import { enableWrapscan, logger, scanIndexNext, scanIndexPrev } from '../util';
 import { ActionRegistrar } from './registrar';
-import { ActionExp, MappingMode } from './types';
+import type { ActionExp, MappingMode } from './types';
 
 export class ActionExplorer extends ActionRegistrar<
   Explorer,

@@ -1,7 +1,7 @@
 import { Notifier } from 'coc-helper';
 import { workspace } from 'coc.nvim';
-import { Explorer } from '../explorer';
-import { ViewExplorer } from '../view/viewExplorer';
+import type { Explorer } from '../explorer';
+import type { ViewExplorer } from '../view/viewExplorer';
 import { MarkExplorer } from './markExplorer';
 
 export class LocatorExplorer {

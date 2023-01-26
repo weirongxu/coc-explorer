@@ -2,7 +2,7 @@ import { workspace } from 'coc.nvim';
 import pathLib from 'path';
 import type { Explorer } from './explorer';
 import { rootStrategyList, RootStrategyStr } from './types';
-import { RootStrategy } from './types/pkg-config';
+import type { RootStrategy } from './types/pkg-config';
 import { inDirectory, isParentFolder, logger, normalizePath } from './util';
 
 export class Rooter {

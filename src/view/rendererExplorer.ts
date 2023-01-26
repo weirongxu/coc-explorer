@@ -1,10 +1,10 @@
 import { Notifier } from 'coc-helper';
 import { Mutex } from 'coc.nvim';
-import { Explorer } from '../explorer';
-import { BaseTreeNode } from '../source/source';
+import type { Explorer } from '../explorer';
+import type { BaseTreeNode } from '../source/source';
 import { logger } from '../util';
 import { RendererSource, rendererSourceSymbol } from './rendererSource';
-import { ViewExplorer } from './viewExplorer';
+import type { ViewExplorer } from './viewExplorer';
 
 export const rendererExplorerSymbol = Symbol('rendererExplorer');
 
