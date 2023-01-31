@@ -6,7 +6,7 @@ import { EventEmitter } from 'events';
 import minimatch from 'minimatch';
 import pathLib from 'path';
 import readline from 'readline';
-import { executable, isWindows } from '../util';
+import { executable, isWindows, logger } from '../util';
 import { registerList } from './runner';
 
 class Task extends EventEmitter implements ListTask {
@@ -37,7 +37,8 @@ class Task extends EventEmitter implements ListTask {
         if (hasPattern && excludePatterns.some((p) => minimatch(file, p))) {
           return;
         }
-        const location = Location.create(Uri.file(file).toString(), range);
+        const finalPath = file.replace(/\/$/, '');
+        const location = Location.create(Uri.file(finalPath).toString(), range);
         this.emit('data', {
           label: line,
           location,
@@ -113,6 +114,7 @@ export const fileList = registerList<Arg, any>({
     if (!cmd) {
       return;
     }
+    logger.info(`file list task cmd: ${cmd.name}`);
     const task = new Task();
     const excludePatterns = config.get<string[]>('excludePatterns', []);
     task.start(cmd.name, cmd.args, [arg.rootPath], excludePatterns);
