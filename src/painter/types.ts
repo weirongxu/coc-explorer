@@ -21,7 +21,7 @@ export type DrawContent = {
   type: 'content';
   content: string;
   /**
-   * Calculate width via `displayWidth()` when unicode is true
+   * Calculate width via `workspace.nvim.strWidth()` when unicode is true
    */
   unicode?: boolean;
   width?: number;
