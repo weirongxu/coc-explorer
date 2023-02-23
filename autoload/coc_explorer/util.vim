@@ -104,3 +104,17 @@ function! coc_explorer#util#strdisplayslice(str, start, end) abort
   let str = matchstr(str, '\%>' . a:start . 'v.*')
   return s:pad_end(str, a:end - a:start)
 endfunction
+
+" Open file
+function! coc_explorer#util#open_file(cmd, filepath, is_relative) abort
+  let cur_fullpath = expand('%:p')
+  if a:cmd == 'edit' && cur_fullpath == a:filepath
+    return
+  endif
+  let path = a:filepath
+  if a:is_relative
+    let path = fnamemodify(path, ':.')
+  endif
+  let path = fnameescape(path)
+  execute a:cmd . ' ' . path
+endfunction

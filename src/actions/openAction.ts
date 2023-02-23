@@ -30,10 +30,10 @@ class OpenActionContext {
     this.openByWinnr =
       originalOpenByWinnr ??
       (async (winnr: number) => {
-        const escapedPath = await this.getEscapePath();
+        const openNotifier = await this.openFilepathNotifier('edit');
         await this.openWrap(() => {
           this.nvim.command(`${winnr}wincmd w`, true);
-          this.nvim.command(`edit ${escapedPath}`, true);
+          openNotifier.notify();
           if (workspace.isVim) {
             // Avoid vim highlight not working,
             // https://github.com/weirongxu/coc-explorer/issues/113
@@ -77,12 +77,16 @@ class OpenActionContext {
     await this.nvim.resumeNotification();
   }
 
-  async getEscapePath(): Promise<string> {
-    let path = await this.getFullpath();
-    if (this.explorer.config.get('openAction.relativePath')) {
-      path = await workspace.nvim.call('fnamemodify', [path, ':.']);
-    }
-    return await workspace.nvim.call('fnameescape', [path]);
+  async openFilepathNotifier(cmd: string) {
+    const fullpath = await this.getFullpath();
+    const isRel = this.explorer.config.get('openAction.relativePath');
+    return Notifier.create(() => {
+      this.nvim.call(
+        'coc_explorer#util#open_file',
+        [cmd, fullpath, isRel],
+        true,
+      );
+    });
   }
 
   async tryResize() {
@@ -134,10 +138,10 @@ class OpenActions {
           ];
         if (target) {
           const targetWinid = WinLayoutFinder.getFirstLeafWinid(target);
-          const escapedPath = await ctx.getEscapePath();
+          const openNotifier = await ctx.openFilepathNotifier(command);
           await ctx.openWrap(() => {
             ctx.nvim.call('win_gotoid', [targetWinid], true);
-            ctx.nvim.command(`${command} ${escapedPath}`, true);
+            openNotifier.notify();
           });
         }
       } else {
@@ -156,9 +160,9 @@ class OpenActions {
 
   async 'split.plain'() {
     const ctx = this.ctx;
-    const escapedPath = await ctx.getEscapePath();
+    const openNotifier = await ctx.openFilepathNotifier('split');
     await ctx.openWrap(() => {
-      ctx.nvim.command(`split ${escapedPath}`, true);
+      openNotifier.notify();
     });
   }
 
@@ -179,9 +183,9 @@ class OpenActions {
   }
   async 'vsplit.plain'() {
     const ctx = this.ctx;
-    const escapedPath = await ctx.getEscapePath();
+    const openNotifier = await ctx.openFilepathNotifier('vsplit');
     await ctx.openWrap(() => {
-      ctx.nvim.command(`vsplit ${escapedPath}`, true);
+      openNotifier.notify();
     });
   }
 
@@ -199,10 +203,10 @@ class OpenActions {
 
   async tab() {
     const ctx = this.ctx;
-    const escapedPath = await ctx.getEscapePath();
+    const openNotifier = await ctx.openFilepathNotifier('tabedit');
     await ctx.openWrap(
       () => {
-        ctx.nvim.command(`tabedit ${escapedPath}`, true);
+        openNotifier.notify();
       },
       { earlyQuit: true },
     );
