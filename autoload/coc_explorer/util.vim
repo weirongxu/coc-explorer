@@ -108,8 +108,14 @@ endfunction
 " Open file
 function! coc_explorer#util#open_file(cmd, filepath, is_relative) abort
   let cur_fullpath = expand('%:p')
-  if a:cmd == 'edit' && cur_fullpath == a:filepath
-    return
+  if a:cmd == 'edit'
+    if cur_fullpath == a:filepath
+      return
+    endif
+    if &modified && !&hidden
+      echoerr 'Vim hidden option is off'
+      return
+    endif
   endif
   let path = a:filepath
   if a:is_relative
