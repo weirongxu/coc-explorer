@@ -338,6 +338,14 @@ export function loadGlobalActions(action: ActionExplorer) {
       }
     },
     'go to source',
+    {
+      args: [
+        {
+          name: 'source name',
+          description: 'buffer | file | ...',
+        },
+      ],
+    },
   );
   action.addNodeAction(
     'sourceNext',
