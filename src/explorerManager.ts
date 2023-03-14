@@ -202,13 +202,16 @@ export class ExplorerManager {
     const rooter = new Rooter(workspace.root);
 
     if (!explorer || !(await this.nvim.call('bufexists', [explorer.bufnr]))) {
+      // Create a new explorer instance
       explorer = await Explorer.create(this, argValues, explorerConfig);
       tabContainer.setExplorer(position, explorer);
     } else if (!(await explorer.inited.get())) {
+      // Delete invalid explorer and create a new
       await this.nvim.command(`bwipeout! ${explorer.bufnr}`);
       explorer = await Explorer.create(this, argValues, explorerConfig);
       tabContainer.setExplorer(position, explorer);
     } else {
+      // Resume, toggle or focus
       const win = await explorer.win;
       if (!win) {
         if (await this.checkResume(explorer, argValues)) {
