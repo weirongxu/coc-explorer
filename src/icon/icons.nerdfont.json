@@ -123,6 +123,10 @@
       "color": "#8dc149"
     },
     "c": {
+      "code": "",
+      "color": "#a074c4"
+    },
+    "cpp": {
       "code": "",
       "color": "#519aba"
     },
@@ -402,11 +406,11 @@
     "webp": "image",
     "ico": "ico",
     "twig": "twig",
-    "cpp": "c",
-    "c++": "c",
-    "cxx": "c",
-    "cc": "c",
-    "cp": "c",
+    "cpp": "cpp",
+    "c++": "cpp",
+    "cxx": "cpp",
+    "cc": "cpp",
+    "cp": "cpp",
     "c": "c",
     "h": "h",
     "hh": "h",
