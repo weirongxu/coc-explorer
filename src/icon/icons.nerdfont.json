@@ -10,11 +10,11 @@
       "color": "#00afaf"
     },
     "folderSymlink": {
-      "code": "",
+      "code": "",
       "color": "#00afaf"
     },
     "folderNpm": {
-      "code": "䮎",
+      "code": "",
       "color": "#00afaf"
     },
     "file": {
@@ -30,15 +30,15 @@
       "color": "#999999"
     },
     "excel": {
-      "code": "",
+      "code": "",
       "color": "#207245"
     },
     "word": {
-      "code": "",
+      "code": "",
       "color": "#185abd"
     },
     "ppt": {
-      "code": "",
+      "code": "",
       "color": "#cb4a32"
     },
     "stylus": {
@@ -55,7 +55,7 @@
     },
     "xml": {
       "code": "",
-      "code.origin": "謹",
+      "code.origin": "",
       "color": "#e37933"
     },
     "ejs": {
@@ -67,7 +67,7 @@
       "color": "#519aba"
     },
     "webpack": {
-      "code": "ﰩ",
+      "code": "",
       "color": "#519aba"
     },
     "markdown": {
@@ -123,6 +123,10 @@
       "color": "#8dc149"
     },
     "c": {
+      "code": "",
+      "color": "#a074c4"
+    },
+    "cpp": {
       "code": "",
       "color": "#519aba"
     },
@@ -199,7 +203,7 @@
       "color": "#fb9d3b"
     },
     "csharp": {
-      "code": "",
+      "code": "",
       "color": "#519aba"
     },
     "fsharp": {
@@ -263,7 +267,7 @@
       "color": "#cbcb41"
     },
     "vue": {
-      "code": "﵂",
+      "code": "",
       "color": "#8dc149"
     },
     "swift": {
@@ -335,7 +339,7 @@
       "color": "#1563FF"
     },
     "svg": {
-      "code": "ﰟ",
+      "code": "",
       "color": "#FFB13B"
     },
     "font": {
@@ -347,7 +351,7 @@
       "color": "#999999"
     },
     "archive": {
-      "code": "",
+      "code": "",
       "color": "#cc3e44"
     },
     "lock": {
@@ -402,11 +406,11 @@
     "webp": "image",
     "ico": "ico",
     "twig": "twig",
-    "cpp": "c",
-    "c++": "c",
-    "cxx": "c",
-    "cc": "c",
-    "cp": "c",
+    "cpp": "cpp",
+    "c++": "cpp",
+    "cxx": "cpp",
+    "cc": "cpp",
+    "cp": "cpp",
     "c": "c",
     "h": "h",
     "hh": "h",
