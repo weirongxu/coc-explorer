@@ -110,9 +110,29 @@
       "code": "",
       "color": "#6d8086"
     },
+    "video": {
+      "code": "",
+      "color": "#dc5285"
+    },
+    "audio": {
+      "code": "",
+      "color": "#a074c4"
+    },
+    "photoshop": {
+      "code": "",
+      "color": "#001d34"
+    },
     "image": {
       "code": "",
       "color": "#a074c4"
+    },
+    "ai": {
+      "code": "",
+      "color": "#cbcb41"
+    },
+    "psd": {
+      "code": "",
+      "color": "#519aba"
     },
     "ico": {
       "code": "",
@@ -237,18 +257,6 @@
     "vim": {
       "code": "",
       "color": "#019833"
-    },
-    "ai": {
-      "code": "",
-      "color": "#cbcb41"
-    },
-    "psd": {
-      "code": "",
-      "color": "#519aba"
-    },
-    "psb": {
-      "code": "",
-      "color": "#519aba"
     },
     "typescript": {
       "code": "",
@@ -398,12 +406,54 @@
     "yml": "conf",
     "yaml": "conf",
     "toml": "conf",
+    "avi": "video",
+    "flv": "video",
+    "m1v": "video",
+    "m2v": "video",
+    "mk3d": "video",
+    "mks": "video",
+    "mkv": "video",
+    "mov": "video",
+    "movie": "video",
+    "mp4": "video",
+    "mp4v": "video",
+    "mpe": "video",
+    "mpeg": "video",
+    "mpg": "video",
+    "mpg4": "video",
+    "ogv": "video",
+    "qt": "video",
+    "webm": "video",
+    "wmv": "video",
+    "aac": "audio",
+    "m2a": "audio",
+    "m3a": "audio",
+    "mid": "audio",
+    "midi": "audio",
+    "mp2": "audio",
+    "mp2a": "audio",
+    "mp3": "audio",
+    "mp4a": "audio",
+    "mpga": "audio",
+    "oga": "audio",
+    "ogg": "audio",
+    "opus": "audio",
+    "spx": "audio",
+    "wav": "audio",
+    "wma": "audio",
     "jpg": "image",
+    "jpe": "image",
     "jpeg": "image",
     "bmp": "image",
     "png": "image",
     "gif": "image",
     "webp": "image",
+    "tga": "image",
+    "tif": "image",
+    "tiff": "image",
+    "ai": "ai",
+    "psd": "psd",
+    "psb": "psd",
     "ico": "ico",
     "twig": "twig",
     "cpp": "cpp",
@@ -471,9 +521,6 @@
     "exx": "elixir",
     "leex": "elixir",
     "vim": "vim",
-    "ai": "ai",
-    "psd": "psd",
-    "psb": "psd",
     "ts": "typescript",
     "tsx": "javascriptreact",
     "jl": "julia",
