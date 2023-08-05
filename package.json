@@ -10,6 +10,7 @@
   "homepage": "https://github.com/weirongxu/coc-explorer",
   "license": "MIT",
   "engines": {
+    "node": ">=14.14",
     "coc": "^0.0.80"
   },
   "files": [
