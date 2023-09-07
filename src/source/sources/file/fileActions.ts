@@ -645,17 +645,25 @@ export function loadFileActions(action: ActionSource<FileSource, FileNode>) {
 
       let targetPath: string | undefined;
 
+      let cwd = await nvim.call('getcwd')
+      let path = node.fullpath.replace(cwd, '')
+      let renameInCwd = path !== node.fullpath
+
+      let targetPath;
       targetPath = await input(
-        `Rename: ${node.fullpath} ->`,
-        node.fullpath,
-        'file',
+          `Rename: `,
+          path,
+          "file"
       );
-
-      targetPath = targetPath?.trim();
+      
+      targetPath = targetPath == null ? void 0 : targetPath.trim();
       if (!targetPath) {
-        return;
+          return;
       }
-
+      
+      if (renameInCwd) {
+          targetPath = cwd + targetPath
+      }
       await overwritePrompt(
         'rename',
         [
