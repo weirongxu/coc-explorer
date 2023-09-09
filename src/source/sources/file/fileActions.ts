@@ -306,8 +306,8 @@ export function loadFileActions(action: ActionSource<FileSource, FileNode>) {
       await file.copyToClipboard(
         nodes
           ? nodes
-              .map((it) => pathLib.relative(file.root, it.fullpath))
-              .join('\n')
+            .map((it) => pathLib.relative(file.root, it.fullpath))
+            .join('\n')
           : file.root,
       );
       await window.showInformationMessage(
@@ -645,16 +645,12 @@ export function loadFileActions(action: ActionSource<FileSource, FileNode>) {
 
       let targetPath: string | undefined;
 
-      const cwd = await nvim.call('getcwd');
-      const path = node.fullpath.replace(cwd, '');
-      const renameInCwd = path !== node.fullpath;
+      const cwd: string = await nvim.call('getcwd');
+      const path: string = node.fullpath.replace(cwd, '');
+      const renameInCwd: boolean = path !== node.fullpath;
 
-      targetPath = await input(
-        `Rename: `,
-        path,
-        "file"
-      );
-      
+      targetPath = await input(`Rename: `, path, 'file');
+
       targetPath = targetPath?.trim();
       targetPath = targetPath == null ? void 0 : targetPath.trim();
       if (!targetPath) {
@@ -662,8 +658,9 @@ export function loadFileActions(action: ActionSource<FileSource, FileNode>) {
       }
 
       if (renameInCwd) {
-          targetPath = cwd + targetPath
+        targetPath = cwd + targetPath;
       }
+
       await overwritePrompt(
         'rename',
         [
