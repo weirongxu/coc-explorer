@@ -645,11 +645,7 @@ export function loadFileActions(action: ActionSource<FileSource, FileNode>) {
 
       let targetPath: string | undefined;
 
-      targetPath = await input(
-        `Rename: ${node.fullpath} ->`,
-        node.fullpath,
-        'file',
-      );
+      targetPath = await input(`Rename: `, node.fullpath, 'file');
 
       targetPath = targetPath?.trim();
       if (!targetPath) {
