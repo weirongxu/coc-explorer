@@ -643,14 +643,13 @@ export function loadFileActions(action: ActionSource<FileSource, FileNode>) {
         return;
       }
 
-      let targetPath: string | undefined;
+      const dir = pathLib.dirname(node.fullpath);
+      const basename = pathLib.basename(node.fullpath);
+      let targetBasename = await input(`Rename: `, basename, 'file');
+      targetBasename = targetBasename.trim();
+      if (!targetBasename) return;
 
-      targetPath = await input(`Rename: `, node.fullpath, 'file');
-
-      targetPath = targetPath?.trim();
-      if (!targetPath) {
-        return;
-      }
+      const targetPath = pathLib.join(dir, targetBasename);
 
       await overwritePrompt(
         'rename',
