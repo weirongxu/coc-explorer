@@ -790,6 +790,25 @@ export function loadGlobalActions(action: ActionExplorer) {
     },
   );
   action.addNodeAction(
+    'normal!',
+    async ({ args }) => {
+      if (args[0]) {
+        await nvim.command(`execute "normal! ${args[0]}"`);
+      }
+    },
+    'execute vim normal mode commands without using mappings',
+    {
+      args: [
+        {
+          name: 'normal! commands',
+        },
+      ],
+      menus: {
+        zz: 'execute normal! zz',
+      },
+    },
+  );
+  action.addNodeAction(
     'esc',
     async ({ source, mode }) => {
       if (source.explorer.isFloating && mode === 'n') {
