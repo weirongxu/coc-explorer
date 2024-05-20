@@ -522,6 +522,7 @@
     "leex": "elixir",
     "vim": "vim",
     "ts": "typescript",
+    "mts": "typescript",
     "tsx": "javascriptreact",
     "jl": "julia",
     "pp": "puppet",
