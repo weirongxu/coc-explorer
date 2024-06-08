@@ -12,3 +12,4 @@ import './child-columns/diagnosticError';
 import './child-columns/diagnosticWarning';
 import './child-columns/readonly';
 import './child-columns/fullpath';
+import './child-columns/relativePath';

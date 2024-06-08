@@ -295,6 +295,7 @@ Columns:
 - bufnr
 - readonly
 - fullpath
+- relativePath
 
 default: `[selection | 1] [bufnr] [name][modified][readonly] [fullpath]`
 
