@@ -1,4 +1,4 @@
-import { Buffer, Window, workspace } from 'coc.nvim';
+import { workspace, type Buffer, type Window } from 'coc.nvim';
 
 const variableName = 'coc_explorer_context';
 
@@ -26,12 +26,17 @@ export abstract class ContextVars<T> {
 }
 
 export class BuffuerContextVars<T> extends ContextVars<T> {
-  constructor(public name: string, public buffer: Buffer) {
+  constructor(
+    public name: string,
+    public buffer: Buffer,
+  ) {
     super(name);
   }
 
   async read(): Promise<object> {
-    return ((await this.buffer.getVar(variableName)) as object) || {};
+    return (
+      ((await this.buffer.getVar(variableName)) as object | undefined) || {}
+    );
   }
 
   async write(obj: object) {
@@ -40,12 +45,15 @@ export class BuffuerContextVars<T> extends ContextVars<T> {
 }
 
 export class WindowContextVars<T> extends ContextVars<T> {
-  constructor(public name: string, public win: Window) {
+  constructor(
+    public name: string,
+    public win: Window,
+  ) {
     super(name);
   }
 
   async read(): Promise<object> {
-    return ((await this.win.getVar(variableName)) as object) || {};
+    return ((await this.win.getVar(variableName)) as object | undefined) || {};
   }
 
   async write(obj: object) {
@@ -56,7 +64,7 @@ export class WindowContextVars<T> extends ContextVars<T> {
 export class GlobalContextVars<T> extends ContextVars<T> {
   nvim = workspace.nvim;
   async read(): Promise<object> {
-    return ((await this.nvim.getVar(variableName)) as object) ?? {};
+    return ((await this.nvim.getVar(variableName)) as object | undefined) ?? {};
   }
 
   async write(obj: object) {

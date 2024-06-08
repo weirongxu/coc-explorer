@@ -1,11 +1,12 @@
 import { WinLayoutFinder } from 'coc-helper';
-import { commands, ExtensionContext, workspace } from 'coc.nvim';
+import { commands, workspace, type ExtensionContext } from 'coc.nvim';
 import pathLib from 'path';
+import type { LiteralUnion } from 'type-fest';
 import type { MappingMode, OriginalActionExp } from './actions/types';
 import { tabContainerManager } from './container';
 import type { Explorer } from './explorer';
 import type { ExplorerManager } from './explorerManager';
-import { IconInfo, IconTarget, loadIcons } from './icon/icons';
+import { loadIcons, type IconInfo, type IconTarget } from './icon/icons';
 import { actionListMru } from './lists/actions';
 import { parseOriginalActionExp } from './mappings';
 import type { BaseTreeNode, ExplorerSource } from './source/source';
@@ -62,7 +63,10 @@ async function getExplorer(
   }
 }
 
-type Position = 'current' | number | ['relative', number, string?];
+type Position =
+  | 'current'
+  | number
+  | [LiteralUnion<'relative', string>, number, string?];
 
 async function getLineIndexByPosition(
   position: Position,
@@ -233,10 +237,12 @@ export function registerVimApi(
           directories: {},
         };
         for (const [fullname, file] of icons.files) {
-          result.files[fullname2filepath[fullname]] = file;
+          const filepath = fullname2filepath[fullname];
+          if (filepath) result.files[filepath] = file;
         }
         for (const [fullname, directory] of icons.directories) {
-          result.directories[fullname2filepath[fullname]] = directory;
+          const filepath = fullname2filepath[fullname];
+          if (filepath) result.directories[filepath] = directory;
         }
         return result;
       },

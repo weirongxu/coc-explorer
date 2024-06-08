@@ -1,13 +1,13 @@
 import type { HelperEventEmitter } from 'coc-helper';
 import { Disposable, Emitter } from 'coc.nvim';
 import {
-  debounceTime,
   Observable,
   Subject,
   Subscription,
+  debounceTime,
   switchMap,
-  ThrottleConfig,
   throttleTime,
+  type ThrottleConfig,
 } from 'rxjs';
 import { logger } from '.';
 

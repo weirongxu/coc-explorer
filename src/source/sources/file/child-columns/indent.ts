@@ -1,5 +1,5 @@
 import { fileColumnRegistrar } from '../fileColumnRegistrar';
-import { FileNode, fileHighlights } from '../fileSource';
+import { fileHighlights, type FileNode } from '../fileSource';
 
 /**
  * indentLine

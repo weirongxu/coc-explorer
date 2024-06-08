@@ -1,5 +1,5 @@
 import { Notifier, WinLayoutFinder } from 'coc-helper';
-import { Neovim, workspace } from 'coc.nvim';
+import { workspace, type Neovim } from 'coc.nvim';
 import { argOptions } from '../arg/argOptions';
 import type { ParsedPosition } from '../arg/parseArgs';
 import type { Explorer } from '../explorer';

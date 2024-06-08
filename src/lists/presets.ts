@@ -1,6 +1,6 @@
-import { BasicList, Neovim } from 'coc.nvim';
-import { getPresets } from '../presets';
+import { BasicList, type Neovim } from 'coc.nvim';
 import { configLocal } from '../config';
+import { getPresets } from '../presets';
 import { logger } from '../util';
 
 export class PresetList extends BasicList {

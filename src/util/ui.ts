@@ -1,6 +1,8 @@
 import type { FloatInputType } from 'coc-floatinput';
-import { extensions, Extension, workspace } from 'coc.nvim';
-import { config, ExplorerConfig } from '../config';
+import { extensions, workspace, type Extension } from 'coc.nvim';
+import { config, type ExplorerConfig } from '../config';
+import type { LiteralUnion } from 'type-fest';
+import type { BufferFilter } from '../types/pkg-config';
 
 let floatInputExt: Extension<FloatInputType> | undefined;
 
@@ -46,7 +48,7 @@ export async function vimPrompt(
         }
         return `${choice.slice(0, index)}&${choice[
           index
-        ].toUpperCase()}${choice.slice(index + 1)}`;
+        ]?.toUpperCase()}${choice.slice(index + 1)}`;
       })
       .join('\n'),
     defaultNumber + 1,
@@ -81,41 +83,43 @@ export async function prompt(
 
 export type InputCompletion =
   | undefined
-  | 'arglist'
-  | 'augroup'
-  | 'buffer'
-  | 'behave'
-  | 'color'
-  | 'command'
-  | 'compiler'
-  | 'cscope'
-  | 'dir'
-  | 'environment'
-  | 'event'
-  | 'expression'
-  | 'file'
-  | 'file_in_path'
-  | 'filetype'
-  | 'function'
-  | 'help'
-  | 'highlight'
-  | 'history'
-  | 'locale'
-  | 'mapclear'
-  | 'mapping'
-  | 'menu'
-  | 'messages'
-  | 'option'
-  | 'packadd'
-  | 'shellcmd'
-  | 'sign'
-  | 'syntax'
-  | 'syntime'
-  | 'tag'
-  | 'tag_listfiles'
-  | 'user'
-  | 'var'
-  | string;
+  | LiteralUnion<
+      | 'arglist'
+      | 'augroup'
+      | 'buffer'
+      | 'behave'
+      | 'color'
+      | 'command'
+      | 'compiler'
+      | 'cscope'
+      | 'dir'
+      | 'environment'
+      | 'event'
+      | 'expression'
+      | 'file'
+      | 'file_in_path'
+      | 'filetype'
+      | 'function'
+      | 'help'
+      | 'highlight'
+      | 'history'
+      | 'locale'
+      | 'mapclear'
+      | 'mapping'
+      | 'menu'
+      | 'messages'
+      | 'option'
+      | 'packadd'
+      | 'shellcmd'
+      | 'sign'
+      | 'syntax'
+      | 'syntime'
+      | 'tag'
+      | 'tag_listfiles'
+      | 'user'
+      | 'var',
+      string
+    >;
 
 export async function vimInput(
   prompt: string,
@@ -163,9 +167,11 @@ export async function selectWindowsUI(
     onCancel?: () => void | Promise<void>;
   },
 ) {
-  let filterOption = config.get('openAction.select.filter')!;
+  let filterOption = config.get('openAction.select.filter');
   if (filterOption.sources) {
-    const sourceFilterOption = filterOption.sources[sourceType];
+    const sourceFilterOption = filterOption.sources[sourceType] as
+      | BufferFilter
+      | undefined;
     if (sourceFilterOption) {
       filterOption = {
         ...filterOption,

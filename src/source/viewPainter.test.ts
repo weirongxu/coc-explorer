@@ -1,7 +1,7 @@
-import { ViewSource } from '../view/viewSource';
 import { bootSource, mockWorkspace } from '../__test__/helpers/helper';
+import { ViewSource } from '../view/viewSource';
 import { ColumnRegistrar } from './columnRegistrar';
-import { BaseTreeNode, ExplorerSource } from './source';
+import { ExplorerSource, type BaseTreeNode } from './source';
 import { ViewRowPainter } from './viewPainter';
 
 mockWorkspace();

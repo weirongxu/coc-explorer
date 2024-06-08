@@ -7,15 +7,15 @@ import type { LiteralUnion } from 'type-fest';
 
 export const textobjTargetList = ['line', 'indent'] as const;
 
-export type TextobjTarget = typeof textobjTargetList[number];
+export type TextobjTarget = (typeof textobjTargetList)[number];
 
 export const textobjTypeList = ['i', 'a'] as const;
 
-export type textobjTarget = typeof textobjTypeList[number];
+export type textobjTarget = (typeof textobjTypeList)[number];
 
 export const moveStrategyList = ['default', 'insideSource'] as const;
 
-export type MoveStrategy = typeof moveStrategyList[number];
+export type MoveStrategy = (typeof moveStrategyList)[number];
 
 export const revealStrategyList = [
   'select',
@@ -25,7 +25,7 @@ export const revealStrategyList = [
   'path',
 ] as const;
 
-export type RevealStrategy = typeof revealStrategyList[number];
+export type RevealStrategy = (typeof revealStrategyList)[number];
 
 export type OpenStrategy = NonNullable<
   Explorer['explorer.openAction.strategy']
@@ -58,7 +58,7 @@ export type OpenCursorPosition =
 
 export const copyOrCutFileTypeList = ['toggle', 'append', 'replace'] as const;
 
-export type CopyOrCutFileType = typeof copyOrCutFileTypeList[number];
+export type CopyOrCutFileType = (typeof copyOrCutFileTypeList)[number];
 
 export const previewOnHoverActionList = [
   'toggle',
@@ -66,7 +66,7 @@ export const previewOnHoverActionList = [
   'disable',
 ] as const;
 
-export type PreviewOnHoverAction = typeof previewOnHoverActionList[number];
+export type PreviewOnHoverAction = (typeof previewOnHoverActionList)[number];
 
 export const previewStrategyList: PreviewActionStrategy[] = [
   'labeling',
@@ -85,7 +85,7 @@ export type RootStrategyStr = LiteralUnion<RootStrategy, string>;
 
 export const searchOptionList = ['recursive', 'noIgnore', 'strict'] as const;
 
-export type SearchOption = typeof searchOptionList[number];
+export type SearchOption = (typeof searchOptionList)[number];
 
 export const expandOptionList = [
   'recursive',
@@ -94,11 +94,11 @@ export const expandOptionList = [
   'recursiveSingle',
 ] as const;
 
-export type ExpandOption = typeof expandOptionList[number];
+export type ExpandOption = (typeof expandOptionList)[number];
 
 export const collapseOptionList = ['recursive', 'all'] as const;
 
-export type CollapseOption = typeof collapseOptionList[number];
+export type CollapseOption = (typeof collapseOptionList)[number];
 
 export type ExplorerOpenOptions = {
   width: number;

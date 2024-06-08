@@ -3,7 +3,7 @@ import { tabContainerManager } from '../../../container';
 import { internalHighlightGroups } from '../../../highlight/internalColors';
 import { hlGroupManager } from '../../../highlight/manager';
 import { ViewSource } from '../../../view/viewSource';
-import { BaseTreeNode, ExplorerSource } from '../../source';
+import { ExplorerSource, type BaseTreeNode } from '../../source';
 import { sourceManager } from '../../sourceManager';
 import { bufferArgOptions } from './argOptions';
 import { loadBufferActions } from './bufferActions';
@@ -43,7 +43,7 @@ export const bufferHighlights = {
 };
 
 export class BufferSource extends ExplorerSource<BufferNode> {
-  showHidden: boolean = this.config.get<boolean>('file.showHiddenBuffers')!;
+  showHidden: boolean = this.config.get<boolean>('file.showHiddenBuffers');
   view: ViewSource<BufferNode> = new ViewSource<BufferNode>(
     this,
     bufferColumnRegistrar,

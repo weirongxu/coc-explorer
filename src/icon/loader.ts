@@ -7,20 +7,20 @@ export abstract class IconLoader {
   ): Promise<IconInternalLoadedItem[]>;
 }
 
-const getLoaders: Record<string, () => IconLoader> = {};
+const getLoaders = new Map<string, () => IconLoader>();
 
 export function registerLoader(
   iconSourceType: IconSourceType,
   getLoader: () => IconLoader,
 ) {
-  getLoaders[iconSourceType] = getLoader;
+  getLoaders.set(iconSourceType, getLoader);
 }
 
 const loadersCache = new Map<IconSourceType, IconLoader>();
 
 export function getLoader(source: IconSourceType) {
   if (!loadersCache.has(source)) {
-    const getLoader = getLoaders[source];
+    const getLoader = getLoaders.get(source);
     if (!getLoader) {
       return;
     }

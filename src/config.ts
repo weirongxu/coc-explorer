@@ -1,4 +1,4 @@
-import { workspace, WorkspaceConfiguration } from 'coc.nvim';
+import { workspace, type WorkspaceConfiguration } from 'coc.nvim';
 import type { OriginalActionExp } from './actions/types';
 import type { CollapseOption, ExpandOption, RootStrategyStr } from './types';
 import type { Explorer } from './types/pkg-config';
@@ -19,7 +19,7 @@ export interface ExplorerConfig {
     section: 'file.reveal.filter',
   ): NonNullable<Explorer['explorer.file.reveal.filter']>;
   get(section: 'autoExpandMaxDepth'): number;
-  get(section: 'autoExpandOptions'): ExpandOption[];
+  get(section: 'autoExpandOptions'): ExpandOption[] | undefined;
   get(section: 'autoCollapseOptions'): CollapseOption[];
   get(section: 'openAction.for.directory'): OriginalActionExp;
   get(section: 'openAction.relativePath'): boolean;
@@ -39,7 +39,10 @@ export interface ExplorerConfig {
   get(section: 'floating.border.enable'): boolean;
   get(section: 'floating.border.chars'): string[];
   get(section: 'floating.border.title'): string;
-  get(section: 'expandStores'): NonNullable<Explorer['explorer.expandStores']>;
+  get(
+    section: 'expandStores',
+    defaultValue?: Explorer['explorer.expandStores'],
+  ): NonNullable<Explorer['explorer.expandStores']>;
   get(section: 'root.strategies'): NonNullable<RootStrategyStr[]>;
   get(
     section: 'root.customRules',
@@ -56,7 +59,7 @@ export const bufferTabOnly = () => {
  * @deprecated
  */
 export const getRevealAuto = (config: ExplorerConfig) => {
-  let revealAuto = config.get<boolean>('file.autoReveal');
+  let revealAuto = config.get<boolean | undefined | null>('file.autoReveal');
   if (revealAuto !== undefined && revealAuto !== null) {
     logger.error(
       '`explorer.file.autoReveal` has been deprecated, please use explorer.file.reveal.auto instead of it',
@@ -77,7 +80,9 @@ export const getRevealWhenOpen = (
   /**
    * @deprecated
    */
-  let revealWhenOpen: boolean | undefined = config.get('file.revealWhenOpen');
+  let revealWhenOpen: boolean | undefined | null = config.get(
+    'file.revealWhenOpen',
+  );
   if (revealWhenOpen !== undefined && revealWhenOpen !== null) {
     logger.error(
       '`explorer.file.autoReveal` has been deprecated, please use explorer.file.reveal.whenOpen instead of it',
@@ -96,7 +101,7 @@ export function buildExplorerConfig(
       return config;
     },
     get<T>(section: string, defaultValue?: T): T {
-      return this.config.get<T>(section, defaultValue!)!;
+      return this.config.get<T>(section, defaultValue!);
     },
   };
 }

@@ -85,7 +85,7 @@ export class HelpPainter {
 
   drawActionForMapping(row: ViewRowPainter, action: Action) {
     row.add(action.name, { hl: helpHightlights.action });
-    if (action.args) {
+    if (action.args.length) {
       row.add(`(${action.args.join(',')})`, { hl: helpHightlights.arg });
     }
     row.add(' ');
@@ -142,7 +142,7 @@ export class HelpPainter {
       }
 
       row.add(action.name, { hl: helpHightlights.action });
-      if (action.args) {
+      if (action.args.length) {
         row.add(`(${action.args.join(',')})`, { hl: helpHightlights.arg });
       }
       row.add(' ');
@@ -163,6 +163,7 @@ export class HelpPainter {
     if (Array.isArray(actionExp)) {
       for (let i = 0; i < actionExp.length; i++) {
         const action = actionExp[i];
+        if (!action) continue;
 
         if (Array.isArray(action)) {
           await this.drawMappingsActionExp(indent, action, ctx);
@@ -188,6 +189,7 @@ export class HelpPainter {
             actionExp[i + 1],
             actionExp[i + 2],
           ];
+          if (!trueAction || !falseAction) continue;
           await this.drawMappingsActionExp(`${indent}  `, trueAction, ctx);
           await this.drawRow((row) => {
             row.add(indent);
@@ -249,7 +251,7 @@ export class HelpPainter {
     };
 
     const mappings = await keyMapping.getMappings(this.source.sourceType);
-    await drawMappings(mappings.all);
+    await drawMappings(mappings.nmap);
     await drawMappings(mappings.vmap);
   }
 
@@ -336,14 +338,12 @@ export class HelpPainter {
       .notify();
     const highlightPositions: HighlightPositionWithLine[] = [];
     for (const [i, drawn] of this.drawnResults.entries()) {
-      if (drawn.highlightPositions) {
-        highlightPositions.push(
-          ...drawn.highlightPositions.map((hl) => ({
-            lineIndex: i,
-            ...hl,
-          })),
-        );
-      }
+      highlightPositions.push(
+        ...drawn.highlightPositions.map((hl) => ({
+          lineIndex: i,
+          ...hl,
+        })),
+      );
     }
     this.explorer.highlight.addHighlightsNotify(
       helpHlSrcId,

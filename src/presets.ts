@@ -1,4 +1,4 @@
-import { workspace, WorkspaceConfiguration } from 'coc.nvim';
+import { workspace, type WorkspaceConfiguration } from 'coc.nvim';
 
 export type PresetMap = Map<string, Map<string, unknown>>;
 

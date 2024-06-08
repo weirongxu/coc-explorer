@@ -1,6 +1,6 @@
-import { BufferHighlight, Disposable, workspace } from 'coc.nvim';
-import type { FloatingCreateOptions, FloatingOpenOptions } from '../types';
 import { FloatingWindow as HelperFloatingWindow } from 'coc-helper';
+import { Disposable, workspace, type BufferHighlight } from 'coc.nvim';
+import type { FloatingCreateOptions, FloatingOpenOptions } from '../types';
 import { logger } from '../util';
 
 export class FloatingWindow implements Disposable {

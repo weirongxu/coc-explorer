@@ -3,21 +3,21 @@ import { workspace } from 'coc.nvim';
 import { gitManager } from '../git/manager';
 import { parseOriginalActionExp } from '../mappings';
 import {
-  CollapseOption,
   collapseOptionList,
-  ExpandOption,
   expandOptionList,
-  MoveStrategy,
   moveStrategyList,
-  OpenCursorPosition,
-  OpenStrategy,
   openStrategyList,
-  PreviewOnHoverAction,
   previewOnHoverActionList,
   previewStrategyList,
-  TextobjTarget,
   textobjTargetList,
   textobjTypeList,
+  type CollapseOption,
+  type ExpandOption,
+  type MoveStrategy,
+  type OpenCursorPosition,
+  type OpenStrategy,
+  type PreviewOnHoverAction,
+  type TextobjTarget,
 } from '../types';
 import type { PreviewActionStrategy } from '../types/pkg-config';
 import { enableWrapscan, input, scanIndexNext, scanIndexPrev } from '../util';
@@ -77,11 +77,11 @@ export function loadGlobalActions(action: ActionExplorer) {
       if (positionRaw === 'keep') {
         cursorPosition = positionRaw;
       } else if (positionRaw) {
-        const [line, column] = positionRaw
+        const [lineIndex = 0, column] = positionRaw
           .split(',')
           .map((n) => parseInt(n, 10));
         cursorPosition = {
-          lineIndex: line,
+          lineIndex,
         };
         if (column) {
           cursorPosition.columnIndex = column;
@@ -355,7 +355,7 @@ export function loadGlobalActions(action: ActionExplorer) {
       if (nextSource) {
         await nextSource.locator.gotoLineIndex(0);
       } else if (await enableWrapscan()) {
-        await explorer.sources[0].locator.gotoLineIndex(0);
+        await explorer.sources[0]?.locator.gotoLineIndex(0);
       }
     },
     'go to next source',
@@ -370,7 +370,7 @@ export function loadGlobalActions(action: ActionExplorer) {
       } else if (await enableWrapscan()) {
         await explorer.sources[
           explorer.sources.length - 1
-        ].locator.gotoLineIndex(0);
+        ]?.locator.gotoLineIndex(0);
       }
     },
     'go to previous source',
@@ -544,33 +544,37 @@ export function loadGlobalActions(action: ActionExplorer) {
     async ({ node: currentNode, args }) => {
       const currentIndex = explorer.view.currentLineIndex;
       const textobjTarget = (args[0] ?? 'line') as TextobjTarget;
-      if (textobjTarget === 'line') {
-        await nvim.command('normal! V');
-      } else if (textobjTarget === 'indent') {
-        const flattenedNodes = explorer.view.flattenedNodes;
-        const begin = scanIndexPrev(
-          flattenedNodes,
-          currentIndex,
-          false,
-          (node) => {
-            return (currentNode.level ?? 0) > (node.level ?? 0);
-          },
-        );
-        if (begin === undefined) {
-          return;
+      switch (textobjTarget) {
+        case 'line':
+          await nvim.command('normal! V');
+          break;
+        case 'indent': {
+          const flattenedNodes = explorer.view.flattenedNodes;
+          const begin = scanIndexPrev(
+            flattenedNodes,
+            currentIndex,
+            false,
+            (node) => {
+              return (currentNode.level ?? 0) > (node.level ?? 0);
+            },
+          );
+          if (begin === undefined) {
+            return;
+          }
+          const end = scanIndexNext(
+            flattenedNodes,
+            currentIndex,
+            false,
+            (node) => {
+              return (currentNode.level ?? 0) > (node.level ?? 0);
+            },
+          );
+          if (end === undefined) {
+            return;
+          }
+          await nvim.command(`normal! ${begin + 2}GV${end}G`);
+          break;
         }
-        const end = scanIndexNext(
-          flattenedNodes,
-          currentIndex,
-          false,
-          (node) => {
-            return (currentNode.level ?? 0) > (node.level ?? 0);
-          },
-        );
-        if (end === undefined) {
-          return;
-        }
-        await nvim.command(`normal! ${begin + 2}GV${end}G`);
       }
     },
     'use visual mode selects',
@@ -725,7 +729,7 @@ export function loadGlobalActions(action: ActionExplorer) {
 
         nvim.pauseNotification();
         source.highlight.clearHighlightsNotify();
-        loadNotifier?.notify();
+        loadNotifier.notify();
         await nvim.resumeNotification();
       });
 

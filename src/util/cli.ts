@@ -1,8 +1,8 @@
 import {
-  spawn,
   exec,
-  SpawnOptionsWithoutStdio,
-  ExecOptions,
+  spawn,
+  type ExecOptions,
+  type SpawnOptionsWithoutStdio,
 } from 'child_process';
 import which from 'which';
 

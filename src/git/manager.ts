@@ -8,9 +8,9 @@ import { GitCommand } from './command';
 import {
   GitFormat,
   GitIgnore,
-  GitMixedStatus,
   GitRootFormat,
-  GitRootStatus,
+  type GitMixedStatus,
+  type GitRootStatus,
 } from './types';
 
 class GitManager {
@@ -151,7 +151,7 @@ class GitManager {
 
       statusRecord.forEach((status, fullpath) => {
         if (status.x === GitFormat.ignored) {
-          if (['/', '\\'].includes(fullpath[fullpath.length - 1])) {
+          if (['/', '\\'].includes(fullpath[fullpath.length - 1]!)) {
             ignoreMap.set(fullpath, GitIgnore.directory);
           } else {
             ignoreMap.set(fullpath, GitIgnore.file);

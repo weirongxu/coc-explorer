@@ -57,7 +57,7 @@ export default class BookmarkDB {
       obj = origin;
     }
     for (let i = 0; i < len; i++) {
-      const key = parts[i];
+      const key = parts[i]!;
       if (i === len - 1) {
         obj[key] = data;
         await fsWriteFile(this.filepath, JSON.stringify(origin, null, 2));
@@ -78,15 +78,15 @@ export default class BookmarkDB {
     const parts = key.split('.');
     const len = parts.length;
     for (let i = 0; i < len; i++) {
-      if (typeof obj[parts[i]] === 'undefined') {
+      if (typeof obj[parts[i]!] === 'undefined') {
         break;
       }
       if (i === len - 1) {
-        delete obj[parts[i]];
+        delete obj[parts[i]!];
         await fsWriteFile(this.filepath, JSON.stringify(origin, null, 2));
         break;
       }
-      obj = obj[parts[i]];
+      obj = obj[parts[i]!];
     }
   }
 

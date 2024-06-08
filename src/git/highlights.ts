@@ -91,7 +91,7 @@ export const registerGitHighlights = (disposables: Disposable[]) => {
       if (yellow) {
         nvim.command(
           `highlight default CocExplorerGitContentChange_Internal ctermfg=${
-            green.ctermfg
+            yellow.ctermfg
           } guifg=#${toHex(yellow.guifg)}`,
           true,
         );

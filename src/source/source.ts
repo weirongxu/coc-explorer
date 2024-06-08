@@ -1,5 +1,10 @@
 import { HelperEventEmitter, Notifier } from 'coc-helper';
-import { Disposable, ExtensionContext, Location, workspace } from 'coc.nvim';
+import {
+  Disposable,
+  Location,
+  workspace,
+  type ExtensionContext,
+} from 'coc.nvim';
 import type { Class } from 'type-fest';
 import { ActionSource } from '../actions/actionSource';
 import type { Explorer } from '../explorer';
@@ -173,13 +178,13 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>>
       );
     },
     get selected() {
-      return source.config.get<string>('icon.selected')!;
+      return source.config.get<string>('icon.selected');
     },
     get hidden() {
-      return source.config.get<string>('icon.hidden')!;
+      return source.config.get<string>('icon.hidden');
     },
     get link() {
-      return source.config.get<string>('icon.link')!;
+      return source.config.get<string>('icon.link');
     },
     get readonly() {
       return (
@@ -199,7 +204,10 @@ export abstract class ExplorerSource<TreeNode extends BaseTreeNode<TreeNode>>
     return true;
   }
 
-  constructor(public sourceType: string, public explorer: Explorer) {
+  constructor(
+    public sourceType: string,
+    public explorer: Explorer,
+  ) {
     this.context = this.explorer.context;
     this.highlight = new HighlightSource(
       this,

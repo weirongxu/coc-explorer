@@ -2,7 +2,7 @@ import { mapKeys, mapValues } from 'lodash-es';
 import pathLib from 'path';
 import { normalizePath } from '../util';
 import { gitManager } from './manager';
-import { GitFormat, GitMixedStatus } from './types';
+import { GitFormat, type GitMixedStatus } from './types';
 
 (
   [

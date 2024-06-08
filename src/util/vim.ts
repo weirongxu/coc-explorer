@@ -1,5 +1,5 @@
 import { Notifier } from 'coc-helper';
-import { Window, workspace } from 'coc.nvim';
+import { workspace, type Window } from 'coc.nvim';
 import colorConvert from 'color-convert';
 import { toHex } from '.';
 import type { HighlightColor } from '../highlight/extractColors';

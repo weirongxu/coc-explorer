@@ -2,7 +2,7 @@ import fs from 'fs';
 import type { JSONSchema7, JSONSchema7Type } from 'json-schema';
 import pathLib from 'path';
 import ts from 'typescript';
-import Pkg from '../package.json';
+import Pkg from '../package.json' assert { type: 'json' };
 
 const fsp = fs.promises;
 
@@ -136,8 +136,7 @@ class ConfigurationDocGenerator extends DocGenerator {
     return (
       (ts.getCombinedModifierFlags(node as ts.Declaration) &
         ts.ModifierFlags.Export) !==
-        0 ||
-      (!!node.parent && node.parent.kind === ts.SyntaxKind.SourceFile)
+        0 || node.parent.kind === ts.SyntaxKind.SourceFile
     );
   }
 

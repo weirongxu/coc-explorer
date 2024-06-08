@@ -1,6 +1,6 @@
 import {
   diagnosticManager,
-  DiagnosticType,
+  type DiagnosticType,
 } from '../../../../diagnostic/manager';
 import { gitManager } from '../../../../git/manager';
 import { FilenameHighlight } from '../../../../highlight/filename';

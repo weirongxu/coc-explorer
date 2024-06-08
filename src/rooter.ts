@@ -1,7 +1,7 @@
 import { workspace } from 'coc.nvim';
 import pathLib from 'path';
 import type { Explorer } from './explorer';
-import { rootStrategyList, RootStrategyStr } from './types';
+import { rootStrategyList, type RootStrategyStr } from './types';
 import type { RootStrategy } from './types/pkg-config';
 import { inDirectory, isParentFolder, logger, normalizePath } from './util';
 
@@ -20,7 +20,10 @@ export class RooterOpened {
   >;
   customRoots: Record<string, string> = {};
 
-  constructor(public workspaceRoot: string, public explorer: Explorer) {
+  constructor(
+    public workspaceRoot: string,
+    public explorer: Explorer,
+  ) {
     // eslint-disable-next-line @typescript-eslint/no-this-alias
     const self = this;
     let sourceBufFullpath_: string | undefined | null = null;

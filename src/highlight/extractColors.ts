@@ -1,4 +1,4 @@
-import { Color, workspace } from 'coc.nvim';
+import { workspace, type Color } from 'coc.nvim';
 import { parseColor } from '../util';
 
 export type HighlightColorString = {

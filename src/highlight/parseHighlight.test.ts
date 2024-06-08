@@ -1,4 +1,4 @@
-import { HighlightStatement, parseHighlight } from './parseHighlight';
+import { parseHighlight, type HighlightStatement } from './parseHighlight';
 
 const list: [string, HighlightStatement][] = [
   [

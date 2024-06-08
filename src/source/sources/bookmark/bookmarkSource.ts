@@ -4,7 +4,7 @@ import { internalEvents } from '../../../events';
 import { hlGroupManager } from '../../../highlight/manager';
 import { debounceFn, fsExists, normalizePath } from '../../../util';
 import { ViewSource } from '../../../view/viewSource';
-import { BaseTreeNode, ExplorerSource } from '../../source';
+import { ExplorerSource, type BaseTreeNode } from '../../source';
 import { sourceManager } from '../../sourceManager';
 import { bookmarkArgOptions } from './argOptions';
 import { bookmarkColumnRegistrar } from './bookmarkColumnRegistrar';
@@ -121,17 +121,21 @@ export class BookmarkSource extends ExplorerSource<BookmarkNode> {
       for (const lnum of Object.keys(bookmarks)
         .map((l) => Number(l))
         .sort((l1, l2) => l1 - l2)) {
-        const bookmark: BookmarkDB.Item = bookmarks[lnum];
-        bookmarkNodes.push({
-          type: 'child',
-          uid: this.helper.getUid(`${fullpath}:${lnum}`),
-          fullpath,
-          name: pathLib.basename(fullpath),
-          lnum,
-          location: Location.create(fullpath, Range.create(lnum, -1, lnum, -1)),
-          line: bookmark.line,
-          annotation: bookmark.annotation?.toString(),
-        });
+        const bookmark = bookmarks[lnum];
+        if (bookmark)
+          bookmarkNodes.push({
+            type: 'child',
+            uid: this.helper.getUid(`${fullpath}:${lnum}`),
+            fullpath,
+            name: pathLib.basename(fullpath),
+            lnum,
+            location: Location.create(
+              fullpath,
+              Range.create(lnum, -1, lnum, -1),
+            ),
+            line: bookmark.line,
+            annotation: bookmark.annotation?.toString(),
+          });
       }
     }
     return bookmarkNodes;

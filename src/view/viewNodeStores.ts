@@ -42,7 +42,7 @@ export class ViewNodeStores<TreeNode extends BaseTreeNode<TreeNode>> {
 
   constructor(public viewSource: ViewSource<TreeNode>) {
     const context = viewSource.source.context;
-    const stores = viewSource.config.get('expandStores') ?? true;
+    const stores = viewSource.config.get('expandStores', true);
     if (typeof stores === 'boolean') {
       this.enabled = stores;
     } else if ('includes' in stores) {

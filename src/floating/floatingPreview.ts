@@ -1,11 +1,12 @@
 import {
-  BufferHighlight,
   Disposable,
-  disposeAll,
   Location,
   Range,
+  disposeAll,
   window,
   workspace,
+  type BufferHighlight,
+  type Document,
 } from 'coc.nvim';
 import { isBinaryFile } from 'isbinaryfile';
 import { argOptions } from '../arg/argOptions';
@@ -18,7 +19,6 @@ import type { PreviewActionStrategy } from '../types/pkg-config';
 import {
   byteLength,
   currentBufnr,
-  flatten,
   logger,
   max,
   min,
@@ -186,31 +186,31 @@ export class FloatingPreview implements Disposable {
     void window.showInformationMessage('Preview disabled ');
   }
 
-  private registeredPreviewActions: Record<string, PreviewAction> = {};
+  private registeredPreviewActions = new Map<string, PreviewAction>();
   public registerAction(name: string, action: PreviewAction) {
-    this.registeredPreviewActions[name] = action;
+    this.registeredPreviewActions.set(name, action);
   }
 
   registerActions() {
     this.registerAction('labeling', async ({ source, node, nodeIndex }) => {
-      const drawnList: Drawn[] | undefined =
-        await source.view.sourcePainters?.drawNodeLabeling(node, nodeIndex);
-      if (!drawnList || !(await this.explorer.explorerManager.inExplorer())) {
+      const drawnList: Drawn[] =
+        await source.view.sourcePainters.drawNodeLabeling(node, nodeIndex);
+      if (!(await this.explorer.explorerManager.inExplorer())) {
         return;
       }
 
       return {
         lines: drawnList.map((d) => d.content),
-        highlights: flatten(
-          drawnList.map((d, index) =>
+        highlights: drawnList
+          .map((d, index) =>
             d.highlightPositions.map((hl) => ({
               hlGroup: hl.group,
               line: index,
               colStart: hl.start,
               colEnd: hl.start + hl.size,
             })),
-          ),
-        ),
+          )
+          .flat(),
         options: {
           filetype: 'coc-explorer-labeling',
         },
@@ -238,7 +238,7 @@ export class FloatingPreview implements Disposable {
         return;
       }
 
-      const doc = workspace.getDocument(uri);
+      const doc = workspace.getDocument(uri) as Document | undefined;
       const lines = doc
         ? doc.getLines(0, range.end.line + this.maxHeight)
         : await readFileLines(uri, 0, range.end.line + this.maxHeight);
@@ -372,14 +372,16 @@ export class FloatingPreview implements Disposable {
       return;
     }
 
-    if (!this.registeredPreviewActions[previewStrategy]) {
+    const reigsteredActions =
+      this.registeredPreviewActions.get(previewStrategy);
+    if (!reigsteredActions) {
       await window.showInformationMessage(
         `coc-explorer no support preview strategy(${previewStrategy})`,
       );
       return;
     }
 
-    const openArgs = await this.registeredPreviewActions[previewStrategy]({
+    const openArgs = await reigsteredActions({
       source,
       node,
       nodeIndex,

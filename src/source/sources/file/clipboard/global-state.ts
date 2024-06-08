@@ -1,5 +1,5 @@
 import type { ExtensionContext } from 'coc.nvim';
-import { ClipboardStorage, ClipboardContent } from './base';
+import { ClipboardStorage, type ClipboardContent } from './base';
 
 export class GlobalStateStorage extends ClipboardStorage {
   context(): ExtensionContext {

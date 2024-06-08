@@ -1,20 +1,20 @@
 import { HelperEventEmitter, Notifier } from 'coc-helper';
 import {
-  Buffer,
   Disposable,
   disposeAll,
-  ExtensionContext,
   window,
-  Window,
   workspace,
+  type Buffer,
+  type ExtensionContext,
+  type Window,
 } from 'coc.nvim';
 import pFilter from 'p-filter';
 import { ActionExplorer } from './actions/actionExplorer';
 import { loadGlobalActions } from './actions/globalActions';
 import type { MappingMode } from './actions/types';
-import { argOptions, ResolvedArgs } from './arg/argOptions';
+import { argOptions, type ResolvedArgs } from './arg/argOptions';
 import type { ArgContentWidthTypes, Args } from './arg/parseArgs';
-import { ExplorerConfig, getRevealWhenOpen } from './config';
+import { getRevealWhenOpen, type ExplorerConfig } from './config';
 import { BuffuerContextVars } from './contextVariables';
 import { doUserAutocmd, doUserAutocmdNotifier, onEvent } from './events';
 import type { ExplorerManager } from './explorerManager';
@@ -30,6 +30,7 @@ import type { ExplorerOpenOptions } from './types';
 import {
   closeWinByBufnrNotifier,
   currentBufnr,
+  findPair,
   logger,
   normalizePath,
   sum,
@@ -308,18 +309,23 @@ export class Explorer implements Disposable {
     ): Promise<boolean> => {
       if (contentWidth <= 0) {
         let contentBaseWidth: number | undefined;
-        if (contentWidthType === 'win-width') {
-          contentBaseWidth = await window.width;
-          if (
-            ((await window.getOption('relativenumber')) as boolean) ||
-            ((await window.getOption('number')) as boolean)
-          ) {
-            contentBaseWidth -= (await window.getOption(
-              'numberwidth',
+        switch (contentWidthType) {
+          case 'win-width':
+            contentBaseWidth = await window.width;
+            if (
+              ((await window.getOption('relativenumber')) as boolean) ||
+              ((await window.getOption('number')) as boolean)
+            ) {
+              contentBaseWidth -= (await window.getOption(
+                'numberwidth',
+              )) as number;
+            }
+            break;
+          case 'vim-width':
+            contentBaseWidth = (await workspace.nvim.eval(
+              '&columns',
             )) as number;
-          }
-        } else if (contentWidthType === 'vim-width') {
-          contentBaseWidth = (await workspace.nvim.eval('&columns')) as number;
+            break;
         }
         if (contentBaseWidth) {
           this.contentWidth = contentBaseWidth + contentWidth;
@@ -560,9 +566,6 @@ export class Explorer implements Disposable {
     await this.initRoot(this.argValues_, rooter);
 
     const argSources = await args.value(argOptions.sources);
-    if (!argSources) {
-      return false;
-    }
 
     const enabledArgSources = await pFilter(argSources, (s) =>
       sourceManager.enabled(s.name),
@@ -626,14 +629,16 @@ export class Explorer implements Disposable {
     source: ExplorerSource<any>;
     sourceIndex: number;
   } {
-    const sourceIndex = this.sources.findIndex(
+    if (!this.sources.length) throw new Error('No explorer sources');
+    const [sourceIndex, source] = findPair(
+      this.sources,
       (source) => lineIndex < source.view.endLineIndex,
     );
-    if (sourceIndex === -1) {
-      const index = this.sources.length - 1;
-      return { source: this.sources[index], sourceIndex: index };
-    } else {
-      return { source: this.sources[sourceIndex], sourceIndex };
+    if (source) return { source, sourceIndex };
+    else {
+      const sourceIndex = this.sources.length - 1;
+      const source = this.sources[sourceIndex]!;
+      return { source, sourceIndex };
     }
   }
 

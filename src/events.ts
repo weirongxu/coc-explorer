@@ -3,13 +3,13 @@ import {
   Disposable,
   Emitter,
   events,
-  ExtensionContext,
   workspace,
+  type ExtensionContext,
 } from 'coc.nvim';
 import type { LiteralUnion } from 'type-fest';
 import { debounceFn, logger, throttleFn } from './util';
 
-type EventResult = any | Promise<any>;
+type EventResult = Promise<any> | void;
 type BufEventListener = (bufnr: number) => EventResult;
 
 // event with asyncCatch

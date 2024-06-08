@@ -96,8 +96,8 @@ export async function overwritePrompt<S extends string | undefined>(
     endFullpaths.push(target);
   };
   for (let i = 0, len = paths.length; i < len; i++) {
-    const sourcePath = paths[i].source;
-    const targetPath = paths[i].target;
+    const sourcePath = paths[i]!.source;
+    const targetPath = paths[i]!.target;
 
     if (!(await fsExists(targetPath))) {
       await finalAction(sourcePath, targetPath);
@@ -138,7 +138,7 @@ export async function overwritePrompt<S extends string | undefined>(
         quit,
       };
       const answer = await prompt(
-        `${promptText[0].toUpperCase()}${promptText.slice(
+        `${promptText[0]?.toUpperCase() ?? ''}${promptText.slice(
           1,
         )}: ${targetPath} already exists.`,
         Object.keys(choices),

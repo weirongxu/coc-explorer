@@ -28,23 +28,30 @@ export type DrawContent = {
   group?: string;
 };
 
+export type DrawUnknown = {
+  type: 'unknown';
+};
+
 export type DrawGroup = {
   type: 'group';
-  contents: DrawContent[];
+  contents: (DrawContent | DrawUnknown)[];
   flexible?: DrawFlexible;
 };
 
-export type Drawable = DrawContent | DrawGroup;
+export type Drawable = DrawContent | DrawGroup | DrawUnknown;
 
 export interface DrawContentWithWidth extends DrawContent {
   width: number;
 }
 
 export interface DrawGroupWithWidth extends DrawGroup {
-  contents: DrawContentWithWidth[];
+  contents: (DrawContentWithWidth | DrawUnknown)[];
 }
 
-export type DrawableWithWidth = DrawContentWithWidth | DrawGroupWithWidth;
+export type DrawableWithWidth =
+  | DrawContentWithWidth
+  | DrawGroupWithWidth
+  | DrawUnknown;
 
 // Drawn types
 export interface Drawn {

@@ -1,12 +1,12 @@
+import type { Disposable } from 'coc.nvim';
 import pFilter from 'p-filter';
+import { hlGroupManager } from '../highlight/manager';
+import type { Drawn, DrawnWithNodeIndex } from '../painter/types';
 import { compactI, groupBy } from '../util';
 import type { Column, ColumnRegistrar } from './columnRegistrar';
-import { hlGroupManager } from '../highlight/manager';
-import { OriginalTemplatePart, parseTemplate } from './parseTemplate';
+import { parseTemplate, type OriginalTemplatePart } from './parseTemplate';
 import type { BaseTreeNode, ExplorerSource } from './source';
 import { ViewPainter } from './viewPainter';
-import type { Disposable } from 'coc.nvim';
-import type { Drawn, DrawnWithNodeIndex } from '../painter/types';
 
 export const labelHighlight = hlGroupManager.linkGroup('Label', 'Label');
 
@@ -225,17 +225,19 @@ export class SourcePainters<
       const painter = this.getPainter(type);
       for (const column of painter.columns) {
         try {
-          column.drawHandle = await column.draw(nodesGroup[type], {
-            drawAll() {
-              if (drawAll) {
-                throw new DrawAll();
-              }
-            },
-            abort() {
-              throw new Abort();
-            },
-            force,
-          });
+          const nodes = nodesGroup[type];
+          if (nodes)
+            column.drawHandle = await column.draw(nodes, {
+              drawAll() {
+                if (drawAll) {
+                  throw new DrawAll();
+                }
+              },
+              abort() {
+                throw new Abort();
+              },
+              force,
+            });
         } catch (err) {
           if (err instanceof DrawAll) {
             return drawAll!();

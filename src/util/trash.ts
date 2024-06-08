@@ -4,6 +4,7 @@ import { execCmdLine, executable, shellescape } from './cli';
 
 const nodejsModuleTrash = async (paths: string[]) => {
   const nodePath = process.argv[0];
+  if (!nodePath) return;
   const scriptPath = path.join(__dirname, '../cli/trash.mjs');
   const pathArgs = paths.map((p) => shellescape(p)).join(' ');
   const cmd = `${shellescape(nodePath)} ${shellescape(scriptPath)} ${pathArgs}`;

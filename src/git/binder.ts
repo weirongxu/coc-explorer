@@ -6,7 +6,7 @@ import type { ExplorerManager } from '../explorerManager';
 import type { BaseTreeNode, ExplorerSource } from '../source/source';
 import { createSubject, mapGetWithDefault, sum } from '../util';
 import { gitManager } from './manager';
-import { GitIgnore, GitMixedStatus, GitRootStatus } from './types';
+import { GitIgnore, type GitMixedStatus, type GitRootStatus } from './types';
 
 const statusEqual = (a: GitMixedStatus, b: GitMixedStatus) => {
   return a.x === b.x && a.y === b.y;
@@ -124,8 +124,8 @@ export class GitBinder {
           'isRoot' in node
             ? source.root
             : node.expandable
-            ? node.fullpath
-            : node.fullpath && pathLib.dirname(node.fullpath);
+              ? node.fullpath
+              : node.fullpath && pathLib.dirname(node.fullpath);
         if (directory) {
           this.reloadDebounceSubject.next({ sources: [source], directory });
         }
@@ -224,7 +224,7 @@ export class GitBinder {
       }
 
       // root
-      if (rootStatus && !rootStatusEqual(prevRootStatus, rootStatus)) {
+      if (!rootStatusEqual(prevRootStatus, rootStatus)) {
         updatePaths.add(root);
       }
 

@@ -42,17 +42,20 @@ export function colorDistance(c1: Color, c2: Color) {
 /**
  * Get the closest color from a list of colors
  */
-export function findNearestColor(color: Color, list: Color[]): Color;
+export function findNearestColor(
+  color: Color,
+  list: Color[],
+): Color | undefined;
 export function findNearestColor<T>(
   color: Color,
   list: T[],
   getColor: (it: T) => Color,
-): T;
+): T | undefined;
 export function findNearestColor<T>(
   color: Color,
   list: T[],
   getColor: (it: T) => Color = (it) => it as unknown as Color,
-) {
+): Color | T | undefined {
   return minBy(list, (it) => colorDistance(getColor(it), color));
 }
 
@@ -67,7 +70,7 @@ export function parseColor(str: string) {
   const m = str.match(/.{1,2}/g);
   if (!m) return;
 
-  const [r, g, b] = m;
+  const [r = '0', g = '0', b = '0'] = m;
   const ri = parseInt(r, 16);
   if (isNaN(ri)) return;
   const gi = parseInt(g, 16);

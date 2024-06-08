@@ -1,8 +1,8 @@
 import pathLib from 'path';
-import { FileNode, FileSource } from '../source/sources/file/fileSource';
-import { normalizePath } from '../util';
 import { FileSourceHelper } from '../__test__/helpers/fileSource';
 import { bootSource, mockWorkspace } from '../__test__/helpers/helper';
+import { FileSource, type FileNode } from '../source/sources/file/fileSource';
+import { normalizePath } from '../util';
 
 mockWorkspace();
 

@@ -6,11 +6,10 @@ import type {
   Range,
   TextDocument,
 } from 'coc.nvim';
-import { ActionMenu } from './menu';
 import type { ExplorerManager } from '../explorerManager';
 import { actionListMru } from '../lists/actions';
 import { keyMapping } from '../mappings';
-import { flatten } from '../util';
+import { ActionMenu } from './menu';
 
 function score(list: string[], key: string): number {
   const idx = list.indexOf(key);
@@ -41,49 +40,49 @@ export class ActionMenuCodeActionProvider implements CodeActionProvider {
     const actions = source.action.registeredActions();
     const mruList = await actionListMru.load();
 
-    return flatten(
-      [...actions.entries()]
-        .filter(([actionName]) => actionName !== 'actionMenu')
-        .sort(([aName], [bName]) => aName.localeCompare(bName))
-        .sort(([aName], [bName]) => aName.localeCompare(bName))
-        .map(([actionName, { options }]) => {
-          const keys = reverseMappings[actionName];
-          const key = keys ? keys.vmap ?? keys.all : '';
-          const list = [
-            {
-              title: `${actionName} [${key}]`,
-              name: actionName,
-              command: 'explorer.doCodeAction',
-              arguments: [actionName, actionName, async () => []] as [
-                string,
-                string,
-                () => Promise<string[]>,
-              ],
-              score: score(mruList, actionName),
-            },
-          ];
-          if (options.menus) {
-            list.push(
-              ...ActionMenu.getNormalizeMenus(options.menus).map((menu) => {
-                const fullActionName = `${actionName}:${menu.args}`;
-                const keys = reverseMappings[fullActionName];
-                const key = keys ? keys.vmap ?? keys.all : '';
-                return {
-                  title: `${fullActionName} [${key}]`,
-                  name: fullActionName,
-                  command: 'explorer.doCodeAction',
-                  arguments: [
-                    fullActionName,
-                    actionName,
-                    () => menu.actionArgs(),
-                  ] as [string, string, () => Promise<string[]>],
-                  score: score(mruList, fullActionName),
-                };
-              }),
-            );
-          }
-          return list;
-        }),
-    ).sort((a, b) => b.score - a.score);
+    return [...actions.entries()]
+      .filter(([actionName]) => actionName !== 'actionMenu')
+      .sort(([aName], [bName]) => aName.localeCompare(bName))
+      .sort(([aName], [bName]) => aName.localeCompare(bName))
+      .map(([actionName, { options }]) => {
+        const keys = reverseMappings.get(actionName);
+        const key = keys ? keys.vmap ?? keys.nmap : '';
+        const list = [
+          {
+            title: `${actionName} [${key}]`,
+            name: actionName,
+            command: 'explorer.doCodeAction',
+            arguments: [actionName, actionName, async () => []] as [
+              string,
+              string,
+              () => Promise<string[]>,
+            ],
+            score: score(mruList, actionName),
+          },
+        ];
+        if (options.menus) {
+          list.push(
+            ...ActionMenu.getNormalizeMenus(options.menus).map((menu) => {
+              const fullActionName = `${actionName}:${menu.args}`;
+              const keys = reverseMappings.get(fullActionName);
+              const key = keys ? keys.vmap ?? keys.nmap : '';
+              return {
+                title: `${fullActionName} [${key}]`,
+                name: fullActionName,
+                command: 'explorer.doCodeAction',
+                arguments: [
+                  fullActionName,
+                  actionName,
+                  () => menu.actionArgs(),
+                ] as [string, string, () => Promise<string[]>],
+                score: score(mruList, fullActionName),
+              };
+            }),
+          );
+        }
+        return list;
+      })
+      .flat()
+      .sort((a, b) => b.score - a.score);
   }
 }

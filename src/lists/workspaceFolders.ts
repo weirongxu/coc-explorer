@@ -15,7 +15,7 @@ export const explorerWorkspaceFolderList = registerList<
       data: {
         path,
         callback: () => {
-          fileSource?.action.doAction('cd', [], [path]).catch(logger.error);
+          fileSource.action.doAction('cd', [], [path]).catch(logger.error);
         },
       },
     }));

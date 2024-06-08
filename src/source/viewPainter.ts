@@ -1,12 +1,13 @@
 import type { Explorer } from '../explorer';
 import type { HighlightCommand, HighlightPosition } from '../highlight/types';
 import type {
-  Drawable,
   DrawBlock,
   DrawContent,
   DrawContentWithWidth,
   DrawFlexible,
   DrawGroup,
+  DrawUnknown,
+  Drawable,
   Drawn,
 } from '../painter/types';
 import {
@@ -16,7 +17,7 @@ import {
   handlePadding,
   isEmptyDrawableList,
 } from '../painter/util';
-import { flatten, sum } from '../util';
+import { compactI, sum } from '../util';
 import type { Column } from './columnRegistrar';
 import type { BaseTreeNode } from './source';
 import type { TemplatePart } from './sourcePainters';
@@ -50,32 +51,41 @@ export class ViewRowPainter {
     );
 
     // Draw flexible
-    let drawContents: DrawContentWithWidth[] = [];
+    let drawContents: (DrawContentWithWidth | DrawUnknown)[] = [];
     const fullwidth = this.view.width;
     const usedWidth = sum(
       drawableList.map((c) => {
-        if (c.type === 'content') {
-          return c.width;
-        } else if (c.type === 'group') {
-          return sum(
-            c.contents.map((cc) => (cc.type === 'content' ? cc.width : 0)),
-          );
-        } else {
-          return 0;
+        switch (c.type) {
+          case 'content':
+            return c.width;
+          case 'group':
+            return sum(
+              c.contents.map((cc) => (cc.type === 'content' ? cc.width : 0)),
+            );
+          default:
+            return 0;
         }
       }),
     );
     if (!flexible || usedWidth === fullwidth) {
-      drawContents = flatten(
-        drawableList.map(
-          (item): DrawContentWithWidth | DrawContentWithWidth[] => {
-            if (item.type === 'group') {
-              return item.contents;
-            } else {
-              return item;
-            }
-          },
-        ),
+      drawContents = compactI(
+        drawableList
+          .map(
+            (
+              item,
+            ):
+              | DrawContentWithWidth
+              | (DrawContentWithWidth | DrawUnknown)[]
+              | undefined => {
+              switch (item.type) {
+                case 'group':
+                  return item.contents;
+                case 'content':
+                  return item;
+              }
+            },
+          )
+          .flat(),
       );
     } else if (usedWidth < fullwidth) {
       drawContents = await handleGrow(fullwidth, usedWidth, drawableList);
@@ -88,6 +98,7 @@ export class ViewRowPainter {
     let content = '';
     let col = 0;
     for (const drawContent of drawContents) {
+      if (drawContent.type !== 'content') continue;
       const size = drawContent.content.length;
       if (drawContent.group) {
         highlightPositions.push({
@@ -163,17 +174,18 @@ export class ViewRowPainter {
   ) {
     return {
       type: 'group',
-      contents: flatten(
-        drawableList.map((c) => {
-          if (c.type === 'content') {
-            return c;
-          } else if (c.type === 'group') {
-            return c.contents;
-          } else {
-            return c;
+      contents: drawableList
+        .map((c) => {
+          switch (c.type) {
+            case 'content':
+              return c;
+            case 'group':
+              return c.contents;
+            default:
+              return c;
           }
-        }),
-      ),
+        })
+        .flat(),
       flexible,
     } as DrawGroup;
   }

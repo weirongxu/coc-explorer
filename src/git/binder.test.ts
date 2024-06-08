@@ -1,18 +1,18 @@
 import { Notifier } from 'coc-helper';
 import pathLib from 'path';
+import { FileSourceHelper } from '../__test__/helpers/fileSource';
+import { bootSource, mockWorkspace } from '../__test__/helpers/helper';
 import type {
   BaseTreeNode,
   ExplorerSource,
   SourceOptions,
 } from '../source/source';
-import { FileNode, FileSource } from '../source/sources/file/fileSource';
+import { FileSource, type FileNode } from '../source/sources/file/fileSource';
 import { normalizePath } from '../util';
 import { rendererSourceSymbol } from '../view/rendererSource';
-import { FileSourceHelper } from '../__test__/helpers/fileSource';
-import { bootSource, mockWorkspace } from '../__test__/helpers/helper';
 import { GitBinder } from './binder';
 import { gitManager } from './manager';
-import { GitFormat, GitMixedStatus } from './types';
+import { GitFormat, type GitMixedStatus } from './types';
 
 mockWorkspace();
 

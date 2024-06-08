@@ -8,7 +8,7 @@ import type {
   ExplorerSource,
   SourceOptions,
 } from '../source/source';
-import { compactI, flatten } from '../util';
+import { compactI } from '../util';
 import type { ViewSource } from './viewSource';
 
 export const rendererSourceSymbol = Symbol('rendererSource');
@@ -38,7 +38,7 @@ export class RendererSource<TreeNode extends BaseTreeNode<TreeNode>> {
       i < len;
       i++
     ) {
-      if ((this.view.flattenedNodes[i].level ?? 0) <= parentLevel) {
+      if ((this.view.flattenedNodes[i]!.level ?? 0) <= parentLevel) {
         endIndex = i - 1;
         break;
       }
@@ -56,7 +56,7 @@ export class RendererSource<TreeNode extends BaseTreeNode<TreeNode>> {
           if (nodeIndex < 0) {
             return;
           }
-          const finalNode = this.view.flattenedNodes[nodeIndex];
+          const finalNode = this.view.flattenedNodes.at(nodeIndex);
           if (!finalNode) {
             return;
           }
@@ -73,14 +73,14 @@ export class RendererSource<TreeNode extends BaseTreeNode<TreeNode>> {
         return drawnList.map((d) => d.content);
       },
       get highlightPositions(): HighlightPositionWithLine[] {
-        return flatten(
-          drawnList.map((d) =>
+        return drawnList
+          .map((d) =>
             d.highlightPositions.map((hl) => ({
               lineIndex: startLineIndex + d.nodeIndex,
               ...hl,
             })),
-          ),
-        );
+          )
+          .flat();
       },
     };
   }
@@ -170,9 +170,8 @@ export class RendererSource<TreeNode extends BaseTreeNode<TreeNode>> {
 
     return await this.view.sourcePainters.drawPre(finalNodes, {
       draw: async () => {
-        const { drawnList, highlightPositions } = await this.drawNodes(
-          finalNodes,
-        );
+        const { drawnList, highlightPositions } =
+          await this.drawNodes(finalNodes);
         const drawnRangeList = drawnWithIndexRange(drawnList);
         await this.source.events.fire('drawn');
         return Notifier.create(() => {
@@ -231,9 +230,8 @@ export class RendererSource<TreeNode extends BaseTreeNode<TreeNode>> {
       this.view.endLineIndex,
     );
     await this.view.sourcePainters.drawPre(needDrawNodes, { force });
-    const { contents, highlightPositions } = await this.drawNodes(
-      needDrawNodes,
-    );
+    const { contents, highlightPositions } =
+      await this.drawNodes(needDrawNodes);
     await this.source.events.fire('drawn');
 
     const sourceIndex = this.view.currentSourceIndex();

@@ -4,7 +4,7 @@ import { buffer, debounceTime, switchMap } from 'rxjs';
 import { internalEvents } from '../events';
 import type { BaseTreeNode, ExplorerSource } from '../source/source';
 import { createSubject, mapGetWithDefault, sum } from '../util';
-import { diagnosticManager, DiagnosticType } from './manager';
+import { diagnosticManager, type DiagnosticType } from './manager';
 
 export class DiagnosticBinder {
   protected sourcesBinding: Map<
@@ -82,8 +82,8 @@ export class DiagnosticBinder {
         'isRoot' in node
           ? source.root
           : node.expandable
-          ? node.fullpath
-          : node.fullpath && pathLib.dirname(node.fullpath);
+            ? node.fullpath
+            : node.fullpath && pathLib.dirname(node.fullpath);
       if (directory) {
         this.reloadDebounceSubject.next([source]);
       }

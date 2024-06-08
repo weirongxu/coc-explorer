@@ -73,29 +73,26 @@ export async function loadIcons(
   };
   for (const target of targets) {
     if (hasOwnProperty(fullname2directoryIcon, target.fullname)) {
-      result.directories.set(
-        target.fullname,
-        fullname2directoryIcon[target.fullname].icon,
-      );
+      const item = fullname2directoryIcon[target.fullname];
+      if (item) result.directories.set(target.fullname, item.icon);
     } else if (hasOwnProperty(fullname2fileIcon, target.fullname)) {
-      result.files.set(
-        target.fullname,
-        fullname2fileIcon[target.fullname].icon,
-      );
+      const item = fullname2fileIcon[target.fullname];
+      if (item) result.files.set(target.fullname, item.icon);
     } else if (target.isDirectory) {
       // get the defeault icon for directory
       const code = target.expanded
-        ? nerdfont.icons.folderOpened.code
-        : nerdfont.icons.folderClosed.code;
-      result.directories.set(target.fullname, {
-        code,
-      });
+        ? nerdfont.icons.folderOpened?.code
+        : nerdfont.icons.folderClosed?.code;
+      if (code)
+        result.directories.set(target.fullname, {
+          code,
+        });
     } else {
       // get defeault icon for file
       const code = target.hidden
-        ? nerdfont.icons.fileHidden.code
-        : nerdfont.icons.file.code;
-      result.files.set(target.fullname, { code });
+        ? nerdfont.icons.fileHidden?.code
+        : nerdfont.icons.file?.code;
+      if (code) result.files.set(target.fullname, { code });
     }
   }
   return result;

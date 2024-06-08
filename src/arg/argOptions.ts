@@ -3,13 +3,13 @@ import type { OpenStrategy, RootStrategyStr } from '../types';
 import type { Position } from '../types/pkg-config';
 import { normalizePath } from '../util';
 import {
-  ArgContentWidthTypes,
-  ArgFloatingPositions,
-  ArgPosition,
   Args,
-  ArgsSource,
-  ParsedPosition,
-  ResolveArgValues,
+  type ArgContentWidthTypes,
+  type ArgFloatingPositions,
+  type ArgPosition,
+  type ArgsSource,
+  type ParsedPosition,
+  type ResolveArgValues,
 } from './parseArgs';
 
 export const argOptions = {

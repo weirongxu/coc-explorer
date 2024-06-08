@@ -1,4 +1,4 @@
-import { ExtensionContext, workspace } from 'coc.nvim';
+import { workspace, type ExtensionContext } from 'coc.nvim';
 import type { MappingMode } from '../actions/types';
 import type { ExplorerManager } from '../explorerManager';
 import { keyMapping } from '../mappings';
@@ -19,9 +19,10 @@ export async function registerMappings(
     ['v', [...commonKeys, ...(await keyMapping.getVisualKeys())]],
   ];
   for (const [mode, keys] of keysModes) {
-    mappings[mode] = {};
+    const mappingsMode: Record<string, string> = {};
+    mappings[mode] = mappingsMode;
     for (const key of keys) {
-      if (mappings[mode][key]) {
+      if (mappingsMode[key]) {
         continue;
       }
       if (mode === 'v' && ['o', 'j', 'k'].includes(key)) {
@@ -37,7 +38,7 @@ export async function registerMappings(
             .catch(logger.error);
         }),
       );
-      mappings[mode][key] = `<Plug>(coc-${plugKey})`;
+      mappingsMode[key] = `<Plug>(coc-${plugKey})`;
     }
   }
   await workspace.nvim.call('coc_explorer#mappings#register', [mappings]);

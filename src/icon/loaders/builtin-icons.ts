@@ -17,7 +17,7 @@ export class BuiltinIconLoader extends IconLoader {
         ? this.getDirectoryIcon(target)
         : this.getFileIcon(target);
       if (icon) {
-        icon.highlight = nerdfontHighlights[icon.name]?.group;
+        icon.highlight = nerdfontHighlights.get(icon.name)?.group;
         loaded.push({
           icon,
           target,
@@ -27,14 +27,16 @@ export class BuiltinIconLoader extends IconLoader {
     return loaded;
   }
 
-  nerdfontToIcon(name: string): undefined | (IconInfo & { name: string }) {
+  nerdfontToIcon(
+    name: string | undefined,
+  ): undefined | (IconInfo & { name: string }) {
+    if (!name) return;
     const icon = nerdfont.icons[name];
-    if (icon) {
+    if (icon)
       return {
         name,
-        ...nerdfont.icons[name],
+        ...icon,
       };
-    }
   }
 
   getFileIcon(
@@ -60,7 +62,7 @@ export class BuiltinIconLoader extends IconLoader {
       return this.nerdfontToIcon(name);
     }
 
-    if (hasOwnProperty(nerdfont.extensions, extname)) {
+    if (extname && hasOwnProperty(nerdfont.extensions, extname)) {
       const name = nerdfont.extensions[extname];
       return this.nerdfontToIcon(name);
     }

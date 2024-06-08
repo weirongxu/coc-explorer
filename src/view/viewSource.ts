@@ -1,5 +1,4 @@
 import { Disposable, workspace } from 'coc.nvim';
-import { clone } from 'lodash-es';
 import type { Explorer } from '../explorer';
 import type { ColumnRegistrar } from '../source/columnRegistrar';
 import type {
@@ -120,12 +119,8 @@ export class ViewSource<
    * Get relative line index for source by node
    */
   getLineByNode(node: TreeNode): undefined | number {
-    if (node) {
-      const line = this.flattenedNodes.findIndex((it) => it.uid === node.uid);
-      return line === -1 ? undefined : line;
-    } else {
-      return 0;
-    }
+    const line = this.flattenedNodes.findIndex((it) => it.uid === node.uid);
+    return line === -1 ? undefined : line;
   }
 
   setLinesNotifier(lines: string[], startIndex: number, endIndex: number) {
@@ -159,7 +154,7 @@ export class ViewSource<
     let currentNode = node;
     const result: TreeNode[] = [];
 
-    // eslint-disable-next-line no-constant-condition
+    // eslint-disable-next-line no-constant-condition, @typescript-eslint/no-unnecessary-condition
     while (true) {
       if (currentNode.parent) {
         result.push(currentNode.parent);
@@ -185,52 +180,58 @@ export class ViewSource<
       // compact
       if (!node.isRoot) {
         const compactStatus = this.nodeStores.getCompact(node);
-        if (compactStatus === 'compact') {
-          if (
-            !node.compactedNodes &&
-            node.children?.length === 1 &&
-            node.children[0].expandable
-          ) {
-            /**
-             * compact
-             * --------------------------------------
-             * └──node/         =>   └──node/subnode/
-             *    └──subnode/           └──file
-             *       └──file
-             */
-            let tail = node.children[0];
-            const compactedNodes = [node, tail];
-            while (tail.children?.length === 1 && tail.children[0].expandable) {
+        switch (compactStatus) {
+          case 'compact':
+            if (
+              !node.compactedNodes &&
+              node.children?.length === 1 &&
+              node.children[0]?.expandable
+            ) {
+              /**
+               * compact
+               * --------------------------------------
+               * └──node/         =>   └──node/subnode/
+               *    └──subnode/           └──file
+               *       └──file
+               */
+              let tail = node.children[0];
+              const compactedNodes = [node, tail];
+              while (
+                tail.children?.length === 1 &&
+                tail.children[0]?.expandable
+              ) {
+                this.nodeStores.setCompact(tail, 'compact');
+                tail = tail.children[0];
+                compactedNodes.push(tail);
+              }
               this.nodeStores.setCompact(tail, 'compact');
-              tail = tail.children[0];
-              compactedNodes.push(tail);
+              const compactedNode = { ...tail };
+              compactedNode.name = compactedNodes.map((n) => n.name).join('/');
+              compactedNode.compactedNodes = compactedNodes;
+              compactedNode.compactedLastNode = tail;
+              // use compactedNode instead of node
+              this.replaceNodeInSibling(node, compactedNode);
+              node = compactedNode;
             }
-            this.nodeStores.setCompact(tail, 'compact');
-            const compactedNode = clone(tail);
-            compactedNode.name = compactedNodes.map((n) => n.name).join('/');
-            compactedNode.compactedNodes = compactedNodes;
-            compactedNode.compactedLastNode = tail;
-            // use compactedNode instead of node
-            this.replaceNodeInSibling(node, compactedNode);
-            node = compactedNode;
-          }
-        } else if (compactStatus === 'uncompact') {
-          if (node.compactedNodes) {
-            /**
-             * uncompact
-             * -------------------------------------
-             * └──topNode/node/  =>   └──topNode/
-             *    └──file                └──node/
-             *                              └──file
-             */
-            const topNode = node.compactedNodes[0];
-            for (const n of node.compactedNodes) {
-              this.nodeStores.setCompact(n, 'uncompact');
+            break;
+          case 'uncompact':
+            if (node.compactedNodes) {
+              /**
+               * uncompact
+               * -------------------------------------
+               * └──topNode/node/  =>   └──topNode/
+               *    └──file                └──node/
+               *                              └──file
+               */
+              const topNode = node.compactedNodes[0]!;
+              for (const n of node.compactedNodes) {
+                this.nodeStores.setCompact(n, 'uncompact');
+              }
+              // use topNode instead of compactedNode
+              this.replaceNodeInSibling(node, topNode);
+              node = topNode;
             }
-            // use topNode instead of compactedNode
-            this.replaceNodeInSibling(node, topNode);
-            node = topNode;
-          }
+            break;
         }
       }
 
@@ -238,9 +239,9 @@ export class ViewSource<
 
       if (node.children) {
         for (let i = node.children.length - 1; i >= 0; i--) {
-          node.children[i].parent = node;
-          node.children[i].level = (node.level ?? 0) + 1;
-          stack.unshift(node.children[i]);
+          node.children[i]!.parent = node;
+          node.children[i]!.level = (node.level ?? 0) + 1;
+          stack.unshift(node.children[i]!);
         }
       }
     }
@@ -278,9 +279,8 @@ export class ViewSource<
             needDrawNodes.length - 1 - (endIndex - startIndex),
             startIndex,
           );
-          const { contents, highlightPositions } = await r.drawNodes(
-            needDrawNodes,
-          );
+          const { contents, highlightPositions } =
+            await r.drawNodes(needDrawNodes);
           await this.source.events.fire('drawn');
 
           workspace.nvim.pauseNotification();
@@ -325,28 +325,31 @@ export class ViewSource<
       }
 
       const singleExpandableNode =
-        node.children.length === 1 && node.children[0].expandable;
+        node.children.length === 1 && node.children[0]?.expandable;
 
       const compactStatus = this.nodeStores.getCompact(node);
-      if (compactStatus === 'uncompact') {
-        /**
-         * └──topNode&node/
-         *    └──subnode/
-         *       └──file
-         */
-        if (singleExpandableNode && compact) {
-          this.nodeStores.setCompact(node, 'compact');
-        }
-      } else if (compactStatus === 'compact') {
-        /**
-         * └──topNode/node/
-         *    └──file
-         */
-        if (isExpanded && uncompact) {
-          this.nodeStores.setCompact(node, 'uncompact');
-        } else {
-          this.nodeStores.setCompact(node, 'compact');
-        }
+      switch (compactStatus) {
+        case 'uncompact':
+          /**
+           * └──topNode&node/
+           *    └──subnode/
+           *       └──file
+           */
+          if (singleExpandableNode && compact) {
+            this.nodeStores.setCompact(node, 'compact');
+          }
+          break;
+        case 'compact':
+          /**
+           * └──topNode/node/
+           *    └──file
+           */
+          if (isExpanded && uncompact) {
+            this.nodeStores.setCompact(node, 'uncompact');
+          } else {
+            this.nodeStores.setCompact(node, 'compact');
+          }
+          break;
       }
 
       if (options.recursive || (singleExpandableNode && recursiveSingle)) {
@@ -459,7 +462,7 @@ export class ViewSource<
 
   async render(options?: SourceOptions.Render<TreeNode>) {
     await this.sync(async (r) => {
-      await (await r.renderNotifier(options))?.run();
+      await (await r.renderNotifier(options)).run();
     });
   }
 }

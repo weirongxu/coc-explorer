@@ -1,4 +1,4 @@
-import { window, WorkspaceConfiguration } from 'coc.nvim';
+import { window, type WorkspaceConfiguration } from 'coc.nvim';
 import { getPresets } from '../presets';
 import type { Explorer, Position } from '../types/pkg-config';
 import { splitCount } from '../util';
@@ -49,11 +49,12 @@ export type ArgFloatingPositions =
   | 'center'
   | 'center-top';
 
-export type ResolveArgValue<T> = T extends ArgOptionRequired<infer V, any>
-  ? V
-  : T extends ArgOption<infer V, any>
-  ? V | undefined
-  : never;
+export type ResolveArgValue<T> =
+  T extends ArgOptionRequired<infer V, any>
+    ? V
+    : T extends ArgOption<infer V, any>
+      ? V | undefined
+      : never;
 
 export type ResolveArgValues<T> = {
   [K in keyof T]: ResolveArgValue<T[K]>;
@@ -160,7 +161,7 @@ export class Args {
         let key: string, value: undefined | string;
 
         if (/^--[\w-]+=/.test(arg)) {
-          [key, value] = splitCount(arg.slice(2), '=', 2);
+          [key = '', value] = splitCount(arg.slice(2), '=', 2);
         } else {
           key = arg.slice(2);
         }
@@ -176,7 +177,7 @@ export class Args {
             self.optionValues.set(option.name, !key.startsWith('no-'));
             continue;
           } else {
-            value = args.shift()!;
+            value = args.shift();
             if (value === undefined) {
               continue;
             }

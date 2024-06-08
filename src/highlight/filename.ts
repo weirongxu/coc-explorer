@@ -2,7 +2,7 @@ import type { ExplorerConfig } from '../config';
 import { diagnosticManager } from '../diagnostic/manager';
 import { getGitFormatHighlight, gitHighlights } from '../git/highlights';
 import { gitManager } from '../git/manager';
-import { GitFormat, GitMixedStatus } from '../git/types';
+import { GitFormat, type GitMixedStatus } from '../git/types';
 import { fileHighlights } from '../source/sources/file/fileSource';
 import type { HighlightCommand } from './types';
 
@@ -49,27 +49,31 @@ export class FilenameHighlight {
     highlightOrder: FilenameHighlight.HighlightTypes[],
   ): HighlightCommand | undefined {
     for (const type of highlightOrder) {
-      if (type === 'diagnosticWarning') {
-        if (this.enabledWarningStatus) {
-          const warning = diagnosticManager.getMixedWarning(fullpath);
-          if (warning) {
-            return fileHighlights.diagnosticWarning;
+      switch (type) {
+        case 'diagnosticWarning':
+          if (this.enabledWarningStatus) {
+            const warning = diagnosticManager.getMixedWarning(fullpath);
+            if (warning) {
+              return fileHighlights.diagnosticWarning;
+            }
           }
-        }
-      } else if (type === 'diagnosticError') {
-        if (this.enabledErrorStatus) {
-          const error = diagnosticManager.getMixedError(fullpath);
-          if (error) {
-            return fileHighlights.diagnosticError;
+          break;
+        case 'diagnosticError':
+          if (this.enabledErrorStatus) {
+            const error = diagnosticManager.getMixedError(fullpath);
+            if (error) {
+              return fileHighlights.diagnosticError;
+            }
           }
-        }
-      } else if (type === 'git') {
-        if (this.enabledGitStatus) {
-          const status = gitManager.getMixedStatus(fullpath, isDirectory);
-          if (status) {
-            return this.getGitHighlight(status);
+          break;
+        case 'git':
+          if (this.enabledGitStatus) {
+            const status = gitManager.getMixedStatus(fullpath, isDirectory);
+            if (status) {
+              return this.getGitHighlight(status);
+            }
           }
-        }
+          break;
       }
     }
   }

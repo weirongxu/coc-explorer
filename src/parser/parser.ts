@@ -1,5 +1,8 @@
 export class ParserSource {
-  constructor(public readonly s: string, public i: number) {}
+  constructor(
+    public readonly s: string,
+    public i: number,
+  ) {}
 
   ch() {
     return this.s[this.i];
@@ -41,7 +44,10 @@ export class ParserSource {
 }
 
 export class ParserError extends Error {
-  constructor(public source: ParserSource, message: string) {
+  constructor(
+    public source: ParserSource,
+    message: string,
+  ) {
     super(message);
   }
 }

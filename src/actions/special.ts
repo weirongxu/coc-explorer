@@ -2,14 +2,15 @@ import type { BaseTreeNode, ExplorerSource } from '../source/source';
 
 export const conditionActionRules: Record<
   string,
-  {
-    filter: (
-      s: ExplorerSource<any>,
-      n: BaseTreeNode<any>,
-      args: string[],
-    ) => boolean | undefined;
-    getHelpDescription: (args: string[]) => string;
-  }
+  | {
+      filter: (
+        s: ExplorerSource<any>,
+        n: BaseTreeNode<any>,
+        args: string[],
+      ) => boolean | undefined;
+      getHelpDescription: (args: string[]) => string;
+    }
+  | undefined
 > = {
   'expandable?': {
     filter: (_s, n) => n.expandable,

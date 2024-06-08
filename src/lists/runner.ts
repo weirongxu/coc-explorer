@@ -2,16 +2,16 @@ import {
   BasicList,
   CancellationToken,
   Emitter,
-  events,
-  ListActionOptions,
-  ListContext,
-  ListItem,
-  listManager,
-  ListTask,
   Location,
-  LocationWithLine,
-  ProviderResult,
+  events,
+  listManager,
   workspace,
+  type ListActionOptions,
+  type ListContext,
+  type ListItem,
+  type ListTask,
+  type LocationWithLine,
+  type ProviderResult,
 } from 'coc.nvim';
 import type { Explorer } from '../explorer';
 import { sleep, winnrByBufnr } from '../util';
@@ -119,7 +119,10 @@ export async function startCocList<Arg, Data>(
   const nvim = explorer.nvim;
   const bufManager = explorer.explorerManager.bufManager;
 
-  const floatingHideOnCocList = config.get('floating.hideOnCocList', true);
+  const floatingHideOnCocList = config.get<boolean>(
+    'floating.hideOnCocList',
+    true,
+  );
 
   let isExplorerShown = true;
   if (explorer.isFloating && floatingHideOnCocList) {

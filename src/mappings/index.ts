@@ -28,7 +28,7 @@ export function parseOriginalAction(originalAction: OriginalAction): Action {
   if (typeof originalAction !== 'string') {
     return originalAction;
   }
-  const [name, ...args] = originalAction.split(/:/);
+  const [name = '', ...args] = originalAction.split(/:/);
   return {
     name,
     args,
@@ -62,13 +62,15 @@ export function parseOriginalActionExp(
 export function parseOriginalMappings(originalMappings: OriginalMappings) {
   const mappings: Mappings = {};
   for (const [key, originalActionExp] of Object.entries(originalMappings)) {
-    mappings[parseMappingKey(key)] = parseOriginalActionExp(originalActionExp);
+    if (originalActionExp)
+      mappings[parseMappingKey(key)] =
+        parseOriginalActionExp(originalActionExp);
   }
   return mappings;
 }
 
 function mixAndParseMappings(
-  defaultMappings: OriginalMappings,
+  defaultMappings: OriginalMappings | Mappings,
   userMappings: OriginalUserMappings,
 ) {
   const mappings = parseOriginalMappings(defaultMappings);
@@ -129,7 +131,7 @@ class KeyMapping {
     {
       global: OriginalMappings;
       vmap: OriginalMappings;
-      sources: Record<string, OriginalMappings>;
+      sources?: Record<string, OriginalMappings>;
     }
   > = {
     none: {
@@ -331,15 +333,13 @@ class KeyMapping {
     const globalMappings = this.globalMappings();
     const sourceMappings = this.sourceMappings(sourceType);
     if (mode === 'v') {
-      return (
-        vmapMappings?.[key] ?? sourceMappings?.[key] ?? globalMappings[key]
-      );
+      return vmapMappings[key] ?? sourceMappings?.[key] ?? globalMappings[key];
     }
     return sourceMappings?.[key] ?? globalMappings[key];
   }
 
   async getMappings(sourceType: string): Promise<{
-    all: Mappings;
+    nmap: Mappings;
     vmap: Mappings;
   }> {
     const globalMappings = this.globalMappings();
@@ -353,33 +353,37 @@ class KeyMapping {
       delete mappings['<esc>'];
     }
     return {
-      all: mappings,
+      nmap: mappings,
       vmap: vmapMappings,
     };
   }
 
   async getReversedMappings(sourceType: string) {
     const mappings = await this.getMappings(sourceType);
-    const reverseMappings: Record<string, { all?: string; vmap?: string }> = {};
-    Object.entries(mappings.all).find(([key, actionExp]) => {
-      const action = getSingleAction(actionExp);
-      if (action) {
-        const orgAction = toOriginalAction(action);
-        if (!reverseMappings[orgAction]) {
-          reverseMappings[orgAction] = {};
-        }
-        reverseMappings[orgAction].all = key;
+    const reverseMappings = new Map<
+      string,
+      {
+        nmap?: string;
+        vmap?: string;
       }
+    >();
+    Object.entries(mappings.nmap).forEach(([key, actionExp]) => {
+      const action = getSingleAction(actionExp);
+      if (!action) return;
+      const orgAction = toOriginalAction(action);
+      let mapping = reverseMappings.get(orgAction);
+      mapping ??= {};
+      mapping.nmap = key;
+      reverseMappings.set(orgAction, mapping);
     });
-    Object.entries(mappings.vmap).find(([key, actionExp]) => {
+    Object.entries(mappings.vmap).forEach(([key, actionExp]) => {
       const action = getSingleAction(actionExp);
-      if (action) {
-        const orgAction = toOriginalAction(action);
-        if (!reverseMappings[orgAction]) {
-          reverseMappings[orgAction] = {};
-        }
-        reverseMappings[orgAction].vmap = key;
-      }
+      if (!action) return;
+      const orgAction = toOriginalAction(action);
+      let mapping = reverseMappings.get(orgAction);
+      mapping ??= {};
+      mapping.vmap = key;
+      reverseMappings.set(orgAction, mapping);
     });
     return reverseMappings;
   }

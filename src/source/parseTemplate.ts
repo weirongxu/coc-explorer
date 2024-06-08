@@ -38,6 +38,7 @@ function parseKeyword(name: string, s: ParserSource, endWith: string[]) {
   let keyword = '';
   while (!s.end()) {
     const ch = s.ch();
+    if (!ch) break;
     if (!endWith.includes(ch)) {
       keyword += ch;
       s.next();
@@ -73,7 +74,7 @@ function parseModifiers(s: ParserSource) {
     } else if (ch === ']') {
       return modifiers;
     }
-    // eslint-disable-next-line no-constant-condition
+    // eslint-disable-next-line no-constant-condition, @typescript-eslint/no-unnecessary-condition
   } while (true);
 }
 

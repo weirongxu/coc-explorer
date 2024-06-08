@@ -1,7 +1,7 @@
 // modified from: https://github.com/neoclide/coc-lists/blob/3c117046b54130157006f8ddf048304507499260/src/files.ts
 
 import { ChildProcess, spawn } from 'child_process';
-import { ListTask, Location, Range, Uri, workspace } from 'coc.nvim';
+import { Location, Range, Uri, workspace, type ListTask } from 'coc.nvim';
 import { EventEmitter } from 'events';
 import minimatch from 'minimatch';
 import pathLib from 'path';
@@ -111,9 +111,6 @@ export const fileList = registerList<Arg, any>({
       return;
     }
     const cmd = await getCommand(arg);
-    if (!cmd) {
-      return;
-    }
     logger.info(`file list task cmd: ${cmd.name}`);
     const task = new Task();
     const excludePatterns = config.get<string[]>('excludePatterns', []);

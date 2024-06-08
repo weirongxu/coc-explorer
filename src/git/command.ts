@@ -3,7 +3,7 @@ import commandExists from 'command-exists';
 import pathLib from 'path';
 import { config } from '../config';
 import { execCmd, fsStat, normalizePath } from '../util';
-import { GitFormat, GitStatus } from './types';
+import { GitFormat, type GitStatus } from './types';
 
 export namespace GitCommand {
   export type ShowUntrackedFiles = 'system' | boolean;
@@ -77,7 +77,7 @@ export class GitCommand {
 
   private parseStatusFormat(format: string): GitFormat {
     return (
-      Object.values(GitFormat).find((it) => it === format) ??
+      Object.values(GitFormat).find((it) => it.toString() === format) ??
       GitFormat.unmodified
     );
   }
@@ -142,8 +142,8 @@ export class GitCommand {
   }
 
   private parseStatusLine(gitRoot: string, line: string) {
-    const xFormat = this.parseStatusFormat(line[0]);
-    const yFormat = this.parseStatusFormat(line[1]);
+    const xFormat = this.parseStatusFormat(line[0] ?? '');
+    const yFormat = this.parseStatusFormat(line[1] ?? '');
     const rawPath = line.slice(3);
     const hasArrow =
       [GitFormat.renamed, GitFormat.copied].includes(xFormat) ||
@@ -229,14 +229,14 @@ export class GitCommand {
 
   async stage(paths: string[]) {
     if (paths.length) {
-      const root = await this.getRoot(paths[0]);
+      const root = await this.getRoot(paths[0] ?? '');
       await this.spawn(['add', ...paths], { cwd: root });
     }
   }
 
   async unstage(paths: string[]) {
     if (paths.length) {
-      const root = await this.getRoot(paths[0]);
+      const root = await this.getRoot(paths[0] ?? '');
       await this.spawn(['reset', ...paths], { cwd: root });
     }
   }
@@ -270,7 +270,7 @@ export class GitCommand {
     if (!paths.length) {
       return [];
     }
-    const root = await this.getRoot(paths[0]);
+    const root = await this.getRoot(paths[0] ?? '');
     const output = await this.spawn(['check-ignore', ...paths], { cwd: root });
     return output.split(/\n/g);
   }

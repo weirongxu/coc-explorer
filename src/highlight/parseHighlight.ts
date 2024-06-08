@@ -38,10 +38,13 @@ function parseAttrs(s: ParserSource) {
   let value = '';
   let state: 'name' | 'value' = 'name';
   const addAttr = () => {
-    if (state === 'name') {
-      attrs[name] = '';
-    } else if (state === 'value') {
-      attrs[name] = value;
+    switch (state) {
+      case 'name':
+        attrs[name] = '';
+        break;
+      case 'value':
+        attrs[name] = value;
+        break;
     }
     name = '';
     value = '';
@@ -56,10 +59,13 @@ function parseAttrs(s: ParserSource) {
       state = 'value';
       s.next();
     } else {
-      if (state === 'name') {
-        name += ch;
-      } else if (state === 'value') {
-        value += ch;
+      switch (state) {
+        case 'name':
+          name += ch;
+          break;
+        case 'value':
+          value += ch;
+          break;
       }
       s.next();
     }

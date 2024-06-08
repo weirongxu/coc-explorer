@@ -1,10 +1,10 @@
 import { activateHelper, registerRuntimepath } from 'coc-helper';
 import {
   commands,
-  ExtensionContext,
   languages,
   listManager,
   workspace,
+  type ExtensionContext,
 } from 'coc.nvim';
 import { ActionMenuCodeActionProvider } from './actions/codeActionProider';
 import { BufManager } from './bufManager';

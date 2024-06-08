@@ -1,6 +1,6 @@
-import { ExtensionContext, workspace } from 'coc.nvim';
+import { workspace, type ExtensionContext } from 'coc.nvim';
 import pathLib from 'path';
-import { buffer, debounceTime, Subject } from 'rxjs';
+import { Subject, buffer, debounceTime } from 'rxjs';
 import { tabContainerManager } from './container';
 import { internalEvents, onEvent } from './events';
 import type { BufferNode } from './source/sources/buffer/bufferSource';
@@ -257,9 +257,9 @@ export class BufManager {
           if (!matches) {
             return;
           }
-          const bufnr = matches[1];
-          const flags = matches[2];
-          const bufname = matches[3];
+          const bufnr = matches[1]!;
+          const flags = matches[2]!;
+          const bufname = matches[3]!;
           const fullpath: string = await workspace.nvim.call('expand', [
             `#${bufnr}:p`,
             1,

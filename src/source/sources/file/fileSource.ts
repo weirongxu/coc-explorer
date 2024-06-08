@@ -27,7 +27,7 @@ import {
 } from '../../../util';
 import type { RendererSource } from '../../../view/rendererSource';
 import { ViewSource } from '../../../view/viewSource';
-import { BaseTreeNode, ExplorerSource } from '../../source';
+import { type BaseTreeNode, ExplorerSource } from '../../source';
 import { sourceManager } from '../../sourceManager';
 import { fileArgOptions } from './argOptions';
 import { loadFileActions } from './fileActions';
@@ -85,7 +85,7 @@ export const fileHighlights = {
 
 export class FileSource extends ExplorerSource<FileNode> {
   scheme = 'file';
-  showHidden: boolean = this.config.get<boolean>('file.showHiddenFiles')!;
+  showHidden: boolean = this.config.get<boolean>('file.showHiddenFiles');
   showOnlyGitChange = false;
   view: ViewSource<FileNode> = new ViewSource<FileNode>(
     this,
@@ -124,7 +124,7 @@ export class FileSource extends ExplorerSource<FileNode> {
       extensions: string[];
       filenames: string[];
       patternMatches: string[];
-    }>('file.hiddenRules')!;
+    }>('file.hiddenRules');
   }
 
   isHidden(filename: string) {
@@ -132,6 +132,7 @@ export class FileSource extends ExplorerSource<FileNode> {
 
     const { basename, extensions } = getExtensions(filename);
     const extname = extensions[extensions.length - 1];
+    if (!extname) return false;
 
     return (
       hiddenRules.filenames.includes(basename) ||
@@ -157,7 +158,7 @@ export class FileSource extends ExplorerSource<FileNode> {
   }
 
   getColumnConfig<T>(name: string, defaultValue?: T): T {
-    return this.config.get(`file.column.${name}`, defaultValue)!;
+    return this.config.get(`file.column.${name}`, defaultValue);
   }
 
   async init() {
@@ -215,7 +216,7 @@ export class FileSource extends ExplorerSource<FileNode> {
     const escapePath = (await nvim.call('fnameescape', fullpath)) as string;
     type CdCmd = Explorer['explorer.file.cdCommand'];
     let cdCmd: CdCmd;
-    const tabCd = this.config.get<boolean>('file.tabCD');
+    const tabCd = this.config.get<boolean | undefined | null>('file.tabCD');
     if (tabCd !== undefined && tabCd !== null) {
       logger.error(
         'explorer.file.tabCD has been deprecated, please use explorer.file.cdCommand instead of it',
@@ -321,7 +322,7 @@ export class FileSource extends ExplorerSource<FileNode> {
       },
       listArgs,
     );
-    task.waitExplorerShow()?.catch(logger.error);
+    task.waitExplorerShow().catch(logger.error);
   }
 
   filterForReveal(path: string, root: string) {
@@ -409,9 +410,7 @@ export class FileSource extends ExplorerSource<FileNode> {
             const renderNotifier = await renderer.renderNotifier({
               node: startNode,
             });
-            if (renderNotifier) {
-              notifiers.push(renderNotifier);
-            }
+            notifiers.push(renderNotifier);
           }
           if (goto) {
             notifiers.push(await this.locator.gotoNodeNotifier(foundNode));
@@ -477,8 +476,8 @@ export class FileSource extends ExplorerSource<FileNode> {
             isWindows && /^[A-Za-z]:[\\/]$/.test(fullpath)
               ? true
               : stat
-              ? stat.isDirectory()
-              : false;
+                ? stat.isDirectory()
+                : false;
           const child: FileNode = {
             type: 'child',
             uid: this.helper.getUid(fullpath),

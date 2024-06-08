@@ -3,8 +3,8 @@ import { fileHighlights } from '../fileSource';
 
 fileColumnRegistrar.registerColumn('child', 'clip', ({ source }) => ({
   async draw() {
-    let copy = source.getColumnConfig<string>('clip.copy');
-    let cut = source.getColumnConfig<string>('clip.cut');
+    let copy = source.getColumnConfig<string | null>('clip.copy');
+    let cut = source.getColumnConfig<string | null>('clip.cut');
 
     if (source.config.get('icon.enableNerdfont')) {
       copy = copy ?? '';

@@ -1,8 +1,8 @@
-import { IconTarget, loadIconsByConfig } from '../../../../icon/icons';
+import { loadIconsByConfig, type IconTarget } from '../../../../icon/icons';
 import { nerdfontHighlights } from '../../../../icon/nerdfont';
 import type { ColumnDrawHandle } from '../../../columnRegistrar';
 import { fileColumnRegistrar } from '../fileColumnRegistrar';
-import { fileHighlights, FileNode } from '../fileSource';
+import { fileHighlights, type FileNode } from '../fileSource';
 
 fileColumnRegistrar.registerColumn('child', 'icon', ({ source }) => ({
   async draw(nodes): Promise<ColumnDrawHandle<FileNode>> {
@@ -37,7 +37,7 @@ fileColumnRegistrar.registerColumn('child', 'icon', ({ source }) => ({
           const icon = icons?.files.get(node.name);
           if (icon) {
             row.add(icon.code, {
-              hl: icon.highlight ?? nerdfontHighlights.file,
+              hl: icon.highlight ?? nerdfontHighlights.get('file'),
             });
           }
         }

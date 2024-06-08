@@ -1,17 +1,6 @@
 import { findIndex, findLastIndex } from 'lodash-es';
 
-export {
-  max,
-  min,
-  partition,
-  groupBy,
-  flatten,
-  flattenDeep,
-  sum,
-  uniq,
-  findIndex,
-  findLastIndex,
-} from 'lodash-es';
+export { groupBy, max, min, partition, sum, uniq } from 'lodash-es';
 
 export const compactI = <T>(arr: (T | undefined | null | void)[]): T[] =>
   arr.filter((it): it is T => it !== undefined && it !== null);
@@ -27,6 +16,17 @@ export function mapGetWithDefault<K, V, M extends Map<K, V>>(
     map.set(key, v);
   }
   return v;
+}
+
+export function findPair<T>(
+  list: T[],
+  predicate: (it: T) => boolean,
+): [number, T] | [undefined, undefined] {
+  const index = list.findIndex(predicate);
+  if (index === -1) {
+    return [undefined, undefined];
+  }
+  return [index, list[index]!];
 }
 
 export function scanIndexPrev<T>(

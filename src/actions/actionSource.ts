@@ -2,7 +2,7 @@ import { explorerActionList } from '../lists/actions';
 import { startCocList } from '../lists/runner';
 import { keyMapping } from '../mappings';
 import type { BaseTreeNode, ExplorerSource } from '../source/source';
-import { flatten, logger, partition, uniq } from '../util';
+import { logger, partition, uniq } from '../util';
 import type { ActionExplorer } from './actionExplorer';
 import { ActionMenu } from './menu';
 import { ActionRegistrar } from './registrar';
@@ -16,7 +16,10 @@ export class ActionSource<
   public readonly global: ActionExplorer;
   public readonly source = this.owner;
 
-  constructor(public readonly owner: S, globalActionRegistrar: ActionExplorer) {
+  constructor(
+    public readonly owner: S,
+    globalActionRegistrar: ActionExplorer,
+  ) {
     super(owner);
     this.global = globalActionRegistrar;
   }
@@ -70,6 +73,8 @@ export class ActionSource<
 
           const action = actionExp[i];
 
+          if (!action) continue;
+
           // nested array
           if (Array.isArray(action)) {
             await this.doActionExp(action, curNodes, subOptions);
@@ -106,10 +111,10 @@ export class ActionSource<
               actionExp[i + 2],
             ];
             i += 2;
-            if (trueNodes.length) {
+            if (trueAction && trueNodes.length) {
               await this.doActionExp(trueAction, trueNodes, subOptions);
             }
-            if (falseNodes.length) {
+            if (falseAction && falseNodes.length) {
               await this.doActionExp(falseAction, falseNodes, subOptions);
             }
           } else {
@@ -143,38 +148,46 @@ export class ActionSource<
     const finalNodes = Array.isArray(nodes) ? nodes : [nodes];
     const source = this.source;
     try {
-      if (select === true) {
-        const allNodes = uniq([...finalNodes, ...source.selectedNodes]);
-        source.selectedNodes.clear();
-        source.view.requestRenderNodes(allNodes);
-        await action.callback.call(source, {
-          source,
-          nodes: allNodes,
-          args,
-          mode,
-        });
-      } else if (select === false) {
-        await action.callback.call(source, {
-          source,
-          nodes: [finalNodes[0]],
-          args,
-          mode,
-        });
-      } else if (select === 'visual') {
-        await action.callback.call(source, {
-          source,
-          nodes: finalNodes,
-          args,
-          mode,
-        });
-      } else if (select === 'keep') {
-        const allNodes = uniq([...finalNodes, ...source.selectedNodes]);
-        await action.callback.call(source, {
-          source,
-          nodes: allNodes,
-          args,
-          mode,
-        });
+      switch (select) {
+        case true: {
+          const allNodes = uniq([...finalNodes, ...source.selectedNodes]);
+          source.selectedNodes.clear();
+          source.view.requestRenderNodes(allNodes);
+          await action.callback.call(source, {
+            source,
+            nodes: allNodes,
+            args,
+            mode,
+          });
+          break;
+        }
+        case false:
+          if (finalNodes[0])
+            await action.callback.call(source, {
+              source,
+              nodes: [finalNodes[0]],
+              args,
+              mode,
+            });
+          break;
+        case 'visual':
+          await action.callback.call(source, {
+            source,
+            nodes: finalNodes,
+            args,
+            mode,
+          });
+          break;
+        case 'keep': {
+          const allNodes = uniq([...finalNodes, ...source.selectedNodes]);
+          await action.callback.call(source, {
+            source,
+            nodes: allNodes,
+            args,
+            mode,
+          });
+          break;
+        }
       }
     } finally {
       if (reload) {
@@ -196,56 +209,55 @@ export class ActionSource<
     const task = await startCocList(
       this.source.explorer,
       explorerActionList,
-      flatten(
-        [...actions.entries()]
-          .filter(([actionName]) => actionName !== 'actionMenu')
-          .sort(([aName], [bName]) => aName.localeCompare(bName))
-          .map(([actionName, { callback, options, description }]) => {
-            const keys = reverseMappings[actionName];
-            const key = keys ? keys.vmap ?? keys.all : '';
-            const list = [
-              {
-                name: actionName,
-                key,
-                description,
-                callback: async () => {
-                  await task.waitExplorerShow();
-                  await callback.call(source, {
-                    source,
-                    nodes,
-                    args: [],
-                    mode: 'n',
-                  });
-                },
+      [...actions.entries()]
+        .filter(([actionName]) => actionName !== 'actionMenu')
+        .sort(([aName], [bName]) => aName.localeCompare(bName))
+        .map(([actionName, { callback, options, description }]) => {
+          const keys = reverseMappings.get(actionName);
+          const key = keys ? keys.vmap ?? keys.nmap : '';
+          const list = [
+            {
+              name: actionName,
+              key,
+              description,
+              callback: async () => {
+                await task.waitExplorerShow();
+                await callback.call(source, {
+                  source,
+                  nodes,
+                  args: [],
+                  mode: 'n',
+                });
               },
-            ];
-            if (options.menus) {
-              list.push(
-                ...ActionMenu.getNormalizeMenus(options.menus).map((menu) => {
-                  const fullActionName = `${actionName}:${menu.args}`;
-                  const keys = reverseMappings[fullActionName];
-                  const key = keys ? keys.vmap ?? keys.all : '';
-                  return {
-                    name: fullActionName,
-                    key,
-                    description: `${description} ${menu.description}`,
-                    callback: async () => {
-                      await task.waitExplorerShow();
-                      await callback.call(source, {
-                        source,
-                        nodes,
-                        args: await menu.actionArgs(),
-                        mode: 'n',
-                      });
-                    },
-                  };
-                }),
-              );
-            }
-            return list;
-          }),
-      ),
+            },
+          ];
+          if (options.menus) {
+            list.push(
+              ...ActionMenu.getNormalizeMenus(options.menus).map((menu) => {
+                const fullActionName = `${actionName}:${menu.args}`;
+                const keys = reverseMappings.get(fullActionName);
+                const key = keys ? keys.vmap ?? keys.nmap : '';
+                return {
+                  name: fullActionName,
+                  key,
+                  description: `${description} ${menu.description}`,
+                  callback: async () => {
+                    await task.waitExplorerShow();
+                    await callback.call(source, {
+                      source,
+                      nodes,
+                      args: await menu.actionArgs(),
+                      mode: 'n',
+                    });
+                  },
+                };
+              }),
+            );
+          }
+          return list;
+        })
+        .flat(),
     );
-    task.waitExplorerShow()?.catch(logger.error);
+    task.waitExplorerShow().catch(logger.error);
   }
 }

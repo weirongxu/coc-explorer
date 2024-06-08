@@ -176,13 +176,13 @@ default is: `workspace,cwd,sourceBuffer,reveal` or `"explorer.root.strategies" o
 {
   "explorer.root.customRules": {
     "vcs": {
-      "patterns": [".git", ".hg", ".projections.json"]
+      "patterns": [".git", ".hg", ".projections.json"],
     },
     "vcs-r": {
       "patterns": [".git", ".hg", ".projections.json"],
-      "bottomUp": true
-    }
-  }
+      "bottomUp": true,
+    },
+  },
 }
 ```
 
@@ -190,7 +190,7 @@ default is: `workspace,cwd,sourceBuffer,reveal` or `"explorer.root.strategies" o
 
 ```jsonc
 {
-  "explorer.root.strategies": ["workspace", "custom:vcs", "custom:vcs-r"]
+  "explorer.root.strategies": ["workspace", "custom:vcs", "custom:vcs-r"],
 }
 ```
 
@@ -470,7 +470,7 @@ You can use `?` to view all actions of current source
     "<2-LeftMouse>": [
       "expandable?",
       ["expanded?", "collapse", "expand"],
-      "open"
+      "open",
     ],
     "o": ["wait", "expanded?", "collapse", "expand"],
     "<cr>": ["wait", "expandable?", "cd", "open"],
@@ -531,8 +531,8 @@ You can use `?` to view all actions of current source
     "[c": ["wait", "markPrev:git"],
     "]c": ["wait", "markNext:git"],
     "<<": "gitStage",
-    ">>": "gitUnstage"
-  }
+    ">>": "gitUnstage",
+  },
 }
 ```
 
@@ -605,6 +605,20 @@ more API: https://github.com/weirongxu/coc-explorer/wiki/Vim-API
 <!-- prettier-ignore-start -->
 <strong>Definitions</strong>
 <details>
+<summary><code>Explorer1</code>: Explorer1.</summary>
+Type: <pre><code>{
+    /**
+     * Explorer source name
+     */
+    name: 'bookmark' | 'buffer' | 'file';
+    /**
+     * Whether to expand it by default
+     */
+    expand: boolean;
+    [k: string]: unknown | undefined;
+}[]</code></pre>
+</details>
+<details>
 <summary><code>Position</code>: Position.</summary>
 Type: <pre><code>'left' | 'right' | 'tab' | 'floating'</code></pre>
 </details>
@@ -617,7 +631,7 @@ Type: <pre><code>MappingAction | MappingActionExp[]</code></pre>
 Type: <pre><code>string | {
     name?: string;
     args?: string[];
-    [k: string]: unknown;
+    [k: string]: unknown | undefined;
 }</code></pre>
 </details>
 <details>
@@ -651,20 +665,7 @@ Type: <pre><code>{
          */
         'quit-on-open'?: boolean;
         reveal?: string;
-        /**
-         * Explorer sources
-         */
-        sources?: {
-            /**
-             * Explorer source name
-             */
-            name: 'bookmark' | 'buffer' | 'file';
-            /**
-             * Whether to expand it by default
-             */
-            expand: boolean;
-            [k: string]: unknown;
-        }[];
+        sources?: Explorer1;
         /**
          * Explorer position
          */
@@ -733,8 +734,8 @@ Type: <pre><code>{
          * Labeling template for child node of file source, use for preview when previewAction is labeling
          */
         'file-child-labeling-template'?: string;
-        [k: string]: unknown;
-    };
+        [k: string]: unknown | undefined;
+    } | undefined;
 }</code></pre>Default: <pre><code>null</code></pre>
 </details>
 <details>
@@ -746,23 +747,17 @@ Type: <pre><code>'none' | 'singleclick' | 'doubleclick'</code></pre>Default: <pr
 Type: <pre><code>'none' | 'default'</code></pre>Default: <pre><code>"default"</code></pre>
 </details>
 <details>
-<summary><code>explorer.keyMappings.global</code>: Custom global key mappings.</summary>
-Type: <pre><code>{
-    [k: string]: MappingActionExp | false;
-}</code></pre>Default: <pre><code>{}</code></pre>
+<summary><code>explorer.keyMappings.global</code>: .</summary>
+Type: <pre><code>Mapping</code></pre>Default: <pre><code>{}</code></pre>
 </details>
 <details>
-<summary><code>explorer.keyMappings.vmap</code>: Custom vmap key mappings.</summary>
-Type: <pre><code>{
-    [k: string]: MappingActionExp | false;
-}</code></pre>Default: <pre><code>{}</code></pre>
+<summary><code>explorer.keyMappings.vmap</code>: .</summary>
+Type: <pre><code>Mapping1</code></pre>Default: <pre><code>{}</code></pre>
 </details>
 <details>
 <summary><code>explorer.keyMappings.sources</code>: Custom key mappings in source.</summary>
 Type: <pre><code>{
-    [k: string]: {
-        [k: string]: MappingActionExp | false;
-    };
+    [k: string]: Mapping2 | undefined;
 }</code></pre>Default: <pre><code>{}</code></pre>
 </details>
 <details>
@@ -883,7 +878,7 @@ Type: <pre><code>BufferFilter & {
     sources?: {
         [k: string]: BufferFilter;
     };
-    [k: string]: unknown;
+    [k: string]: unknown | undefined;
 }</code></pre>Default: <pre><code>{
   "buftypes": [
     "terminal"
@@ -920,18 +915,8 @@ Type: <pre><code>boolean | {
 }</code></pre>Default: <pre><code>true</code></pre>
 </details>
 <details>
-<summary><code>explorer.sources</code>: Explorer sources.</summary>
-Type: <pre><code>{
-    /**
-     * Explorer source name
-     */
-    name: 'bookmark' | 'buffer' | 'file';
-    /**
-     * Whether to expand it by default
-     */
-    expand: boolean;
-    [k: string]: unknown;
-}[]</code></pre>Default: <pre><code>[
+<summary><code>explorer.sources</code>: .</summary>
+Type: <pre><code>Explorer1</code></pre>Default: <pre><code>[
   {
     "name": "bookmark",
     "expand": false
@@ -964,8 +949,8 @@ Type: <pre><code>{
          * Search outward from the current buffer, default is false
          */
         bottomUp?: boolean;
-        [k: string]: unknown;
-    };
+        [k: string]: unknown | undefined;
+    } | undefined;
 }</code></pre>Default: <pre><code>null</code></pre>
 </details>
 <details>
@@ -999,40 +984,40 @@ Type: <pre><code>{
              * Group icon color
              */
             color: string;
-            [k: string]: unknown;
-        };
+            [k: string]: unknown | undefined;
+        } | undefined;
     };
     /**
      * File extension to icon group
      */
     extensions?: {
-        [k: string]: unknown;
+        [k: string]: unknown | undefined;
     };
     /**
      * Filename to icon group
      */
     filenames?: {
-        [k: string]: unknown;
+        [k: string]: unknown | undefined;
     };
     /**
      * Filename to icon group
      */
     dirnames?: {
-        [k: string]: unknown;
+        [k: string]: unknown | undefined;
     };
     /**
      * Pattern to icon group
      */
     patternMatches?: {
-        [k: string]: unknown;
+        [k: string]: unknown | undefined;
     };
     /**
      * Pattern to icon group
      */
     dirPatternMatches?: {
-        [k: string]: unknown;
+        [k: string]: unknown | undefined;
     };
-    [k: string]: unknown;
+    [k: string]: unknown | undefined;
 }</code></pre>Default: <pre><code>{
   "icons": {},
   "extensions": {},
@@ -1121,7 +1106,7 @@ Type: <pre><code>{
      * Filter buffer by literal string
      */
     literals?: string[];
-    [k: string]: unknown;
+    [k: string]: unknown | undefined;
 }</code></pre>Default: <pre><code>{}</code></pre>
 </details>
 <details>
@@ -1133,7 +1118,7 @@ Type: <pre><code>{
      * Pattern to icon group
      */
     patternMatches?: unknown[];
-    [k: string]: unknown;
+    [k: string]: unknown | undefined;
 }</code></pre>Default: <pre><code>{
   "extensions": [
     "o",
@@ -1197,7 +1182,7 @@ Type: <pre><code>boolean | {
     diagnosticError?: boolean;
     diagnosticWarning?: boolean;
     git?: boolean;
-    [k: string]: unknown;
+    [k: string]: unknown | undefined;
 }</code></pre>Default: <pre><code>true</code></pre>
 </details>
 <details>

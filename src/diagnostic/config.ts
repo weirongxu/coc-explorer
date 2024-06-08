@@ -8,7 +8,7 @@ type DiagnosisConfig = {
 
 export const getDiagnosticConfig = (config: ExplorerConfig) => {
   const diagnosticConfig: DiagnosisConfig = {
-    displayMax: config.get<number>('diagnostic.displayMax')!,
+    displayMax: config.get<number>('diagnostic.displayMax'),
     enableSubscriptNumber: config.get<boolean>(
       'diagnostic.enableSubscriptNumber',
     ),

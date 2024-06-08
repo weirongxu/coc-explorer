@@ -1,7 +1,12 @@
 import { HelperEventEmitter, isTest } from 'coc-helper';
-import { Disposable, disposeAll, ExtensionContext, workspace } from 'coc.nvim';
+import {
+  Disposable,
+  disposeAll,
+  workspace,
+  type ExtensionContext,
+} from 'coc.nvim';
 import { firstValueFrom } from 'rxjs';
-import { argOptions, ResolvedArgs } from './arg/argOptions';
+import { argOptions, type ResolvedArgs } from './arg/argOptions';
 import { Args } from './arg/parseArgs';
 import type { BufManager } from './bufManager';
 import { buildExplorerConfig, configLocal } from './config';
@@ -31,7 +36,10 @@ export class ExplorerManager {
   waitInited = firstValueFrom(fromHelperEvent(this.events, 'inited'));
   clipboardStorage = getClipboard(this);
 
-  constructor(public context: ExtensionContext, public bufManager: BufManager) {
+  constructor(
+    public context: ExtensionContext,
+    public bufManager: BufManager,
+  ) {
     currentBufnr().then(this.updatePrevCtxVars.bind(this)).catch(logger.error);
     this.context.subscriptions.push(
       onBufEnter(async (bufnr) => {
