@@ -5,18 +5,16 @@ import type { ParsedPosition } from '../arg/parseArgs';
 import type { Explorer } from '../explorer';
 import type { BaseTreeNode, ExplorerSource } from '../source/source';
 import type { OpenCursorPosition, OpenStrategy } from '../types';
-import { hasOwnProperty, selectWindowsUI } from '../util';
+import { hasOwnProperty, selectWindowsUI, winidByBufnr } from '../util';
 
 class OpenActionContext {
   nvim: Neovim;
   explorerPosition: ParsedPosition;
-  openByWinnr: (winnr: number) => void | Promise<void>;
 
   constructor(
     public explorer: Explorer,
     public source: ExplorerSource<any>,
     public cursorPosition: OpenCursorPosition | undefined,
-    originalOpenByWinnr: ((winnr: number) => void | Promise<void>) | undefined,
     public getFullpath: () => string | Promise<string>,
     private quitOnOpenNotifier: () => Notifier | Promise<Notifier>,
     public explorerWinid: number | undefined,
@@ -25,22 +23,32 @@ class OpenActionContext {
 
     // explorer position
     this.explorerPosition = explorer.argValues.position;
+  }
 
-    // open by winnr
-    this.openByWinnr =
-      originalOpenByWinnr ??
-      (async (winnr: number) => {
-        const openNotifier = await this.openFilepathNotifier('edit');
-        await this.openWrap(() => {
-          this.nvim.command(`${winnr}wincmd w`, true);
-          openNotifier.notify();
-          if (workspace.isVim) {
-            // Avoid vim highlight not working,
-            // https://github.com/weirongxu/coc-explorer/issues/113
-            this.nvim.command('redraw', true);
-          }
-        });
-      });
+  async openByWinnr(winnr: number) {
+    const openNotifier = await this.openFilepathNotifier('edit');
+    await this.openWrap(() => {
+      this.nvim.command(`${winnr}wincmd w`, true);
+      openNotifier.notify();
+      if (workspace.isVim) {
+        // Avoid vim highlight not working,
+        // https://github.com/weirongxu/coc-explorer/issues/113
+        this.nvim.command('redraw', true);
+      }
+    });
+  }
+
+  async openByWinid(winid: number) {
+    const openNotifier = await this.openFilepathNotifier('edit');
+    await this.openWrap(() => {
+      this.nvim.call('win_gotoid', [winid], true);
+      openNotifier.notify();
+      if (workspace.isVim) {
+        // Avoid vim highlight not working,
+        // https://github.com/weirongxu/coc-explorer/issues/113
+        this.nvim.command('redraw', true);
+      }
+    });
   }
 
   private jumpToNotify() {
@@ -201,6 +209,29 @@ class OpenActions {
     await this.splitIntelligent('vsplit', 'vsplit.plain');
   }
 
+  private async dropOr(fallback: () => Promise<void>) {
+    const ctx = this.ctx;
+    const fullpath = await ctx.getFullpath();
+    const bufManager = ctx.explorer.explorerManager.bufManager;
+    const buf = bufManager.getBufferNode(fullpath);
+    if (buf) {
+      const winid = await winidByBufnr(buf.bufnr);
+      if (winid) {
+        await ctx.openByWinid(winid);
+        return;
+      }
+    }
+    await fallback();
+  }
+
+  async 'drop.select'() {
+    await this.dropOr(() => this.select());
+  }
+
+  async 'drop.tab'() {
+    await this.dropOr(() => this.tab());
+  }
+
   async tab() {
     const ctx = this.ctx;
     const openNotifier = await ctx.openFilepathNotifier('tabedit');
@@ -250,11 +281,9 @@ export async function openAction(
   node: BaseTreeNode<any>,
   getFullpath: () => string | Promise<string>,
   {
-    openByWinnr,
     openStrategy,
     cursorPosition,
   }: {
-    openByWinnr?: (winnr: number) => void | Promise<void>;
     openStrategy?: OpenStrategy;
     cursorPosition?: OpenCursorPosition;
   },
@@ -276,7 +305,6 @@ export async function openAction(
     explorer,
     source,
     cursorPosition,
-    openByWinnr,
     getFullpath,
     quitOnOpenNotifier,
     explorerWinid,

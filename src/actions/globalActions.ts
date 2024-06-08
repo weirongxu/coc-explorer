@@ -47,6 +47,8 @@ export function loadGlobalActions(action: ActionExplorer) {
     'vsplit.intelligent':
       'use vim vsplit, but keep the explorer in the original position',
     tab: 'vim tab',
+    'drop.select': 'use vim drop, fall back to select strategy',
+    'drop.tab': 'use vim drop, fall back to tab strategy',
     previousBuffer: 'use last used buffer',
     previousWindow: 'use last used window',
     sourceWindow: 'use the window where explorer opened',
@@ -100,7 +102,7 @@ export function loadGlobalActions(action: ActionExplorer) {
     {
       select: true,
       args: openActionArgs,
-      menus: openActionMenu as Record<string, string>,
+      menus: openActionMenu,
     },
   );
   action.addNodeAction(

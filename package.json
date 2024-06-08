@@ -485,6 +485,8 @@
             "vsplit.plain",
             "vsplit.intelligent",
             "tab",
+            "drop.select",
+            "drop.tab",
             "previousBuffer",
             "previousWindow",
             "sourceWindow"
@@ -498,6 +500,8 @@
             "Open action use plain vsplit",
             "Open action use intelligent vsplit",
             "Open action use tab",
+            "Open action use drop, fall back to select strategy",
+            "Open action use drop, fall back to tab strategy",
             "Open action use last used buffer",
             "Open action use last used window",
             "Open action use the window where explorer opened"

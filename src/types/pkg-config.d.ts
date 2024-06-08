@@ -62,6 +62,8 @@ export interface Explorer {
             | 'vsplit.plain'
             | 'vsplit.intelligent'
             | 'tab'
+            | 'drop.select'
+            | 'drop.tab'
             | 'previousBuffer'
             | 'previousWindow'
             | 'sourceWindow';
@@ -237,6 +239,8 @@ export interface Explorer {
     | 'vsplit.plain'
     | 'vsplit.intelligent'
     | 'tab'
+    | 'drop.select'
+    | 'drop.tab'
     | 'previousBuffer'
     | 'previousWindow'
     | 'sourceWindow';

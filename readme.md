@@ -659,7 +659,7 @@ Type: <pre><code>{
         /**
          * Strategy for open action
          */
-        'open-action-strategy'?: 'select' | 'split' | 'split.plain' | 'split.intelligent' | 'vsplit' | 'vsplit.plain' | 'vsplit.intelligent' | 'tab' | 'previousBuffer' | 'previousWindow' | 'sourceWindow';
+        'open-action-strategy'?: 'select' | 'split' | 'split.plain' | 'split.intelligent' | 'vsplit' | 'vsplit.plain' | 'vsplit.intelligent' | 'tab' | 'drop.select' | 'drop.tab' | 'previousBuffer' | 'previousWindow' | 'sourceWindow';
         /**
          * quit explorer when open action
          */
@@ -867,7 +867,7 @@ Type: <pre><code>number</code></pre>Default: <pre><code>30</code></pre>
 </details>
 <details>
 <summary><code>explorer.openAction.strategy</code>: Strategy for open action.</summary>
-Type: <pre><code>'select' | 'split' | 'split.plain' | 'split.intelligent' | 'vsplit' | 'vsplit.plain' | 'vsplit.intelligent' | 'tab' | 'previousBuffer' | 'previousWindow' | 'sourceWindow'</code></pre>Default: <pre><code>"select"</code></pre>
+Type: <pre><code>'select' | 'split' | 'split.plain' | 'split.intelligent' | 'vsplit' | 'vsplit.plain' | 'vsplit.intelligent' | 'tab' | 'drop.select' | 'drop.tab' | 'previousBuffer' | 'previousWindow' | 'sourceWindow'</code></pre>Default: <pre><code>"select"</code></pre>
 </details>
 <details>
 <summary><code>explorer.openAction.select.filter</code>: Filter windows for select strategy.</summary>
