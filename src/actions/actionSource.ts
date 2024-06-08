@@ -68,7 +68,8 @@ export class ActionSource<
       if (Array.isArray(actionExp)) {
         for (let i = 0; i < actionExp.length; i++) {
           if (i !== 0) {
-            curNodes = [this.source.view.currentNode()];
+            const curNode = this.source.view.currentNode();
+            curNodes = curNode ? [curNode] : [];
           }
 
           const action = actionExp[i];
@@ -134,6 +135,9 @@ export class ActionSource<
 
   async doAction(
     name: string,
+    /**
+     * visual nodes
+     */
     nodes: TreeNode | TreeNode[],
     args: string[] = [],
     mode: MappingMode = 'n',
@@ -150,7 +154,10 @@ export class ActionSource<
     try {
       switch (select) {
         case true: {
-          const allNodes = uniq([...finalNodes, ...source.selectedNodes]);
+          const allNodes: TreeNode[] = uniq([
+            ...finalNodes,
+            ...source.selectedNodes,
+          ]);
           source.selectedNodes.clear();
           source.view.requestRenderNodes(allNodes);
           await action.callback.call(source, {
@@ -212,7 +219,7 @@ export class ActionSource<
       [...actions.entries()]
         .filter(([actionName]) => actionName !== 'actionMenu')
         .sort(([aName], [bName]) => aName.localeCompare(bName))
-        .map(([actionName, { callback, options, description }]) => {
+        .map(([actionName, { options, description }]) => {
           const keys = reverseMappings.get(actionName);
           const key = keys ? keys.vmap ?? keys.nmap : '';
           const list = [
@@ -222,12 +229,7 @@ export class ActionSource<
               description,
               callback: async () => {
                 await task.waitExplorerShow();
-                await callback.call(source, {
-                  source,
-                  nodes,
-                  args: [],
-                  mode: 'n',
-                });
+                await source.action.doAction(actionName, nodes, [], 'n');
               },
             },
           ];
@@ -243,12 +245,7 @@ export class ActionSource<
                   description: `${description} ${menu.description}`,
                   callback: async () => {
                     await task.waitExplorerShow();
-                    await callback.call(source, {
-                      source,
-                      nodes,
-                      args: await menu.actionArgs(),
-                      mode: 'n',
-                    });
+                    await source.action.doAction(actionName, nodes, [], 'n');
                   },
                 };
               }),

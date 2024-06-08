@@ -45,6 +45,10 @@ export const openStrategyList: OpenStrategy[] = [
   'sourceWindow',
 ];
 
+export const quickfixActions = ['add', 'replace'] as const;
+
+export type QuickfixAction = (typeof quickfixActions)[number];
+
 /**
  * `keep string` - Keep cursor in explorer when open
  * `position object` - Open cursor in special position

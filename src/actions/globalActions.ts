@@ -1,5 +1,6 @@
 import { compactI } from 'coc-helper';
 import { workspace } from 'coc.nvim';
+import pathLib from 'path';
 import { gitManager } from '../git/manager';
 import { parseOriginalActionExp } from '../mappings';
 import {
@@ -9,6 +10,7 @@ import {
   openStrategyList,
   previewOnHoverActionList,
   previewStrategyList,
+  quickfixActions,
   textobjTargetList,
   textobjTypeList,
   type CollapseOption,
@@ -17,6 +19,7 @@ import {
   type OpenCursorPosition,
   type OpenStrategy,
   type PreviewOnHoverAction,
+  type QuickfixAction,
   type TextobjTarget,
 } from '../types';
 import type { PreviewActionStrategy } from '../types/pkg-config';
@@ -774,6 +777,45 @@ export function loadGlobalActions(action: ActionExplorer) {
     'show actions in coc-list',
     {
       select: 'visual',
+    },
+  );
+  action.addNodesAction(
+    'quickfix',
+    async ({ args, nodes, source }) => {
+      const argAction = (args[0] ?? 'replace') as QuickfixAction;
+      const action = { add: 'a', replace: 'r' }[argAction];
+      await nvim.call('setqflist', [
+        nodes
+          .filter((it) => it.fullpath && !it.expandable)
+          .map((it) => {
+            const realtive = pathLib.relative(source.root, it.fullpath!);
+            return {
+              filename: it.fullpath,
+              text: realtive,
+            };
+          }),
+        action,
+      ]);
+      const openCommand = (await nvim.getVar(
+        'coc_quickfix_open_command',
+      )) as string;
+      await nvim.command(
+        typeof openCommand === 'string' ? openCommand : 'copen',
+      );
+    },
+    'push nodes to quickfix list',
+    {
+      select: true,
+      args: [
+        {
+          name: 'action',
+          description: `action for quickfix, ${quickfixActions.join(' | ')}`,
+        },
+      ],
+      menus: {
+        add: 'add nodes to quickfix list',
+        replace: 'replace nodes in quickfix list',
+      },
     },
   );
   action.addNodeAction(

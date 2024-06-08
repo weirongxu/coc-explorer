@@ -1082,7 +1082,7 @@ Type: <pre><code>string</code></pre>Default: <pre><code>"[icon] [title] [hidden 
 </details>
 <details>
 <summary><code>explorer.buffer.child.template</code>: Template for child node of buffer source.</summary>
-Type: <pre><code>string</code></pre>Default: <pre><code>"[git | 2] [selection | 1] [bufnr] [name][modified][readonly] [fullpath]"</code></pre>
+Type: <pre><code>string</code></pre>Default: <pre><code>"[git | 2] [selection | 1] [bufnr] [name][modified][readonly] [relativePath]"</code></pre>
 </details>
 <details>
 <summary><code>explorer.buffer.child.labelingTemplate</code>: Labeling template for child node of buffer source, use for preview when previewAction is labeling.</summary>
