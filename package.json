@@ -855,7 +855,7 @@
         "explorer.buffer.child.template": {
           "description": "Template for child node of buffer source",
           "type": "string",
-          "default": "[git | 2] [selection | 1] [bufnr] [name][modified][readonly] [fullpath]"
+          "default": "[git | 2] [selection | 1] [bufnr] [name][modified][readonly] [relativePath]"
         },
         "explorer.buffer.child.labelingTemplate": {
           "description": "Labeling template for child node of buffer source, use for preview when previewAction is labeling",
