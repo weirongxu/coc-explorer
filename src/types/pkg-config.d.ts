@@ -257,6 +257,10 @@ export interface Explorer {
     [k: string]: unknown | undefined;
   };
   /**
+   * Chars for select strategy
+   */
+  'explorer.openAction.select.chars'?: string;
+  /**
    * The action when you open a directory of file source
    */
   'explorer.openAction.for.directory'?: MappingAction | MappingActionExp[];

@@ -1,7 +1,7 @@
 import type { FloatInputType } from 'coc-floatinput';
 import { extensions, workspace, type Extension } from 'coc.nvim';
-import { config, type ExplorerConfig } from '../config';
 import type { LiteralUnion } from 'type-fest';
+import { config, type ExplorerConfig } from '../config';
 import type { BufferFilter } from '../types/pkg-config';
 
 let floatInputExt: Extension<FloatInputType> | undefined;
@@ -168,6 +168,7 @@ export async function selectWindowsUI(
   },
 ) {
   let filterOption = config.get('openAction.select.filter');
+  const chars = config.get('openAction.select.chars');
   if (filterOption.sources) {
     const sourceFilterOption = filterOption.sources[sourceType] as
       | BufferFilter
@@ -180,6 +181,7 @@ export async function selectWindowsUI(
     }
   }
   const winnr = await workspace.nvim.call('coc_explorer#select_wins#start', [
+    chars,
     filterOption.buftypes ?? [],
     filterOption.filetypes ?? [],
     filterOption.floatingWindows ?? true,

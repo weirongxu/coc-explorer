@@ -26,6 +26,7 @@ export interface ExplorerConfig {
   get(
     section: 'openAction.select.filter',
   ): NonNullable<Explorer['explorer.openAction.select.filter']>;
+  get(section: 'openAction.select.chars'): string;
   get(
     section: 'previewAction.onHover',
   ): NonNullable<Explorer['explorer.previewAction.onHover']>;

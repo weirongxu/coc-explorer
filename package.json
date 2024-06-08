@@ -546,6 +546,11 @@
             }
           }
         },
+        "explorer.openAction.select.chars": {
+          "description": "Chars for select strategy",
+          "type": "string",
+          "default": "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+        },
         "explorer.openAction.for.directory": {
           "description": "The action when you open a directory of file source",
           "$ref": "#/definitions/mapping.actionExp",

@@ -899,6 +899,10 @@ Type: <pre><code>BufferFilter & {
 }</code></pre>
 </details>
 <details>
+<summary><code>explorer.openAction.select.chars</code>: Chars for select strategy.</summary>
+Type: <pre><code>string</code></pre>Default: <pre><code>"ABCDEFGHIJKLMNOPQRSTUVWXYZ"</code></pre>
+</details>
+<details>
 <summary><code>explorer.openAction.for.directory</code>: The action when you open a directory of file source.</summary>
 Type: <pre><code>MappingAction | MappingActionExp[]</code></pre>Default: <pre><code>"cd"</code></pre>
 </details>
