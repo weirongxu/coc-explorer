@@ -245,7 +245,12 @@ export class ActionSource<
                   description: `${description} ${menu.description}`,
                   callback: async () => {
                     await task.waitExplorerShow();
-                    await source.action.doAction(actionName, nodes, [], 'n');
+                    await source.action.doAction(
+                      actionName,
+                      nodes,
+                      await menu.actionArgs(),
+                      'n',
+                    );
                   },
                 };
               }),
