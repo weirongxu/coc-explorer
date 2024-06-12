@@ -10,7 +10,6 @@ export * from './vim';
 export * from './ui';
 export * from './platform';
 export * from './cli';
-export * from './function';
 export * from './uri';
 export * from './color';
 export * from './rx';

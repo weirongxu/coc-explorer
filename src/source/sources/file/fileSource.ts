@@ -4,7 +4,7 @@ import fs from 'fs';
 import { homedir } from 'os';
 import pathLib from 'path';
 import { argOptions } from '../../../arg/argOptions';
-import { getRevealAuto, getRevealWhenOpen } from '../../../config';
+import { config, getRevealWhenOpen } from '../../../config';
 import { diagnosticHighlights } from '../../../diagnostic/highlights';
 import { onBufEnter } from '../../../events';
 import { gitManager } from '../../../git/manager';
@@ -27,7 +27,7 @@ import {
 } from '../../../util';
 import type { RendererSource } from '../../../view/rendererSource';
 import { ViewSource } from '../../../view/viewSource';
-import { type BaseTreeNode, ExplorerSource } from '../../source';
+import { ExplorerSource, type BaseTreeNode } from '../../source';
 import { sourceManager } from '../../sourceManager';
 import { fileArgOptions } from './argOptions';
 import { loadFileActions } from './fileActions';
@@ -162,7 +162,7 @@ export class FileSource extends ExplorerSource<FileNode> {
   }
 
   async init() {
-    if (getRevealAuto(this.config)) {
+    if (config.get('file.reveal.auto')) {
       this.disposables.push(
         onBufEnter(async (bufnr) => {
           if (bufnr === this.explorer.bufnr) {
@@ -215,20 +215,7 @@ export class FileSource extends ExplorerSource<FileNode> {
     const { nvim } = this;
     const escapePath = (await nvim.call('fnameescape', fullpath)) as string;
     type CdCmd = Explorer['explorer.file.cdCommand'];
-    let cdCmd: CdCmd;
-    const tabCd = this.config.get<boolean | undefined | null>('file.tabCD');
-    if (tabCd !== undefined && tabCd !== null) {
-      logger.error(
-        'explorer.file.tabCD has been deprecated, please use explorer.file.cdCommand instead of it',
-      );
-      if (tabCd) {
-        cdCmd = 'tcd';
-      } else {
-        cdCmd = 'cd';
-      }
-    } else {
-      cdCmd = this.config.get<CdCmd>('file.cdCommand');
-    }
+    const cdCmd = this.config.get<CdCmd>('file.cdCommand');
     if (cdCmd === 'tcd') {
       if (workspace.isNvim || (await nvim.call('exists', [':tcd']))) {
         await nvim.command(`tcd ${escapePath}`);
@@ -253,7 +240,7 @@ export class FileSource extends ExplorerSource<FileNode> {
     const hasRevealPath = args.has(argOptions.reveal);
 
     if (
-      getRevealAuto(this.config) ||
+      config.get('file.reveal.auto') ||
       getRevealWhenOpen(this.config, this.explorer.argValues.revealWhenOpen) ||
       hasRevealPath
     ) {

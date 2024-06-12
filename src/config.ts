@@ -2,7 +2,7 @@ import { workspace, type WorkspaceConfiguration } from 'coc.nvim';
 import type { OriginalActionExp } from './actions/types';
 import type { CollapseOption, ExpandOption, RootStrategyStr } from './types';
 import type { Explorer } from './types/pkg-config';
-import { generateUri, logger } from './util';
+import { generateUri } from './util';
 
 export const config = workspace.getConfiguration('explorer');
 
@@ -56,21 +56,6 @@ export const bufferTabOnly = () => {
   return config.get<boolean>('buffer.tabOnly')!;
 };
 
-/**
- * @deprecated
- */
-export const getRevealAuto = (config: ExplorerConfig) => {
-  let revealAuto = config.get<boolean | undefined | null>('file.autoReveal');
-  if (revealAuto !== undefined && revealAuto !== null) {
-    logger.error(
-      '`explorer.file.autoReveal` has been deprecated, please use explorer.file.reveal.auto instead of it',
-    );
-  } else {
-    revealAuto = config.get('file.reveal.auto');
-  }
-  return revealAuto;
-};
-
 export const getRevealWhenOpen = (
   config: ExplorerConfig,
   revealWhenOpenArg: boolean | undefined,
@@ -78,20 +63,7 @@ export const getRevealWhenOpen = (
   if (revealWhenOpenArg !== undefined) {
     return revealWhenOpenArg;
   }
-  /**
-   * @deprecated
-   */
-  let revealWhenOpen: boolean | undefined | null = config.get(
-    'file.revealWhenOpen',
-  );
-  if (revealWhenOpen !== undefined && revealWhenOpen !== null) {
-    logger.error(
-      '`explorer.file.autoReveal` has been deprecated, please use explorer.file.reveal.whenOpen instead of it',
-    );
-  } else {
-    revealWhenOpen = config.get('file.reveal.whenOpen');
-  }
-  return revealWhenOpen;
+  return config.get('file.reveal.whenOpen');
 };
 
 export function buildExplorerConfig(

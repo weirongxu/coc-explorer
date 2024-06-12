@@ -743,21 +743,6 @@ export function loadFileActions(action: ActionSource<FileSource, FileNode>) {
   );
 
   action.addNodeAction(
-    'searchRecursive',
-    async ({ node }) => {
-      logger.error(
-        'searchRecursive action has been deprecated, please use "search:recursive" instead of it',
-      );
-      await file.searchByCocList(pathLib.dirname(node.fullpath), {
-        recursive: true,
-        noIgnore: false,
-        strict: false,
-      });
-    },
-    'search by coc-list recursively',
-  );
-
-  action.addNodeAction(
     'toggleOnlyGitChange',
     async () => {
       file.showOnlyGitChange = !file.showOnlyGitChange;
