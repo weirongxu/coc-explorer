@@ -784,16 +784,24 @@ export function loadGlobalActions(action: ActionExplorer) {
     async ({ args, nodes, source }) => {
       const argAction = (args[0] ?? 'replace') as QuickfixAction;
       const action = { add: 'a', replace: 'r' }[argAction];
+      const list: { filename?: string }[] = await nvim.call('getqflist');
+      const existFullpathes = list
+        .map((it) => it.filename)
+        .filter(Boolean) as string[];
       await nvim.call('setqflist', [
         nodes
           .filter((it) => it.fullpath && !it.expandable)
           .map((it) => {
-            const realtive = pathLib.relative(source.root, it.fullpath!);
+            const fullpath = it.fullpath!;
+            if (existFullpathes.includes(fullpath)) return undefined;
+            const realtive = pathLib.relative(source.root, fullpath);
             return {
               filename: it.fullpath,
               text: realtive,
+              lnum: 1,
             };
-          }),
+          })
+          .filter(Boolean),
         action,
       ]);
       const openCommand = (await nvim.getVar(
