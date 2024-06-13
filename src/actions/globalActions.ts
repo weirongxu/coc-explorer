@@ -785,23 +785,28 @@ export function loadGlobalActions(action: ActionExplorer) {
       const argAction = (args[0] ?? 'replace') as QuickfixAction;
       const action = { add: 'a', replace: 'r' }[argAction];
       const list: { bufnr: number }[] = await nvim.call('getqflist');
-      const existFullpathes = list
+      const existFullpaths = list
         .map((it) => source.bufManager.getBufferNode(it.bufnr)?.fullpath)
         .filter(Boolean) as string[];
       await nvim.call('setqflist', [
-        nodes
-          .filter((it) => it.fullpath && !it.expandable)
-          .map((it) => {
-            const fullpath = it.fullpath!;
-            if (existFullpathes.includes(fullpath)) return undefined;
-            const realtive = pathLib.relative(source.root, fullpath);
-            return {
-              filename: it.fullpath,
-              text: realtive,
-              lnum: 1,
-            };
-          })
-          .filter(Boolean),
+        nodes.reduce<{ filename: string; text: string; lnum: number }[]>(
+          (acc, it) => {
+            if (
+              it.fullpath &&
+              !it.expandable &&
+              !existFullpaths.includes(it.fullpath)
+            ) {
+              const relative = pathLib.relative(source.root, it.fullpath);
+              acc.push({
+                filename: it.fullpath,
+                text: relative,
+                lnum: 1,
+              });
+            }
+            return acc;
+          },
+          [],
+        ),
         action,
       ]);
       const openCommand = (await nvim.getVar(
