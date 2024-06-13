@@ -789,17 +789,24 @@ export function loadGlobalActions(action: ActionExplorer) {
         .map((it) => source.bufManager.getBufferNode(it.bufnr)?.fullpath)
         .filter(Boolean) as string[];
       await nvim.call('setqflist', [
-        nodes.reduce<{ filename: string; text: string; lnum: number; }[]>((acc, it) => {
-          if (it.fullpath && !it.expandable && !existFullpaths.includes(it.fullpath)) {
-            const relative = pathLib.relative(source.root, it.fullpath);
-            acc.push({
-              filename: it.fullpath,
-              text: relative,
-              lnum: 1,
-            });
-          }
-          return acc;
-        }, []),
+        nodes.reduce<{ filename: string; text: string; lnum: number }[]>(
+          (acc, it) => {
+            if (
+              it.fullpath &&
+              !it.expandable &&
+              !existFullpaths.includes(it.fullpath)
+            ) {
+              const relative = pathLib.relative(source.root, it.fullpath);
+              acc.push({
+                filename: it.fullpath,
+                text: relative,
+                lnum: 1,
+              });
+            }
+            return acc;
+          },
+          [],
+        ),
         action,
       ]);
       const openCommand = (await nvim.getVar(
