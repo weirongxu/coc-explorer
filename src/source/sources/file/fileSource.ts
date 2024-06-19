@@ -130,17 +130,20 @@ export class FileSource extends ExplorerSource<FileNode> {
   isHidden(filename: string) {
     const hiddenRules = this.getHiddenRules();
 
-    const { basename, extensions } = getExtensions(filename);
-    const extname = extensions[extensions.length - 1];
-    if (!extname) return false;
-
-    return (
-      hiddenRules.filenames.includes(basename) ||
-      hiddenRules.extensions.includes(extname) ||
+    if (
       hiddenRules.patternMatches.some((pattern) =>
         new RegExp(pattern).test(filename),
       )
-    );
+    )
+      return true;
+
+    const { basename, extensions } = getExtensions(filename);
+    if (hiddenRules.filenames.includes(basename)) return true;
+
+    const extname = extensions[extensions.length - 1];
+    if (!extname) return false;
+
+    return hiddenRules.extensions.includes(extname);
   }
 
   getNodesByPaths(fullpaths: string[]) {
