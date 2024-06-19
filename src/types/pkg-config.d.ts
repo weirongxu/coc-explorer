@@ -369,10 +369,6 @@ export interface Explorer {
     [k: string]: unknown | undefined;
   };
   /**
-   * Enable use vim-devicons instead of built-in icon configuration
-   */
-  'explorer.icon.enableVimDevicons'?: boolean;
-  /**
    * Icon for expanded node
    */
   'explorer.icon.expanded'?: string;
@@ -432,14 +428,6 @@ export interface Explorer {
    * Explorer datetime format, check out https://date-fns.org/v2.9.0/docs/format
    */
   'explorer.datetime.format'?: string;
-  /**
-   * Explorer will automatically reveal to the current buffer when open explorer
-   */
-  'explorer.file.revealWhenOpen'?: boolean;
-  /**
-   * Explorer will automatically expand to the current buffer
-   */
-  'explorer.file.autoReveal'?: boolean;
   /**
    * Explorer will automatically reveal to the current buffer when open explorer
    */
