@@ -36,9 +36,9 @@ export class MarkSource<TreeNode extends BaseTreeNode<TreeNode>> {
     if (sourceIndex === undefined) {
       return;
     }
-    this.explorer.sources.slice(sourceIndex + 1).forEach((source) => {
-      source.view.startLineIndex += offset;
-      source.view.endLineIndex += offset;
+    this.explorer.sources.slice(sourceIndex + 1).forEach(({ view }) => {
+      view.startLineIndex += offset;
+      view.endLineIndex += offset;
     });
   }
 }

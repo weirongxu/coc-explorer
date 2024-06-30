@@ -103,7 +103,7 @@ export function divideVolumeBy(
   widthLimits?: number[],
 ) {
   let unit = totalWidth / sum(volumes);
-  const widthes: number[] = new Array(volumes.length);
+  const widths: number[] = new Array(volumes.length);
   if (widthLimits) {
     for (let i = 0; i < volumes.length; i++) {
       const volume = volumes[i];
@@ -111,7 +111,7 @@ export function divideVolumeBy(
       if (!volume || !widthLimit) continue;
       const width = Math.ceil(volume * unit);
       if (width > widthLimit) {
-        widthes[i] = widthLimit;
+        widths[i] = widthLimit;
         totalWidth -= widthLimit;
         volumes[i] = 0;
       }
@@ -119,19 +119,19 @@ export function divideVolumeBy(
     unit = totalWidth / sum(volumes);
   }
   for (let i = 0; i < volumes.length; i++) {
-    if (widthes[i] === undefined) {
+    if (widths[i] === undefined) {
       const volume = volumes[i];
       if (!volume) continue;
       const width = Math.ceil(volume * unit);
       if (width <= totalWidth) {
         totalWidth -= width;
-        widthes[i] = width;
+        widths[i] = width;
       } else {
-        widthes[i] = totalWidth;
+        widths[i] = totalWidth;
       }
     }
   }
-  return widthes;
+  return widths;
 }
 
 export async function handlePadding(
@@ -211,7 +211,7 @@ export async function handleGrow(
   drawableList: DrawableWithWidth[],
 ): Promise<(DrawContentWithWidth | DrawUnknown)[]> {
   const allSpaceWidth = fullwidth - usedWidth;
-  const spaceWids = divideVolumeBy(
+  const spaceWidths = divideVolumeBy(
     allSpaceWidth,
     drawableList.map((c) =>
       c.type === 'group' && c.flexible?.grow ? c.flexible.growVolume ?? 1 : 0,
@@ -234,16 +234,16 @@ export async function handleGrow(
             return item.contents;
           }
 
-          const spaceWid = spaceWids[idx];
-          if (!spaceWid) return;
+          const spaceWidth = spaceWidths[idx];
+          if (!spaceWidth) return;
 
           switch (item.flexible.grow) {
             case 'left':
               return [
                 {
                   type: 'content',
-                  content: ' '.repeat(spaceWid),
-                  width: spaceWid,
+                  content: ' '.repeat(spaceWidth),
+                  width: spaceWidth,
                 },
                 ...item.contents,
               ];
@@ -252,13 +252,13 @@ export async function handleGrow(
                 ...item.contents,
                 {
                   type: 'content',
-                  content: ' '.repeat(spaceWid),
-                  width: spaceWid,
+                  content: ' '.repeat(spaceWidth),
+                  width: spaceWidth,
                 },
               ];
             case 'center': {
-              const leftSpace = Math.floor(spaceWid / 2);
-              const rightSpace = spaceWid - leftSpace;
+              const leftSpace = Math.floor(spaceWidth / 2);
+              const rightSpace = spaceWidth - leftSpace;
               return [
                 {
                   type: 'content',
@@ -294,7 +294,7 @@ export async function handleOmit(
   drawableList: DrawableWithWidth[],
 ): Promise<(DrawContentWithWidth | DrawUnknown)[]> {
   const allOmitWidth = usedWidth - fullwidth;
-  const omitWids = divideVolumeBy(
+  const omitWidths = divideVolumeBy(
     allOmitWidth,
     drawableList.map((c) =>
       c.type === 'group' && c.flexible?.omit ? c.flexible.omitVolume ?? 1 : 0,
@@ -329,61 +329,61 @@ export async function handleOmit(
             return item.contents;
           }
 
-          const omitWid = omitWids[idx];
-          if (!omitWid) return;
+          const omitWidth = omitWidths[idx];
+          if (!omitWidth) return;
           const contents: (DrawContentWithWidth | DrawUnknown)[] = [];
 
           switch (item.flexible.omit) {
             case 'left': {
-              const cutWid = omitWid + 1;
-              let remainCutWid = cutWid;
+              const cutWidth = omitWidth + 1;
+              let remainCutWidth = cutWidth;
               for (const c of item.contents) {
                 if (c.type !== 'content') {
                   contents.push(c);
                   continue;
                 }
 
-                if (remainCutWid < 0) {
+                if (remainCutWidth < 0) {
                   contents.push(c);
-                } else if (remainCutWid < c.width) {
+                } else if (remainCutWidth < c.width) {
                   contents.push({
                     type: 'content',
                     content: '‥',
                     width: 1,
                     group: omitSymbolHighlight.group,
                   });
-                  if (remainCutWid > 0) {
+                  if (remainCutWidth > 0) {
                     contents.push({
                       ...c,
-                      content: await displaySlice(c.content, remainCutWid),
-                      width: c.width - remainCutWid,
+                      content: await displaySlice(c.content, remainCutWidth),
+                      width: c.width - remainCutWidth,
                     });
                   }
                 }
-                remainCutWid -= c.width;
+                remainCutWidth -= c.width;
               }
               return contents;
             }
             case 'right': {
-              const cutWid = omitWid + 1;
-              const contentWid = sum(
+              const cutWidth = omitWidth + 1;
+              const contentWidth = sum(
                 item.contents.map((c) => (c.type === 'content' ? c.width : 0)),
               );
-              let remainWid = contentWid - cutWid;
+              let remainWidth = contentWidth - cutWidth;
               for (const c of item.contents) {
                 if (c.type !== 'content') {
                   contents.push(c);
                   continue;
                 }
 
-                if (remainWid >= c.width) {
+                if (remainWidth >= c.width) {
                   contents.push(c);
-                } else if (remainWid < c.width) {
-                  if (remainWid > 0) {
+                } else if (remainWidth < c.width) {
+                  if (remainWidth > 0) {
                     contents.push({
                       ...c,
-                      content: await displaySlice(c.content, 0, remainWid),
-                      width: remainWid,
+                      content: await displaySlice(c.content, 0, remainWidth),
+                      width: remainWidth,
                     });
                   }
                   contents.push({
@@ -394,18 +394,18 @@ export async function handleOmit(
                   });
                   break;
                 }
-                remainWid -= c.width;
+                remainWidth -= c.width;
               }
               return contents;
             }
             case 'center': {
-              const contentWid = sum(
+              const contentWidth = sum(
                 item.contents.map((c) => (c.type === 'content' ? c.width : 0)),
               );
-              const cutWid = omitWid + 1;
-              const remainWid = contentWid - cutWid;
-              const leftCutPos = Math.floor(remainWid / 2);
-              const rightCutPos = contentWid - (remainWid - leftCutPos);
+              const cutWidth = omitWidth + 1;
+              const remainWidth = contentWidth - cutWidth;
+              const leftCutPos = Math.floor(remainWidth / 2);
+              const rightCutPos = contentWidth - (remainWidth - leftCutPos);
               let itemStartPos = 0;
               let itemEndPos = 0;
               const contents: (DrawContentWithWidth | DrawUnknown)[] = [];

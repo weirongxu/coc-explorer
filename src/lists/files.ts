@@ -45,7 +45,7 @@ class Task extends EventEmitter implements ListTask {
         });
       });
       rl.on('close', () => {
-        remain = remain - 1;
+        remain -= 1;
         if (remain === 0) {
           this.emit('end');
         }
@@ -119,8 +119,8 @@ export const fileList = registerList<Arg, any>({
   },
   init() {
     this.addLocationActions();
-    this.addAction('reveal', async ({ arg, item }) => {
-      const loc = await this.convertLocation(item.location!);
+    this.addAction('reveal', async ({ arg, item: { location } }) => {
+      const loc = await this.convertLocation(location!);
       if (arg.revealCallback) {
         await arg.revealCallback(loc);
       }

@@ -11,9 +11,9 @@ export class PresetList extends BasicList {
   constructor(nvim: Neovim) {
     super(nvim);
 
-    this.addAction('do', async (item) => {
+    this.addAction('do', async ({ data }) => {
       this.nvim
-        .command(`CocCommand explorer --preset ${item.data.name as string}`)
+        .command(`CocCommand explorer --preset ${data.name as string}`)
         .catch(logger.error);
     });
   }
