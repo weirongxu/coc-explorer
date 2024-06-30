@@ -372,16 +372,16 @@ export class FloatingPreview implements Disposable {
       return;
     }
 
-    const reigsteredActions =
+    const registeredActions =
       this.registeredPreviewActions.get(previewStrategy);
-    if (!reigsteredActions) {
+    if (!registeredActions) {
       await window.showInformationMessage(
         `coc-explorer no support preview strategy(${previewStrategy})`,
       );
       return;
     }
 
-    const openArgs = await reigsteredActions({
+    const openArgs = await registeredActions({
       source,
       node,
       nodeIndex,
