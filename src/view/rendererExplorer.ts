@@ -17,7 +17,9 @@ export class RendererExplorer {
   ) {}
 
   async runQueue<T>(fn: () => Promise<T>): Promise<T> {
-    let release: undefined | (() => void) = await this.renderMutex.acquire();
+    let release = (await this.renderMutex.acquire()) as
+      | undefined
+      | (() => void);
     setTimeout(() => {
       if (release) {
         release();
@@ -30,8 +32,10 @@ export class RendererExplorer {
     try {
       return await fn();
     } finally {
-      release();
-      release = undefined;
+      if (release) {
+        release();
+        release = undefined;
+      }
     }
   }
 
